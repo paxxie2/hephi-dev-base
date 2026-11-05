@@ -36,7 +36,36 @@
 
 项目检查入口负责正确选择测试，并在目标测试未执行、断言失败或其他不满足验收条件时非零退出。命令成功不自动证明 Issue 业务正确，更不能把单纯构建成功当作业务验收。GitHub 交付应明确设置 `HEPHI_REQUIRE_PULL_REQUEST=1`。
 
-目前只接受明确结束的前台检查。后台、取消或未知结果不会放行；这些异常的恢复能力尚未完成。XML 解析器、强制反向验证和项目专用报告转换器已删除。检查命令不再接受 `parser`、`reportPaths`、`targetTests`、`expect` 字段；已有此类配置必须明确修订后创建新任务，不能静默忽略。
+检查可以是前台命令，也可以是宿主原生后台 Job；HEPHI 等待其终态。取消、超时或未知结果不会放行，这些异常的恢复能力尚未完成。
+
+## 任务卡
+
+`HEPHI_REQUIRE_TASK=1`（prepare 脚本默认开启）时，Issue 正文必须包含任务卡，否则不创建合同：
+
+````text
+```hephi-task
+{
+  "version": 1,
+  "goal": "total() 返回两数之和",
+  "outOfScope": ["定价规则", "模块结构调整"],
+  "acceptance": [
+    { "id": "AC1", "text": "total(2, 3) 为 5", "check": "tests",
+      "paths": ["src/price.js", "tests/price*"], "tests": ["tests/price*"] }
+  ],
+  "budget": { "maxFiles": 3, "maxChangedLines": 40 }
+}
+```
+
+```hephi-test AC1 tests/hephi/AC1.test.sh
+node -e "process.exit(require('./src/price.js').total(2, 3) === 5 ? 0 : 1)"
+```
+````
+
+- 合同哈希覆盖整张任务卡；`hephi-test` 块是冻结验收测试，存放在 Worker 检出目录之外，按内容哈希校验。
+- 改动文件必须同时落在 `HEPHI_ALLOWED_PATHS` 和某个验收项的 `paths` 内；直接 `write`/`edit` 越界会被当场拒绝。
+- ready 时检查改动预算、重命名、纯格式化改动和已有测试的删除（`protect`，默认覆盖常见测试路径）。`allowRenames`、`allowFormatOnly` 可显式放开。
+- `hephi_check("AC1")` 在两个临时 worktree 里运行该项的检查：HEAD 加冻结测试必须通过，base 加冻结测试和 Worker 的匹配测试必须失败。依赖目录（如 `node_modules`）通过检查配置的 `proofLinks` 链接进去。
+- ready 时每条证据都必须能在宿主 Session 事件中找到对应的原生 bash 调用（`HEPHI_REQUIRE_SESSION_BINDING=0` 可关闭，仅用于宿主核对事件格式期间）。XML 解析器、强制反向验证和项目专用报告转换器已删除。检查命令不再接受 `parser`、`reportPaths`、`targetTests`、`expect` 字段；已有此类配置必须明确修订后创建新任务，不能静默忽略。
 
 ## 开发和验收
 

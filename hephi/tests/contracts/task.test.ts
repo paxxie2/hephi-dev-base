@@ -72,6 +72,9 @@ describe('Issue task card', () => {
   it('prepare refuses a missing card when required, and a card naming an unknown check', async () => {
     await expect(prepareActivation(env(await mkdtemp(join(tmpdir(), 'hephi-task-')), 'plain issue', { HEPHI_REQUIRE_TASK: '1' }))).rejects.toThrow('hephi-task block')
     await expect(prepareActivation(env(await mkdtemp(join(tmpdir(), 'hephi-task-')), body.replace('"check": "tests"', '"check": "lint"')))).rejects.toThrow('unknown check lint')
+    const noFrozen = body.slice(0, body.indexOf('```hephi-test'))
+    await expect(prepareActivation(env(await mkdtemp(join(tmpdir(), 'hephi-task-')), noFrozen, { HEPHI_REQUIRE_FROZEN_TEST: '1' }))).rejects.toThrow('needs a hephi-test block')
+    expect((await prepareActivation(env(await mkdtemp(join(tmpdir(), 'hephi-task-')), body, { HEPHI_REQUIRE_FROZEN_TEST: '1' }))).enabled).toBe(true)
   })
 
   it('keeps the goal in the Worker prompt and denies direct edits outside the item scope', async () => {

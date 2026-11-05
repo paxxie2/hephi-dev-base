@@ -164,8 +164,10 @@ function taskOf(env: NodeJS.ProcessEnv, verification: VerificationConfig): { car
     return {}
   }
   const checks = new Set(verification.checks.map(check => check.id))
+  const requireFrozen = boolean(env.HEPHI_REQUIRE_FROZEN_TEST, false)
   for (const item of issueTask.card.acceptance) {
     if (!checks.has(item.check)) throw new Error(`acceptance ${item.id} refers to unknown check ${item.check}`)
+    if (requireFrozen && !item.frozen.length) throw new Error(`acceptance ${item.id} needs a hephi-test block when HEPHI_REQUIRE_FROZEN_TEST=1`)
   }
   return { card: issueTask.card, files: issueTask.frozenFiles }
 }

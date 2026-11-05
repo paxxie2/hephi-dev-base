@@ -1,0 +1,147 @@
+task_id: hephi-control-plane-v2.1
+title: HEPHI Super Agent 控制面 v2.1
+status: unverified
+children:
+  - id: T0
+    title: 冻结基线和验证现状
+    owner: codex
+    depends_on: []
+    scope:
+      - 记录 baseline commit
+      - 确认现有 pnpm check 通过
+      - 确认当前分支无代码改动
+    planned_command: "git rev-parse HEAD && pnpm check"
+    outputs:
+      - docs/hephi-control-plane-v2.1/implementation-contract.md
+    evidence:
+      - planned: git output
+      - planned: pnpm check output
+    acceptance:
+      - baseline 可回退
+      - 当前测试基线明确
+    rollback_point: R0
+    status: done
+  - id: T1
+    title: 对齐 Worker Skill 和工具入口
+    owner: codex
+    depends_on: [T0]
+    scope:
+      - Skill 改为调用 hephi_kb_search
+      - 删除 hephi_verify 必做步骤
+      - 明确 ready gate 是唯一交付验证来源
+      - 旧 hephi_verify 标记为诊断性工具
+    planned_command: "rg -n 'hephi_verify|hephi_kb_search|ready' skills/hephi-superagent-control/SKILL.md src/tools.ts"
+    outputs:
+      - skills/hephi-superagent-control/SKILL.md
+      - src/tools.ts
+    evidence:
+      - planned: Skill diff
+      - planned: tool schema diff
+    acceptance:
+      - Skill 不再要求旧 helper
+      - 普通 Worker 流程未增加新工具或状态
+    rollback_point: R1
+    status: done
+  - id: T2
+    title: 抽取共享 Worker workspace 解析
+    owner: codex
+    depends_on: [T0]
+    scope:
+      - 从 dubbo-verifier 提取最小 gitRoot/resolveWorkspace 工具
+      - verifier 和 KB 工具使用同一规则
+      - 保持 remote/base 校验在控制面边界
+    planned_command: "pnpm typecheck"
+    outputs:
+      - src/control/workspace.ts
+      - src/control/dubbo-verifier.ts
+      - src/tools.ts
+    evidence:
+      - planned: typecheck output
+      - planned: workspace unit tests
+    acceptance:
+      - Session cwd 优先
+      - activation workspace 只支持既有嵌套 worktree 规则
+      - 解析失败不会回退到任意独立 clone
+    rollback_point: R0
+    status: done
+  - id: T3
+    title: 修正 reverse 多目标判定
+    owner: codex
+    depends_on: [T0]
+    scope:
+      - 所有目标测试必须有报告并实际执行
+      - 至少一个目标测试出现断言 failure
+      - 目标外 failure/error、目标 error、编译/环境错误阻断
+    planned_command: "pnpm vitest run tests/verification/runner.test.ts"
+    outputs:
+      - src/verification/runner.ts
+      - tests/verification/runner.test.ts
+    evidence:
+      - planned: reverse verdict matrix test output
+    acceptance:
+      - 目标测试一失败一通过可通过
+      - 目标报告缺失、skipped、error、目标外失败均不能通过
+    rollback_point: R0
+    status: done
+  - id: T4
+    title: 增加 baseMap/context pack
+    owner: codex
+    depends_on: [T1, T2]
+    scope:
+      - hephi_kb_search 接收 exec.agent
+      - 使用同一 Worker workspace
+      - 对 baseSha 使用 git grep
+      - 返回候选模块、文件、测试、unknowns、truncated
+      - 保留历史 KB 引用和 referenceOnly
+    planned_command: "pnpm vitest run tests/kb tests/tools 2>/dev/null || pnpm test"
+    outputs:
+      - src/kb/index.ts
+      - src/tools.ts
+      - tests/kb/index.test.ts
+    evidence:
+      - planned: context pack JSON assertions
+    acceptance:
+      - 返回路径都存在于 baseSha
+      - 查询无命中是空结果而非错误
+      - 结果过多明确 truncated
+      - 不新增 context pack 文件
+    rollback_point: R2
+    status: done
+  - id: T5
+    title: 补齐 evidence 最小字段
+    owner: codex
+    depends_on: [T3, T4]
+    scope:
+      - 保存 command、args、target report IDs
+      - 不保存完整日志或永久 XML
+    planned_command: "pnpm vitest run tests/control/dubbo-verifier.test.ts"
+    outputs:
+      - src/control/dubbo-verifier.ts
+      - tests/control/dubbo-verifier.test.ts
+    evidence:
+      - planned: evidence JSON assertions
+    acceptance:
+      - evidence 可复核实际验证入口和目标报告
+      - 不泄露凭据
+    rollback_point: R0
+    status: done
+  - id: T6
+    title: 集成验收和真实 Dubbo Issue
+    owner: codex
+    depends_on: [T1, T2, T3, T4, T5]
+    scope:
+      - pnpm check
+      - 普通 Worker、激活失败、KB、reverse、PR 和工作区竞态用例
+      - 一个新的真实 Dubbo Issue 端到端运行
+    planned_command: "pnpm check; planned: dsh-superagent Ticket E2E"
+    outputs:
+      - evidence/verification JSON
+      - docs/hephi-control-plane-v2.1/final-status.md
+    evidence:
+      - planned: pnpm check output
+      - planned: real Ticket evidence path
+    acceptance:
+      - 真实 Issue result=passed
+      - 未通过 ready 不产生交付成功结论
+    rollback_point: R0
+    status: unverified

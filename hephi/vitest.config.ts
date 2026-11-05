@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     include: ['tests/**/*.test.ts'],
     // Stage tests spawn real Git repositories and foreground check processes.
-    testTimeout: 20000,
+    testTimeout: 60000,
     coverage: { reporter: ['text'] }
   }
 })

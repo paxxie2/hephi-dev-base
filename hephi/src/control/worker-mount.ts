@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs'
 import { loadKnowledgeBases } from '../kb/index.js'
 import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type ExecutionMode } from './activation.js'
 import { createReadyGate, type ReadyVerifier } from './ready-gate.js'
+import { inScope } from './discipline.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
 import { installStageControl, type StageAgents, type StageJobs, type StageSessionQuery, type StageSubagents } from './stage-mount.js'
 
@@ -19,6 +20,26 @@ type PromptContext = Context & {
 function modeSensitive(name: string, args: unknown): boolean {
   if (MODIFYING_TOOLS.has(name) || DELEGATION_TOOLS.has(name) || name === 'hephi_stage' || name === 'hephi_check') return true
   return name === 'orchestrator_report' && (args as { state?: unknown } | null)?.state === 'ready'
+}
+
+/** The task card stays in the system prompt every turn so the goal survives long sessions and compaction. */
+export function hephiTaskPrompt(contract: ActivationContract | undefined): string {
+  const task = contract?.task
+  if (!task) return ''
+  const lines = [
+    `HEPHI task goal (frozen; do not reinterpret or extend): ${task.goal}`,
+    ...task.acceptance.map(a => `- ${a.id}: ${a.text} | may change: ${a.paths.join(', ')} | prove with hephi_check("${a.id}")`),
+    ...(task.outOfScope.length ? [`Explicitly out of scope: ${task.outOfScope.join('; ')}`] : []),
+    `Change budget: at most ${task.budget.maxFiles} files and ${task.budget.maxChangedLines} changed lines.${task.allowRenames ? '' : ' No renames or moves.'}${task.allowFormatOnly ? '' : ' No formatting-only edits.'} Do not delete existing tests.`,
+    'Change only what an acceptance item needs. If an item cannot be met within these paths and budget, report blocked with the reason instead of widening the change.',
+  ]
+  return lines.join('\n')
+}
+
+function editedPath(args: unknown): string | undefined {
+  const value = args as { path?: unknown; file_path?: unknown; filePath?: unknown } | null
+  const path = value?.path ?? value?.file_path ?? value?.filePath
+  return typeof path === 'string' ? path : undefined
 }
 
 export function hephiStartupPrompt(filePath: string, mode?: ExecutionMode, contractProblem?: string): string {
@@ -135,8 +156,20 @@ export function mountWorkerGate(
     if (checking && (MODIFYING_TOOLS.has(e.name) || DELEGATION_TOOLS.has(e.name) || e.name === 'hephi_check'
       || (e.name === 'orchestrator_report' && (e.arguments as { state?: string })?.state === 'ready'))) return 'HEPHI synchronous check is running'
   })
+  // Early feedback for direct file edits; shell writes are caught by the check and ready gates.
+  const removeScopeGuard = agent.ctx.tools.guard(e => {
+    if (!mountedContract || (e.name !== 'write' && e.name !== 'edit')) return undefined
+    const path = editedPath(e.arguments)
+    if (!path) return undefined
+    const root = mountedContract.workspace.replace(/\/+$/, '')
+    const nested = path.startsWith('/') ? path.startsWith(`${root}/`) ? path.slice(root.length + 1) : undefined : path
+    if (nested === undefined) return undefined
+    const candidates = [nested, nested.split('/').slice(1).join('/')].filter(Boolean)
+    if (candidates.some(candidate => inScope(mountedContract!, candidate))) return undefined
+    return `HEPHI task scope does not include ${nested}; change only files an acceptance item needs, or report blocked`
+  })
   const removeCheck = agent.ctx.tools.register(defineTool({
-    name: 'hephi_check', description: 'Run a frozen synchronous check by checkId before ready. Background checks are unsupported.',
+    name: 'hephi_check', description: 'Run a frozen check by checkId, or prove an acceptance item by its id (passes on HEAD, fails on base), before ready.',
     parameters: { checkId: { type: 'string', required: true } },
     output: { schema: { type: 'json' as const }, render: (_a, value) => [{ type: 'text' as const, text: JSON.stringify(value) }] },
     execute: async (args, execution) => {
@@ -167,7 +200,7 @@ export function mountWorkerGate(
     name: 'hephi:startup-instructions',
     order: 900,
     interpolate: false,
-    text: () => hephiStartupPrompt(filePath, mode, mountProblem),
+    text: () => [hephiStartupPrompt(filePath, mode, mountProblem), hephiTaskPrompt(mountedContract)].filter(Boolean).join('\n'),
   })
   let disposed = false
   return {
@@ -181,6 +214,7 @@ export function mountWorkerGate(
       removePrompt()
       removeCheck()
       removeCheckGuard()
+      removeScopeGuard()
       gate.dispose()
       stages?.dispose()
     },

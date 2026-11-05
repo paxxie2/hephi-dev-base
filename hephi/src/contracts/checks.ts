@@ -24,6 +24,8 @@ export type VerificationCheck = {
 export type VerificationConfig = {
   version: 1
   checks: VerificationCheck[]
+  /** Workspace-relative paths (e.g. node_modules) linked into acceptance proof worktrees. */
+  proofLinks?: string[]
 }
 
 const CHECK_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
@@ -51,6 +53,7 @@ const checkSchema = z.object({
 const verificationSchema = z.object({
   version: z.literal(1),
   checks: z.array(checkSchema).min(1),
+  proofLinks: z.array(relativePath).default([]),
 }).strict().superRefine((config, ctx) => {
   const ids = new Set<string>()
   for (const check of config.checks) {

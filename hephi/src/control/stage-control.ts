@@ -7,6 +7,7 @@ import { promisify } from 'node:util'
 import { z } from 'zod'
 import { executionModeOf, type ActivationContract } from './activation.js'
 import { allowedPath } from './repository.js'
+import { inScope } from './discipline.js'
 import { groupAlive, runStageCheck } from './stage-process.js'
 
 const exec = promisify(execFile)
@@ -312,7 +313,7 @@ export class StageControl {
         const untracked = await this.git('ls-files', '-z', '--others', '--exclude-standard')
         const files = [...new Set((diff + '\0' + staged + '\0' + untracked).split('\0').filter(Boolean))]
         if (files.some(f => /[\r\n]/.test(f))) throw new Error('Stage paths containing line breaks are unsupported')
-        if (files.some(f => !allowedPath(f, this.contract.allowedPaths) || !allowedPath(f, stage.scope))) throw new Error('Stage changes exceed stage or contract paths')
+        if (files.some(f => !inScope(this.contract, f) || !allowedPath(f, stage.scope))) throw new Error('Stage changes exceed stage or contract paths')
         attempt.before = await this.fingerprint(); this.save()
         for (const check of stage.checks) {
           const dir = join(dirname(this.path), 'stage-evidence', attempt.id, check.id)

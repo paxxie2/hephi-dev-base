@@ -19,6 +19,8 @@ printf '%s\n' "$labels" | grep -Fxq 'hephi/delivery' || exit 0
 [ -r "$HEPHI_VERIFICATION_FILE" ] || { echo 'HEPHI verification configuration is unreadable' >&2; exit 1; }
 
 HEPHI_ISSUE_TITLE=$("$gh_cli" api "repos/$repo/issues/$number" --jq '.title')
+# The task card and frozen acceptance tests are read from the Issue body.
+HEPHI_ISSUE_BODY=$("$gh_cli" api "repos/$repo/issues/$number" --jq '.body // ""')
 base_ref=$("$gh_cli" api "repos/$repo" --jq '.default_branch')
 base_sha=$("$gh_cli" api "repos/$repo/commits/$base_ref" --jq '.sha')
 if [ ! -e "$workspace/.git" ]; then
@@ -26,7 +28,8 @@ if [ ! -e "$workspace/.git" ]; then
   git -C "$HEPHI_SOURCE_REPO" worktree add -b "agent/$ticket_name" "$workspace" "$base_sha"
 fi
 
-export HEPHI_ENABLED=1 HEPHI_REQUIRE_PULL_REQUEST=1 HEPHI_ISSUE_TITLE
+export HEPHI_ENABLED=1 HEPHI_REQUIRE_PULL_REQUEST=1 HEPHI_ISSUE_TITLE HEPHI_ISSUE_BODY
+export HEPHI_REQUIRE_TASK=${HEPHI_REQUIRE_TASK:-1}
 export HEPHI_BASE_REF=$base_ref HEPHI_BASE_COMMIT=$base_sha
 plugin_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 exec node "$plugin_dir/lib/cli.mjs" prepare

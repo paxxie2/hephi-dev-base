@@ -4,6 +4,7 @@ import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
+import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
 
 export type ExecutionMode = 'native' | 'staged'
 
@@ -21,6 +22,8 @@ export type ActivationContract = {
   executionMode?: ExecutionMode
   /** Frozen checks are required for every activation. */
   verification: VerificationConfig
+  /** Issue-scoped task card. Absent only in contracts written before task cards. */
+  task?: TaskCard
   contractHash: string
 }
 
@@ -148,6 +151,25 @@ export function activationIntentPath(stateDir: string, ticketId: string): string
   return join(stateDir, 'hephi', safeTicketId(ticketId), 'activation.intent')
 }
 
+/** Frozen acceptance tests live beside the contract, outside the Worker checkout. */
+export function frozenTestDir(stateDir: string, ticketId: string): string {
+  return join(stateDir, 'hephi', safeTicketId(ticketId), 'frozen')
+}
+
+function taskOf(env: NodeJS.ProcessEnv, verification: VerificationConfig): { card?: TaskCard; files?: Map<string, { content: string }> } {
+  const body = env.HEPHI_ISSUE_BODY
+  const issueTask = body === undefined ? undefined : parseIssueTask(body)
+  if (!issueTask) {
+    if (boolean(env.HEPHI_REQUIRE_TASK, false)) throw new Error('Issue body must contain a hephi-task block when HEPHI_REQUIRE_TASK=1')
+    return {}
+  }
+  const checks = new Set(verification.checks.map(check => check.id))
+  for (const item of issueTask.card.acceptance) {
+    if (!checks.has(item.check)) throw new Error(`acceptance ${item.id} refers to unknown check ${item.check}`)
+  }
+  return { card: issueTask.card, files: issueTask.frozenFiles }
+}
+
 /**
  * An intent is deliberately a marker, not a second contract. Unknown access
  * errors count as present so an activated task cannot silently become normal.
@@ -195,6 +217,14 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
   }
   const verification = await loadVerificationFromEnv(env)
+  const task = taskOf(env, verification)
+  if (task.files) {
+    const root = frozenTestDir(stateDir, ticketId)
+    for (const [path, file] of task.files) {
+      await mkdir(dirname(join(root, path)), { recursive: true })
+      await writeFile(join(root, path), file.content)
+    }
+  }
   const base: Omit<ActivationContract, 'contractHash'> = {
     enabled: true,
     ticketId,
@@ -207,6 +237,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     requirePullRequest: boolean(env.HEPHI_REQUIRE_PULL_REQUEST, false),
     executionMode,
     verification,
+    ...(task.card ? { task: task.card } : {}),
   }
   const contract: ActivationContract = { ...base, contractHash: contractHash(base) }
   const filePath = activationPath(stateDir, ticketId)
@@ -245,7 +276,13 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   // Return the parsed object unchanged so historical contracts keep their raw
   // shape and later reads/hashes match.
   contractExecutionMode(base.executionMode)
-  parseVerificationConfig(base.verification)
+  const verification = parseVerificationConfig(base.verification)
+  if (base.task !== undefined) {
+    const task = parseTaskCard(base.task)
+    for (const item of task.acceptance) {
+      if (!verification.checks.some(check => check.id === item.check)) throw new Error(`HEPHI activation contract acceptance ${item.id} refers to unknown check ${item.check}`)
+    }
+  }
   return parsed as ActivationContract
 }
 

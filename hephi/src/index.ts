@@ -11,9 +11,17 @@ export const pluginVersion = '0.1.0'
 export const inject = ['agents', 'tools', 'systemPrompt']
 
 /** Cordis bundle entry. The control plane only observes existing Worker Agents. */
-export function apply(ctx: Context, config: { stateDir?: string } = {}): void {
+export function apply(ctx: Context, config: { stateDir?: string; requireSessionBinding?: boolean } = {}): void {
   const stateDir = defaultStateDir(config.stateDir)
-  const dispose = installWorkerMount(ctx, { stateDir, verify: createEvidenceVerifier({ stateDir }) })
+  type SessionQuery = { readSession(id: string): Promise<{ events: Array<{ type: string; data: unknown }> }> }
+  const sessionEvents = async (sessionId: string) => {
+    const query = ctx.get('sessionQuery') as SessionQuery | undefined
+    if (!query) throw new Error('host sessionQuery service is unavailable; evidence cannot be bound to native executions')
+    return (await query.readSession(sessionId)).events
+  }
+  const requireSessionBinding = config.requireSessionBinding ?? process.env.HEPHI_REQUIRE_SESSION_BINDING !== '0'
+  const verify = createEvidenceVerifier({ stateDir, sessionEvents: requireSessionBinding ? sessionEvents : undefined })
+  const dispose = installWorkerMount(ctx, { stateDir, verify })
   ctx.effect(() => dispose, `${pluginName}: worker ready gate`)
 }
 

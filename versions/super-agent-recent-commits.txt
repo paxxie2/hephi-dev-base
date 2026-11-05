@@ -1,0 +1,12 @@
+62d7d53723e5841eca5e02b151c1b48653650ea4 2026-11-02T05:34:36+08:00 feat: watch additional GitHub repositories in the existing source
+394a6e191fbda61fb5a5c0d03582f4ff49d92a5d 2026-11-01T21:11:03+08:00 fix: ignore Feishu config reads after store close
+1eb9f03f5f0162cc44f045f5a1534f188427fc85 2026-11-01T21:08:11+08:00 feat: expose Hephi knowledge search to workers
+54a048ac8e38bdfa64f42ffb7ed0bf154757d8a0 2026-11-01T21:02:47+08:00 Revert "feat: expose Hephi knowledge search to workers"
+e996b71324f297fbdba1a6d8d1e14a9602da8c3e 2026-11-01T21:01:21+08:00 feat: expose Hephi knowledge search to workers
+c4b4511f4adfa60cfa39c970ab873cf16593e326 2026-11-01T20:58:02+08:00 Revert "feat: expose Hephi knowledge search to workers"
+5303ea5bb05559a3b33d9eca05090c51679b4e28 2026-11-01T20:23:56+08:00 feat: expose Hephi knowledge search to workers
+9339f1fee10f0db59c6ff81e9e91d19a901d5ed5 2026-11-01T04:29:20+08:00 chore: checkpoint current Super Agent integration state
+f9ae1c7269c947a5baa2e52ead2602902e075fbc 2026-11-01T03:18:46+08:00 feat(github): optionally admit self-authored issues
+a90a3f89cd011a1bf54b931bdc4f6367b52b4413 2026-11-01T00:46:15+08:00 docs: record official repository selection
+c9f266d348d4ea8fa3b51b951a5f37ce1e92311b 2026-11-01T00:44:59+08:00 docs: add dsh superagent knowledge base and skill
+6337fc823ce20251c8de8085948165c81aaa701e 2026-10-31T20:05:39+08:00 feat: add the dsh-superagent research prototype

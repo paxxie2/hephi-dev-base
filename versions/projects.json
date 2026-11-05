@@ -1,0 +1,14 @@
+{
+  "hephi": {
+    "branch": "main",
+    "head": "8e68ec27ef6cc3e16991bc56c841e2f0ac7f2db5",
+    "status": "",
+    "snapshot": "Git tracked working-tree files; clean at packaging"
+  },
+  "super-agent": {
+    "branch": "codex/multi-repository-github",
+    "head": "62d7d53723e5841eca5e02b151c1b48653650ea4",
+    "status": "",
+    "snapshot": "Git tracked working-tree files; clean at packaging"
+  }
+}

@@ -1,0 +1,25 @@
+8e68ec27ef6cc3e16991bc56c841e2f0ac7f2db5 2026-11-05T05:12:49+08:00 fix: await native background check completion before ready
+648d7981523538b80c74916053c1975a19cf7389 2026-11-05T01:52:11+08:00 style: remove trailing blank line in repository helpers
+c2383e977ef4d87163f398d529208bb1e13d921a 2026-11-05T01:51:57+08:00 docs: record simplified MVP real native and staged delivery
+e8bd69f1219e8c000635894a6421a75735fa1889 2026-11-05T01:43:36+08:00 refactor: simplify project preparation and approved worker instructions
+5a4eea4b373a40415c63253344543e7535a0c15d 2026-11-05T01:41:26+08:00 refactor: remove XML and reverse adapters from MVP checks
+fd3c7946b94956cafd742ee6327479966e9c3203 2026-11-05T01:37:55+08:00 refactor: remove obsolete delivery chain and project ready verifier
+31e02360ee0d25e40a1b3aacb32e9bbf238543d5 2026-11-05T01:28:40+08:00 docs: record five-cause audit and native/staged real verification
+d580188595d17ef6de7cc4aa492a45f61f49889e 2026-11-05T01:23:20+08:00 refactor: remove legacy tool routes and keep ready evidence-only
+d9c7fbf4fcf09319aa164d05e6ffe959f5d297aa 2026-11-05T01:03:24+08:00 fix: allow native project checks and share stage pass evaluation
+94308b85b6be573a0bdee479026dbd70c28e49a6 2026-11-05T00:10:38+08:00 fix: parse flat JUnit reports from the native Node test runner
+53996c192bdf4a667fdc4839d5dc1d2faabdd1f4 2026-11-04T23:57:51+08:00 simplify: remove redundant check hashes and repeated test setup
+eddfb0dd8017bdc17b2fa63e10ee86a9ff775443 2026-11-04T23:55:37+08:00 simplify: require frozen checks in first-version contracts
+532686d3689ed2d13c9d1fb273c6a8978b5e14ee 2026-11-04T23:51:56+08:00 refactor: retain one hashed report copy per check
+b049c60ff66df1178bc9c829b6e537e3adb81f1d 2026-11-04T23:49:03+08:00 refactor: remove expanded evidence machinery and keep synchronous MVP
+a10d96fe859eca014e5a6df861393f069a51c112 2026-11-04T23:04:04+08:00 docs: record evidence MVP review and validation limits
+45b2a4ad581e2faf7f3a7798bb866429e1ed6127 2026-11-04T23:03:52+08:00 feat: freeze project checks and verify evidence at ready
+035c240b3b55492a2764c704596ad7b9eb85a5d0 2026-11-04T22:28:31+08:00 docs: record verified DSH execution seams for evidence MVP
+a08b1eb8899e99b5a0961ec9e00cc4fdeb5cf741 2026-11-04T22:22:57+08:00 docs: freeze ready evidence MVP implementation scope
+7bd6fe0b3e55848a3df6fee98491d723702f05ca 2026-11-04T20:02:26+08:00 feat: prepare site-pnl with real pytest and vitest reverse checks
+4520c5a4827982e2235c49173cda2d2b16440ce7 2026-11-04T19:18:35+08:00 fix: inspect jobs for unloaded subagent sessions
+c1868346839dff1d17fe37bcf70bef986214b672 2026-11-04T19:16:30+08:00 fix: close staged lifecycle and report regressions
+1aa06b77e1e16309b1a2e866b8d9fa326da33218 2026-11-04T19:07:14+08:00 feat: add optional native and staged execution modes
+35e3213a12bf158cfe34696e621558743f6cabe6 2026-11-04T07:51:35+08:00 Remove HEPHI staged execution and retain final ready verification
+033098df2cb45b0cfa318d17b87ed45956bac497 2026-11-04T07:16:53+08:00 docs: name native DSH agent team in stage guidance
+ce6be2fe4b57cb3bd980a523b0b98c5fd62c9314 2026-11-04T06:58:21+08:00 fix: remove staged implementation delegation ban

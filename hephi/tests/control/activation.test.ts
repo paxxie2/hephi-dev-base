@@ -1,0 +1,149 @@
+import { mkdtemp, readFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { activationIntentPath, activationPath, contractHash, executionModeOf, loadActivation, migrateActivationIntentSync, parseIssueExecutionMode, prepareActivation } from '../../src/control/activation.js'
+
+async function stateDir(): Promise<string> {
+  return mkdtemp(join(tmpdir(), 'hephi-activation-'))
+}
+
+function enabledEnv(dir: string): NodeJS.ProcessEnv {
+  return {
+    HEPHI_ENABLED: '1',
+    HEPHI_STATE_DIR: dir,
+    HEPHI_BASE_COMMIT: 'a'.repeat(40),
+    HEPHI_ALLOWED_PATHS: '["dubbo-common/**"]',
+    HEPHI_TEST_COMMAND: 'mvn -pl dubbo-common test',
+    HEPHI_REVERSE_TEST_COMMAND: 'mvn -pl dubbo-common -Dhephi.reverse=true test',
+    DSH_SUPERAGENT_TICKET: 'ticket-1',
+    DSH_SUPERAGENT_DIR: '/tmp/ticket-1',
+    DSH_SUPERAGENT_GITHUB_REPOSITORY: 'paxxie2/dubbo',
+    DSH_SUPERAGENT_GITHUB_NUMBER: '42',
+    HEPHI_VERIFICATION_CHECKS: JSON.stringify({version:1,checks:[{id:'fixture-build',kind:'build',purpose:'fixture command',command:'true',args:[],cwd:'.',required:true,timeoutMs:5000,}]}),
+  }
+}
+
+describe('HEPHI activation', () => {
+  it('does nothing when the task is not explicitly enabled', async () => {
+    await expect(prepareActivation({})).resolves.toEqual({ enabled: false, reason: 'not-requested' })
+  })
+
+  it('writes and reloads one hashed activation contract', async () => {
+    const dir = await stateDir()
+    const result = await prepareActivation(enabledEnv(dir))
+    expect(result.enabled).toBe(true)
+    if (!result.enabled) return
+    const filePath = activationPath(dir, 'ticket-1')
+    expect(await readFile(activationIntentPath(dir, 'ticket-1'), 'utf8')).toContain('ticket-1')
+    expect(result.filePath).toBe(filePath)
+    expect(JSON.parse(await readFile(filePath, 'utf8'))).toMatchObject({ ticketId: 'ticket-1', issueNumber: 42 })
+    await expect(loadActivation(filePath)).resolves.toEqual(result.contract)
+    const { contractHash: hash, ...base } = result.contract
+    expect(hash).toBe(contractHash(base))
+  })
+
+  it('fails closed when an enabled task lacks required context', async () => {
+    const dir = await stateDir()
+    await expect(prepareActivation({ HEPHI_ENABLED: '1', HEPHI_STATE_DIR: dir, DSH_SUPERAGENT_TICKET: 'ticket-1', HEPHI_VERIFICATION_CHECKS: JSON.stringify({version:1,checks:[{id:'fixture-build',kind:'build',purpose:'fixture command',command:'true',args:[],cwd:'.',required:true,timeoutMs:5000,}]}) })).rejects.toThrow('DSH_SUPERAGENT_GITHUB_REPOSITORY')
+    await expect(readFile(activationIntentPath(dir, 'ticket-1'), 'utf8')).resolves.toContain('ticket-1')
+  })
+
+  it('rejects a tampered activation contract', async () => {
+    const dir = await stateDir()
+    const result = await prepareActivation(enabledEnv(dir))
+    if (!result.enabled) throw new Error('activation was not enabled')
+    const filePath = activationPath(dir, 'ticket-1')
+    const value = JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>
+    value.baseSha = 'b'.repeat(40)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, `${JSON.stringify(value)}\n`))
+    await expect(loadActivation(filePath)).rejects.toThrow('hash mismatch')
+  })
+
+  it('migrates an existing contract to an activation intent marker', async () => {
+    const dir = await stateDir()
+    await prepareActivation(enabledEnv(dir))
+    await import('node:fs/promises').then(({ unlink }) => unlink(activationIntentPath(dir, 'ticket-1')))
+    migrateActivationIntentSync(dir, 'ticket-1')
+    await expect(readFile(activationIntentPath(dir, 'ticket-1'), 'utf8')).resolves.toContain('ticket-1')
+  })
+})
+
+describe('HEPHI optional execution modes', () => {
+  it('defaults to native, writes an explicit mode, and hashes staged differently', async () => {
+    const nativeDir = await stateDir()
+    const native = await prepareActivation(enabledEnv(nativeDir))
+    if (!native.enabled) throw new Error('activation was not enabled')
+    expect(native.contract.executionMode).toBe('native')
+    expect(JSON.parse(await readFile(native.filePath, 'utf8'))).toMatchObject({ executionMode: 'native' })
+    const staged = await prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_EXECUTION_MODE: 'staged' })
+    if (!staged.enabled) throw new Error('activation was not enabled')
+    expect(staged.contract.executionMode).toBe('staged')
+    expect(staged.contract.contractHash).not.toBe(native.contract.contractHash)
+  })
+
+  it('rejects an invalid environment mode before writing a contract', async () => {
+    const dir = await stateDir()
+    await expect(prepareActivation({ ...enabledEnv(dir), HEPHI_EXECUTION_MODE: 'parallel' })).rejects.toThrow('HEPHI_EXECUTION_MODE')
+    await expect(readFile(activationPath(dir, 'ticket-1'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
+  })
+
+  it('loads a historical mode-less contract with its original hash and interprets it as native', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const filePath = activationPath(dir, 'ticket-1')
+    const raw = JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>
+    delete raw.executionMode
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as any)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, `${JSON.stringify(raw, null, 2)}\n`))
+    const loaded = await loadActivation(filePath)
+    expect(loaded.contractHash).toBe(raw.contractHash)
+    expect(Object.hasOwn(loaded, 'executionMode')).toBe(false)
+    expect(loaded.executionMode).toBeUndefined()
+    expect(executionModeOf(loaded)).toBe('native')
+    const { contractHash: loadedHash, ...loadedBase } = loaded
+    expect(contractHash(loadedBase)).toBe(loadedHash)
+    expect(JSON.parse(await readFile(filePath, 'utf8'))).toEqual(raw)
+  })
+
+  it('rejects a mode value only after validating the original hash', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const filePath = activationPath(dir, 'ticket-1')
+    const raw = JSON.parse(await readFile(filePath, 'utf8')) as Record<string, unknown>
+    raw.executionMode = 'parallel'
+    // A raw hash over the invalid field proves hash validation precedes mode interpretation.
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as any)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, JSON.stringify(raw)))
+    await expect(loadActivation(filePath)).rejects.toThrow('invalid executionMode')
+    raw.executionMode = 'staged'
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, JSON.stringify(raw)))
+    await expect(loadActivation(filePath)).rejects.toThrow('hash mismatch')
+  })
+})
+
+describe('Issue execution mode marker', () => {
+  it('selects exactly one explicit marker and rejects missing or conflicting markers', () => {
+    expect(parseIssueExecutionMode('[native] implement site pnl')).toBe('native')
+    expect(parseIssueExecutionMode('[staged] implement site pnl')).toBe('staged')
+    expect(parseIssueExecutionMode('[NATIVE] case insensitive')).toBe('native')
+    expect(() => parseIssueExecutionMode('implement site pnl')).toThrow('explicit [native] or [staged]')
+    expect(() => parseIssueExecutionMode('[native] [staged] conflict')).toThrow('conflicting')
+    expect(() => parseIssueExecutionMode('[native]', 'staged')).toThrow('conflicts')
+    expect(parseIssueExecutionMode('[staged]', 'staged')).toBe('staged')
+  })
+
+  it('writes the title-selected mode into the new contract', async () => {
+    const native = await prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ISSUE_TITLE: '[native] task' })
+    if (!native.enabled) throw new Error('activation was not enabled')
+    expect(native.contract.executionMode).toBe('native')
+    const staged = await prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ISSUE_TITLE: '[staged] task' })
+    if (!staged.enabled) throw new Error('activation was not enabled')
+    expect(staged.contract.executionMode).toBe('staged')
+    await expect(prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ISSUE_TITLE: '[native] task', HEPHI_EXECUTION_MODE: 'staged' })).rejects.toThrow('conflicts')
+  })
+})

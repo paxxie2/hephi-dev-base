@@ -1,0 +1,3 @@
+# Raw verification logs preserve command output verbatim, including trailing spaces.
+docs/validation/*.log -whitespace
+docs/validation/*.exit -whitespace

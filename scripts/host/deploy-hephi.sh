@@ -3,14 +3,14 @@
 # --rollback 用最近一次部署前的快照恢复，并再次健康检查；失败保持暂停并非零退出。
 # 必须人工执行。--dry-run 只做检查与构建，不重启。
 # 用法：./scripts/host/deploy-hephi.sh --instance <dir> --host <url> [--hephi <dir>] [--repo <dir>]
-#        [--releases <dir>] [--dry-run] [--skip-build] [--rollback] [--timeout <sec>]
+#        [--releases <dir>] [--dry-run] [--skip-build] [--rollback] [--allow-open-tickets] [--timeout <sec>]
 #   --hephi 插件源码目录（默认 <instance>/hephi；本机实验实例为 <instance>/hephi-review/hephi）
 #   --repo  用于回读 commit 的 git 仓库根（默认 <instance>；本机实验实例为 <instance>/hephi-review）
 #   --releases 不可变构建目录（默认 <instance>/releases/hephi）
 set -eu
 
 usage() {
-  echo "usage: $0 --instance <dir> --host <url> [--hephi <dir>] [--repo <dir>] [--releases <dir>] [--dry-run] [--skip-build] [--rollback] [--timeout <sec>]" >&2
+  echo "usage: $0 --instance <dir> --host <url> [--hephi <dir>] [--repo <dir>] [--releases <dir>] [--dry-run] [--skip-build] [--rollback] [--allow-open-tickets] [--timeout <sec>]" >&2
   exit 2
 }
 
@@ -22,6 +22,7 @@ releases=""
 dry_run="no"
 skip_build="no"
 rollback="no"
+allow_open="no"
 timeout=120
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -33,6 +34,7 @@ while [ $# -gt 0 ]; do
     --dry-run) dry_run="yes"; shift ;;
     --skip-build) skip_build="yes"; shift ;;
     --rollback) rollback="yes"; shift ;;
+    --allow-open-tickets) allow_open="yes"; shift ;;
     --timeout) [ $# -ge 2 ] || usage; timeout="$2"; shift 2 ;;
     -h|--help) usage ;;
     *) echo "未知参数：$1" >&2; usage ;;
@@ -106,6 +108,16 @@ running="$1"; queued="$2"; paused="$3"; runtime="$4"
 echo "部署前状态：running=$running queued=$queued paused=$paused runtime=$runtime"
 [ "$paused" = "true" ] || { echo "宿主未暂停，拒绝部署：先暂停评估/派发/出站并排空在途任务" >&2; exit 1; }
 [ "$running" = "0" ] && [ "$queued" = "0" ] || { echo "仍有运行或排队任务，拒绝部署：$running/$queued" >&2; exit 1; }
+
+# 有进行中的 Ticket 时禁止升级（P5/P8）；需显式 --allow-open-tickets 才跳过。
+if [ "$allow_open" = "no" ]; then
+  open_tickets=$(curl -fsS -H 'x-orchestrator-request: 1' "$host/orchestrator/api/tickets?state=open&limit=1000" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const j=JSON.parse(s);const list=Array.isArray(j)?j:(j.tickets??j.items??[]);process.stdout.write(String(list.length))}catch(e){process.stdout.write("unknown")}})')
+  case "$open_tickets" in
+    ''|*[!0-9]*) echo "无法确认进行中的 Ticket 数量，拒绝部署（可用 --allow-open-tickets 显式跳过）" >&2; exit 1 ;;
+  esac
+  [ "$open_tickets" -eq 0 ] || { echo "仍有 $open_tickets 个进行中的 Ticket，禁止升级；处理完或用 --allow-open-tickets 显式跳过" >&2; exit 1; }
+  echo "进行中 Ticket 检查：0"
+fi
 
 sha=$(git -C "$repo" rev-parse HEAD 2>/dev/null || echo unknown)
 echo "实例仓库 HEAD：$sha"

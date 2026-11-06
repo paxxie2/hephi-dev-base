@@ -30,6 +30,12 @@
 记录（本机）：`logs/deploy-20261107T043029.json`、`logs/rollback-20261107T043045.json`、`logs/deploy-20261107T043140.json`。
 回滚失败保护：脚本先备份回滚前 `lib`，健康检查失败则恢复该备份并保持暂停（本轮未注入故障验证）。
 
+## 升级前置：进行中 Ticket 保护（2026-11-07）
+
+部署脚本在暂停/排空检查之后新增“进行中 Ticket”保护：`GET /orchestrator/api/tickets?state=open` 计数 >0 时拒绝升级，需显式 `--allow-open-tickets` 才跳过（对应 P5“有进行中赫菲工单时禁止升级”）。
+
+实测（B 实例暂停状态下）：存在 3 个进行中 Ticket → 不带 flag 输出“仍有 3 个进行中的 Ticket，禁止升级”；带 `--allow-open-tickets` → dry-run 检查通过；随后恢复实例，health 全 ready。
+
 ## 已证明 / 未证明
 
 - 已证明：暂停→构建→重启→状态恢复的真实链路；构建产物时间 `03:57`；实例以新进程运行且监听正常。

@@ -7,8 +7,10 @@ import { clean, defaultPullRequest, hasCommit, normalizeRepository, remoteReposi
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
 import { checkRunDir, readRuns, type CheckRunRecord } from './check-store.js'
-import { checkCommand, sameSource } from './check-runner.js'
+import { checkCommand, contained, sameSource } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
+import { pluginCommit } from '../version.js'
+import { logDecision } from './decision-log.js'
 
 /**
  * The host's Session snapshot, in the shape stage recovery already reads
@@ -59,6 +61,23 @@ export function sessionBindingProblem(snapshot: SessionSnapshot, sessionId: stri
   return undefined
 }
 
+/**
+ * Evidence must match the frozen check definition even when Session binding is off:
+ * a record for another command or another directory is not evidence for this check.
+ */
+async function frozenCheckProblem(contract: ActivationContract, record: CheckRunRecord, workspace: string): Promise<string | undefined> {
+  const definition = verificationOf(contract).checks.find(check => check.id === record.checkId)
+  if (!definition) return `${record.checkId}: no frozen check definition in the contract`
+  const expected = [definition.command, ...definition.args]
+  if (record.argv.length !== expected.length || record.argv.some((value, index) => value !== expected[index])) {
+    return `${record.checkId}: recorded argv differs from the frozen check`
+  }
+  if (record.cwd !== await contained(workspace, definition.cwd)) {
+    return `${record.checkId}: recorded working directory differs from the frozen check`
+  }
+  return undefined
+}
+
 export function createEvidenceVerifier(options: {
   stateDir: string
   pullRequest?: (repo: string, n: number) => Promise<PullRequestInfo>
@@ -66,7 +85,7 @@ export function createEvidenceVerifier(options: {
   requireSessionBinding?: boolean
 }): ReadyVerifier {
   if (options.requireSessionBinding && !options.readSession) throw new Error('Session binding requires a Session reader')
-  return async (contract, execution) => {
+  const verify = async (contract: ActivationContract, execution: Parameters<ReadyVerifier>[1]): ReturnType<ReadyVerifier> => {
     try {
       const verification = verificationOf(contract)
       await requireKnowledgeQuery(contract, options.stateDir)
@@ -76,6 +95,9 @@ export function createEvidenceVerifier(options: {
       const before = await gitFingerprint(workspace, contract.baseSha)
       if (!before.changedFiles.length) throw new Error('missing patch or path outside contract')
       await checkDiscipline(contract, workspace)
+      if (contract.plugin !== undefined && contract.plugin.commit !== pluginCommit()) {
+        throw new Error(`contract was prepared by another plugin build (${contract.plugin.commit}); rerun prepare with ${pluginCommit()}`)
+      }
       const records = await readRuns(options.stateDir, contract.ticketId)
       if (records.some(r => r.status === 'unknown' || r.status === 'running')) throw new Error('unfinished/unsupported check execution; operator resolution required')
       // Required checks plus every check an acceptance item names, each verified once.
@@ -88,6 +110,9 @@ export function createEvidenceVerifier(options: {
           || !r.sessionId || !r.callId || !r.innerCallId || !r.finishedAt
           || !sameSource(r.before, before) || !sameSource(r.after, before)) throw new Error(`missing, failed or stale evidence: ${id}`)
         if (sha256(await readFile(join(checkRunDir(options.stateDir, contract.ticketId, r.runId), 'output.log'))) !== r.outputHash) throw new Error('output hash mismatch')
+        const frozen = await frozenCheckProblem(contract, r, workspace)
+        if (frozen) throw new Error(`evidence does not match the frozen check: ${frozen}`)
+        if (r.pluginCommit !== pluginCommit()) throw new Error(`check evidence was produced by another plugin build (${r.pluginCommit}); rerun checks with ${pluginCommit()}`)
         used.push(r)
       }
       if (options.requireSessionBinding) {
@@ -110,4 +135,31 @@ export function createEvidenceVerifier(options: {
       return { ok: true }
     } catch (e) { return { ok: false, reason: e instanceof Error ? e.message : String(e) } }
   }
+  return async (contract, execution) => {
+    const result = await verify(contract, execution)
+    const rule = result.ok ? 'ready.pass' : readyRule(result.reason)
+    const sessionId = execution.agent?.session.header.id
+    await logDecision(options.stateDir, {
+      ticketId: contract.ticketId,
+      sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+      callId: String(execution.callId),
+      tool: 'orchestrator_report',
+      mode: 'enforce',
+      effectiveDecision: result.ok ? 'allow' : 'deny',
+      wouldDecision: result.ok ? 'allow' : 'deny',
+      rule,
+      reason: result.ok ? undefined : result.reason,
+      contractHash: contract.contractHash,
+    })
+    return result
+  }
+}
+
+/** Stable rule ids for ready denials; P3 aggregates by rule. */
+function readyRule(reason: string): string {
+  if (reason.includes('not bound to a native execution')) return 'ready.binding'
+  if (reason.includes('PR/base/HEAD mismatch')) return 'ready.pr-mismatch'
+  if (reason.includes('missing, failed or stale evidence')) return 'ready.evidence-missing'
+  if (reason.includes('contract was prepared by another plugin build')) return 'ready.plugin-build'
+  return 'ready.other'
 }

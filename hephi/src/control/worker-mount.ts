@@ -4,12 +4,13 @@ import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { Context } from '@deepseek-ai/cordis'
 import { readFileSync } from 'node:fs'
 import { loadKnowledgeBases } from '../kb/index.js'
-import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type ExecutionMode } from './activation.js'
+import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, enforcementOf, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type EnforcementMode, type ExecutionMode } from './activation.js'
 import { createReadyGate, type ReadyVerifier } from './ready-gate.js'
-import { inScope } from './discipline.js'
+import { checkDiscipline, inScope } from './discipline.js'
 import { checkoutRelative, resolveWorkspace } from './workspace.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
 import { installStageControl, type StageAgents, type StageJobs, type StageSessionQuery, type StageSubagents } from './stage-mount.js'
+import { logDecision } from './decision-log.js'
 
 // Structural type for the host's public, agent-scoped prompt service.
 type PromptContext = Context & {
@@ -116,8 +117,11 @@ export function mountWorkerGate(
     mountProblem = `HEPHI activation contract unavailable: ${error instanceof Error ? error.message : String(error)}`
   }
   const mode = mountedContract ? executionModeOf(mountedContract) : undefined
+  const enforcement: EnforcementMode = mountedContract ? enforcementOf(mountedContract) : 'enforce'
+  const shadow = enforcement === 'shadow'
   const boundHash = mountedContract?.contractHash
   const boundMode = mode
+  const boundEnforcement = enforcement
   const currentProblem = (): string | undefined => {
     if (!mountedContract || !boundHash || !boundMode) return mountProblem ?? 'HEPHI activation contract was unavailable at mount'
     let current: ActivationContract
@@ -128,6 +132,7 @@ export function mountWorkerGate(
     }
     if (current.contractHash !== boundHash) return 'HEPHI activation contract changed during this Worker; stop and report the contract problem instead of reusing the mounted control'
     if (executionModeOf(current) !== boundMode) return `HEPHI execution mode changed from ${boundMode} to ${executionModeOf(current)} during this Worker; stop and report the contract problem`
+    if (enforcementOf(current) !== boundEnforcement) return `HEPHI enforcement mode changed from ${boundEnforcement} to ${enforcementOf(current)} during this Worker; stop and report the contract problem`
     return undefined
   }
 
@@ -137,10 +142,11 @@ export function mountWorkerGate(
     const current = await loadActivation(filePath)
     if (current.contractHash !== boundHash) throw new Error('HEPHI activation contract changed during this Worker; cannot reuse mounted control')
     if (executionModeOf(current) !== boundMode) throw new Error(`HEPHI execution mode changed from ${boundMode} to ${executionModeOf(current)} during this Worker; cannot reuse mounted control`)
+    if (enforcementOf(current) !== boundEnforcement) throw new Error(`HEPHI enforcement mode changed from ${boundEnforcement} to ${enforcementOf(current)} during this Worker; cannot reuse mounted control`)
     return current
   }
 
-  const stages = mountedContract && mode === 'staged'
+  const stages = mountedContract && mode === 'staged' && !shadow
     ? installStageControl(agent, stateDir, ticketId, {
         loadContract: loadBoundActivation,
         jobs: () => ctx.get('jobs') as StageJobs | undefined,
@@ -157,24 +163,59 @@ export function mountWorkerGate(
     if (checking && (MODIFYING_TOOLS.has(e.name) || DELEGATION_TOOLS.has(e.name) || e.name === 'hephi_check'
       || (e.name === 'orchestrator_report' && (e.arguments as { state?: string })?.state === 'ready'))) return 'HEPHI synchronous check is running'
   })
-  const removeCheck = agent.ctx.tools.register(defineTool({
+  const removeCheck = shadow ? () => {} : agent.ctx.tools.register(defineTool({
     name: 'hephi_check', description: 'Run a frozen required check by checkId before ready.',
     parameters: { checkId: { type: 'string', required: true } },
     output: { schema: { type: 'json' as const }, render: (_a, value) => [{ type: 'text' as const, text: JSON.stringify(value) }] },
     execute: async (args, execution) => {
-      if (checking) throw new Error('HEPHI check already running')
+      const sessionId = String(agent.session.header.id)
+      if (checking) {
+        await logDecision(stateDir, {
+          ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_check', mode: 'enforce',
+          effectiveDecision: 'deny', wouldDecision: 'deny', rule: 'check.running', reason: 'HEPHI check already running',
+        })
+        throw new Error('HEPHI check already running')
+      }
       checking = true
       try {
-        return JSON.parse(JSON.stringify(await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
+        const record = await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
           outer: execution, tools: agent.ctx.tools as unknown as CheckTools, jobs: nativeJobs(ctx), sessionCwd: agent.session.header.cwd,
-          internal: id => { internalCall = id } })))
+          internal: id => { internalCall = id } })
+        const passed = record.status === 'passed' && record.exitCode === 0
+        await logDecision(stateDir, {
+          ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_check', mode: 'enforce',
+          effectiveDecision: passed ? 'allow' : 'deny', wouldDecision: passed ? 'allow' : 'deny',
+          rule: passed ? 'check.pass' : `check.${record.status}`, reason: record.reason,
+          contractHash: mountedContract?.contractHash,
+        })
+        return JSON.parse(JSON.stringify(record))
       } finally { checking = false; internalCall = undefined }
     },
   }))
 
+  // Shadow ready: only range/discipline is computed, recorded as wouldDecision, and always allowed.
+  const shadowVerify: ReadyVerifier = async (contract, execution) => {
+    let wouldDecision: 'allow' | 'deny' = 'allow'
+    let reason: string | undefined
+    try {
+      const workspace = await resolveWorkspace(contract.workspace, execution.agent?.session.header.cwd)
+      await checkDiscipline(contract, workspace)
+    } catch (error) {
+      wouldDecision = 'deny'
+      reason = `shadow would deny: ${error instanceof Error ? error.message : String(error)}`
+    }
+    const sessionId = execution.agent?.session.header.id
+    await logDecision(stateDir, {
+      ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+      callId: String(execution.callId), tool: 'orchestrator_report', mode: 'shadow',
+      effectiveDecision: 'allow', wouldDecision, rule: wouldDecision === 'allow' ? 'ready.pass' : 'ready.discipline',
+      reason, contractHash: contract.contractHash,
+    })
+    return { ok: true }
+  }
   const gate = createReadyGate({
     loadActivation: loadBoundActivation,
-    verify: options.verify ? (contract, execution) => stages
+    verify: shadow ? shadowVerify : options.verify ? (contract, execution) => stages
       ? stages.verify(() => options.verify!(contract, execution), execution.signal, execution.token)
       : options.verify!(contract, execution) : undefined,
   })
@@ -183,16 +224,37 @@ export function mountWorkerGate(
     if (!mountedContract || (execution.name !== 'write' && execution.name !== 'edit')) return undefined
     const path = editedPath(execution.arguments)
     if (!path) return undefined
+    const log = async (rule: string, problem?: string) => {
+      await logDecision(stateDir, {
+        ticketId, sessionId: String(agent.session.header.id), callId: String(execution.callId), tool: execution.name,
+        mode: shadow ? 'shadow' : 'enforce',
+        effectiveDecision: shadow ? 'allow' : problem ? 'deny' : 'allow',
+        wouldDecision: problem ? 'deny' : 'allow',
+        rule, reason: problem, contractHash: mountedContract.contractHash,
+      })
+    }
+    const decide = (problem: string): string | undefined => (shadow ? undefined : problem)
     let file: string | undefined
     try {
       const sessionCwd = agent.session.header.cwd
       const checkout = await resolveWorkspace(mountedContract.workspace, sessionCwd)
       file = await checkoutRelative(checkout, sessionCwd ?? checkout, path)
     } catch (error) {
-      return `HEPHI cannot resolve the Worker checkout: ${error instanceof Error ? error.message : String(error)}`
+      const problem = `HEPHI cannot resolve the Worker checkout: ${error instanceof Error ? error.message : String(error)}`
+      await log('scope.outside-checkout', problem)
+      return decide(problem)
     }
-    if (file === undefined) return `HEPHI denies ${path}: it is outside the Worker checkout`
-    if (!inScope(mountedContract, file)) return `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
+    if (file === undefined) {
+      const problem = `HEPHI denies ${path}: it is outside the Worker checkout`
+      await log('scope.outside-checkout', problem)
+      return decide(problem)
+    }
+    if (!inScope(mountedContract, file)) {
+      const problem = `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
+      await log('scope.outside-task', problem)
+      return decide(problem)
+    }
+    await log('scope.allowed')
     return undefined
   }
   const removePreExecute = agent.ctx.on('tools/pre-execute', async (execution: ToolExecution, next: () => Promise<PreToolDecision>) => {
@@ -205,7 +267,7 @@ export function mountWorkerGate(
     if (!modeSensitive(execution.name, execution.arguments)) return undefined
     return currentProblem()
   })
-  const removePrompt = (agent.ctx as PromptContext).systemPrompt.section({
+  const removePrompt = shadow ? () => {} : (agent.ctx as PromptContext).systemPrompt.section({
     name: 'hephi:startup-instructions',
     order: 900,
     interpolate: false,

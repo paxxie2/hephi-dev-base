@@ -1,10 +1,11 @@
-import { mkdir, unlink, writeFile } from 'node:fs/promises'
+import { mkdir, realpath, unlink, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { activationPath, loadActivation, type ActivationContract } from '../../src/control/activation.js'
 import { checkRunDir, saveRun } from '../../src/control/check-store.js'
 import { createEvidenceVerifier } from '../../src/control/evidence-verifier.js'
 import { gitFingerprint, sha256 } from '../../src/verification/fingerprint.js'
+import { pluginCommit } from '../../src/version.js'
 import { check, commitAll, PRICE, project, readyCall, verifier, type Project } from './harness.js'
 
 // Delivery-discipline scenarios for Issue #7 "total() must add".
@@ -85,8 +86,8 @@ describe('evidence integrity', () => {
     await mkdir(checkRunDir(p.stateDir, p.contract.ticketId, 'forged'), { recursive: true })
     await writeFile(join(checkRunDir(p.stateDir, p.contract.ticketId, 'forged'), 'output.log'), 'ok')
     await saveRun(p.stateDir, {
-      version: 2, runId: 'forged', sequence: 100, ticketId: p.contract.ticketId, contractHash: p.contract.contractHash, checkId: 'price',
-      sessionId: 'x', callId: 'x', innerCallId: 'fake-call', argv: ['node', '-e', PRICE], cwd: p.dir, startedAt: 'x', finishedAt: 'x',
+      version: 3, pluginCommit: pluginCommit(), runId: 'forged', sequence: 100, ticketId: p.contract.ticketId, contractHash: p.contract.contractHash, checkId: 'price',
+      sessionId: 'x', callId: 'x', innerCallId: 'fake-call', argv: ['node', '-e', PRICE], cwd: await realpath(p.dir), startedAt: 'x', finishedAt: 'x',
       status: 'passed', exitCode: 0, before: fp, after: fp, outputHash: sha256('ok'),
     })
     expect(await verifier(p)(p.contract, readyCall(p.dir))).toMatchObject({ ok: false, reason: expect.stringContaining('expected one native call fake-call') })

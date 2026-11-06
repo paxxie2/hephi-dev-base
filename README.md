@@ -7,8 +7,9 @@
 - [`ROADMAP-95.md`](ROADMAP-95.md)：评分提升路线（修订版）：统一评分表和一票否决条件（按新表初评约 26 分）、已核实的缺陷，以及能力可靠性、效果评估、能力增强三条工作线。
 - [`ROADMAP-95-PREREQUISITES.md`](ROADMAP-95-PREREQUISITES.md)：实施上述路线之前必须具备的前置条件、两个关口和分组的出口清单。
 - [`hephi/`](hephi/)：改造后的插件。第一个相关提交是快照 `8e68ec2` 的原样导入，之后的提交就是全部改动。
-- [`eval/ab-metrics.mjs`](eval/ab-metrics.mjs)：开、关赫菲对照实验的指标计算脚本。其中的“无关重构”仍按格式化和重命名估算，待按 `ROADMAP-95.md` 的 B6 改为只提取机械指标，无关改动改由盲评判定。
-- [`probes/`](probes/)：改造前用于证明缺口的探针测试，需放进原始快照中运行（见 `REPORT.md` 第 8 节）。
+- [`eval/ab-metrics.mjs`](eval/ab-metrics.mjs)：开、关赫菲对照实验的指标计算脚本。其中的“无关重构”仍按格式化和重命名估算，待按 `ROADMAP-95.md` 的 B6 改为只提取机械指标，无关改动改由盲评判定；**B6 前不得用其估算代替效果结论**。
+- [`probes/`](probes/)：改造前用于证明缺口的探针测试，固定对应原始快照 `8e68ec2`，不作为现行基线；需放进原始快照中运行（见 `REPORT.md` 第 8 节）。
+- [`docs/source-consistency.md`](docs/source-consistency.md)：本地分支、隔离副本、构建与实载 commit、c547 等价修复位置的一致性表。
 
 ## 运行
 
@@ -17,7 +18,7 @@
 ```bash
 cd hephi
 pnpm install --frozen-lockfile
-pnpm check        # 类型检查、测试、构建；以实际运行输出为准
+pnpm check        # 类型检查、175 个测试、构建；以实际运行输出为准
 ```
 
 对照实验：

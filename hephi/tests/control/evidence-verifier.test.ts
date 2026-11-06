@@ -12,6 +12,7 @@ import { sha256 } from '../../src/verification/fingerprint.js'
 import { createEvidenceVerifier } from '../../src/control/evidence-verifier.js'
 import { checkRunDir, readRuns } from '../../src/control/check-store.js'
 import { allowedPath } from '../../src/control/repository.js'
+import { pluginCommit } from '../../src/version.js'
 
 const run = promisify(execFile)
 const build: VerificationCheck = {
@@ -176,4 +177,64 @@ describe('synchronous evidence MVP (fixture integration)', () => {
     await expect(x.execute('build')).rejects.toThrow('operator resolution')
     expect((await x.verify()).ok).toBe(false)
   })
+
+  it('rejects evidence whose recorded argv differs from the frozen check', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, argv: [...record.argv, '--skip-required-assertion'] }))
+    expect((await x.verify()).ok).toBe(false)
+    await writeFile(file, JSON.stringify(record))
+    expect(await x.verify()).toEqual({ ok: true })
+  })
+  it('rejects evidence whose recorded cwd differs from the frozen check directory', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, cwd: tmpdir() }))
+    expect((await x.verify()).ok).toBe(false)
+  })
+
+
+  it('rejects evidence recorded by another plugin build and delivers again after a rerun', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, pluginCommit: 'another-build' }))
+    expect((await x.verify()).ok).toBe(false)
+    await writeFile(file, JSON.stringify(record))
+    expect(await x.verify()).toEqual({ ok: true })
+  })
+  it('rejects a contract frozen by another plugin build', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const original = x.c.plugin
+    x.c.plugin = { version: '0.1.0', commit: 'another-build' }
+    expect((await x.verify()).ok).toBe(false)
+    x.c.plugin = original
+    expect(await x.verify()).toEqual({ ok: true })
+  })
+  it('refuses check records written before plugin commit tracking', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, version: 2 }))
+    await expect(readRuns(x.stateDir, x.c.ticketId)).rejects.toThrow('unsupported or corrupt check evidence')
+  })
+
+
+  it('records ready decisions in the per-ticket decision log', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    expect((await x.verify()).ok).toBe(true)
+    const file = join(x.stateDir, 'hephi', x.c.ticketId, 'decisions.jsonl')
+    const read = async () => (await readFile(file, 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+    const passed = (await read()).at(-1)
+    expect(passed).toMatchObject({ version: 1, tool: 'orchestrator_report', rule: 'ready.pass', effectiveDecision: 'allow', wouldDecision: 'allow', mode: 'enforce' })
+    await writeFile(join(x.r.dir, 'a.txt'), 'later change')
+    expect((await x.verify()).ok).toBe(false)
+    const denied = (await read()).at(-1)
+    expect(denied).toMatchObject({ tool: 'orchestrator_report', effectiveDecision: 'deny', wouldDecision: 'deny' })
+    expect(denied.rule).toMatch(/^ready\./)
+    expect(denied.seq).toBe((await read()).at(-2).seq + 1)
+  })
+
 })

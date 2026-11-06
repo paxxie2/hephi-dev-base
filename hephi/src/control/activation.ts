@@ -5,10 +5,19 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
 import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
+import { pluginCommit, pluginVersion } from '../version.js'
 
 export type ExecutionMode = 'native' | 'staged'
 
+/** shadow only observes: decisions are recorded but never enforced. */
+export type EnforcementMode = 'enforce' | 'shadow'
+
+/** The one supported persisted activation format. Any other explicit version is rejected. */
+export const ACTIVATION_VERSION = 1
+
 export type ActivationContract = {
+  /** Format version. Absent only in contracts written before versioning (legacy). */
+  version?: number
   enabled: true
   ticketId: string
   repository: string
@@ -20,8 +29,12 @@ export type ActivationContract = {
   requirePullRequest: boolean
   /** Absent only in contracts written before execution modes. It then means native. */
   executionMode?: ExecutionMode
+  /** Absent only in contracts written before shadow mode. It then means enforce. */
+  enforcement?: EnforcementMode
   /** Frozen checks are required for every activation. */
   verification: VerificationConfig
+  /** Plugin build that froze this contract. Absent only in contracts written before P2. */
+  plugin?: { version: string; commit: string }
   /** Issue-scoped task card. Absent only in contracts written before task cards. */
   task?: TaskCard
   contractHash: string
@@ -81,6 +94,26 @@ export function parseExecutionMode(value: string | undefined): ExecutionMode {
   if (!mode) return 'native'
   if (mode === 'native' || mode === 'staged') return mode
   throw new Error(`HEPHI_EXECUTION_MODE must be "native" or "staged", got "${value}"`)
+}
+
+/** Environment default is enforce; an explicitly invalid value must never silently fall back. */
+export function parseEnforcement(value: string | undefined): EnforcementMode {
+  const mode = value?.trim()
+  if (!mode) return 'enforce'
+  if (mode === 'enforce' || mode === 'shadow') return mode
+  throw new Error(`HEPHI_ENFORCEMENT must be "enforce" or "shadow", got "${value}"`)
+}
+
+/** Validate a persisted mode only after the contract hash has been checked. */
+function contractEnforcement(value: unknown): EnforcementMode {
+  if (value === undefined) return 'enforce'
+  if (value === 'enforce' || value === 'shadow') return value
+  throw new Error(`HEPHI activation contract has invalid enforcement: ${String(value)}`)
+}
+
+/** Historical contracts without enforcement mean enforce. */
+export function enforcementOf(contract: ActivationContract): EnforcementMode {
+  return contractEnforcement(contract.enforcement)
 }
 
 /** Validate a persisted mode only after the contract hash has been checked. */
@@ -200,6 +233,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
   if (env.HEPHI_ENABLED !== '1') return { enabled: false, reason: 'not-requested' }
 
   // Reject an invalid mode before writing an intent or a partial contract.
+  const enforcement = parseEnforcement(env.HEPHI_ENFORCEMENT)
   const executionMode = env.HEPHI_ISSUE_TITLE !== undefined
     ? parseIssueExecutionMode(env.HEPHI_ISSUE_TITLE, env.HEPHI_EXECUTION_MODE)
     : parseExecutionMode(env.HEPHI_EXECUTION_MODE)
@@ -215,6 +249,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
   const verification = await loadVerificationFromEnv(env)
   const task = taskOf(env, verification)
   const base: Omit<ActivationContract, 'contractHash'> = {
+    version: ACTIVATION_VERSION,
     enabled: true,
     ticketId,
     repository: required(env, 'DSH_SUPERAGENT_GITHUB_REPOSITORY'),
@@ -225,6 +260,8 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     allowedPaths: list(env.HEPHI_ALLOWED_PATHS),
     requirePullRequest: boolean(env.HEPHI_REQUIRE_PULL_REQUEST, false),
     executionMode,
+    enforcement,
+    plugin: { version: pluginVersion, commit: pluginCommit() },
     verification,
     ...(task ? { task } : {}),
   }
@@ -251,6 +288,26 @@ function isContract(value: unknown): value is Omit<ActivationContract, 'executio
     && typeof contract.contractHash === 'string'
 }
 
+const ACTIVATION_FIELDS = new Set([
+  'version', 'enabled', 'ticketId', 'repository', 'issueNumber', 'workspace', 'baseRef', 'baseSha',
+  'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'task', 'contractHash',
+])
+
+/** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
+function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: string): void {
+  for (const key of Object.keys(parsed)) {
+    if (!ACTIVATION_FIELDS.has(key)) throw new Error(`unsupported HEPHI activation field: ${key} (${filePath})`)
+  }
+}
+
+/** A missing version means a contract written before versioning; only the current version is otherwise supported. */
+function supportedVersion(value: unknown, filePath: string): void {
+  if (value === undefined) return
+  if (value !== ACTIVATION_VERSION) {
+    throw new Error(`unsupported HEPHI activation version: ${String(value)}; this plugin supports ${ACTIVATION_VERSION} (${filePath})`)
+  }
+}
+
 /**
  * Parse one activation contract. The stored hash is verified against the raw
  * object first, so old contracts keep their original hash and mode-less meaning;
@@ -261,10 +318,17 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   if (!isContract(parsed)) throw new Error(`invalid HEPHI activation contract: ${filePath}`)
   const { contractHash: storedHash, ...base } = parsed
   if (storedHash !== contractHash(base)) throw new Error(`HEPHI activation contract hash mismatch: ${filePath}`)
+  supportedVersion(base.version, filePath)
+  rejectUnsupportedFields(parsed as Record<string, unknown>, filePath)
   // Validate persisted optional fields only after the original hash matches.
   // Return the parsed object unchanged so historical contracts keep their raw
   // shape and later reads/hashes match.
   contractExecutionMode(base.executionMode)
+  contractEnforcement(base.enforcement)
+  if (base.plugin !== undefined) {
+    const plugin = base.plugin as { version?: unknown; commit?: unknown }
+    if (typeof plugin?.version !== 'string' || typeof plugin?.commit !== 'string') throw new Error(`invalid HEPHI activation plugin metadata: ${filePath}`)
+  }
   const verification = parseVerificationConfig(base.verification)
   if (base.task !== undefined) {
     const task = parseTaskCard(base.task)

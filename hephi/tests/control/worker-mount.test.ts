@@ -301,6 +301,8 @@ describe('Worker mount', () => {
       })
       expect(result.status).toBe('passed')
       expect(result.jobId).toBe('bash-job')
+      const decisions = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(decisions.at(-1)).toMatchObject({ tool: 'hephi_check', rule: 'check.pass', effectiveDecision: 'allow', wouldDecision: 'allow', callId: 'outer-check' })
     } finally { mounted.dispose() }
   })
 
@@ -523,4 +525,54 @@ describe('Worker mount', () => {
     expect(fake.callbacks().preExecute).toBeTypeOf('function')
     dispose()
   })
+
+  it('records write-scope decisions in the per-ticket decision log', async () => {
+    const { repo, baseSha } = await gitWorkspace()
+    await run('git', ['remote', 'add', 'origin', 'git@github.com:paxxie2/dubbo.git'], { cwd: repo })
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation(env(stateDir, 'native', repo, baseSha))
+    const fake = fakeAgent('dsh-superagent-worker', undefined, repo)
+    const context = { get: () => undefined } as unknown as Context
+    const mounted = mountWorkerGate(context, fake.agent, { stateDir })!
+    try {
+      const next = async () => ({ kind: 'allow' as const })
+      const call = (path: string, callId: string) => ({
+        name: 'write', arguments: { path }, callId, token: Symbol(), agent: fake.agent, signal: new AbortController().signal,
+      }) as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(call('src/ok.ts', 'call-allow'), next)).toEqual({ kind: 'allow' })
+      const denied = await fake.callbacks().preExecute!(call('../outside.ts', 'call-deny'), next)
+      expect(denied.kind).toBe('deny')
+      const entries = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(entries.map(entry => entry.rule)).toEqual(['scope.allowed', 'scope.outside-checkout'])
+      expect(entries.map(entry => entry.effectiveDecision)).toEqual(['allow', 'deny'])
+      expect(entries[1]).toMatchObject({ tool: 'write', callId: 'call-deny', mode: 'enforce', wouldDecision: 'deny' })
+    } finally { mounted.dispose() }
+  })
+
+
+  it('shadow mode observes scope and ready but never denies, registers checks or injects prompts', async () => {
+    const { repo, baseSha } = await gitWorkspace()
+    await run('git', ['remote', 'add', 'origin', 'git@github.com:paxxie2/dubbo.git'], { cwd: repo })
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation({ ...env(stateDir, 'native', repo, baseSha), HEPHI_ENFORCEMENT: 'shadow' })
+    const fake = fakeAgent('dsh-superagent-worker', undefined, repo)
+    const register = vi.fn(() => () => true)
+    fake.agent.ctx.tools.register = register as unknown as typeof fake.agent.ctx.tools.register
+    const verify = vi.fn(async () => ({ ok: false as const, reason: 'real evidence would fail' }))
+    const mounted = mountWorkerGate({} as Context, fake.agent, { stateDir, verify })!
+    try {
+      expect(register).not.toHaveBeenCalled()
+      expect(fake.callbacks().prompts).toHaveLength(0)
+      const next = vi.fn(async () => ({ kind: 'allow' }))
+      const write = { name: 'write', arguments: { path: '../outside.ts' }, callId: 'shadow-write', token: Symbol(), agent: fake.agent } as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(write, next)).toEqual({ kind: 'allow' })
+      const ready = { name: 'orchestrator_report', arguments: { state: 'ready' }, callId: 'shadow-ready', token: Symbol() } as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(ready, next)).toEqual({ kind: 'allow' })
+      expect(verify).not.toHaveBeenCalled()
+      const entries = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(entries[0]).toMatchObject({ tool: 'write', mode: 'shadow', effectiveDecision: 'allow', wouldDecision: 'deny', rule: 'scope.outside-checkout' })
+      expect(entries[1]).toMatchObject({ tool: 'orchestrator_report', mode: 'shadow', effectiveDecision: 'allow', rule: 'ready.pass' })
+    } finally { mounted.dispose() }
+  })
+
 })

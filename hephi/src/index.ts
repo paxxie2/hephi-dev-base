@@ -3,11 +3,11 @@ import type { Context } from '@deepseek-ai/cordis'
 import { defaultStateDir } from './control/activation.js'
 import { createEvidenceVerifier, type SessionSnapshot } from './control/evidence-verifier.js'
 import { installWorkerMount } from './control/worker-mount.js'
+import { pluginCommit, pluginName, pluginVersion } from './version.js'
 
 export * from './control/index.js'
 
-export const pluginName = 'hephi-superagent-plugin'
-export const pluginVersion = '0.1.0'
+export { pluginCommit, pluginName, pluginVersion } from './version.js'
 export const inject = ['agents', 'tools', 'systemPrompt']
 
 /**
@@ -32,6 +32,6 @@ export function apply(ctx: Context, config: { stateDir?: string; requireSessionB
  * The runtime integration is registered by Cordis through cordis.patch.yml.
  * Keeping this module side-effect free makes the domain code testable outside DSH.
  */
-export function describePlugin(): { name: string; version: string } {
-  return { name: pluginName, version: pluginVersion }
+export function describePlugin(): { name: string; version: string; commit: string } {
+  return { name: pluginName, version: pluginVersion, commit: pluginCommit() }
 }

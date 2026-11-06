@@ -8,6 +8,7 @@ import { clean, hasCommit, normalizeRepository, remoteRepository } from './repos
 import { inScope } from './discipline.js'
 import { resolveWorkspace } from './workspace.js'
 import { checkRunDir, readRuns, saveRun, type CheckRunRecord } from './check-store.js'
+import { pluginCommit } from '../version.js'
 
 export type CheckTools = { execute(input: ToolExecutionInput): Promise<ToolExecutionResult> }
 
@@ -106,7 +107,7 @@ export async function runCheck(options: {
   await mkdir(dir, { recursive: true })
   const command = checkCommand(contract.baseSha, check.command, check.args)
   const record: CheckRunRecord = {
-    version: 2, runId, sequence: (old.at(-1)?.sequence ?? 0) + 1, ticketId: contract.ticketId,
+    version: 3, pluginCommit: pluginCommit(), runId, sequence: (old.at(-1)?.sequence ?? 0) + 1, ticketId: contract.ticketId,
     contractHash: contract.contractHash, checkId: check.id,
     sessionId: String(outer.agent?.id ?? ''), callId: outer.callId, innerCallId,
     argv: [check.command, ...check.args], cwd: check.cwd, startedAt: new Date().toISOString(),

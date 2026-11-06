@@ -12,7 +12,7 @@
 | 隔离 Super Agent 副本 | `/Users/zm/dsh-instances/experiment/superagent` | `codex/dual-instance-experiment` | `62d7d53` | 工作树干净 |
 | 隔离赫菲副本 | `/Users/zm/dsh-instances/experiment/hephi-review/hephi` | 同执行分支 | `abfdd3a` | 工作树干净；`lib/` 由该提交构建 |
 
-执行分支相对 `a212d69` 的提交（按顺序）：`f53f9c6` P12/P13/P14/P15/G1 脚本；`7a26d0f` P1 CI；`1ea45b9` P4/P7/P8/P9/P10/P11 脚本；`b8415e9` c547 等价修复；`42b766d` P5；`89d4ab9` P2；`e373c68` P3；`abfdd3a` P4。
+执行分支相对 `a212d69` 的提交（按顺序）：`f53f9c6` P12/P13/P14/P15/G1 脚本；`7a26d0f` P1 CI（其 workflow 已按用户 2026-11-07 决定删除）；`1ea45b9` P4/P7/P8/P9/P10/P11 脚本；`b8415e9` c547 等价修复；`42b766d` P5；`89d4ab9` P2；`e373c68` P3；`abfdd3a` P4；`44e888c` P16；`a96dc1b` P6。
 
 ## 2. c547 修复登记
 
@@ -29,7 +29,12 @@
 | 实验宿主 B | `http://127.0.0.1:3083` 运行中（`running=0`、`queued=0`、`paused=false`，2026-11-07 回读） |
 | **实载 commit** | **未验证**：仓库无 `describePlugin` 回读入口，宿主无版本查询 API；不得以“重启成功”冒充实载 |
 
-## 4. 其他一致性项
+## 4. CI
+
+- 按用户 2026-11-07 决定，**不使用 GitHub Actions**。`7a26d0f` 引入的 `.github/workflows/hephi-check.yml` 已删除，P1 不实施；CI 通过与否不作为合并或基线门禁。
+- 因此本仓库的唯一检查入口是本地 `pnpm check`（typecheck + 175 tests + 构建）。
+
+## 5. 其他一致性项
 
 - PR #2：`2026-11-05T16:22:58Z` 已 **MERGED**（base `cursor/hephi-effectiveness-report-1199`）。旧文档中“未合并”的说法只适用于当时快照，已过时。
 - Skill 修改：**未实施**。`hephi/docs/skill-change-proposal.md` 是待批准的 diff；按 P16 必须专项批准，本次未改 `hephi/skills/hephi-superagent-control/SKILL.md`。

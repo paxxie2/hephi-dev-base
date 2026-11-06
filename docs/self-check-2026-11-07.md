@@ -104,6 +104,7 @@
 | S8 | P8 无不可变构建/自动回滚（原 L4） | 部署脚本增加构建快照、`releases/<sha>/lib` 与 `--rollback`；在 B 实例完成“部署→回滚→再部署”三轮实测，入口 sha256 前后可对照 |
 | S9 | P8 竞态场景未验证（原缺口） | 暂停期间创建 Issue 实测：Trigger 持久化、无 Ticket/Worker；恢复后调度层只处理一次。**发现 worker 重复创建两个 PR**（外部产物层未满足“只处理一次”），记录见 `docs/p8-race-record.md` |
 | S10 | P5“有进行中工单时禁止升级”未实现 | 部署脚本增加进行中 Ticket 检查与 `--allow-open-tickets` 显式跳过；暂停状态下实测拒绝（3 个进行中 Ticket）与放行 |
+| S11 | hephi 激活交付未做过真实 smoke（P11/B5 入口） | 合并基线修复 PR #29、使检查自包含后完成两轮：第一轮因 prepare/Worker 构建不一致被 `ready.plugin-build` 拒绝（fail-closed）；部署重启后第二轮完整通过（合同→hephi_check pass→ready.pass→PR #42）。记录见 `docs/p11-hephi-smoke-record.md` |
 | — | 测试总数 | 176 → **180**（unit 41 / integration 139）；`pnpm check` 全绿 |
 
 ## 5. 结论

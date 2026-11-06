@@ -1,5 +1,7 @@
 # P11 原生 GitHub 入口 smoke 记录（2026-11-07，实验宿主 B）
 
+> hephi 激活型 smoke 见 [`docs/p11-hephi-smoke-record.md`](p11-hephi-smoke-record.md)（第二轮完整通过）。
+
 按用户授权由 Agent 代操作。产物标记 **SMOKE_ONLY / NOT_FOR_METRICS**，已按资料包“关闭测试 PR/分支”的 rollback 要求清理。
 
 ## 链路（全部真实）

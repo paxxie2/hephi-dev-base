@@ -1,0 +1,18 @@
+# HEPHI domain bundle. The host profile supplies stateDir and the Super Agent
+# bundle supplies the Ticket/Assignment/Worker lifecycle.
+- insert:
+    - id: hephi
+      name: hephi-superagent-plugin
+    - id: hephi-superagent-control-skill
+      name: '@deepseek-ai/dsh-skill-filesystem'
+      config:
+        providerName: hephi-control
+        includeDefaultRoots: false
+        customSkillDirs:
+          - skills
+    # Domain tools are loaded by the plugin and made available to the
+    # existing Super Agent worker preset by the host integration.
+    - id: hephi-tools
+      name: hephi-superagent-plugin/tools
+      config:
+        stateDir: /Users/USER/.dsh/state/superagent-desktop

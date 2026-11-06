@@ -9,6 +9,7 @@ import { requireKnowledgeQuery } from '../kb/index.js'
 import { checkRunDir, readRuns, type CheckRunRecord } from './check-store.js'
 import { checkCommand, contained, sameSource } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
+import { pluginCommit } from '../version.js'
 
 /**
  * The host's Session snapshot, in the shape stage recovery already reads
@@ -93,6 +94,9 @@ export function createEvidenceVerifier(options: {
       const before = await gitFingerprint(workspace, contract.baseSha)
       if (!before.changedFiles.length) throw new Error('missing patch or path outside contract')
       await checkDiscipline(contract, workspace)
+      if (contract.plugin !== undefined && contract.plugin.commit !== pluginCommit()) {
+        throw new Error(`contract was prepared by another plugin build (${contract.plugin.commit}); rerun prepare with ${pluginCommit()}`)
+      }
       const records = await readRuns(options.stateDir, contract.ticketId)
       if (records.some(r => r.status === 'unknown' || r.status === 'running')) throw new Error('unfinished/unsupported check execution; operator resolution required')
       // Required checks plus every check an acceptance item names, each verified once.
@@ -107,6 +111,7 @@ export function createEvidenceVerifier(options: {
         if (sha256(await readFile(join(checkRunDir(options.stateDir, contract.ticketId, r.runId), 'output.log'))) !== r.outputHash) throw new Error('output hash mismatch')
         const frozen = await frozenCheckProblem(contract, r, workspace)
         if (frozen) throw new Error(`evidence does not match the frozen check: ${frozen}`)
+        if (r.pluginCommit !== pluginCommit()) throw new Error(`check evidence was produced by another plugin build (${r.pluginCommit}); rerun checks with ${pluginCommit()}`)
         used.push(r)
       }
       if (options.requireSessionBinding) {

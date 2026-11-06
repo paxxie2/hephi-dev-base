@@ -5,6 +5,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
 import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
+import { pluginCommit, pluginVersion } from '../version.js'
 
 export type ExecutionMode = 'native' | 'staged'
 
@@ -27,6 +28,8 @@ export type ActivationContract = {
   executionMode?: ExecutionMode
   /** Frozen checks are required for every activation. */
   verification: VerificationConfig
+  /** Plugin build that froze this contract. Absent only in contracts written before P2. */
+  plugin?: { version: string; commit: string }
   /** Issue-scoped task card. Absent only in contracts written before task cards. */
   task?: TaskCard
   contractHash: string
@@ -231,6 +234,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     allowedPaths: list(env.HEPHI_ALLOWED_PATHS),
     requirePullRequest: boolean(env.HEPHI_REQUIRE_PULL_REQUEST, false),
     executionMode,
+    plugin: { version: pluginVersion, commit: pluginCommit() },
     verification,
     ...(task ? { task } : {}),
   }
@@ -259,7 +263,7 @@ function isContract(value: unknown): value is Omit<ActivationContract, 'executio
 
 const ACTIVATION_FIELDS = new Set([
   'version', 'enabled', 'ticketId', 'repository', 'issueNumber', 'workspace', 'baseRef', 'baseSha',
-  'allowedPaths', 'requirePullRequest', 'executionMode', 'verification', 'task', 'contractHash',
+  'allowedPaths', 'requirePullRequest', 'executionMode', 'plugin', 'verification', 'task', 'contractHash',
 ])
 
 /** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
@@ -293,6 +297,10 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   // Return the parsed object unchanged so historical contracts keep their raw
   // shape and later reads/hashes match.
   contractExecutionMode(base.executionMode)
+  if (base.plugin !== undefined) {
+    const plugin = base.plugin as { version?: unknown; commit?: unknown }
+    if (typeof plugin?.version !== 'string' || typeof plugin?.commit !== 'string') throw new Error(`invalid HEPHI activation plugin metadata: ${filePath}`)
+  }
   const verification = parseVerificationConfig(base.verification)
   if (base.task !== undefined) {
     const task = parseTaskCard(base.task)

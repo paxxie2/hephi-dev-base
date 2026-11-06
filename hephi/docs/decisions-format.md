@@ -14,7 +14,7 @@
 | `sessionId` | 产生判定的 Worker Session |
 | `callId` | 宿主工具调用 ID（ready 为 `orchestrator_report` 的调用） |
 | `tool` | `write` / `edit` / `hephi_check` / `orchestrator_report` |
-| `mode` | `enforce` / `shadow`（P4 实施 shadow 后才有 `shadow`） |
+| `mode` | `enforce` / `shadow`（shadow 下 effective 恒为 allow，would 记录本应判定） |
 | `effectiveDecision` | 实际生效的判定 `allow` / `deny` |
 | `wouldDecision` | 规则本应给出的判定；enforce 下与 effective 相同，shadow 下用于统计"本应拒绝" |
 | `rule` | 固定规则编号 |

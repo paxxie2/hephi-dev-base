@@ -549,4 +549,30 @@ describe('Worker mount', () => {
     } finally { mounted.dispose() }
   })
 
+
+  it('shadow mode observes scope and ready but never denies, registers checks or injects prompts', async () => {
+    const { repo, baseSha } = await gitWorkspace()
+    await run('git', ['remote', 'add', 'origin', 'git@github.com:paxxie2/dubbo.git'], { cwd: repo })
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation({ ...env(stateDir, 'native', repo, baseSha), HEPHI_ENFORCEMENT: 'shadow' })
+    const fake = fakeAgent('dsh-superagent-worker', undefined, repo)
+    const register = vi.fn(() => () => true)
+    fake.agent.ctx.tools.register = register as unknown as typeof fake.agent.ctx.tools.register
+    const verify = vi.fn(async () => ({ ok: false as const, reason: 'real evidence would fail' }))
+    const mounted = mountWorkerGate({} as Context, fake.agent, { stateDir, verify })!
+    try {
+      expect(register).not.toHaveBeenCalled()
+      expect(fake.callbacks().prompts).toHaveLength(0)
+      const next = vi.fn(async () => ({ kind: 'allow' }))
+      const write = { name: 'write', arguments: { path: '../outside.ts' }, callId: 'shadow-write', token: Symbol(), agent: fake.agent } as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(write, next)).toEqual({ kind: 'allow' })
+      const ready = { name: 'orchestrator_report', arguments: { state: 'ready' }, callId: 'shadow-ready', token: Symbol() } as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(ready, next)).toEqual({ kind: 'allow' })
+      expect(verify).not.toHaveBeenCalled()
+      const entries = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(entries[0]).toMatchObject({ tool: 'write', mode: 'shadow', effectiveDecision: 'allow', wouldDecision: 'deny', rule: 'scope.outside-checkout' })
+      expect(entries[1]).toMatchObject({ tool: 'orchestrator_report', mode: 'shadow', effectiveDecision: 'allow', rule: 'ready.pass' })
+    } finally { mounted.dispose() }
+  })
+
 })

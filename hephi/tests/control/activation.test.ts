@@ -2,7 +2,7 @@ import { mkdtemp, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { activationIntentPath, activationPath, contractHash, executionModeOf, loadActivation, migrateActivationIntentSync, parseIssueExecutionMode, prepareActivation } from '../../src/control/activation.js'
+import { activationIntentPath, activationPath, contractHash, enforcementOf, executionModeOf, loadActivation, migrateActivationIntentSync, parseEnforcement, parseIssueExecutionMode, prepareActivation } from '../../src/control/activation.js'
 
 async function stateDir(): Promise<string> {
   return mkdtemp(join(tmpdir(), 'hephi-activation-'))
@@ -178,11 +178,11 @@ describe('activation format versioning', () => {
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
-    raw.enforcement = 'shadow'
+    raw.undeclaredPolicy = 'shadow'
     delete raw.contractHash
     raw.contractHash = contractHash(raw as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
-    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation field: enforcement')
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation field: undeclaredPolicy')
   })
 
   it('loads a legacy contract written before versioning', async () => {
@@ -197,5 +197,46 @@ describe('activation format versioning', () => {
     const loaded = await loadActivation(prepared.filePath)
     expect(loaded.version).toBeUndefined()
     expect(Object.hasOwn(loaded, 'version')).toBe(false)
+  })
+})
+
+describe('HEPHI enforcement mode', () => {
+  it('defaults to enforce, writes an explicit mode and hashes shadow differently', async () => {
+    const nativeDir = await stateDir()
+    const enforced = await prepareActivation(enabledEnv(nativeDir))
+    if (!enforced.enabled) throw new Error('activation was not enabled')
+    expect(enforced.contract.enforcement).toBe('enforce')
+    const shadow = await prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ENFORCEMENT: 'shadow' })
+    if (!shadow.enabled) throw new Error('activation was not enabled')
+    expect(shadow.contract.enforcement).toBe('shadow')
+    expect(enforcementOf(shadow.contract)).toBe('shadow')
+    expect(shadow.contract.contractHash).not.toBe(enforced.contract.contractHash)
+    await expect(prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ENFORCEMENT: 'observe' })).rejects.toThrow('HEPHI_ENFORCEMENT')
+  })
+
+  it('loads a mode-less contract as enforce and rejects an invalid persisted value after the hash', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
+    delete raw.enforcement
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
+    const loaded = await loadActivation(prepared.filePath)
+    expect(enforcementOf(loaded)).toBe('enforce')
+    raw.enforcement = 'observe'
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('invalid enforcement')
+  })
+
+  it('parses the environment value explicitly', () => {
+    expect(parseEnforcement(undefined)).toBe('enforce')
+    expect(parseEnforcement('')).toBe('enforce')
+    expect(parseEnforcement('shadow')).toBe('shadow')
+    expect(parseEnforcement('enforce')).toBe('enforce')
+    expect(() => parseEnforcement('on')).toThrow('HEPHI_ENFORCEMENT')
   })
 })

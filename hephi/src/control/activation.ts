@@ -9,6 +9,9 @@ import { pluginCommit, pluginVersion } from '../version.js'
 
 export type ExecutionMode = 'native' | 'staged'
 
+/** shadow only observes: decisions are recorded but never enforced. */
+export type EnforcementMode = 'enforce' | 'shadow'
+
 /** The one supported persisted activation format. Any other explicit version is rejected. */
 export const ACTIVATION_VERSION = 1
 
@@ -26,6 +29,8 @@ export type ActivationContract = {
   requirePullRequest: boolean
   /** Absent only in contracts written before execution modes. It then means native. */
   executionMode?: ExecutionMode
+  /** Absent only in contracts written before shadow mode. It then means enforce. */
+  enforcement?: EnforcementMode
   /** Frozen checks are required for every activation. */
   verification: VerificationConfig
   /** Plugin build that froze this contract. Absent only in contracts written before P2. */
@@ -89,6 +94,26 @@ export function parseExecutionMode(value: string | undefined): ExecutionMode {
   if (!mode) return 'native'
   if (mode === 'native' || mode === 'staged') return mode
   throw new Error(`HEPHI_EXECUTION_MODE must be "native" or "staged", got "${value}"`)
+}
+
+/** Environment default is enforce; an explicitly invalid value must never silently fall back. */
+export function parseEnforcement(value: string | undefined): EnforcementMode {
+  const mode = value?.trim()
+  if (!mode) return 'enforce'
+  if (mode === 'enforce' || mode === 'shadow') return mode
+  throw new Error(`HEPHI_ENFORCEMENT must be "enforce" or "shadow", got "${value}"`)
+}
+
+/** Validate a persisted mode only after the contract hash has been checked. */
+function contractEnforcement(value: unknown): EnforcementMode {
+  if (value === undefined) return 'enforce'
+  if (value === 'enforce' || value === 'shadow') return value
+  throw new Error(`HEPHI activation contract has invalid enforcement: ${String(value)}`)
+}
+
+/** Historical contracts without enforcement mean enforce. */
+export function enforcementOf(contract: ActivationContract): EnforcementMode {
+  return contractEnforcement(contract.enforcement)
 }
 
 /** Validate a persisted mode only after the contract hash has been checked. */
@@ -208,6 +233,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
   if (env.HEPHI_ENABLED !== '1') return { enabled: false, reason: 'not-requested' }
 
   // Reject an invalid mode before writing an intent or a partial contract.
+  const enforcement = parseEnforcement(env.HEPHI_ENFORCEMENT)
   const executionMode = env.HEPHI_ISSUE_TITLE !== undefined
     ? parseIssueExecutionMode(env.HEPHI_ISSUE_TITLE, env.HEPHI_EXECUTION_MODE)
     : parseExecutionMode(env.HEPHI_EXECUTION_MODE)
@@ -234,6 +260,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     allowedPaths: list(env.HEPHI_ALLOWED_PATHS),
     requirePullRequest: boolean(env.HEPHI_REQUIRE_PULL_REQUEST, false),
     executionMode,
+    enforcement,
     plugin: { version: pluginVersion, commit: pluginCommit() },
     verification,
     ...(task ? { task } : {}),
@@ -263,7 +290,7 @@ function isContract(value: unknown): value is Omit<ActivationContract, 'executio
 
 const ACTIVATION_FIELDS = new Set([
   'version', 'enabled', 'ticketId', 'repository', 'issueNumber', 'workspace', 'baseRef', 'baseSha',
-  'allowedPaths', 'requirePullRequest', 'executionMode', 'plugin', 'verification', 'task', 'contractHash',
+  'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'task', 'contractHash',
 ])
 
 /** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
@@ -297,6 +324,7 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   // Return the parsed object unchanged so historical contracts keep their raw
   // shape and later reads/hashes match.
   contractExecutionMode(base.executionMode)
+  contractEnforcement(base.enforcement)
   if (base.plugin !== undefined) {
     const plugin = base.plugin as { version?: unknown; commit?: unknown }
     if (typeof plugin?.version !== 'string' || typeof plugin?.commit !== 'string') throw new Error(`invalid HEPHI activation plugin metadata: ${filePath}`)

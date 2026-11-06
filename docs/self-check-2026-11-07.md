@@ -3,6 +3,8 @@
 范围：本仓库相对 `718087c` 的全部新增/修改（39 个源/测试/脚本/文档文件，约 +1.8k 行），对照资料包
 `implementation-checklist.md`、`validation-matrix.md` 与 `task-tree.yaml`。
 
+> **状态指针（R4 同步，2026-11-07 06:54，R3 提交后）**：本文是**初次自检时点**的记录；其中 L6、L7 已在后续提交修复（`bc95bf3`、`e862cf7`），L4 的不可变发布/自动回滚/全量健康门禁已由 R3 提交 `0d58bc3` 实现并通过假宿主验证（**实载回读与真实宿主仍未验证**），测试数由 176 演进到 **202**。当前状态以 [`docs/implementation-index.md`](implementation-index.md) §6 的修复索引为准（本轮修复分支**尚未合并**，合并后以 index 中的最终合并段为准）；逐条命令与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)。历史数字保留原时点，不回改。
+
 方法：静态审阅、`pnpm check`（typecheck + 176 tests + 构建）、`test:unit`/`test:integration` 分层运行、
 脚本正反例实跑、与验收矩阵逐条对照。所有结论附可复核命令。
 
@@ -21,18 +23,18 @@
 | S2 | `eval/check-data-package.mjs` 遇到符号链接自环时 `ELOOP` 未捕获并崩溃 | 数据包预检在异常目录上不可控 | 改用 `lstatSync`，符号链接记为 `symlink` finding，不再递归；复测自环目录 EXIT=1 |
 | S3 | `eval/export-baseline.mjs` 数据库路径不存在时抛栈 | 错误不可读、退出码不可预期 | 捕获并明确报错退出 2；复测 EXIT=2 |
 
-### 1.2 仍存在的限制（未修复，已登记）
+### 1.2 限制清单（发现时点与后续状态）
 
-| # | 限制 | 说明 |
-| --- | --- | --- |
-| L1 | 决策日志只做进程内串行 | 跨进程并发追加时 `seq` 可能重复（未加文件锁）；文档已标注 |
-| L2 | 决策日志写失败仅写 stderr | 计划要求的“工具结果/独立告警通道”依赖 G1 新增项，尚未确认可用 |
-| L3 | P2 legacy 合同例外 | 无 `plugin` 字段的旧合同不因构建不同被拒绝（其检查记录仍须为当前构建）；文档已标注，需人工确认口径 |
-| L4 | 部署无不可变构建与自动回滚 | P8 只实现“构建→重启→回读→恢复”，回滚/竞态未实现 |
-| L5 | 实载插件 commit 无回读入口 | 宿主无版本查询 API，`describePlugin` 无调用入口 |
-| L6 | `rebuild-isolated.sh` 仅 macOS | 使用 BSD `sed -i ''` |
-| L7 | eval/scripts 无自动化测试 | 仅人工正反例证据；未纳入任何 CI（按用户决定也不使用 Actions） |
-| L8 | P4 super-agent 表面未改 | Worker 工具白名单/Skill 挂载面在本仓库之外，三组真实对照未做 |
+| # | 限制（发现时点） | 说明 | 后续状态（R4 追记，2026-11-07） |
+| --- | --- | --- | --- |
+| L1 | 决策日志只做进程内串行 | 跨进程并发追加时 `seq` 可能重复（未加文件锁）；文档已标注 | **仍未修复**：P3 仍为部分完成 |
+| L2 | 决策日志写失败仅写 stderr | 计划要求的“工具结果/独立告警通道”依赖 G1 新增项，尚未确认可用 | **仍未修复**：依赖 G1 未确认 |
+| L3 | P2 legacy 合同例外 | 无 `plugin` 字段的旧合同不因构建不同被拒绝（其检查记录仍须为当前构建）；文档已标注，需人工确认口径 | **仍未修复**：仍需负责人确认口径 |
+| L4 | 部署无不可变构建与自动回滚 | P8 只实现“构建→重启→回读→恢复”，回滚/竞态未实现 | **已实现（假宿主验证）**：不可变发布 `releases/<sha>/lib`、原子指针切换、自动回滚、全量健康门禁、target/previous 与 `--host-version` 由 R3 `0d58bc3` 实现，假宿主 R3-T01–T17 **44 断言通过**；**实载 commit 回读仍未验证**（见 L5），P8 真实宿主验收未 done |
+| L5 | 实载插件 commit 无回读入口 | 宿主无版本查询 API，`describePlugin` 无调用入口 | **仍未修复**：R3 完成磁盘切换测试也不能替代实载回读 |
+| L6 | `rebuild-isolated.sh` 仅 macOS | 使用 BSD `sed -i ''` | **已修复**：`bc95bf3`（P10 提交）改为临时文件可移植改写，并复测实例脚手架路径/端口 |
+| L7 | eval/scripts 无自动化测试 | 仅人工正反例证据；未纳入任何 CI（按用户决定也不使用 Actions） | **已修复**：`e862cf7` 新增 `hephi/tests/eval/cli.test.ts`（4 用例，纳入 integration 分层，见 S6） |
+| L8 | P4 super-agent 表面未改 | Worker 工具白名单/Skill 挂载面在本仓库之外，三组真实对照未做 | **仍未修复**：仓库外改动，未获授权 |
 
 ## 2. 实施清单对照（21 节点）
 
@@ -61,6 +63,7 @@
 ## 3. 测试用例检查
 
 - 全量：17 个文件 / **176 tests**，全部通过；相对基线 `a212d69`（155）新增 21 个用例。
+- 时点说明（R4 追记，R3 提交后更新）：上面 176／17 文件与下面的 41／135 分层均为**初次自检时点**。后经 S6/S7 补遗为 18 文件 / 180；R1 后 18 / 192；R1+R2 后 19 / 201；**R3（`0d58bc3`）后当前为 20 文件 / 202 tests**（2026-11-07 06:51:38，52.15s；Node `v22.19.0`、pnpm `11.7.0`；新增 `deploy-script.test.ts` 1 用例）。
 - 分层：`test:unit` 7 文件 / 41 tests（实测无 git 调用）；`test:integration` 10 文件 / 135 tests（依赖真实 git）。
 - 弱断言：仅 4 处既有用例使用 `toBeTruthy`（stage-control/worker-mount 既有场景），本次新增用例未引入弱断言。
 - 覆盖缺口：eval 脚本 7 个、13 个 planned 命令脚本均无自动化测试；P2 构建注入、P3 跨进程、P4 三组对照、
@@ -109,8 +112,25 @@
 
 ## 5. 结论
 
-- 代码：176 tests 全绿、构建通过；自检发现 3 个缺陷（1 个行为语义、2 个健壮性）均已修复并复测。
+- 代码（**初次自检时点**）：176 tests 全绿、构建通过；自检发现 3 个缺陷（1 个行为语义、2 个健壮性）均已修复并复测。
+- 代码（**当前时点，R3 提交后**）：20 文件 / **202 tests** 全绿（`pnpm test`，2026-11-07 06:51:38，52.15s；`pnpm typecheck` exit 0）；**Node `v22.19.0`、pnpm `11.7.0` 与方案指定一致**（R1/R2 时点曾在 Node `v26.1.0` 复跑，结果同为全绿）。`pnpm check` 的构建段仍须在最终提交的干净工作树复跑（R2 起 dirty 树直接拒绝构建），最终验收由 R5 独立复跑关闭。
 - 实施：资料包 21 个节点中，6 个已完成实施（G2、P2、P3、P4、P5、P6 的代码/文档部分），
-  P1 按用户决定不实施，其余受外部资源或仓库外改动阻塞；验收层面只有 G2 由 Agent 代办完成（缺人类签名）。
-- 建议下一步：优先补 P8 回滚/实载回读与 P15 trigger 关联表；G1 真机探针与 P9–P13 需外部资源；
+  P1 按用户决定不实施，其余受外部资源或仓库外改动阻塞；验收层面只有 G2 由 Agent 代办完成（缺人类签名）。**R1–R3 代码完成不会自动把 P2／P5／P8 改为真实验收 done**（见 §6）。
+- 建议下一步：优先补 P8 真实宿主验收（R3.7：A→B→A、实载回读、受控故障注入）与 P15 trigger 关联表；G1 真机探针与 P9–P13 需外部资源；
   P4 三组对照需要 super-agent 仓库与宿主导出。
+
+## 6. 本轮修复追记（R4 同步，2026-11-07）
+
+### 6.1 R1／R2／R3 提交与验证
+
+| 工作包 | 提交 | 内容 | 验证（实测） | 局限 |
+| --- | --- | --- | --- | --- |
+| R1 | `9e874f8` | activation 升 `version: 2`，递归规范化哈希；v1／无版本走历史原始键序哈希只读兼容；未知版本先验 hash 再拒绝 | `activation.test.ts` 30 passed（含 R1-T01–T12）；R1-T12 期望值由独立 Python 实现复算一致；`pnpm typecheck` exit 0 | 独立会话复跑未做；v1/v2 合同字节样例未归档 |
+| R2 | `0d7c031` | dirty（已跟踪／暂存／未跟踪）构建失败；有 `.git` 时以完整 HEAD 为唯一 commit；无 git 时 `HEPHI_BUILD_COMMIT` 必须是 40 位十六进制 | `build-commit.test.ts` 9 passed（R2-T01–T08 + 配置惰性）；真实 dirty 工作树 `pnpm build` exit 1 | 独立克隆 dirty 负例、无 git 源码归档路径未实测（未验证） |
+| R3 | `0d58bc3` | 重写部署脚本：`--host-version` 必填、`git archive` 干净构建、不可变 `releases/<sha>`、原子 symlink 指针切换、10 项全量健康门禁、失败自动恢复 previous 并复检、drain 未知字段拒绝、无绕过入口 | 假宿主 R3-T01–T17 **PASS: 44 assertions**（`real 50.22s`／复核 `49.55s`）；`deploy-script.test.ts` 1 passed；全量 20 文件 / 202 tests（Node `v22.19.0`） | **R3.7 真实宿主 A→B→A、实载 commit 回读、真实 drain API 语义全部未验证**；独立验收未做 |
+
+### 6.2 21 节点状态不变声明
+
+- R1–R3 属于 P5／P2／P8 的实现层修复，不改变 §2 的验收口径：P2 仍为部分、P5 仍为部分、**P8 仍为部分**（R3 只完成假宿主验证，R3.7 真实宿主与实载回读未做，不得记 done）。
+- G1、G2 人类独立审查、P3、P4、P6–P15 与 GATE-B5 状态不变，仍按原门槛阻塞。
+- 详细命令、退出码与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)。

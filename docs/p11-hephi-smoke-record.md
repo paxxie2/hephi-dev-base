@@ -1,6 +1,6 @@
 # P11 hephi 激活交付 smoke 记录（2026-11-07，实验宿主 B）
 
-按用户授权由 Agent 代操作。产物标记 **SMOKE_ONLY / NOT_FOR_METRICS**，已按资料包 rollback 要求清理（PR 关闭、分支删除、Issue 关闭）。
+按用户授权由 Agent 代操作。产物标记 **SMOKE_ONLY / NOT_FOR_METRICS**。失败与过期工件已按资料包 rollback 要求清理（PR 关闭、分支删除、Issue 关闭）；**PR #42 为例外：按用户 2026-11-07 指示重新打开并合并（见 §2.1）**。
 
 ## 0. 前置修复（本轮完成）
 
@@ -34,7 +34,7 @@
 | 写入判定 | decisions seq1 `scope.allowed`（edit README.md） |
 | hephi_check | `project-regression` **passed**，exit 0；`argv = sh -c "npm --prefix web install … && bash scripts/check.sh"`，`cwd` 为 Worker 真实工作区；run `4794b189-07ee-4611-80a5-28eb7f31de8c`，记录 `version:3`、`pluginCommit:fba676e…` |
 | ready | **passed**（decisions seq3 `ready.pass`，pluginCommit 一致） |
-| 交付 | PR #42：base `main@291b29e`，head `99faa2a`，仅改 README.md（+1 行）；OPEN、未合并 |
+| 交付 | PR #42：base `main@291b29e`，head `99faa2a`，仅改 README.md（+1 行）；OPEN、未合并（**第二轮时点状态**；随后见 §2.1 合并） |
 | 报告 | Worker ready summary 自述“verify-only、不合并”，列出检查命令、runId、changedFiles、clean tree |
 
 ## 2.1 合并结果（2026-11-07 按用户指示）
@@ -52,4 +52,4 @@
 - 清理：#39（第一轮失败）关闭并删除分支；#42 按用户指示重新打开并合并（main `8d2ec58`）；Issue #38/#41 已关闭。
 - 本 smoke 证明的是**机制链路**（合同→检查→证据→ready→PR），不代表效果、成本或稳定性；
   hephi 仍未部署到 A（无插件对照），也没有跑三组对照（依赖 G1 的模型可见表面导出，用户已排除）。
-- 仍未做：hephi activated 的 PR 合并（按 smoke 要求不合并）、多任务稳定性、并发、成本统计。
+- 仍未做：多任务稳定性、并发调度、成本统计、A/B 三组对照。**PR 已合并**（#42 → site-pnl `main@8d2ec58`，见 §2.1），不再列为未做项。

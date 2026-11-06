@@ -1,0 +1,27 @@
+name: hephi-check
+
+# P1 持续集成：PR 与 main push 在 hephi/ 冻结安装并执行 pnpm check。
+# 宿主专用脚本（hephi/scripts/check-stage-host.mjs 等）不在此调度，需人工运行。
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: hephi
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.7.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: pnpm
+          cache-dependency-path: hephi/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check

@@ -301,6 +301,8 @@ describe('Worker mount', () => {
       })
       expect(result.status).toBe('passed')
       expect(result.jobId).toBe('bash-job')
+      const decisions = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(decisions.at(-1)).toMatchObject({ tool: 'hephi_check', rule: 'check.pass', effectiveDecision: 'allow', wouldDecision: 'allow', callId: 'outer-check' })
     } finally { mounted.dispose() }
   })
 
@@ -523,4 +525,28 @@ describe('Worker mount', () => {
     expect(fake.callbacks().preExecute).toBeTypeOf('function')
     dispose()
   })
+
+  it('records write-scope decisions in the per-ticket decision log', async () => {
+    const { repo, baseSha } = await gitWorkspace()
+    await run('git', ['remote', 'add', 'origin', 'git@github.com:paxxie2/dubbo.git'], { cwd: repo })
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation(env(stateDir, 'native', repo, baseSha))
+    const fake = fakeAgent('dsh-superagent-worker', undefined, repo)
+    const context = { get: () => undefined } as unknown as Context
+    const mounted = mountWorkerGate(context, fake.agent, { stateDir })!
+    try {
+      const next = async () => ({ kind: 'allow' as const })
+      const call = (path: string, callId: string) => ({
+        name: 'write', arguments: { path }, callId, token: Symbol(), agent: fake.agent, signal: new AbortController().signal,
+      }) as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(call('src/ok.ts', 'call-allow'), next)).toEqual({ kind: 'allow' })
+      const denied = await fake.callbacks().preExecute!(call('../outside.ts', 'call-deny'), next)
+      expect(denied.kind).toBe('deny')
+      const entries = (await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+      expect(entries.map(entry => entry.rule)).toEqual(['scope.allowed', 'scope.outside-checkout'])
+      expect(entries.map(entry => entry.effectiveDecision)).toEqual(['allow', 'deny'])
+      expect(entries[1]).toMatchObject({ tool: 'write', callId: 'call-deny', mode: 'enforce', wouldDecision: 'deny' })
+    } finally { mounted.dispose() }
+  })
+
 })

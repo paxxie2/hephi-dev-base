@@ -10,6 +10,7 @@ import { checkRunDir, readRuns, type CheckRunRecord } from './check-store.js'
 import { checkCommand, contained, sameSource } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
 import { pluginCommit } from '../version.js'
+import { logDecision } from './decision-log.js'
 
 /**
  * The host's Session snapshot, in the shape stage recovery already reads
@@ -84,7 +85,7 @@ export function createEvidenceVerifier(options: {
   requireSessionBinding?: boolean
 }): ReadyVerifier {
   if (options.requireSessionBinding && !options.readSession) throw new Error('Session binding requires a Session reader')
-  return async (contract, execution) => {
+  const verify = async (contract: ActivationContract, execution: Parameters<ReadyVerifier>[1]): ReturnType<ReadyVerifier> => {
     try {
       const verification = verificationOf(contract)
       await requireKnowledgeQuery(contract, options.stateDir)
@@ -134,4 +135,31 @@ export function createEvidenceVerifier(options: {
       return { ok: true }
     } catch (e) { return { ok: false, reason: e instanceof Error ? e.message : String(e) } }
   }
+  return async (contract, execution) => {
+    const result = await verify(contract, execution)
+    const rule = result.ok ? 'ready.pass' : readyRule(result.reason)
+    const sessionId = execution.agent?.session.header.id
+    await logDecision(options.stateDir, {
+      ticketId: contract.ticketId,
+      sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+      callId: String(execution.callId),
+      tool: 'orchestrator_report',
+      mode: 'enforce',
+      effectiveDecision: result.ok ? 'allow' : 'deny',
+      wouldDecision: result.ok ? 'allow' : 'deny',
+      rule,
+      reason: result.ok ? undefined : result.reason,
+      contractHash: contract.contractHash,
+    })
+    return result
+  }
+}
+
+/** Stable rule ids for ready denials; P3 aggregates by rule. */
+function readyRule(reason: string): string {
+  if (reason.includes('not bound to a native execution')) return 'ready.binding'
+  if (reason.includes('PR/base/HEAD mismatch')) return 'ready.pr-mismatch'
+  if (reason.includes('missing, failed or stale evidence')) return 'ready.evidence-missing'
+  if (reason.includes('contract was prepared by another plugin build')) return 'ready.plugin-build'
+  return 'ready.other'
 }

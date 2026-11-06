@@ -10,6 +10,7 @@ import { inScope } from './discipline.js'
 import { checkoutRelative, resolveWorkspace } from './workspace.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
 import { installStageControl, type StageAgents, type StageJobs, type StageSessionQuery, type StageSubagents } from './stage-mount.js'
+import { logDecision } from './decision-log.js'
 
 // Structural type for the host's public, agent-scoped prompt service.
 type PromptContext = Context & {
@@ -162,12 +163,27 @@ export function mountWorkerGate(
     parameters: { checkId: { type: 'string', required: true } },
     output: { schema: { type: 'json' as const }, render: (_a, value) => [{ type: 'text' as const, text: JSON.stringify(value) }] },
     execute: async (args, execution) => {
-      if (checking) throw new Error('HEPHI check already running')
+      const sessionId = String(agent.session.header.id)
+      if (checking) {
+        await logDecision(stateDir, {
+          ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_check', mode: 'enforce',
+          effectiveDecision: 'deny', wouldDecision: 'deny', rule: 'check.running', reason: 'HEPHI check already running',
+        })
+        throw new Error('HEPHI check already running')
+      }
       checking = true
       try {
-        return JSON.parse(JSON.stringify(await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
+        const record = await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
           outer: execution, tools: agent.ctx.tools as unknown as CheckTools, jobs: nativeJobs(ctx), sessionCwd: agent.session.header.cwd,
-          internal: id => { internalCall = id } })))
+          internal: id => { internalCall = id } })
+        const passed = record.status === 'passed' && record.exitCode === 0
+        await logDecision(stateDir, {
+          ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_check', mode: 'enforce',
+          effectiveDecision: passed ? 'allow' : 'deny', wouldDecision: passed ? 'allow' : 'deny',
+          rule: passed ? 'check.pass' : `check.${record.status}`, reason: record.reason,
+          contractHash: mountedContract?.contractHash,
+        })
+        return JSON.parse(JSON.stringify(record))
       } finally { checking = false; internalCall = undefined }
     },
   }))
@@ -183,16 +199,34 @@ export function mountWorkerGate(
     if (!mountedContract || (execution.name !== 'write' && execution.name !== 'edit')) return undefined
     const path = editedPath(execution.arguments)
     if (!path) return undefined
+    const log = async (rule: string, problem?: string) => {
+      await logDecision(stateDir, {
+        ticketId, sessionId: String(agent.session.header.id), callId: String(execution.callId), tool: execution.name,
+        mode: 'enforce', effectiveDecision: problem ? 'deny' : 'allow', wouldDecision: problem ? 'deny' : 'allow',
+        rule, reason: problem, contractHash: mountedContract.contractHash,
+      })
+    }
     let file: string | undefined
     try {
       const sessionCwd = agent.session.header.cwd
       const checkout = await resolveWorkspace(mountedContract.workspace, sessionCwd)
       file = await checkoutRelative(checkout, sessionCwd ?? checkout, path)
     } catch (error) {
-      return `HEPHI cannot resolve the Worker checkout: ${error instanceof Error ? error.message : String(error)}`
+      const problem = `HEPHI cannot resolve the Worker checkout: ${error instanceof Error ? error.message : String(error)}`
+      await log('scope.outside-checkout', problem)
+      return problem
     }
-    if (file === undefined) return `HEPHI denies ${path}: it is outside the Worker checkout`
-    if (!inScope(mountedContract, file)) return `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
+    if (file === undefined) {
+      const problem = `HEPHI denies ${path}: it is outside the Worker checkout`
+      await log('scope.outside-checkout', problem)
+      return problem
+    }
+    if (!inScope(mountedContract, file)) {
+      const problem = `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
+      await log('scope.outside-task', problem)
+      return problem
+    }
+    await log('scope.allowed')
     return undefined
   }
   const removePreExecute = agent.ctx.on('tools/pre-execute', async (execution: ToolExecution, next: () => Promise<PreToolDecision>) => {

@@ -221,4 +221,20 @@ describe('synchronous evidence MVP (fixture integration)', () => {
     await expect(readRuns(x.stateDir, x.c.ticketId)).rejects.toThrow('unsupported or corrupt check evidence')
   })
 
+
+  it('records ready decisions in the per-ticket decision log', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    expect((await x.verify()).ok).toBe(true)
+    const file = join(x.stateDir, 'hephi', x.c.ticketId, 'decisions.jsonl')
+    const read = async () => (await readFile(file, 'utf8')).trim().split('\n').map(line => JSON.parse(line))
+    const passed = (await read()).at(-1)
+    expect(passed).toMatchObject({ version: 1, tool: 'orchestrator_report', rule: 'ready.pass', effectiveDecision: 'allow', wouldDecision: 'allow', mode: 'enforce' })
+    await writeFile(join(x.r.dir, 'a.txt'), 'later change')
+    expect((await x.verify()).ok).toBe(false)
+    const denied = (await read()).at(-1)
+    expect(denied).toMatchObject({ tool: 'orchestrator_report', effectiveDecision: 'deny', wouldDecision: 'deny' })
+    expect(denied.rule).toMatch(/^ready\./)
+    expect(denied.seq).toBe((await read()).at(-2).seq + 1)
+  })
+
 })

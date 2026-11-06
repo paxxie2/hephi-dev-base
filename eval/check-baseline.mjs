@@ -44,8 +44,16 @@ for (const line of sumsText.trim().split('\n').filter(Boolean)) {
   if (createHash('sha256').update(readFileSync(file)).digest('hex') !== hash) problems.push(`${name} SHA256 不符`)
 }
 
-const tickets = JSON.parse(ticketsText)
-const summary = JSON.parse(summaryText)
+function parseJson(name, text) {
+  try { return JSON.parse(text) }
+  catch { problems.push(`${name} 不是合法 JSON`); return null }
+}
+const tickets = parseJson('tickets.json', ticketsText)
+const summary = parseJson('summary.json', summaryText)
+if (tickets === null || summary === null) {
+  console.log(JSON.stringify({ archive, ok: false, problems }, null, 2))
+  process.exit(2)
+}
 const ids = new Set(tickets.map((ticket) => ticket.id))
 if (tickets.length !== summary.total) problems.push(`total 不符：tickets=${tickets.length} summary=${summary.total}`)
 if (ids.size !== summary.uniqueIds) problems.push(`uniqueIds 不符：实际=${ids.size} summary=${summary.uniqueIds}`)
@@ -66,8 +74,58 @@ for (const [status, count] of Object.entries(summary.byStatus ?? {})) {
 }
 const prLinked = tickets.filter((ticket) => ticket.prRefs.length > 0).length
 if (prLinked !== summary.prLinked) problems.push(`prLinked 不符：实际=${prLinked} summary=${summary.prLinked}`)
+
+// 关系表（P15）：有 summary 声明时逐个校验计数、唯一性与 Trigger↔Thread 引用。
+const relationFiles = {
+  triggers: 'triggers.json', dispositions: 'dispositions.json', threads: 'threads.json', triggerThreads: 'trigger-threads.json',
+}
+const relations = {}
+for (const [key, name] of Object.entries(relationFiles)) {
+  if (!Number.isInteger(summary[key])) continue
+  const path = join(archive, name)
+  if (!existsSync(path)) { problems.push(`summary 声明 ${key} 但缺少 ${name}`); continue }
+  const rows = parseJson(name, readFileSync(path, 'utf8'))
+  if (rows === null) continue
+  relations[key] = rows
+  if (rows.length !== summary[key]) problems.push(`${key} 计数不符：实际=${rows.length} summary=${summary[key]}`)
+}
+// 多实例合并导出：id/key 只要求在同一 source（同一数据库）内唯一，引用也限定在同 source 内。
+const bySource = (rows) => {
+  const map = new Map()
+  for (const row of rows ?? []) {
+    const key = row.source ?? 'unknown'
+    if (!map.has(key)) map.set(key, [])
+    map.get(key).push(row)
+  }
+  return map
+}
+if (relations.triggers) {
+  for (const [source, rows] of bySource(relations.triggers)) {
+    const ids = rows.map(row => row.id)
+    if (new Set(ids).size !== ids.length) problems.push(`triggers 在 ${source} 内存在重复 id`)
+  }
+}
+if (relations.threads) {
+  for (const [source, rows] of bySource(relations.threads)) {
+    const keys = rows.map(row => row.key)
+    if (new Set(keys).size !== keys.length) problems.push(`threads 在 ${source} 内存在重复 key`)
+  }
+}
+if (relations.triggerThreads) {
+  const threadKeys = bySource(relations.threads)
+  const triggerIds = bySource(relations.triggers)
+  for (const row of relations.triggerThreads) {
+    const source = row.source ?? 'unknown'
+    const keys = new Set((threadKeys.get(source) ?? []).map(item => item.key))
+    const ids = new Set((triggerIds.get(source) ?? []).map(item => item.id))
+    if (keys.size > 0 && !keys.has(row.thread)) problems.push(`trigger-thread 在 ${source} 引用了不存在的 thread：${row.thread}`)
+    if (ids.size > 0 && !ids.has(row.triggerId)) problems.push(`trigger-thread 在 ${source} 引用了不存在的 trigger：${row.triggerId}`)
+  }
+}
 if (unknown !== summary.unknownCount) problems.push(`unknownCount 不符：实际=${unknown} summary=${summary.unknownCount}`)
 
-const result = { archive, total: tickets.length, uniqueIds: ids.size, byStatus, unknown, prLinked, ok: problems.length === 0, problems }
+const result = { archive, total: tickets.length, uniqueIds: ids.size, byStatus, unknown, prLinked,
+  relations: relations ? Object.fromEntries(Object.entries(relations).map(([key, rows]) => [key, rows.length])) : {},
+  ok: problems.length === 0, problems }
 console.log(JSON.stringify(result, null, 2))
 process.exit(problems.length === 0 ? 0 : 1)

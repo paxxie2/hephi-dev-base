@@ -18,7 +18,7 @@
 ```bash
 cd hephi
 pnpm install --frozen-lockfile
-pnpm check        # 类型检查、175 个测试、构建；以实际运行输出为准
+pnpm check        # 类型检查、180 个测试、构建；以实际运行输出为准
 ```
 
 对照实验：
@@ -28,6 +28,20 @@ node eval/ab-metrics.mjs runs.json
 ```
 
 `runs.json` 的格式写在脚本开头的注释里。
+
+## 测试分层（P6）
+
+| 层 | 命令 | 覆盖 | 本机实测（2026-11-07，Node 26.1.0 / pnpm 10.7.0） |
+| --- | --- | --- | --- |
+| unit | `pnpm test:unit` | 合同/任务卡解析、激活与版本、决策日志、ready 门、工具上下文；不执行 git 或子进程 | 7 文件 / 41 tests，约 0.45s |
+| integration | `pnpm test:integration` | 真实 git 仓库、子进程检查、worker 挂载、探针、eval/scripts CLI；每个用例自建临时目录，互不共享模板 | 11 文件 / 139 tests，约 34s |
+| 全量 | `pnpm test` / `pnpm check` | 18 文件 / 180 tests，另含 typecheck 与构建 | 两层合计 = 全量 |
+
+- 分层只是入口切分：`pnpm check` 仍跑全量 180 个测试，覆盖不减少。
+- 环境：CI 固定 Node 22.19.0、pnpm 11.7.0（按用户决定不使用 GitHub Actions）；本机版本不同，上表耗时只作参考。
+- 缓存：复用 pnpm store 与 `node_modules`；冷安装时间不计入上表。
+- 并发：vitest 默认并发；同机其它构建会拉长 integration 耗时。
+- **预登记性能门槛尚未定义**（P6 要求由评审确认）。在门槛登记前，不宣称任何耗时改善。
 
 ## main 分支审查入口与版本边界
 

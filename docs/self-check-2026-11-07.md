@@ -93,6 +93,16 @@
 
 已覆盖集中在 G2（5）与 P5（3）；未覆盖集中在 G1 真机探针、P7/P9/P10/P12/P13 外部资源项与三个 B5 门槛。
 
+## 4.1 补遗（同日后续修复）
+
+| # | 补充 | 证据 |
+| --- | --- | --- |
+| S4 | `eval/check-baseline.mjs` 对非法 JSON 会抛栈（关系表被篡改时） | 改为 `parseJson` 收集问题并继续；新增负例测试 |
+| S5 | P15 关系表（Trigger/Disposition/Thread/Trigger↔Thread）未导出 | `eval/export-baseline.mjs` 增加关系表导出与 summary 计数；`check-baseline` 校验计数、source 内唯一性与引用；第二次真实归档 r2 通过 |
+| S6 | eval/scripts 无自动化测试（原 L7） | 新增 `hephi/tests/eval/cli.test.ts`（4 用例，覆盖 kappa、基线与关系表、roles/budget/data-package、shadow-parity/dubbo 运行器），纳入 integration 层 |
+| S7 | P6 的测试分层文档实际未落盘（`a96dc1b` 只改了 `package.json`，README 未被修改；此前汇报有误） | 根 `README.md` 新增「测试分层（P6）」小节，记录 unit/integration 命令、覆盖与实测耗时（0.45s / 34s），并更新总数 180 |
+| — | 测试总数 | 176 → **180**（unit 41 / integration 139）；`pnpm check` 全绿 |
+
 ## 5. 结论
 
 - 代码：176 tests 全绿、构建通过；自检发现 3 个缺陷（1 个行为语义、2 个健壮性）均已修复并复测。

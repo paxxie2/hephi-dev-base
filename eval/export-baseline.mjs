@@ -58,7 +58,9 @@ function normalize(db, row) {
 const tickets = []
 const sources = []
 for (const db of dbs) {
-  const rows = readTickets(db)
+  let rows
+  try { rows = readTickets(db) }
+  catch (error) { console.error(`读取数据库失败：${db}（${error instanceof Error ? error.message : String(error)}）`); process.exit(2) }
   const normalized = rows.map((row) => normalize(db, row))
     .filter((ticket) => (!from || (ticket.createdAt ?? '') >= from) && (!to || (ticket.createdAt ?? '') <= to))
   tickets.push(...normalized)

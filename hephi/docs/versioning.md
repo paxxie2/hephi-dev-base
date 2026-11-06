@@ -28,6 +28,7 @@
 
 - activation：`src/control/activation.ts` 写入 `version: 1` 并纳入合同哈希；加载时先校验原哈希，再拒绝未知版本与未知顶层字段；缺失 version 的旧合同按 legacy 读取。测试见 `tests/control/activation.test.ts` 的「activation format versioning」。
 - 检查记录：`version: 3` 增加 `pluginCommit`；ready 拒绝另一构建产生的证据并要求用当前构建重跑（`src/control/evidence-verifier.ts`）。v2 记录在 `readRuns` 加载时即被拒绝。
+- 合同：无 `plugin` 字段的 legacy 合同不因构建不同被拒绝（P2 之前的合同），但其检查记录仍必须是当前构建产生的——这是已知的兼容例外，需人工确认是否符合“旧证据拒绝”口径。
 - 插件构建身份：`tsdown.config.ts` 注入 `__HEPHI_COMMIT__`（dirty 构建写成 `<sha>-dirty`，无 git 时必须提供 `HEPHI_BUILD_COMMIT`，否则构建失败）；`describePlugin()` 返回 `{name, version, commit}`，prepare 合同冻结 `plugin: {version, commit}` 并纳入哈希。
 - 其余格式（任务卡、`decisions.jsonl`、基线归档）：代码实施前，任何"已版本化"的结论不得写入验收记录。
 - 活跃工单禁止升级由 P8 部署流程执行，不在本文件实现。

@@ -6,7 +6,7 @@
 
 | 副本 | 位置 | 分支/引用 | HEAD | 状态 |
 | --- | --- | --- | --- | --- |
-| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | `3f276a5`（PR #7 合并后） | `git ls-remote` 回读 |
+| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | 截至 2026-11-07 自检为 `d2e864a`（PR #7–#10 合并后；后续文档提交会继续前移） | `git ls-remote` 回读 |
 | 执行分支 | `/Users/zm/dsh-instances/experiment/hephi-review` | `codex/dual-instance-hephi` | `b660051` | 已随 PR #7 合入 main |
 | 旧路线图目录 | `/Users/zm/Documents/hephi-roadmap-work` | `work/hephi-95` | 已不存在 | 2026-11-07 核验时目录已删除；`c547dc1` 无法再取用 |
 | 隔离 Super Agent 副本 | `/Users/zm/dsh-instances/experiment/superagent` | `codex/dual-instance-experiment` | `62d7d53` | 工作树干净 |
@@ -32,7 +32,7 @@
 
 ## 3.1 交付 PR
 
-- 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。
+- 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。#8（状态记录）、#9（部署脚本 + P8 记录）、#10（P11 smoke + A 实例）随后合并。
 - 基线标签 **`hephi-baseline-1`**（annotated，tag object `1e93e4b`）指向合并后的 `main` commit `3f276a5`，已推送远端。
 - 审查记录见 `docs/g2-baseline-review.md`：按用户 2026-11-07 授权由 Agent 代办，**不是人类独立审查**。
 

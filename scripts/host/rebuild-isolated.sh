@@ -1,6 +1,7 @@
 #!/bin/sh
 # P7 专用测试宿主：从模板实例复制配置到新的隔离实例目录，改写路径与端口，并校验不重叠。
 # 只做本机可验证的脚手架；干净机器重建、真实端到端和独立操作者仍需人工执行。
+# 注意：路径/端口改写使用 BSD `sed -i ''`，仅适用于 macOS。
 # 用法：./scripts/host/rebuild-isolated.sh --template <实例目录> --target <新目录> --port <端口> [--profile <名>]
 set -eu
 

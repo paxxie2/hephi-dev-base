@@ -575,4 +575,17 @@ describe('Worker mount', () => {
     } finally { mounted.dispose() }
   })
 
+
+  it('shadow mode never blocks ready even when the activation contract disappears', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation({ ...env(dir), HEPHI_ENFORCEMENT: 'shadow' })
+    const fake = fakeAgent()
+    const mounted = mountWorkerGate({} as Context, fake.agent, { stateDir: dir })!
+    try {
+      await import('node:fs/promises').then(({ unlink }) => unlink(activationPath(dir, 'ticket-1')))
+      const ready = { name: 'orchestrator_report', arguments: { state: 'ready' }, callId: 'shadow-missing-contract', token: Symbol() } as unknown as ToolExecution
+      expect(await fake.callbacks().preExecute!(ready, async () => ({ kind: 'allow' }))).toEqual({ kind: 'allow' })
+    } finally { mounted.dispose() }
+  })
+
 })

@@ -37,9 +37,19 @@
 | 交付 | PR #42：base `main@291b29e`，head `99faa2a`，仅改 README.md（+1 行）；OPEN、未合并 |
 | 报告 | Worker ready summary 自述“verify-only、不合并”，列出检查命令、runId、changedFiles、clean tree |
 
+## 2.1 合并结果（2026-11-07 按用户指示）
+
+- PR #42 已按用户指示**重新打开并合并**：`main` = `8d2ec58`（merge commit），README 末尾现含
+  `<!-- hephi activated smoke 2026-11-07 -->`；分支已删除。
+- 其余同主题的**过期 smoke 工件**（PR #40、#43 等，标题均标 “do not merge/smoke”）已按用户授权清理：
+  关闭并删除分支（可重开）。它们**不是**本轮 Worker 的产物：B 的 GitHub source 共收到 5 条 trigger，
+  issue #38/#41 各只有 1 条 trigger、各对应 1 个 Ticket（`c603d0ef…`、`b7201bbf…`），
+  因此“同一 trigger 被调度两次”无法得到证据支持；#40/#43 的来源未能确认（可能是其他宿主/代理工件），
+  不作为本 Worker 的重复执行证据。
+
 ## 3. 清理与边界
 
-- 两轮产物均已清理：PR #39/#42 关闭、分支删除、Issue #38/#41 关闭（均带 SMOKE_ONLY 说明）。
+- 清理：#39（第一轮失败）关闭并删除分支；#42 按用户指示重新打开并合并（main `8d2ec58`）；Issue #38/#41 已关闭。
 - 本 smoke 证明的是**机制链路**（合同→检查→证据→ready→PR），不代表效果、成本或稳定性；
   hephi 仍未部署到 A（无插件对照），也没有跑三组对照（依赖 G1 的模型可见表面导出，用户已排除）。
 - 仍未做：hephi activated 的 PR 合并（按 smoke 要求不合并）、多任务稳定性、并发、成本统计。

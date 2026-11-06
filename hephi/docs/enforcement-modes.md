@@ -12,6 +12,7 @@
 - 不注册 `hephi_check` 工具，也不安装 staged 阶段控制。
 - 写/改文件的路径与范围判定照常计算，但一律放行；决策日志记录 `mode:"shadow"`、`effectiveDecision:"allow"`、`wouldDecision:"deny"`。
 - ready 只计算范围/预算/删除测试等纪律，一律放行；判定结果记录为 `wouldDecision`，不计算检查记录、Session 绑定与 PR 证据。
+- 合同在挂载后不可读/被改写时，shadow 的 ready 仍放行（只观察、不阻断），对应实现见 `ready-gate.ts` 的 `allowUnavailable`。
 - 决策日志本身属于允许的观察副作用。
 
 ## 未实施部分（需要本仓库之外的工作）

@@ -24,6 +24,8 @@ function isReadyReport(execution: ToolExecution): boolean {
 export function createReadyGate(options: {
   loadActivation: () => Promise<ActivationContract>
   verify?: ReadyVerifier
+  /** Shadow mode observes only: an unavailable contract must not block a ready report. */
+  allowUnavailable?: boolean
 }): ReadyGate {
   const approved = new Set<ToolExecutionToken>()
   const timers = new Set<ReturnType<typeof setTimeout>>()
@@ -43,6 +45,7 @@ export function createReadyGate(options: {
     try {
       contract = await options.loadActivation()
     } catch (error) {
+      if (options.allowUnavailable) return next()
       return { kind: 'deny', reason: `HEPHI activation is unavailable: ${error instanceof Error ? error.message : String(error)}` }
     }
     if (!options.verify) return { kind: 'deny', reason: 'HEPHI verifier is not configured' }

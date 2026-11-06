@@ -2,7 +2,7 @@
 // P14 数据包预检：脱敏交付包不得含密钥、不得在文件名/路径中暴露实验组别。
 // 只读扫描目录；发现命中退出码 1，目录不存在退出码 2。
 // 用法：node eval/check-data-package.mjs --package <dir>
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 function arg(name, fallback) {
@@ -36,14 +36,17 @@ function walk(dir) {
     const path = join(dir, name)
     const rel = relative(root, path)
     if (GROUP_PATTERN.test(rel)) findings.push({ path: rel, kind: 'group-label' })
-    const stat = statSync(path)
+    const stat = lstatSync(path)
+    if (stat.isSymbolicLink()) { findings.push({ path: rel, kind: 'symlink' }); continue }
     if (stat.isDirectory()) {
       walk(path)
       continue
     }
     files.push(rel)
     if (stat.size > MAX_BYTES) continue
-    const text = readFileSync(path, 'utf8')
+    let text
+    try { text = readFileSync(path, 'utf8') }
+    catch { findings.push({ path: rel, kind: 'unreadable' }); continue }
     for (const [kind, pattern] of SECRET_PATTERNS) {
       if (pattern.test(text)) findings.push({ path: rel, kind })
     }

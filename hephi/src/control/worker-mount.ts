@@ -215,6 +215,7 @@ export function mountWorkerGate(
   }
   const gate = createReadyGate({
     loadActivation: loadBoundActivation,
+    allowUnavailable: shadow,
     verify: shadow ? shadowVerify : options.verify ? (contract, execution) => stages
       ? stages.verify(() => options.verify!(contract, execution), execution.signal, execution.token)
       : options.verify!(contract, execution) : undefined,

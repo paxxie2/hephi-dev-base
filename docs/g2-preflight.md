@@ -15,5 +15,6 @@
 ## 结论
 
 - 只读预检通过：基线 SHA 正确、无标签冲突、远端无同名执行分支、c547 不可直接取用（已按资料包允许的“等价修复”处理）。
-- 未完成（需人工）：八项原要求的非原实现者逐项审查；是否把本分支合入 `main`；合并后创建 `hephi-baseline-1`（不得覆盖同名异 SHA）。
+- 已按用户 2026-11-07 授权（“代我审阅，代替人工操作”）完成：PR #7 合并（merge commit `3f276a5`）、八项逐项审查见 `docs/g2-baseline-review.md`、创建并推送基线标签 `hephi-baseline-1`（annotated，指向 `3f276a5`）。
+- 仍缺：人类“非原实现者”独立审查签名；真实宿主端到端证据。
 - 按用户决定，不使用 GitHub Actions；`.github/workflows/hephi-check.yml` 已删除，P1 不实施。

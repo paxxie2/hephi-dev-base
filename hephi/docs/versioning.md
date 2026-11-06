@@ -38,6 +38,6 @@
 - activation：`src/control/activation.ts` 写入 `version: 2` 并使用规范化哈希（`contractHash`）；`legacyContractHash` 仅供 v1／无版本合同校验。加载时按原始 version 选择算法，先校验 stored hash，再拒绝未知版本与未知顶层字段。测试见 `tests/control/activation.test.ts` 的「activation format versioning」「activation canonical hashing (R1)」（R1-T01–T12）。
 - 检查记录：`version: 3` 增加 `pluginCommit`；ready 拒绝另一构建产生的证据并要求用当前构建重跑（`src/control/evidence-verifier.ts`）。v2 记录在 `readRuns` 加载时即被拒绝。
 - 合同：无 `plugin` 字段的 legacy 合同不因构建不同被拒绝（P2 之前的合同），但其检查记录仍必须是当前构建产生的——这是已知的兼容例外，需人工确认是否符合“旧证据拒绝”口径。
-- 插件构建身份：`tsdown.config.ts` 注入 `__HEPHI_COMMIT__`（dirty 构建写成 `<sha>-dirty`，无 git 时必须提供 `HEPHI_BUILD_COMMIT`，否则构建失败）；`describePlugin()` 返回 `{name, version, commit}`，prepare 合同冻结 `plugin: {version, commit}` 并纳入哈希。
+- 插件构建身份：`tsdown.config.ts` 注入 `__HEPHI_COMMIT__`。**dirty 工作树（已跟踪／暂存／未跟踪任一）直接构建失败**，不产出可发布构建；`HEPHI_BUILD_COMMIT` 不能覆盖 dirty 的 Git HEAD。无 `.git` 的源码归档必须显式提供完整 40 位十六进制 `HEPHI_BUILD_COMMIT`，缺失或非法值同样失败；不存在静默 `unknown` 或 `-dirty` 发布路径。`describePlugin()` 返回 `{name, version, commit}`，prepare 合同冻结 `plugin: {version, commit}` 并纳入哈希。
 - 其余格式（任务卡、`decisions.jsonl`、基线归档）：代码实施前，任何"已版本化"的结论不得写入验收记录。
 - 活跃工单禁止升级由 P8 部署流程执行，不在本文件实现。

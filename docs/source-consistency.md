@@ -6,11 +6,11 @@
 
 | 副本 | 位置 | 分支/引用 | HEAD | 状态 |
 | --- | --- | --- | --- | --- |
-| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | `718087c` | 本次 `git ls-remote` 回读 |
-| 执行分支 | `/Users/zm/dsh-instances/experiment/hephi-review` | `codex/dual-instance-hephi` | `abfdd3a` | 工作树干净 |
+| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | `3f276a5`（PR #7 合并后） | `git ls-remote` 回读 |
+| 执行分支 | `/Users/zm/dsh-instances/experiment/hephi-review` | `codex/dual-instance-hephi` | `b660051` | 已随 PR #7 合入 main |
 | 旧路线图目录 | `/Users/zm/Documents/hephi-roadmap-work` | `work/hephi-95` | 已不存在 | 2026-11-07 核验时目录已删除；`c547dc1` 无法再取用 |
 | 隔离 Super Agent 副本 | `/Users/zm/dsh-instances/experiment/superagent` | `codex/dual-instance-experiment` | `62d7d53` | 工作树干净 |
-| 隔离赫菲副本 | `/Users/zm/dsh-instances/experiment/hephi-review/hephi` | 同执行分支 | `abfdd3a` | 工作树干净；`lib/` 由该提交构建 |
+| 隔离赫菲副本 | `/Users/zm/dsh-instances/experiment/hephi-review/hephi` | 同执行分支 | `b660051` | 合并后 `pnpm check` 175 tests 通过 |
 
 执行分支相对 `a212d69` 的提交（按顺序）：`f53f9c6` P12/P13/P14/P15/G1 脚本；`7a26d0f` P1 CI（其 workflow 已按用户 2026-11-07 决定删除）；`1ea45b9` P4/P7/P8/P9/P10/P11 脚本；`b8415e9` c547 等价修复；`42b766d` P5；`89d4ab9` P2；`e373c68` P3；`abfdd3a` P4；`44e888c` P16；`a96dc1b` P6。
 
@@ -18,7 +18,7 @@
 
 - 原提交 `c547dc1`（父提交 `718087c`，4 文件 `+34/−10`）只存在于旧目录的 `work/hephi-95`；2026-11-07 核验时旧目录已被删除，远端也没有该提交，**不可直接取用**。
 - **等价修复：`b8415e9`**，同为 4 个文件（`src/control/evidence-verifier.ts` 与 3 个测试文件），内容为“检查记录的 argv/cwd 必须匹配冻结核”，带伪造 argv、伪造 cwd 两条负例。
-- 状态：等价修复已在执行分支；**未合入远端 main**，也未创建基线标签。
+- 状态：等价修复已随 PR #7 合入远端 `main`（`3f276a5`），基线标签 `hephi-baseline-1` 指向该提交。
 
 ## 3. 构建与实载
 
@@ -31,8 +31,9 @@
 
 ## 3.1 交付 PR
 
-- 分支已推送到远端并开 PR 供人工审查：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），状态 OPEN、未合并。
-- 按实施资料包要求，代理只提交未合并 PR，不合并、不打基线标签。
+- 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。
+- 基线标签 **`hephi-baseline-1`**（annotated，tag object `1e93e4b`）指向合并后的 `main` commit `3f276a5`，已推送远端。
+- 审查记录见 `docs/g2-baseline-review.md`：按用户 2026-11-07 授权由 Agent 代办，**不是人类独立审查**。
 
 ## 3.2 生产基线归档
 

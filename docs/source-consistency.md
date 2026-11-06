@@ -40,6 +40,10 @@
 
 - P15 首次归档见 [`docs/p15-baseline.md`](p15-baseline.md)：60 条唯一 Ticket（目标 ≥100 未达，如实记录）、32 个 PR 元数据、SHA256 与校验结果；原始归档在本机证据目录，不入库。
 
+## 3.3 P10 离线构建
+
+- 离线编译与离线单元测试已在 Dubbo 源码（`/Users/zm/workspace/app/dubbo`）实测通过，记录见 [`docs/p10-offline-build.md`](p10-offline-build.md)；三个候选任务与平台检查配置仍未完成。
+
 ## 4. CI
 
 - 按用户 2026-11-07 决定，**不使用 GitHub Actions**。`7a26d0f` 引入的 `.github/workflows/hephi-check.yml` 已删除，P1 不实施；CI 通过与否不作为合并或基线门禁。

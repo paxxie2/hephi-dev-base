@@ -10,6 +10,9 @@
 # 6. 有进行中 Ticket、drain 字段未知或非零时禁止升级；不存在绕过入口。
 # 7. 成功退出也不自动恢复派发；由操作者核对后手动恢复。
 # 8. 文件哈希只证明磁盘内容，不等于实载 commit；无实载回读入口时 P8 真实验收保持未通过。
+# 9. 首次从普通 lib 目录迁移是显式事务：先原子改名旧目录，再改名 symlink；第二步失败必须恢复旧目录。
+# 10. 记录中的 paused／load／health 必须来自部署结束时的真实回读；不可读记为 unverified，不得硬编码 true。
+# 11. rollback 只接受显式 --target（及显式 --previous），不得隐式取仓库 HEAD；恢复目标必须通过校验。
 #
 # 用法：deploy-hephi.sh --instance <dir> --host <url> --host-version <单行值>
 #        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
@@ -26,14 +29,15 @@ USAGE
 }
 
 instance=""; host=""; host_version=""; target=""; previous=""; rollback="no"; dry_run="no"
+target_set="no"; previous_set="no"
 releases=""; repo=""; hephi=""; timeout=120
 while [ $# -gt 0 ]; do
   case "$1" in
     --instance) [ $# -ge 2 ] || usage; instance="$2"; shift 2 ;;
     --host) [ $# -ge 2 ] || usage; host="$2"; shift 2 ;;
     --host-version) [ $# -ge 2 ] || usage; host_version="$2"; shift 2 ;;
-    --target) [ $# -ge 2 ] || usage; target="$2"; shift 2 ;;
-    --previous) [ $# -ge 2 ] || usage; previous="$2"; shift 2 ;;
+    --target) [ $# -ge 2 ] || usage; target="$2"; target_set="yes"; shift 2 ;;
+    --previous) [ $# -ge 2 ] || usage; previous="$2"; previous_set="yes"; shift 2 ;;
     --rollback) rollback="yes"; shift ;;
     --dry-run) dry_run="yes"; shift ;;
     --releases) [ $# -ge 2 ] || usage; releases="$2"; shift 2 ;;
@@ -119,15 +123,30 @@ release_validate() {
   [ "$actual" = "$expected" ] || { echo "release entry hash mismatch: $dir" >&2; return 1; }
 }
 
+
 set_pointer() {
   new_lib="$1"
   tmp="$hephi/.lib-new-$$"
   rm -f "$tmp"
-  ln -s "$new_lib" "$tmp"
-  node -e 'const fs=require("fs");fs.renameSync(process.argv[1],process.argv[2])' "$tmp" "$hephi/lib"
+  ln -s "$new_lib" "$tmp" || { echo "cannot create temporary symlink: $tmp" >&2; return 1; }
+  # 首次迁移：$hephi/lib 仍是普通目录，rename symlink 到目录会 EISDIR，必须先把旧目录原子改名备份。
+  if [ -d "$hephi/lib" ] && [ ! -L "$hephi/lib" ]; then
+    migration="$hephi/.migration-$(date -u +%Y%m%dT%H%M%SZ)-$$"
+    mv "$hephi/lib" "$migration" || { rm -f "$tmp"; echo "cannot move plain lib directory aside: $hephi/lib" >&2; return 1; }
+    MIGRATION_BACKUP="$migration"
+    if ! node -e 'const fs=require("fs");fs.renameSync(process.argv[1],process.argv[2])' "$tmp" "$hephi/lib"; then
+      mv "$migration" "$hephi/lib" 2>/dev/null || echo "cannot restore plain lib directory from $migration" >&2
+      rm -f "$tmp"
+      echo "pointer rename failed during plain-directory migration; old lib directory restored" >&2
+      return 1
+    fi
+    return 0
+  fi
+  node -e 'const fs=require("fs");fs.renameSync(process.argv[1],process.argv[2])' "$tmp" "$hephi/lib" \
+    || { rm -f "$tmp"; echo "pointer rename failed: $tmp -> $hephi/lib" >&2; return 1; }
 }
 
-SNAP_ROOT=""
+SNAP_ROOT=""; MIGRATION_BACKUP=""
 snapshot_existing_lib() {
   [ -L "$hephi/lib" ] && return 0
   [ -d "$hephi/lib" ] || return 0
@@ -174,12 +193,13 @@ build_release() {
   rm -rf "$build_root"
 }
 
+LAST_STATE=""; FAIL_STATE=""; HEALTH_STATE=""
 restart_instance() {
   pid=$(cat "$instance/host.pid")
   kill -TERM "$pid" 2>/dev/null || true
   waited=0
   while kill -0 "$pid" 2>/dev/null; do
-    [ "$waited" -ge "$timeout" ] && { echo "instance did not stop within ${timeout}s" >&2; return 1; }
+    [ "$waited" -ge "$timeout" ] && { FAIL_STATE="$LAST_STATE"; echo "instance did not stop within ${timeout}s" >&2; return 1; }
     sleep 1; waited=$((waited+1))
   done
   nohup "$instance/start.sh" >> "$instance/logs/host.log" 2>&1 &
@@ -187,28 +207,46 @@ restart_instance() {
   waited=0
   while :; do
     if state=$(read_state 2>/dev/null); then
+      LAST_STATE="$state"
       if health_ok "$state" 2>/dev/null; then HEALTH_STATE="$state"; return 0; fi
     fi
-    [ "$waited" -ge "$timeout" ] && { echo "instance did not reach full health within ${timeout}s" >&2; return 1; }
+    [ "$waited" -ge "$timeout" ] && { FAIL_STATE="$LAST_STATE"; echo "instance did not reach full health within ${timeout}s" >&2; return 1; }
     sleep 1; waited=$((waited+1))
   done
 }
 
+# 记录真实宿主状态回读：paused/load/healthReadback 一律来自 read_state；读不到就写 unverified。
 record() {
   kind="$1"; action="$2"; result="$3"
   shift 3
-  file="$instance/logs/$kind-$(date -u +%Y%m%dT%H%M%SZ).json"
+  file="$instance/logs/$kind-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
+  state=$(read_state 2>/dev/null || true)
   node -e '
-    const fs=require("fs"); const [file,action,result,hostVersion,...pairs]=process.argv.slice(1);
+    const fs=require("fs"); const [file,action,result,hostVersion,state,...pairs]=process.argv.slice(1);
     const extra={}; for(let i=0;i+1<pairs.length;i+=2) extra[pairs[i]]=pairs[i+1];
-    fs.writeFileSync(file, JSON.stringify({at:new Date().toISOString(), action, result, hostVersion, paused:true, ...extra}, null, 2)+"\n");
-  ' "$file" "$action" "$result" "$host_version" "$@"
+    let paused="unverified", load="unverified", healthReadback="unverified";
+    if(state){ try{const j=JSON.parse(state);
+      if(typeof j.paused==="boolean") paused=j.paused;
+      if(j.load&&typeof j.load==="object") load=j.load;
+      if(j.health&&typeof j.health==="object") healthReadback=j.health;
+    }catch(e){} }
+    const rec={at:new Date().toISOString(), action, result, hostVersion, paused, load, healthReadback, ...extra};
+    fs.writeFileSync(file, JSON.stringify(rec,null,2)+"\n");
+  ' "$file" "$action" "$result" "$host_version" "$state" "$@"
   echo "record: $file"
 }
 
 current_pointer_sha() {
   [ -L "$hephi/lib" ] || return 1
   release_sha "$(readlink "$hephi/lib")"
+}
+pointer_after() { readlink "$hephi/lib" 2>/dev/null || echo ""; }
+
+# 真实 paused 回读：读不到返回 1（调用方必须按 unverified/失败处理）。
+paused_now() {
+  s=$(read_state 2>/dev/null || true)
+  [ -n "$s" ] || return 1
+  printf '%s' "$s" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);process.stdout.write(String(j.paused))})'
 }
 
 fail_keep_paused() {
@@ -218,6 +256,16 @@ fail_keep_paused() {
 
 # ---- main ----
 mkdir -p "$releases" "$instance/logs"
+
+# rollback 语义：target／previous 只接受显式完整 SHA，必须在任何默认值/切换之前校验。
+if [ "$rollback" = "yes" ]; then
+  [ "$target_set" = "yes" ] || fail_keep_paused "--rollback needs an explicit --target release (no implicit HEAD default)"
+  is_sha "$target" || fail_keep_paused "--rollback target must be a full 40-char SHA: $target"
+  if [ "$previous_set" = "yes" ]; then
+    is_sha "$previous" || fail_keep_paused "--rollback previous must be a full 40-char SHA: $previous"
+  fi
+fi
+
 state=$(read_state) || fail_keep_paused "host state is unreadable: $host"
 paused=$(printf '%s' "$state" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);process.stdout.write(String(j.paused))})')
 [ "$paused" = "true" ] || fail_keep_paused "host is not paused; pause and drain before deploying (P8)"
@@ -225,12 +273,18 @@ drain_ok "$state" || fail_keep_paused "drain check failed; refusing to upgrade"
 count=$(open_tickets) || fail_keep_paused "cannot read open tickets; refusing to upgrade"
 [ "$count" = "0" ] || fail_keep_paused "there are $count open Tickets; finish them before upgrading (no bypass)"
 
-# 解析 target：未指定时取仓库 HEAD。
+# 普通部署未指定 target 时才允许取仓库 HEAD；rollback 已在上方强制显式。
 if [ -z "$target" ]; then target=$(git -C "$repo" rev-parse HEAD); fi
 is_sha "$target" || fail_keep_paused "target must be a full 40-char SHA: $target"
 
-pointer_before=$(readlink "$hephi/lib" 2>/dev/null || echo "")
+pointer_before=$(pointer_after)
 current=$(current_pointer_sha 2>/dev/null || true)
+
+# current 是否通过校验必须单独保存：rollback 可以继续，但绝不允许把未通过校验的 current 当恢复目标。
+current_valid="no"
+if [ -n "$current" ]; then
+  if release_validate "$releases/$current" >/dev/null 2>&1; then current_valid="yes"; fi
+fi
 
 # 已载入的 release 视为不可变：重复发布同一 SHA 是空操作，直接拒绝且不碰 release/不重启。
 if [ "$rollback" != "yes" ] && [ -n "$current" ] && [ "$target" = "$current" ]; then
@@ -238,27 +292,47 @@ if [ "$rollback" != "yes" ] && [ -n "$current" ] && [ "$target" = "$current" ]; 
 fi
 
 if [ "$rollback" = "yes" ]; then
-  [ -n "$previous" ] && [ -n "$target" ] || fail_keep_paused "--rollback needs an explicit --target release"
   release_validate "$releases/$target" || fail_keep_paused "rollback target release is invalid: $target"
-  [ -n "$current" ] && release_validate "$releases/$current" || true
+  if [ "$previous_set" = "yes" ]; then
+    release_validate "$releases/$previous" || fail_keep_paused "rollback previous release is invalid: $previous"
+  fi
   snapshot_existing_lib
-  set_pointer "$releases/$target/lib"
-  started_ok="no"
-  if restart_instance; then started_ok="yes"; fi
-  if [ "$started_ok" = "no" ]; then
-    if [ -n "$current" ] && [ -d "$releases/$current/lib" ]; then
-      set_pointer "$releases/$current/lib"
-      if ! restart_instance; then
-        record rollback rollback failed-twice target "$target" previous "$current" pointerBefore "$pointer_before" health "not-checked"
-        fail_keep_paused "rollback failed twice; host kept paused and needs manual takeover"
-      fi
+  if ! set_pointer "$releases/$target/lib"; then
+    record rollback rollback failed-pointer target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" health not-ready migration "${MIGRATION_BACKUP:-none}" error "pointer switch failed"
+    fail_keep_paused "rollback could not switch the loaded pointer; host kept paused"
+  fi
+  if restart_instance; then
+    p=$(paused_now) || p=""
+    if [ "$p" != "true" ]; then
+      record rollback rollback failed-not-paused target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready error "host did not report paused=true after rollback; manual takeover required"
+      fail_keep_paused "host is not paused after rollback; manual takeover required"
     fi
-    record rollback rollback failed-restored-previous target "$target" previous "$current" pointerBefore "$pointer_before" health "not-checked"
+    record rollback rollback ok target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}"
+    echo "rollback complete; host remains paused, verify loaded build then resume via API"
+    exit 0
+  fi
+  # rollback 目标失败：用显式 previous（已校验）或通过校验的 current 恢复；两者都没有就记 failed-no-previous。
+  target_fail_state="$FAIL_STATE"
+  restore_target=""; restore_kind=""
+  if [ "$previous_set" = "yes" ]; then
+    restore_target="$releases/$previous/lib"; restore_kind="previous"
+  elif [ "$current_valid" = "yes" ]; then
+    restore_target="$releases/$current/lib"; restore_kind="current"
+  fi
+  if [ -z "$restore_target" ]; then
+    record rollback rollback failed-no-previous target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" error "rollback target failed and no validated previous release exists; host kept paused"
+    fail_keep_paused "rollback target failed and no validated previous release exists; host kept paused"
+  fi
+  if ! set_pointer "$restore_target"; then
+    record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreFailure "pointer restore to $restore_target failed" error "rollback target failed and restoring pointer failed; host kept paused"
+    fail_keep_paused "rollback target failed and restoring the previous pointer failed; host kept paused with both errors recorded"
+  fi
+  if restart_instance; then
+    record rollback rollback failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreHealth all-required-ready error "rollback target failed; previous build restored and host kept paused"
     fail_keep_paused "rollback target failed health; previous build restored and host kept paused"
   fi
-  record rollback rollback ok target "$target" previous "$current" pointerBefore "$pointer_before" pointerAfter "$(readlink "$hephi/lib")" health all-required-ready
-  echo "rollback complete; host remains paused, verify loaded build then resume via API"
-  exit 0
+  record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreFailure "$FAIL_STATE" error "rollback target and automatic recovery both failed; host kept paused with both errors recorded"
+  fail_keep_paused "rollback failed twice; host kept paused and needs manual takeover"
 fi
 
 # 构建或复用不可变 release。
@@ -276,30 +350,49 @@ fi
 
 [ -n "$previous" ] || previous="$current"
 if [ -n "$previous" ]; then release_validate "$releases/$previous" || fail_keep_paused "previous release is invalid: $previous"; fi
+previous_valid="no"
+if [ -n "$previous" ]; then previous_valid="yes"; fi
 
 snapshot_existing_lib
 if [ -z "$previous" ] && [ -z "$SNAP_ROOT" ]; then
   echo "first install: no previous release and no existing lib; a failed switch will keep the host paused" >&2
 fi
-set_pointer "$releases/$target/lib"
+if ! set_pointer "$releases/$target/lib"; then
+  record deploy deploy failed-pointer target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" error "pointer switch failed"
+  fail_keep_paused "could not switch the loaded pointer; host kept paused and previous state preserved"
+fi
 if restart_instance; then
-  record deploy deploy ok target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(readlink "$hephi/lib")" health all-required-ready loadedCommitReadback unverified
+  p=$(paused_now) || p=""
+  if [ "$p" != "true" ]; then
+    record deploy deploy failed-not-paused target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" error "host did not report paused=true after switch; manual takeover required"
+    fail_keep_paused "host is not paused after switch; manual takeover required"
+  fi
+  record deploy deploy ok target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}"
   echo "deploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)"
   exit 0
 fi
 
-# 切换后失败：自动恢复 previous（或首次安装的旧 lib 快照）并全量健康检查。
-restore_target=""
-if [ -n "$previous" ]; then restore_target="$releases/$previous/lib"
-elif [ -n "$SNAP_ROOT" ]; then restore_target="$SNAP_ROOT/lib"; fi
-if [ -z "$restore_target" ]; then
-  record deploy deploy failed-no-previous target "$target" previous "" pointerBefore "$pointer_before" pointerAfter "$(readlink "$hephi/lib")" health "not-checked"
-  fail_keep_paused "target failed after switch and no previous build exists; host kept paused"
+# 切换后失败：统一错误路径——恢复 previous／快照，重启，全量健康复检，写记录，非零退出。
+target_fail_state="$FAIL_STATE"
+restore_target=""; restore_kind=""
+if [ "$previous_valid" = "yes" ]; then
+  if release_validate "$releases/$previous" >/dev/null 2>&1; then
+    restore_target="$releases/$previous/lib"; restore_kind="previous"
+  fi
+elif [ -n "$SNAP_ROOT" ] && [ -d "$SNAP_ROOT/lib" ]; then
+  restore_target="$SNAP_ROOT/lib"; restore_kind="snapshot"
 fi
-set_pointer "$restore_target"
+if [ -z "$restore_target" ]; then
+  record deploy deploy failed-no-previous target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" error "target failed after switch and no validated previous build exists; host kept paused"
+  fail_keep_paused "target failed after switch and no validated previous build exists; host kept paused"
+fi
+if ! set_pointer "$restore_target"; then
+  record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreFailure "pointer restore to $restore_target failed" error "target failed after switch and restoring previous pointer failed; host kept paused"
+  fail_keep_paused "target failed after switch and restoring the previous pointer failed; host kept paused with both errors recorded"
+fi
 if restart_instance; then
-  record deploy deploy failed-restored-previous target "$target" previous "${previous:-snapshot}" pointerBefore "$pointer_before" pointerAfter "$(readlink "$hephi/lib")" health all-required-ready
+  record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreHealth all-required-ready error "target failed after switch; previous build restored and host kept paused"
   fail_keep_paused "target failed after switch; previous build restored and host kept paused"
 fi
-record deploy deploy failed-twice target "$target" previous "${previous:-snapshot}" pointerBefore "$pointer_before" health "not-checked"
+record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreFailure "$FAIL_STATE" error "target and automatic recovery both failed; host kept paused with both errors recorded"
 fail_keep_paused "target and automatic recovery both failed; host kept paused with both errors recorded"

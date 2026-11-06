@@ -43,14 +43,10 @@ function runAsync(cmd, args, opts = {}) {
   })
 }
 
-// ---- fake host state server ----
-const state = {
-  paused: true,
-  load: { running: 0, queued: 0, startupReservations: 0, effects: 0, jobs: 0, subagents: 0, unknown: 0 },
-  tickets: 0,
-  health: 'ok',
-  marker: null,
-}
+// ---- 可重复的假宿主世界：每次 initWorld() 建独立临时目录 + 独立假宿主服务 ----
+let root; let instance; let releases; let repo; let server; let base; let state; let A; let B
+let deployEnv = {}
+
 function healthPayload() {
   const ready = () => ({ state: 'ready', detail: 'ready', at: new Date().toISOString() })
   const health = {
@@ -59,32 +55,16 @@ function healthPayload() {
   }
   if (state.health === 'github-starting') health.github = { state: 'starting', detail: 'starting', at: new Date().toISOString() }
   if (state.health === 'always-bad') health.github = { state: 'error', detail: 'boom', at: new Date().toISOString() }
-  if (state.health === 'marker' && state.marker && !existsSync(state.marker)) {
+  // 假宿主语义：start.sh 真正跑起来之前（写 started.marker；pauseOnStart 世界还要写 resumed.marker）不报 ready。
+  // 否则 deploy 的健康门禁会早于 start.sh 执行就通过，harness 会读到启动前的过渡态（paused 回到 true、
+  // 或在进程尚未读取 start.sh 时改写脚本，导致旧进程执行了新脚本）。
+  const bootPending = Boolean(state.marker) && !existsSync(state.marker)
+  const resumePending = state.pauseOnStart && !existsSync(join(instance, 'resumed.marker'))
+  if (bootPending || resumePending) {
     health.runtime = { state: 'starting', detail: 'waiting for start', at: new Date().toISOString() }
   }
   return health
 }
-const server = createServer((req, res) => {
-  const url = new URL(req.url ?? '/', 'http://127.0.0.1')
-  res.setHeader('content-type', 'application/json')
-  if (url.pathname === '/orchestrator/api/state') {
-    res.end(JSON.stringify({ paused: state.paused, load: state.load, health: healthPayload() }))
-    return
-  }
-  if (url.pathname === '/orchestrator/api/tickets') {
-    res.end(JSON.stringify(Array.from({ length: state.tickets }, (_, i) => ({ id: `t${i}` }))))
-    return
-  }
-  res.statusCode = 404
-  res.end('{}')
-})
-
-// ---- fake instance and repo ----
-const root = mkdtempSync(join(tmpdir(), 'hephi-r3-'))
-const instance = join(root, 'instance')
-const releases = join(instance, 'releases', 'hephi')
-const repo = join(root, 'repo')
-for (const dir of [instance, join(instance, 'logs'), join(instance, 'hephi'), releases, repo, join(repo, 'hephi')]) mkdirSync(dir, { recursive: true })
 
 function writeStart(scriptBody) {
   const file = join(instance, 'start.sh')
@@ -92,34 +72,102 @@ function writeStart(scriptBody) {
   run('chmod', ['+x', file])
 }
 function normalStart() {
-  writeStart(`echo started >> "${instance}/start.log"\n: > "${instance}/started.marker"\nexec sleep 3600`)
+  const resume = state.pauseOnStart ? `\n: > "${instance}/resumed.marker"` : ''
+  writeStart(`echo started >> "${instance}/start.log"\n: > "${instance}/started.marker"${resume}\nexec sleep 3600`)
 }
-writeStart('#!/bin/sh\nexit 1') // placeholder before scenarios
-writeFileSync(join(instance, 'host.pid'), '999999\n')
-normalStart()
-state.marker = join(instance, 'started.marker')
 
-// stub plugin repository: git archive + frozen install + pnpm check must succeed
-writeFileSync(join(repo, 'hephi', 'package.json'), JSON.stringify({ name: 'stub-hephi', version: '0.0.0', private: true, type: 'module', scripts: { check: 'node build.mjs' } }, null, 2))
-writeFileSync(join(repo, 'hephi', 'pnpm-lock.yaml'), "lockfileVersion: '9.0'\n\nsettings:\n  autoInstallPeers: true\n  excludeLinksFromLockfile: false\n\nimporters:\n  .: {}\n")
-writeFileSync(join(repo, 'hephi', 'build.mjs'), "import { mkdirSync, writeFileSync } from 'node:fs'\nmkdirSync('lib', { recursive: true })\nwriteFileSync('lib/index.mjs', `export function describePlugin(){return {name:'stub',version:'0.0.0',commit:${JSON.stringify(process.env.HEPHI_BUILD_COMMIT ?? 'unknown')}}}\\n`)\n")
-run('git', ['init', '-q', '-b', 'main'], { cwd: repo })
-run('git', ['config', 'user.email', 'test@example.invalid'], { cwd: repo })
-run('git', ['config', 'user.name', 'deploy test'], { cwd: repo })
-run('git', ['add', '.'], { cwd: repo })
-run('git', ['commit', '-q', '-m', 'A'], { cwd: repo })
-const A = run('git', ['rev-parse', 'HEAD'], { cwd: repo }).out.trim()
-writeFileSync(join(repo, 'hephi', 'VERSION.txt'), 'B\n')
-run('git', ['add', '.'], { cwd: repo })
-run('git', ['commit', '-q', '-m', 'B'], { cwd: repo })
-const B = run('git', ['rev-parse', 'HEAD'], { cwd: repo }).out.trim()
+// 普通目录迁移/恢复失败注入：只在 deploy 的 PATH 前置一个 node 垫片，第 N 次 renameSync 调用失败。
+function nodeShimSource() {
+  return [
+    '#!/bin/sh',
+    'if [ -n "${HARNESS_RENAME_FAIL_AT:-}" ]; then',
+    '  case "$*" in',
+    '    *renameSync*)',
+    '      n=$(cat "$HARNESS_RENAME_COUNTER" 2>/dev/null || echo 0)',
+    '      n=$((n + 1))',
+    '      printf "%s" "$n" > "$HARNESS_RENAME_COUNTER"',
+    '      if [ "$n" = "$HARNESS_RENAME_FAIL_AT" ]; then echo "injected pointer rename failure" >&2; exit 42; fi',
+    '      ;;',
+    '  esac',
+    'fi',
+    'exec "$HARNESS_REAL_NODE" "$@"',
+    '',
+  ].join('\n')
+}
 
-await new Promise((resolveListen) => server.listen(0, '127.0.0.1', resolveListen))
-const base = `http://127.0.0.1:${server.address().port}`
+async function initWorld(options = {}) {
+  const { plainLib = false, pauseOnStart = false } = options
+  deployEnv = {}
+  root = mkdtempSync(join(tmpdir(), 'hephi-r3-'))
+  instance = join(root, 'instance')
+  releases = join(instance, 'releases', 'hephi')
+  repo = join(root, 'repo')
+  const bin = join(root, 'bin')
+  for (const dir of [instance, join(instance, 'logs'), join(instance, 'hephi'), releases, repo, join(repo, 'hephi'), bin]) mkdirSync(dir, { recursive: true })
+  if (plainLib) {
+    mkdirSync(join(instance, 'hephi', 'lib'), { recursive: true })
+    writeFileSync(join(instance, 'hephi', 'lib', 'legacy.mjs'), 'export const legacy = 1\n')
+  }
+  writeFileSync(join(bin, 'node'), nodeShimSource())
+  run('chmod', ['+x', join(bin, 'node')])
+
+  state = {
+    paused: true,
+    load: { running: 0, queued: 0, startupReservations: 0, effects: 0, jobs: 0, subagents: 0, unknown: 0 },
+    tickets: 0,
+    health: 'ok',
+    marker: null,
+    pauseOnStart,
+  }
+  server = createServer((req, res) => {
+    const url = new URL(req.url ?? '/', 'http://127.0.0.1')
+    res.setHeader('content-type', 'application/json')
+    if (url.pathname === '/orchestrator/api/state') {
+      const resumed = state.pauseOnStart && existsSync(join(instance, 'resumed.marker'))
+      res.end(JSON.stringify({ paused: resumed ? false : state.paused, load: state.load, health: healthPayload() }))
+      return
+    }
+    if (url.pathname === '/orchestrator/api/tickets') {
+      res.end(JSON.stringify(Array.from({ length: state.tickets }, (_, i) => ({ id: `t${i}` }))))
+      return
+    }
+    res.statusCode = 404
+    res.end('{}')
+  })
+
+  writeStart('#!/bin/sh\nexit 1') // placeholder before scenarios
+  writeFileSync(join(instance, 'host.pid'), '999999\n')
+  normalStart()
+  state.marker = join(instance, 'started.marker')
+
+  // stub plugin repository: git archive + frozen install + pnpm check must succeed
+  writeFileSync(join(repo, 'hephi', 'package.json'), JSON.stringify({ name: 'stub-hephi', version: '0.0.0', private: true, type: 'module', scripts: { check: 'node build.mjs' } }, null, 2))
+  writeFileSync(join(repo, 'hephi', 'pnpm-lock.yaml'), "lockfileVersion: '9.0'\n\nsettings:\n  autoInstallPeers: true\n  excludeLinksFromLockfile: false\n\nimporters:\n  .: {}\n")
+  writeFileSync(join(repo, 'hephi', 'build.mjs'), "import { mkdirSync, writeFileSync } from 'node:fs'\nmkdirSync('lib', { recursive: true })\nwriteFileSync('lib/index.mjs', `export function describePlugin(){return {name:'stub',version:'0.0.0',commit:${JSON.stringify(process.env.HEPHI_BUILD_COMMIT ?? 'unknown')}}}\\n`)\n")
+  run('git', ['init', '-q', '-b', 'main'], { cwd: repo })
+  run('git', ['config', 'user.email', 'test@example.invalid'], { cwd: repo })
+  run('git', ['config', 'user.name', 'deploy test'], { cwd: repo })
+  run('git', ['add', '.'], { cwd: repo })
+  run('git', ['commit', '-q', '-m', 'A'], { cwd: repo })
+  A = run('git', ['rev-parse', 'HEAD'], { cwd: repo }).out.trim()
+  writeFileSync(join(repo, 'hephi', 'VERSION.txt'), 'B\n')
+  run('git', ['add', '.'], { cwd: repo })
+  run('git', ['commit', '-q', '-m', 'B'], { cwd: repo })
+  B = run('git', ['rev-parse', 'HEAD'], { cwd: repo }).out.trim()
+
+  await new Promise((resolveListen) => server.listen(0, '127.0.0.1', resolveListen))
+  base = `http://127.0.0.1:${server.address().port}`
+}
+
+async function closeWorld() {
+  if (server) { await new Promise((resolveClose) => server.close(resolveClose)); server = null }
+  if (root) { rmSync(root, { recursive: true, force: true }) }
+  deployEnv = {}
+}
 
 async function deploy(extra, timeout = 120_000) {
   const flags = process.env.HARNESS_DEBUG ? ['-x', script] : [script]
-  return runAsync('sh', [...flags, '--instance', instance, '--host', base, '--host-version', 'host-1.0.0', '--repo', repo, '--hephi', join(instance, 'hephi'), '--releases', releases, '--timeout', '6', ...extra], { timeout })
+  return runAsync('sh', [...flags, '--instance', instance, '--host', base, '--host-version', 'host-1.0.0', '--repo', repo, '--hephi', join(instance, 'hephi'), '--releases', releases, '--timeout', '6', ...extra], { timeout, env: deployEnv })
 }
 function pointer() { try { return readlinkSync(join(instance, 'hephi', 'lib')) } catch { return '' } }
 function releaseDir(sha) { return join(releases, sha) }
@@ -131,6 +179,24 @@ async function waitForStarts(expected, timeoutMs = 10_000) {
   return starts()
 }
 function starts() { return existsSync(join(instance, 'start.log')) ? readFileSync(join(instance, 'start.log'), 'utf8').trim().split('\n').filter(Boolean).length : 0 }
+function readRecords(kind) {
+  const dir = join(instance, 'logs')
+  if (!existsSync(dir)) return []
+  return readdirSync(dir)
+    .filter((name) => name.endsWith('.json') && (!kind || name.startsWith(`${kind}-`)))
+    .map((name) => { try { return JSON.parse(readFileSync(join(dir, name), 'utf8')) } catch { return null } })
+    .filter(Boolean)
+}
+function renameFailEnv(at) {
+  const counter = join(root, 'rename-counter')
+  writeFileSync(counter, '0')
+  return {
+    PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}`,
+    HARNESS_RENAME_FAIL_AT: String(at),
+    HARNESS_RENAME_COUNTER: counter,
+    HARNESS_REAL_NODE: process.execPath,
+  }
+}
 function treeHash(dir) {
   const rows = []
   const walk = (d) => {
@@ -145,8 +211,10 @@ function treeHash(dir) {
   return createHash('sha256').update(rows.join('\n')).digest('hex')
 }
 
-try {
-  // R3-T01 首次发布
+async function runMainSuite() {
+  await initWorld()
+  try {
+    // R3-T01 首次发布
   const t1 = await deploy(['--target', A])
   check('R3-T01 first publish exits 0', t1.code === 0, JSON.stringify(t1))
   await waitForStarts(1)
@@ -271,6 +339,9 @@ try {
   const failedDeploy = records.find((r) => r.action === 'deploy' && r.result !== 'ok')
   check('R3-T17 success record complete', okDeploy && okDeploy.target === B && okDeploy.previous === A && okDeploy.hostVersion === 'host-1.0.0' && okDeploy.health === 'all-required-ready' && okDeploy.paused === true && typeof okDeploy.at === 'string', JSON.stringify(okDeploy))
   check('R3-T17 failure record complete', failedDeploy && typeof failedDeploy.target === 'string' && failedDeploy.hostVersion === 'host-1.0.0' && typeof failedDeploy.at === 'string', JSON.stringify(failedDeploy))
+  check('R3-T17 success record uses real paused/load/health readback', okDeploy && okDeploy.paused === true && okDeploy.load && okDeploy.load.running === 0 && okDeploy.healthReadback && Object.keys(okDeploy.healthReadback).length === 10 && okDeploy.healthReadback.github.state === 'ready', JSON.stringify(okDeploy))
+  const restoredDeploy = records.find((r) => r.action === 'deploy' && r.result === 'failed-restored-previous')
+  check('R3-T08 restored record keeps both health evidences', restoredDeploy && restoredDeploy.restoreHealth === 'all-required-ready' && String(restoredDeploy.targetFailure).length > 2 && restoredDeploy.paused === true, JSON.stringify(restoredDeploy))
 
   // R3-T06/T16 不可变性总校验
   check('R3-T16 releases A/B unchanged after all scenarios', treeHash(releaseDir(A)) === hashA && treeHash(releaseDir(B)) === hashB)
@@ -279,10 +350,121 @@ try {
   const tRollback = await deploy(['--rollback', '--target', B, '--previous', A])
   check('R3-T07b explicit rollback exits 0', tRollback.code === 0, tRollback.out)
   check('R3-T07b rollback record exists', readdirSync(join(instance, 'logs')).some((name) => name.startsWith('rollback-') && name.endsWith('.json')))
-} finally {
-  server.close()
-  rmSync(root, { recursive: true, force: true })
+  } finally {
+    await closeWorld()
+  }
 }
+
+async function runNegativeSuite() {
+  // N1：首次从普通 lib 目录迁移必须成功，旧内容保留在迁移备份中
+  await initWorld({ plainLib: true })
+  try {
+    const r = await deploy(['--target', A])
+    check('N1 plain-lib first deploy exits 0', r.code === 0, r.out)
+    check('N1 lib becomes symlink to release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+    // set_pointer 的迁移事务把旧普通 lib 目录整体改名到 $hephi/.migration-<ts>-<pid>，备份根即旧 lib 内容。
+    const backup = existsSync(join(instance, 'hephi')) ? readdirSync(join(instance, 'hephi')).find((name) => name.startsWith('.migration-')) : undefined
+    check('N1 migration backup keeps old lib content', Boolean(backup) && existsSync(join(instance, 'hephi', backup, 'legacy.mjs')) && readFileSync(join(instance, 'hephi', backup, 'legacy.mjs'), 'utf8') === 'export const legacy = 1\n', String(backup))
+    const rec = readRecords('deploy').find((x) => x.result === 'ok')
+    check('N1 success record keeps migration evidence', Boolean(rec) && String(rec.migration).includes('.migration-'), JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // N1b：迁移第二步（symlink rename）失败时必须恢复旧普通目录，且不留失败指针
+  await initWorld({ plainLib: true })
+  try {
+    deployEnv = renameFailEnv(1)
+    const r = await deploy(['--target', A])
+    check('N1b migration rename failure exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    const libStat = lstatSync(join(instance, 'hephi', 'lib'))
+    check('N1b old plain lib directory restored', libStat.isDirectory() && !libStat.isSymbolicLink() && existsSync(join(instance, 'hephi', 'lib', 'legacy.mjs')))
+    check('N1b failure record written', readRecords('deploy').some((x) => x.result === 'failed-pointer'), JSON.stringify(readRecords('deploy')))
+  } finally {
+    await closeWorld()
+  }
+
+  // N2：rollback 缺 target／空 target／非法 SHA 一律拒绝且无副作用
+  await initWorld()
+  try {
+    const first = await deploy(['--target', A])
+    check('N2 setup: release A loaded', first.code === 0 && pointer() === join(releaseDir(A), 'lib'), first.out)
+    const before = pointer()
+    const startsBefore = starts()
+    const recordsBefore = readRecords().length
+    const r1 = await deploy(['--rollback', '--previous', A])
+    check('N2 rollback without --target rejected', r1.code !== 0 && /--target/.test(r1.out), r1.out)
+    const r2 = await deploy(['--rollback', '--target', '', '--previous', A])
+    check('N2 empty rollback target rejected', r2.code !== 0 && /full 40-char SHA/.test(r2.out), r2.out)
+    const r3 = await deploy(['--rollback', '--target', 'abc', '--previous', A])
+    check('N2 invalid rollback target rejected', r3.code !== 0 && /full 40-char SHA/.test(r3.out), r3.out)
+    check('N2 rejected rollbacks have no side effects', pointer() === before && starts() === startsBefore && readRecords().length === recordsBefore, `pointer=${pointer()} starts=${starts()} records=${readRecords().length}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // N3：无 current 指针时用显式 --previous 恢复，且只在真正恢复后才写 failed-restored-previous
+  await initWorld()
+  try {
+    await deploy(['--target', A])
+    await deploy(['--target', B])
+    await deploy(['--target', A])
+    rmSync(join(instance, 'hephi', 'lib'))
+    mkdirSync(join(instance, 'hephi', 'lib'), { recursive: true })
+    state.health = 'marker'
+    writeStart(`echo attempt >> "${instance}/start.log"
+if [ ! -f "${instance}/fail-once-used" ]; then : > "${instance}/fail-once-used"; exit 1; fi
+: > "${instance}/started.marker"
+exec sleep 3600`)
+    rmSync(join(instance, 'started.marker'), { force: true })
+    const r = await deploy(['--rollback', '--target', B, '--previous', A])
+    check('N3 rollback failure exits nonzero', r.code !== 0, r.out)
+    const rec = readRecords('rollback').find((x) => x.result === 'failed-restored-previous')
+    check('N3 restore record only after real pointer restore', Boolean(rec) && pointer() === join(releaseDir(A), 'lib') && String(rec.previous).startsWith('previous:'), `${pointer()} ${JSON.stringify(rec)}`)
+    check('N3 record keeps target failure health evidence', Boolean(rec) && String(rec.targetFailure).includes('health'), JSON.stringify(rec))
+    check('N3 record keeps restore health evidence', Boolean(rec) && rec.restoreHealth === 'all-required-ready', JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // N4：恢复阶段 rename 失败不得绕过双失败记录（不得以 42 原始退出）
+  await initWorld()
+  try {
+    await deploy(['--target', A])
+    state.health = 'marker'
+    writeStart(`echo attempt >> "${instance}/start.log"
+if [ ! -f "${instance}/fail-once-used" ]; then : > "${instance}/fail-once-used"; exit 1; fi
+: > "${instance}/started.marker"
+exec sleep 3600`)
+    rmSync(join(instance, 'started.marker'), { force: true })
+    deployEnv = renameFailEnv(2)
+    const r = await deploy(['--target', B, '--previous', A])
+    if (process.env.HARNESS_DEBUG) console.error('N4 deploy:', JSON.stringify(r))
+    check('N4 recovery rename failure exits nonzero without raw 42', r.code !== 0 && r.code !== 42, `code=${r.code} ${r.out}`)
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-twice')
+    check('N4 double-failure record written', Boolean(rec), JSON.stringify(readRecords('deploy')))
+    check('N4 record keeps both failure evidences', Boolean(rec) && String(rec.targetFailure).length > 2 && String(rec.restoreFailure).includes('pointer restore'), JSON.stringify(rec))
+    check('N4 double-failure record keeps real paused readback', Boolean(rec) && rec.paused === true, JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // N5：成功路径必须回读真实 paused，不得硬编码 true
+  await initWorld({ pauseOnStart: true })
+  try {
+    const r = await deploy(['--target', A])
+    if (process.env.HARNESS_DEBUG) console.error('N5 deploy:', JSON.stringify(r), 'pointer=', pointer(), 'records=', JSON.stringify(readRecords('deploy')))
+    check('N5 deploy refuses success when host is not paused', r.code !== 0, r.out)
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-not-paused')
+    check('N5 record uses real paused readback (false)', Boolean(rec) && rec.paused === false, JSON.stringify(rec))
+    check('N5 record keeps health readback', Boolean(rec) && rec.healthReadback && rec.healthReadback.runtime && rec.healthReadback.runtime.state === 'ready', JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+}
+
+await runMainSuite()
+await runNegativeSuite()
 
 for (const line of results) console.log(line)
 if (failures > 0) {

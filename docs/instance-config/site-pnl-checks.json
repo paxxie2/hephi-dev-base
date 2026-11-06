@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "project-regression",
+      "kind": "test",
+      "purpose": "项目已有后端测试、前端类型检查、组件测试与生产构建通过（先安装前端依赖，保证新 worktree 可自包含执行）",
+      "command": "sh",
+      "args": [
+        "-c",
+        "npm --prefix web install --no-audit --no-fund && bash scripts/check.sh"
+      ],
+      "timeoutMs": 900000
+    }
+  ]
+}

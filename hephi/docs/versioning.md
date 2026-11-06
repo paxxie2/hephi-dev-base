@@ -1,14 +1,14 @@
 # 持久格式版本化规则（P5）
 
-状态：**规则已定稿；代码实施仍为 pending，本文档不代表已实施。**
+状态：**规则已定稿；activation 版本化已按本规则实施（version=1），其余格式仍为 pending。**
 适用范围：activation 合同、任务卡、检查配置、检查记录、`decisions.jsonl`、基线归档。
-只规定规则，不改变现有解析行为；行为改动由 P5 节点单独实施并带测试。
+只规定规则；行为改动按本规则实施并带测试（activation 已实施）。
 
 ## 1. 版本矩阵
 
 | 格式 | 载体 | 当前状态 | 升版条件 |
 | --- | --- | --- | --- |
-| activation 合同 | `activation.json` | 无 `version` 字段（待 P5 加） | 任何影响判定或挂载的字段变化 |
+| activation 合同 | `activation.json` | 有 `version: 1`；无 version 的旧合同按 legacy 读取 | 任何影响判定或挂载的字段变化 |
 | 任务卡 | 合同内 `task` | 固定 1 | 影响拦截或验收判定的变化 |
 | 检查配置 | 项目检查文件 | 待登记 | 判定语义变化 |
 | 检查记录 | 每工单 evidence | 2 | 字段语义或判定条件变化 |
@@ -26,5 +26,6 @@
 
 ## 3. 落实方式
 
-- 代码与测试由 P5 节点实施：旧/当前/未知版本、未知顶层字段、键序与哈希篡改、活跃工单禁止升级。
-- 在代码实施前，任何"已版本化"的结论不得写入验收记录。
+- activation：`src/control/activation.ts` 写入 `version: 1` 并纳入合同哈希；加载时先校验原哈希，再拒绝未知版本与未知顶层字段；缺失 version 的旧合同按 legacy 读取。测试见 `tests/control/activation.test.ts` 的「activation format versioning」。
+- 其余格式（任务卡、检查记录、`decisions.jsonl`、基线归档）：代码实施前，任何"已版本化"的结论不得写入验收记录。
+- 活跃工单禁止升级由 P8 部署流程执行，不在本文件实现。

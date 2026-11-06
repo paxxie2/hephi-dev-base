@@ -8,7 +8,12 @@ import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.
 
 export type ExecutionMode = 'native' | 'staged'
 
+/** The one supported persisted activation format. Any other explicit version is rejected. */
+export const ACTIVATION_VERSION = 1
+
 export type ActivationContract = {
+  /** Format version. Absent only in contracts written before versioning (legacy). */
+  version?: number
   enabled: true
   ticketId: string
   repository: string
@@ -215,6 +220,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
   const verification = await loadVerificationFromEnv(env)
   const task = taskOf(env, verification)
   const base: Omit<ActivationContract, 'contractHash'> = {
+    version: ACTIVATION_VERSION,
     enabled: true,
     ticketId,
     repository: required(env, 'DSH_SUPERAGENT_GITHUB_REPOSITORY'),
@@ -251,6 +257,26 @@ function isContract(value: unknown): value is Omit<ActivationContract, 'executio
     && typeof contract.contractHash === 'string'
 }
 
+const ACTIVATION_FIELDS = new Set([
+  'version', 'enabled', 'ticketId', 'repository', 'issueNumber', 'workspace', 'baseRef', 'baseSha',
+  'allowedPaths', 'requirePullRequest', 'executionMode', 'verification', 'task', 'contractHash',
+])
+
+/** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
+function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: string): void {
+  for (const key of Object.keys(parsed)) {
+    if (!ACTIVATION_FIELDS.has(key)) throw new Error(`unsupported HEPHI activation field: ${key} (${filePath})`)
+  }
+}
+
+/** A missing version means a contract written before versioning; only the current version is otherwise supported. */
+function supportedVersion(value: unknown, filePath: string): void {
+  if (value === undefined) return
+  if (value !== ACTIVATION_VERSION) {
+    throw new Error(`unsupported HEPHI activation version: ${String(value)}; this plugin supports ${ACTIVATION_VERSION} (${filePath})`)
+  }
+}
+
 /**
  * Parse one activation contract. The stored hash is verified against the raw
  * object first, so old contracts keep their original hash and mode-less meaning;
@@ -261,6 +287,8 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   if (!isContract(parsed)) throw new Error(`invalid HEPHI activation contract: ${filePath}`)
   const { contractHash: storedHash, ...base } = parsed
   if (storedHash !== contractHash(base)) throw new Error(`HEPHI activation contract hash mismatch: ${filePath}`)
+  supportedVersion(base.version, filePath)
+  rejectUnsupportedFields(parsed as Record<string, unknown>, filePath)
   // Validate persisted optional fields only after the original hash matches.
   // Return the parsed object unchanged so historical contracts keep their raw
   // shape and later reads/hashes match.

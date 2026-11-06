@@ -147,3 +147,55 @@ describe('Issue execution mode marker', () => {
     await expect(prepareActivation({ ...enabledEnv(await stateDir()), HEPHI_ISSUE_TITLE: '[native] task', HEPHI_EXECUTION_MODE: 'staged' })).rejects.toThrow('conflicts')
   })
 })
+
+describe('activation format versioning', () => {
+  it('writes the explicit version and covers it in the contract hash', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    expect(prepared.contract.version).toBe(1)
+    const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
+    expect(raw.version).toBe(1)
+    const { contractHash: hash, ...base } = raw as Record<string, unknown> & { contractHash: string }
+    expect(hash).toBe(contractHash(base as never))
+    expect(contractHash({ ...base, version: 2 } as never)).not.toBe(hash)
+  })
+
+  it('rejects an unknown activation version at load time', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
+    raw.version = 2
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 2')
+  })
+
+  it('rejects an unknown top-level field even when the stored hash matches it', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
+    raw.enforcement = 'shadow'
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation field: enforcement')
+  })
+
+  it('loads a legacy contract written before versioning', async () => {
+    const dir = await stateDir()
+    const prepared = await prepareActivation(enabledEnv(dir))
+    if (!prepared.enabled) throw new Error('activation was not enabled')
+    const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
+    delete raw.version
+    delete raw.contractHash
+    raw.contractHash = contractHash(raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
+    const loaded = await loadActivation(prepared.filePath)
+    expect(loaded.version).toBeUndefined()
+    expect(Object.hasOwn(loaded, 'version')).toBe(false)
+  })
+})

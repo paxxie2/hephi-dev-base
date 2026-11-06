@@ -14,11 +14,11 @@
 | 恢复 | `POST executor/pause {"paused":false}` | — |
 | 恢复后处理 | 恰好一个 Ticket `04b029dc406e343f08b0df8453b6d9ef`（ticket 5→6），assignments=1，worker 会话目录 1 个（`work-race-smoke-readme-04b029dc406e`），assignment 报告 `ready` 并引用 PR #37 | 调度层只处理一次 |
 
-## 异常发现（未解释）
+## 异常发现（来源未确认，已修正表述）
 
 - 同一 Issue 出现了 **两个 PR**：#36（21:27:57Z，分支 `agent/race-smoke-c0a9445cb550`）与 #37（21:31:13Z，分支 `agent/race-smoke-readme-04b029dc406e`，即 Ticket 报告里引用的那个）。
-- 同期只有 1 个 Ticket、1 个 worker 会话；trigger 只新增 1 条。说明**调度层没有重复处理**，但 **worker 层重复创建了外部产物**（原因未查明：可能是中途重试/重启后重复执行外部操作）。
-- Ticket 的 assignment `state=running` 与 `report=ready` 同时出现，观测不一致；未深究。
+- 复查宿主记录：该 Issue 只有 1 条 trigger、1 个 Ticket（`04b029dc…`）、1 个 worker 会话；B 的 GitHub source 统计也未出现重复 trigger。**调度层与 Worker 均无重复执行证据**。
+- 因此 #36 的来源**未能确认**（分支后缀 `c0a9445c` 不对应本实例的任何 Ticket；可能是其他宿主/代理创建的工件）。先前记录中“worker 重复创建外部产物”的推断**不成立**，已在此更正；两处 PR 均已清理。
 
 ## 结论
 

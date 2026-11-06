@@ -29,6 +29,11 @@
 | 实验宿主 B | `http://127.0.0.1:3083` 运行中（`running=0`、`queued=0`、`paused=false`，2026-11-07 回读） |
 | **实载 commit** | **未验证**：仓库无 `describePlugin` 回读入口，宿主无版本查询 API；不得以“重启成功”冒充实载 |
 
+## 3.1 交付 PR
+
+- 分支已推送到远端并开 PR 供人工审查：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），状态 OPEN、未合并。
+- 按实施资料包要求，代理只提交未合并 PR，不合并、不打基线标签。
+
 ## 4. CI
 
 - 按用户 2026-11-07 决定，**不使用 GitHub Actions**。`7a26d0f` 引入的 `.github/workflows/hephi-check.yml` 已删除，P1 不实施；CI 通过与否不作为合并或基线门禁。

@@ -34,6 +34,10 @@
 - 分支已推送到远端并开 PR 供人工审查：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），状态 OPEN、未合并。
 - 按实施资料包要求，代理只提交未合并 PR，不合并、不打基线标签。
 
+## 3.2 生产基线归档
+
+- P15 首次归档见 [`docs/p15-baseline.md`](p15-baseline.md)：60 条唯一 Ticket（目标 ≥100 未达，如实记录）、32 个 PR 元数据、SHA256 与校验结果；原始归档在本机证据目录，不入库。
+
 ## 4. CI
 
 - 按用户 2026-11-07 决定，**不使用 GitHub Actions**。`7a26d0f` 引入的 `.github/workflows/hephi-check.yml` 已删除，P1 不实施；CI 通过与否不作为合并或基线门禁。

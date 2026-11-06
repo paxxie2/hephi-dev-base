@@ -35,11 +35,13 @@ if (ticketsText === null || summaryText === null || sumsText === null) {
   process.exit(2)
 }
 
+// 归档可包含额外文件（如 pr-metadata.json）：逐个校验 SHA256SUMS 列出的文件。
 for (const line of sumsText.trim().split('\n').filter(Boolean)) {
   const [hash, name] = line.trim().split(/\s+/)
-  const body = name === 'tickets.json' ? ticketsText : name === 'summary.json' ? summaryText : null
-  if (body === null) problems.push(`SHA256SUMS 含未知文件 ${name}`)
-  else if (createHash('sha256').update(body).digest('hex') !== hash) problems.push(`${name} SHA256 不符`)
+  if (!name) { problems.push('SHA256SUMS 存在空行'); continue }
+  const file = join(archive, name)
+  if (!existsSync(file)) { problems.push(`SHA256SUMS 列出但缺少文件 ${name}`); continue }
+  if (createHash('sha256').update(readFileSync(file)).digest('hex') !== hash) problems.push(`${name} SHA256 不符`)
 }
 
 const tickets = JSON.parse(ticketsText)

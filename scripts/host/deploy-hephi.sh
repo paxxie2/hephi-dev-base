@@ -1,16 +1,20 @@
 #!/bin/sh
 # P8 插件部署：检查暂停/排空 → 构建 → 重启实例 → 实载回读；任一步失败保持暂停并非零退出。
 # 必须人工执行。--dry-run 只做检查（可配 --skip-build 跳过构建，用于在宿主上先验证前置条件）。
-# 用法：./scripts/host/deploy-hephi.sh --instance <dir> --host <url> [--dry-run] [--skip-build] [--timeout <sec>]
+# 用法：./scripts/host/deploy-hephi.sh --instance <dir> --host <url> [--hephi <dir>] [--repo <dir>] [--dry-run] [--skip-build] [--timeout <sec>]
+#   --hephi 插件源码目录（默认 <instance>/hephi；本机实验实例为 <instance>/hephi-review/hephi）
+#   --repo  用于回读 commit 的 git 仓库根（默认 <instance>；本机实验实例为 <instance>/hephi-review）
 set -eu
 
 usage() {
-  echo "usage: $0 --instance <dir> --host <url> [--dry-run] [--skip-build] [--timeout <sec>]" >&2
+  echo "usage: $0 --instance <dir> --host <url> [--hephi <dir>] [--repo <dir>] [--dry-run] [--skip-build] [--timeout <sec>]" >&2
   exit 2
 }
 
 instance=""
 host=""
+hephi=""
+repo=""
 dry_run="no"
 skip_build="no"
 timeout=120
@@ -18,6 +22,8 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --instance) [ $# -ge 2 ] || usage; instance="$2"; shift 2 ;;
     --host) [ $# -ge 2 ] || usage; host="$2"; shift 2 ;;
+    --hephi) [ $# -ge 2 ] || usage; hephi="$2"; shift 2 ;;
+    --repo) [ $# -ge 2 ] || usage; repo="$2"; shift 2 ;;
     --dry-run) dry_run="yes"; shift ;;
     --skip-build) skip_build="yes"; shift ;;
     --timeout) [ $# -ge 2 ] || usage; timeout="$2"; shift 2 ;;
@@ -28,6 +34,9 @@ done
 [ -n "$instance" ] && [ -n "$host" ] || usage
 [ -d "$instance" ] || { echo "实例目录不存在：$instance" >&2; exit 2; }
 [ -f "$instance/host.pid" ] || { echo "缺少 host.pid：$instance/host.pid" >&2; exit 2; }
+[ -n "$hephi" ] || hephi="$instance/hephi"
+[ -n "$repo" ] || repo="$instance"
+[ -d "$hephi" ] || { echo "插件目录不存在：$hephi" >&2; exit 2; }
 host=${host%/}
 
 read_state() {
@@ -45,11 +54,11 @@ echo "部署前状态：running=$running queued=$queued paused=$paused runtime=$
 [ "$paused" = "true" ] || { echo "宿主未暂停，拒绝部署：先暂停评估/派发/出站并排空在途任务" >&2; exit 1; }
 [ "$running" = "0" ] && [ "$queued" = "0" ] || { echo "仍有运行或排队任务，拒绝部署：$running/$queued" >&2; exit 1; }
 
-sha=$(git -C "$instance" rev-parse HEAD 2>/dev/null || echo unknown)
+sha=$(git -C "$repo" rev-parse HEAD 2>/dev/null || echo unknown)
 echo "实例仓库 HEAD：$sha"
 
 if [ "$skip_build" = "no" ]; then
-  ( cd "$instance/hephi" && pnpm install --frozen-lockfile && pnpm check ) || { echo "构建失败，保持暂停，不切换" >&2; exit 1; }
+  ( cd "$hephi" && pnpm install --frozen-lockfile && pnpm check ) || { echo "构建失败，保持暂停，不切换" >&2; exit 1; }
 fi
 if [ "$dry_run" = "yes" ]; then
   echo "dry-run：暂停/排空检查与构建通过，未重启实例"

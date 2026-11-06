@@ -22,8 +22,9 @@
 
 ## 3. 对照环境现状
 
-- A 实例（`http://127.0.0.1:3082`，无赫菲）：本次探测时 HTTP `000`（未运行）→ G1 第 6 项与 P4 三组对照所需的“无插件”宿主需要用户先启动。
-- B 实例（`http://127.0.0.1:3083`，加载赫菲）：运行中，状态可读。
+- A 实例（`http://127.0.0.1:3082`，无赫菲）：已按用户授权启动并核查（2026-11-07）：host.pid `96013`，状态可读 `paused=false`、`running=0`、`queued=0`；health 中 `runtime/relay/notice/launch/delivery/assessment/evals/models/gitlab` 为 `ready`，`reply=error`；登录 URL 见 `daily/logs/host.log`（含本地 token，不记录）。A 可作为“无插件”对照宿主，但 G1 第 6 项仍需受控 Issue 运行。
+- B 实例（`http://127.0.0.1:3083`，加载赫菲）：运行中，状态可读；2026-11-07 完成一次真实部署（`docs/p8-deploy-record.md`）。
+- 模型账号：A/B 日志均出现 `deepseek-account /auth-api/v0/users/current 403 network`，但 `/orchestrator/api/models` 仍将 `deepseek-account` 标为 routable、health `models=ready`；真实 Worker 运行（P11 smoke）成功，说明该 403 未阻断模型调用，但属环境风险。
 
 ## 4. 未做的事（不得冒充通过）
 

@@ -26,7 +26,8 @@
 | --- | --- |
 | 构建来源 | `hephi/` @ `abfdd3a`，`pnpm check`（typecheck + 175 tests + tsdown） |
 | 构建 commit 注入 | tsdown 注入 `__HEPHI_COMMIT__`；干净树为 `abfdd3a`，dirty 树为 `<sha>-dirty`（P2） |
-| 实验宿主 B | `http://127.0.0.1:3083` 运行中（`running=0`、`queued=0`、`paused=false`，2026-11-07 回读） |
+| 实验宿主 B | `http://127.0.0.1:3083` 运行中（2026-11-07 完成一次真实部署，见 `docs/p8-deploy-record.md`） |
+| 日常宿主 A | `http://127.0.0.1:3082` 已启动（2026-11-07，host.pid 96013，无赫菲，可作为“无插件”对照） |
 | **实载 commit** | **未验证**：仓库无 `describePlugin` 回读入口，宿主无版本查询 API；不得以“重启成功”冒充实载 |
 
 ## 3.1 交付 PR

@@ -7,7 +7,7 @@ import { clean, defaultPullRequest, hasCommit, normalizeRepository, remoteReposi
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
 import { checkRunDir, readRuns, type CheckRunRecord } from './check-store.js'
-import { checkCommand, sameSource } from './check-runner.js'
+import { checkCommand, contained, sameSource } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
 
 /**
@@ -59,6 +59,23 @@ export function sessionBindingProblem(snapshot: SessionSnapshot, sessionId: stri
   return undefined
 }
 
+/**
+ * Evidence must match the frozen check definition even when Session binding is off:
+ * a record for another command or another directory is not evidence for this check.
+ */
+async function frozenCheckProblem(contract: ActivationContract, record: CheckRunRecord, workspace: string): Promise<string | undefined> {
+  const definition = verificationOf(contract).checks.find(check => check.id === record.checkId)
+  if (!definition) return `${record.checkId}: no frozen check definition in the contract`
+  const expected = [definition.command, ...definition.args]
+  if (record.argv.length !== expected.length || record.argv.some((value, index) => value !== expected[index])) {
+    return `${record.checkId}: recorded argv differs from the frozen check`
+  }
+  if (record.cwd !== await contained(workspace, definition.cwd)) {
+    return `${record.checkId}: recorded working directory differs from the frozen check`
+  }
+  return undefined
+}
+
 export function createEvidenceVerifier(options: {
   stateDir: string
   pullRequest?: (repo: string, n: number) => Promise<PullRequestInfo>
@@ -88,6 +105,8 @@ export function createEvidenceVerifier(options: {
           || !r.sessionId || !r.callId || !r.innerCallId || !r.finishedAt
           || !sameSource(r.before, before) || !sameSource(r.after, before)) throw new Error(`missing, failed or stale evidence: ${id}`)
         if (sha256(await readFile(join(checkRunDir(options.stateDir, contract.ticketId, r.runId), 'output.log'))) !== r.outputHash) throw new Error('output hash mismatch')
+        const frozen = await frozenCheckProblem(contract, r, workspace)
+        if (frozen) throw new Error(`evidence does not match the frozen check: ${frozen}`)
         used.push(r)
       }
       if (options.requireSessionBinding) {

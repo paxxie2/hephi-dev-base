@@ -176,4 +176,22 @@ describe('synchronous evidence MVP (fixture integration)', () => {
     await expect(x.execute('build')).rejects.toThrow('operator resolution')
     expect((await x.verify()).ok).toBe(false)
   })
+
+  it('rejects evidence whose recorded argv differs from the frozen check', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, argv: [...record.argv, '--skip-required-assertion'] }))
+    expect((await x.verify()).ok).toBe(false)
+    await writeFile(file, JSON.stringify(record))
+    expect(await x.verify()).toEqual({ ok: true })
+  })
+  it('rejects evidence whose recorded cwd differs from the frozen check directory', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const file = join(checkRunDir(x.stateDir, x.c.ticketId, record.runId), 'run.json')
+    await writeFile(file, JSON.stringify({ ...record, cwd: tmpdir() }))
+    expect((await x.verify()).ok).toBe(false)
+  })
+
 })

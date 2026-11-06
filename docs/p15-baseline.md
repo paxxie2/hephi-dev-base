@@ -25,11 +25,22 @@
 - PR 元数据（来自 ticket JSON 中 `/pull/<n>` 启发式提取的 32 个唯一 PR，`gh pr view` 只读读取）：
   - 29 OPEN、3 MERGED；涉及 `paxxie2/dubbo`、`topic-bench`、`site-pnl-agent`、`site-pnl-diagnosis`、`super-agent-hephi-review`
 
+## 2.1 第二次归档（含 Trigger/Disposition/Thread 关系表）
+
+按资料包 P15 的“Trigger/Assignment/follows 关联”要求补充关系表导出：
+
+- 归档目录（本机，不入库）：`/Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2/`
+- 文件：`tickets.json`、`triggers.json`、`dispositions.json`、`threads.json`、`trigger-threads.json`、`summary.json`、`SHA256SUMS`
+- 计数（2026-11-07 04:22 导出）：Ticket 61（open 34 / stopped 21 / merged 2 / completed 4）、Trigger 85、Disposition 85、Thread 107、Trigger↔Thread 85；PR 关联 33
+- `node eval/check-baseline.mjs --archive <dir>` → `ok: true`；负例：改关系文件保留旧哈希 → `triggers.json SHA256 不符`；伪造 trigger 引用 → `引用了不存在的 trigger`
+- 多实例合并说明：`id`/`key` 只要求同一实例（source）内唯一；跨实例重复是数据库克隆的已知现象，校验按 source 分组
+- 第一次归档（60 条、无关系表）由本次 r2 归档取代
+
 ## 3. 缺口（如实报告）
 
 1. **未达 ≥100**：全量唯一 Ticket 仅 60（单实例最高 49）。按计划要求如实记录，不构造历史工单。
 2. **样本类型**：真实数据无 `dropped` 终态（0 条）；`stopped` 21 条可用；重试/多 Assignment（14 条多 assignment）可覆盖。
-3. **触发器/关联表**：当前归档只含 Ticket 主表与 PR 元数据，未导出 `trigger`、`disposition`、`follows` 全量关联表；这是计划 P15 的下一项，需单独导出并校验。
+3. **触发器/关联表**：r2 已导出 `trigger`、`disposition`、`thread` 与 `trigger-thread` 关联；`follows`（ticket JSON 内字段）随 Ticket 主表保存，未单独拆表。
 4. **PR 关联为启发式**：来自 Ticket JSON 中出现的 `/pull/<n>` 文本，不保证覆盖所有人工记录。
 5. 窗口与只读凭据仍需用户确认；本记录不代表 P15 完成。
 

@@ -29,13 +29,34 @@ if (existsSync(out) && readdirSync(out).length > 0) {
 
 const [from, to] = window ? window.split('..') : [null, null]
 
-function readTickets(db) {
+function readRows(db, sql) {
   if (!existsSync(db)) throw new Error(`db 不存在：${db}`)
-  const text = execFileSync('sqlite3', ['-json', `file:${db}?immutable=1`, 'select id, value from ticket;'], {
+  const text = execFileSync('sqlite3', ['-json', `file:${db}?immutable=1`, sql], {
     encoding: 'utf8',
     maxBuffer: 256 * 1024 * 1024,
   })
   return JSON.parse(text || '[]')
+}
+
+function readTickets(db) {
+  return readRows(db, 'select id, value from ticket;')
+}
+
+/** Ticket 主表之外的关系表：Trigger、Disposition、Thread 及 Trigger↔Thread 关联。 */
+function readRelations(db) {
+  const triggers = readRows(db, 'select id, at, value from trigger;').map(row => ({
+    id: row.id, at: row.at ?? null, value: JSON.parse(row.value), source: db,
+  }))
+  const dispositions = readRows(db, 'select id, value from disposition;').map(row => ({
+    id: row.id, value: JSON.parse(row.value), source: db,
+  }))
+  const threads = readRows(db, 'select key, value from thread;').map(row => ({
+    key: row.key, value: JSON.parse(row.value), source: db,
+  }))
+  const triggerThreads = readRows(db, 'select thread, id, at, human from trigger_thread;').map(row => ({
+    thread: row.thread, triggerId: row.id, at: row.at ?? null, human: row.human === 1, source: db,
+  }))
+  return { triggers, dispositions, threads, triggerThreads }
 }
 
 function normalize(db, row) {
@@ -56,15 +77,30 @@ function normalize(db, row) {
 }
 
 const tickets = []
+const triggers = []
+const dispositions = []
+const threads = []
+const triggerThreads = []
 const sources = []
 for (const db of dbs) {
-  let rows
-  try { rows = readTickets(db) }
-  catch (error) { console.error(`读取数据库失败：${db}（${error instanceof Error ? error.message : String(error)}）`); process.exit(2) }
+  let rows, relations
+  try {
+    rows = readTickets(db)
+    relations = readRelations(db)
+  } catch (error) { console.error(`读取数据库失败：${db}（${error instanceof Error ? error.message : String(error)}）`); process.exit(2) }
   const normalized = rows.map((row) => normalize(db, row))
     .filter((ticket) => (!from || (ticket.createdAt ?? '') >= from) && (!to || (ticket.createdAt ?? '') <= to))
+  const inWindow = (at) => !window || ((!from || (at ?? '') >= from) && (!to || (at ?? '') <= to))
+  const relationTriggers = relations.triggers.filter(row => inWindow(row.at))
+  const relationTriggerThreads = relations.triggerThreads.filter(row => inWindow(row.at))
   tickets.push(...normalized)
-  sources.push({ db, tickets: normalized.length })
+  triggers.push(...relationTriggers)
+  dispositions.push(...relations.dispositions)
+  threads.push(...relations.threads)
+  triggerThreads.push(...relationTriggerThreads)
+  sources.push({ db, tickets: normalized.length, triggers: relationTriggers.length,
+    dispositions: relations.dispositions.length, threads: relations.threads.length,
+    triggerThreads: relationTriggerThreads.length })
 }
 
 const ids = new Set(tickets.map((ticket) => ticket.id))
@@ -79,6 +115,10 @@ const summary = {
   prLinked: tickets.filter((ticket) => ticket.prRefs.length > 0).length,
   noPr: tickets.filter((ticket) => ticket.prRefs.length === 0).length,
   byStatus: tickets.reduce((acc, ticket) => ({ ...acc, [ticket.status]: (acc[ticket.status] ?? 0) + 1 }), {}),
+  triggers: triggers.length,
+  dispositions: dispositions.length,
+  threads: threads.length,
+  triggerThreads: triggerThreads.length,
   unknownCount: tickets.filter((ticket) => !['merged', 'stopped', 'dropped', 'completed', 'open'].includes(ticket.status)).length,
   notes: [
     'PR 关联为 JSON 中 https://github.com/<owner>/<repo>/pull/<n> 的启发式提取，不保证覆盖所有人工记录。',
@@ -87,11 +127,17 @@ const summary = {
 }
 
 mkdirSync(out, { recursive: true })
-const ticketsJson = `${JSON.stringify(tickets, null, 2)}\n`
-const summaryJson = `${JSON.stringify(summary, null, 2)}\n`
-writeFileSync(join(out, 'tickets.json'), ticketsJson)
-writeFileSync(join(out, 'summary.json'), summaryJson)
-const sums = [['tickets.json', ticketsJson], ['summary.json', summaryJson]]
+const files = {
+  'tickets.json': tickets,
+  'triggers.json': triggers,
+  'dispositions.json': dispositions,
+  'threads.json': threads,
+  'trigger-threads.json': triggerThreads,
+  'summary.json': summary,
+}
+const bodies = Object.fromEntries(Object.entries(files).map(([name, value]) => [name, `${JSON.stringify(value, null, 2)}\n`]))
+for (const [name, body] of Object.entries(bodies)) writeFileSync(join(out, name), body)
+const sums = Object.entries(bodies)
   .map(([name, body]) => `${createHash('sha256').update(body).digest('hex')}  ${name}`)
   .join('\n')
 writeFileSync(join(out, 'SHA256SUMS'), `${sums}\n`)

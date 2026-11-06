@@ -1,6 +1,10 @@
 #!/usr/bin/env node
 // Score A/B delivery runs from their Git results.
 //
+// 使用限制（P16）：在 B6 之前，本脚本只计算建议性指标，不得用格式化/重命名估算、
+// 测试数量或自评分代替真实宿主对照的效果结论；对照实验须在真实宿主运行，并由
+// 冻结的评分表与预注册口径判定。
+//
 //   node eval/ab-metrics.mjs eval/runs.json
 //
 // runs.json:

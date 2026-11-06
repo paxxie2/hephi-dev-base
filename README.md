@@ -6,7 +6,8 @@
 - [`PLAN.md`](PLAN.md)：改造方案、实现说明、重新评分（现在 84 分，宿主核对并完成对照实验后 90～92 分）、落地步骤和残余缺口。
 - [`hephi/`](hephi/)：改造后的插件。第一个相关提交是快照 `8e68ec2` 的原样导入，之后的提交就是全部改动。
 - [`eval/ab-metrics.mjs`](eval/ab-metrics.mjs)：开、关赫菲对照实验的指标计算与判定脚本。
-- [`probes/`](probes/)：改造前用于证明缺口的探针测试，需放进原始快照中运行（见 `REPORT.md` 第 8 节）。
+- [`probes/`](probes/)：改造前用于证明缺口的探针测试，固定对应原始快照 `8e68ec2`，不作为现行基线；需放进原始快照中运行（见 `REPORT.md` 第 8 节）。
+- [`docs/source-consistency.md`](docs/source-consistency.md)：本地分支、隔离副本、构建与实载 commit、c547 等价修复位置的一致性表。
 
 ## 运行
 
@@ -15,7 +16,7 @@
 ```bash
 cd hephi
 pnpm install --frozen-lockfile
-pnpm check        # 类型检查、140 个测试、构建
+pnpm check        # 类型检查、175 个测试、构建
 ```
 
 对照实验：

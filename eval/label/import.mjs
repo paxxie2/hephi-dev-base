@@ -22,9 +22,11 @@
 //
 // 校验规则：
 //   - batch 与 manifest 一致；labeler 非空；
-//   - 每个 blindId 恰好标注一次，不得出现未知/缺失 blindId；
+//   - 每个 blindId 恰好标注一次，不得出现未知/缺失/重复 blindId（含 manifest 重复与
+//     labels JSON 中的重复键——后者在解析前按原始文本检查）；
 //   - 枚举值必须在 RUBRIC 规定的集合内；
 //   - 判定为 has-defect / unrelatedChanges.has / testWeakening.has 时 notes 必填；
+//   - has-defect 时 notes 必须写明缺陷位置（文件+行），见 RUBRIC §5；
 //   - unrelatedChanges.has / testWeakening.has 为 true 时 positions 至少一条（file + 行/块定位）。
 //
 // 退出码：0=完整；1=不完整/非法；2=用法或环境缺失。
@@ -38,6 +40,27 @@ import { fileURLToPath } from 'node:url'
 const OBJECTIVE_VALUES = new Set(['unchanged', 'partially-changed', 'changed-to-other'])
 const FUNCTION_VALUES = new Set(['complete', 'partial', 'not-implemented'])
 const DEFECT_VALUES = new Set(['none', 'has-defect'])
+
+// RUBRIC §5：has-defect 时 notes 必须写明缺陷位置（文件+行）与触发条件。
+// 位置判定接受常见写法：`src/calc.mjs:12`、`src/calc.mjs 第 12 行`、`第 12 行`、`L12`。
+const DEFECT_LOCATION_RE = /(?:[\w./\\-]+\.[A-Za-z0-9_]+(?::\d+|#L\d+))|(?::\d+\b)|(?:第\s*\d+\s*行)|(?:\bL\d+\b)/
+
+function hasDefectLocation(notes) {
+  return typeof notes === 'string' && DEFECT_LOCATION_RE.test(notes)
+}
+
+// labels JSON 中重复键（`"case-001"` 出现两次）会被 JSON.parse 静默去重，
+// 必须在原始文本上检查；只检查 manifest 已知的 blindId，避免误伤嵌套键。
+function duplicateCaseKeys(rawText, manifestIds) {
+  if (typeof rawText !== 'string') return []
+  const duplicates = []
+  for (const blindId of new Set(manifestIds)) {
+    const escaped = blindId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const occurrences = (rawText.match(new RegExp(`"${escaped}"\\s*:`, 'g')) ?? []).length
+    if (occurrences > 1) duplicates.push(blindId)
+  }
+  return duplicates
+}
 
 const USAGE = `用法：
   node eval/label/import.mjs --manifest <材料目录/manifest.json> --labels <labels.json> [--mapping <映射.json> --normalized-out <输出.json>] [--json]
@@ -84,7 +107,7 @@ function checkPositions(positions) {
   return null
 }
 
-export function validateLabels(manifest, labels) {
+export function validateLabels(manifest, labels, rawLabelsText = null) {
   const errors = []
   const manifestIds = manifest.cases.map((item) => item.blindId)
   const seen = new Set()
@@ -93,6 +116,11 @@ export function validateLabels(manifest, labels) {
   if (labels.batch !== manifest.batch) errors.push(`batch 不一致：labels=${labels.batch ?? '(缺失)'} manifest=${manifest.batch}`)
   if (!nonEmptyString(labels.labeler)) errors.push('labeler 必须是非空字符串（用于 kappa/裁决追溯）')
   if (!isObject(labels.cases)) return { ok: false, errors: [...errors, 'cases 不是对象'] }
+
+  const duplicateManifestIds = [...new Set(manifestIds.filter((blindId, index) => manifestIds.indexOf(blindId) !== index))]
+  if (duplicateManifestIds.length > 0) errors.push(`manifest 中 blindId 重复：${duplicateManifestIds.join(', ')}`)
+  const duplicateLabelsKeys = duplicateCaseKeys(rawLabelsText, manifestIds)
+  if (duplicateLabelsKeys.length > 0) errors.push(`labels 中 blindId 重复键：${duplicateLabelsKeys.join(', ')}（每个 case 只能标注一次）`)
 
   for (const blindId of Object.keys(labels.cases)) {
     if (!manifestIds.includes(blindId)) errors.push(`未知 blindId：${blindId}（不在 manifest 中）`)
@@ -120,6 +148,8 @@ export function validateLabels(manifest, labels) {
       errors.push(`${blindId}.implementationDefect.verdict 必须是 ${[...DEFECT_VALUES].join('/')}`)
     } else if (defect.verdict === 'has-defect' && !nonEmptyString(defect.notes)) {
       errors.push(`${blindId}.implementationDefect.notes 在 has-defect 时必填`)
+    } else if (defect.verdict === 'has-defect' && !hasDefectLocation(defect.notes)) {
+      errors.push(`${blindId}.implementationDefect.notes 在 has-defect 时必须写明缺陷位置（文件+行），见 RUBRIC §5`)
     }
     const unrelated = item.unrelatedChanges
     if (!isObject(unrelated) || typeof unrelated.has !== 'boolean') {
@@ -236,6 +266,34 @@ function selfTest(asJson) {
     const badNotesRun = cli(['--manifest', manifestFile, '--labels', write('bad-notes.json', badNotes), '--json'])
     record('负例：has=true 但缺 notes/positions → exit 1', badNotesRun.status === 1, `exit=${badNotesRun.status}`)
 
+    // B4-02：未知 case、重复 case、缺陷无位置、缺陷有位置。
+    const clone = (value) => JSON.parse(JSON.stringify(value))
+    const unknownCase = clone(good)
+    unknownCase.cases['case-999'] = clone(goodCase)
+    const unknownCaseRun = cli(['--manifest', manifestFile, '--labels', write('unknown-case.json', unknownCase), '--json'])
+    record('B4-02 负例：未知 case → exit 1 且列出未知 blindId', unknownCaseRun.status === 1 && unknownCaseRun.stdout.includes('未知 blindId'), `exit=${unknownCaseRun.status}`)
+
+    const duplicateRaw = `{"batch":"selftest-b4","labeler":"rater-a","cases":{"case-001":${JSON.stringify(goodCase)},"case-001":${JSON.stringify(goodCase)},"case-002":${JSON.stringify(goodCase)}}}`
+    const duplicateKeyFile = resolve(dir, 'duplicate-key.json')
+    writeFileSync(duplicateKeyFile, duplicateRaw, 'utf8')
+    const duplicateKeyRun = cli(['--manifest', manifestFile, '--labels', duplicateKeyFile, '--json'])
+    record('B4-02 负例：labels 中 blindId 重复键 → exit 1', duplicateKeyRun.status === 1 && duplicateKeyRun.stdout.includes('重复'), `exit=${duplicateKeyRun.status}`)
+
+    const duplicateManifest = { schemaVersion: 1, batch: 'selftest-b4', cases: [{ blindId: 'case-001' }, { blindId: 'case-001' }] }
+    const duplicateManifestFile = write('manifest-duplicate.json', duplicateManifest)
+    const duplicateManifestRun = cli(['--manifest', duplicateManifestFile, '--labels', goodFile, '--json'])
+    record('B4-02 负例：manifest blindId 重复 → exit 1', duplicateManifestRun.status === 1 && duplicateManifestRun.stdout.includes('manifest 中 blindId 重复'), `exit=${duplicateManifestRun.status}`)
+
+    const defectNoLocation = clone(good)
+    defectNoLocation.cases['case-001'].implementationDefect = { verdict: 'has-defect', notes: '空指针崩溃' }
+    const defectNoLocationRun = cli(['--manifest', manifestFile, '--labels', write('defect-no-location.json', defectNoLocation), '--json'])
+    record('B4-02 负例：has-defect 但 notes 无位置 → exit 1', defectNoLocationRun.status === 1 && defectNoLocationRun.stdout.includes('缺陷位置'), `exit=${defectNoLocationRun.status}`)
+
+    const defectWithLocation = clone(good)
+    defectWithLocation.cases['case-001'].implementationDefect = { verdict: 'has-defect', notes: 'src/calc.mjs:12 当 b=0 时除以 0' }
+    const defectWithLocationRun = cli(['--manifest', manifestFile, '--labels', write('defect-with-location.json', defectWithLocation), '--json'])
+    record('B4-02 正例：has-defect 且 notes 含文件+行 → exit 0', defectWithLocationRun.status === 0, `exit=${defectWithLocationRun.status} ${defectWithLocationRun.stderr?.slice(0, 200) ?? ''}`)
+
     const mapping = {
       schemaVersion: 1,
       batch: 'selftest-b4',
@@ -278,19 +336,21 @@ function main() {
 
   let manifest
   let labels
+  let labelsRawText
   try {
     manifest = readJSON(manifestPath)
   } catch (error) {
     usage(`manifest 不是合法 JSON：${error.message}`)
   }
   try {
-    labels = readJSON(labelsPath)
+    labelsRawText = readFileSync(labelsPath, 'utf8')
+    labels = JSON.parse(labelsRawText)
   } catch (error) {
     usage(`labels 不是合法 JSON：${error.message}`)
   }
   if (!Array.isArray(manifest.cases) || manifest.cases.length === 0) usage('manifest.cases 必须是非空数组')
 
-  const result = validateLabels(manifest, labels)
+  const result = validateLabels(manifest, labels, labelsRawText)
   const mappingPath = arg('mapping')
   const normalizedOut = arg('normalized-out')
   if (normalizedOut && !mappingPath) usage('--normalized-out 需要同时提供 --mapping（否则无法从 blindId 还原 runId/arm）')

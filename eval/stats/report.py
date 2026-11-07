@@ -339,8 +339,10 @@ def evaluate_metric(pairs: dict[str, dict[str, Run]], metric_key: str, direction
 
 
 def evaluate_cost(pairs: dict[str, dict[str, Run]], runs: list[Run], caps: dict) -> dict:
-    native_runs = [run for run in runs if run.arm == "native" and run.env_available]
-    off_runs = [run for run in runs if run.arm == "off" and run.env_available]
+    # PREREG §7：环境不可用/任务卡不一致等被排除出**效果指标**的运行，记录保留并计入成本/稳定性。
+    # 因此成本统计包含全部运行（不再按 env_available 过滤）；效果指标仍只用有效配对。
+    native_runs = [run for run in runs if run.arm == "native"]
+    off_runs = [run for run in runs if run.arm == "off"]
     native_minutes = [run.minutes for run in native_runs]
     off_minutes = [run.minutes for run in off_runs]
     native_tokens = [float(run.tokens) for run in native_runs if run.tokens is not None]
@@ -426,7 +428,7 @@ def analyze(runs: list[Run], config: dict | None = None) -> dict:
     guardrails = {}
     for key, name, direction, _ in GUARDRAIL_METRICS:
         guardrails[key] = {"name": name, "direction": "larger is better（已归一化）", **evaluate_metric(pairs, key, direction, n_boot, seed, margin)}
-    cost = evaluate_cost(pairs, effect_runs, caps)
+    cost = evaluate_cost(pairs, runs, caps)
     consistency = {key: repeat_consistency(effect_runs, key) for key, _, _, _ in PRIMARY_METRICS}
     faults = [
         {"runId": run.run_id, "taskId": run.task_id, "faults": run.faults}

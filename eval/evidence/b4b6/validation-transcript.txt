@@ -1,0 +1,387 @@
+==== 环境 ====
+$ uname -a
+Darwin xgjdeMacBook-Pro.local 27.0.0 Darwin Kernel Version 27.0.0: Tue Aug 11 21:05:42 PDT 2026; root:xnu-13432.1.9~1/RELEASE_ARM64_T6031 arm64
+[exit=0]   # 环境：OS/内核
+
+$ git --version
+git version 2.54.0 (Apple Git-157)
+[exit=0]   # 环境：git 版本
+
+$ node --version
+v26.1.0
+[exit=0]   # 环境：node 版本
+
+$ /tmp/b4b6-venv/bin/python -V
+Python 3.14.2
+[exit=0]   # 环境：venv python 版本
+
+$ /tmp/b4b6-venv/bin/pip -V
+pip 25.3 from /private/tmp/b4b6-venv/lib/python3.14/site-packages/pip (python 3.14)
+[exit=0]   # 环境：venv pip 版本
+
+$ bash -c /tmp/b4b6-venv/bin/pip\ freeze\ \|\ grep\ -Ei\ \'\^\(numpy\|scipy\|statsmodels\|pandas\)==\'
+numpy==2.3.4
+pandas==3.1.1
+scipy==1.16.2
+statsmodels==0.14.5
+[exit=0]   # 环境：固定版本依赖 pip freeze（过滤）
+
+$ python3 -V
+Python 3.14.2
+[exit=0]   # 环境：系统 python3 版本
+
+$ python3 -c import\ statsmodels
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import statsmodels
+ModuleNotFoundError: No module named 'statsmodels'
+[exit=1]   # 环境：系统 python3 无 statsmodels（依赖守卫负例前提）
+
+==== 分支与基线 ====
+$ git branch --show-current
+agent/b4b6-stats
+[exit=0]   # git：当前分支
+
+$ git rev-parse HEAD
+29b127809d3389b693ca21b7e242e57086fafc99
+[exit=0]   # git：HEAD commit
+
+$ git rev-parse main
+29b127809d3389b693ca21b7e242e57086fafc99
+[exit=0]   # git：基线 main
+
+$ git status --short
+ M eval/label/export.mjs
+ M eval/label/import.mjs
+ M eval/stats/report.py
+?? eval/CHECKLIST-B4B6-acceptance.md
+?? eval/evidence/b4b6/
+?? eval/stats/b6_known_answers.py
+?? eval/stats/kappa.py
+[exit=0]   # git：工作树状态
+
+==== B4 依赖守卫（系统 Python 缺依赖 → exit 2）====
+$ python3 eval/stats/kappa.py --self-test
+[kappa] 缺少统计依赖：
+  - numpy
+  - statsmodels
+请先安装固定版本（见 eval/stats/requirements.txt）：
+  python3 -m venv .venv
+  .venv/bin/pip install -r eval/stats/requirements.txt
+  .venv/bin/python eval/stats/kappa.py --scores <scores.json>
+[exit=2]   # B4：系统 python3 kappa.py --self-test 缺依赖 → 期望 2
+
+$ python3 eval/stats/report.py --self-test
+[report] 缺少统计依赖：
+  - numpy
+  - scipy
+  - statsmodels
+请先安装固定版本（本仓库不新增 npm 依赖；Python 依赖只用于 B 线统计）：
+  python3 -m venv .venv
+  .venv/bin/pip install -r eval/stats/requirements.txt
+  .venv/bin/python eval/stats/report.py --input <runs.json>
+（本仓库在 Python 3.14.2 / numpy 2.3.4 / scipy 1.16.2 / statsmodels 0.14.5 上实测过自测。）
+[exit=2]   # B4：系统 python3 report.py --self-test 缺依赖 → 期望 2
+
+==== B4-01 导出工具自测（合成材料）====
+$ node eval/label/export.mjs --self-test
+PASS 导出干净材料 :: exit=0
+PASS 材料目录生成 manifest/template/case :: layout
+PASS 导出清单不含组别/taskId/runId 键 :: []
+PASS 私有映射与材料目录分离 :: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-label-self-DrxvwT/private/mapping.json
+PASS 负例：映射放进材料目录 → 拒绝（exit 2） :: exit=2
+PASS 负例：材料含 hephi 痕迹 → 拒绝导出（exit 1） :: exit=1 [label-export] 导出材料中发现组别/赫菲硬痕迹，已拒绝导出。请先清理材料或修正任务卡/运行仓库内容。
+HARD case-001 diff:8 [hephi] +// hephi output: ready
+
+PASS B4-01 负例：diff 含分支名 agent/... → 拒绝导出（exit 1） :: exit=1 [label-export] 导出材料中发现组别/赫菲硬痕迹，已拒绝导出。请先清理材料或修正任务卡/运行仓库内容。
+HARD case-001 diff:8 [branch-ref] +// 来自 agent/b4b6-stats 分支
+
+PASS B4-01 负例：diff 含插件输出 loadedShaReadback → 拒绝导出（exit 1） :: exit=1 [label-export] 导出材料中发现组别/赫菲硬痕迹，已拒绝导出。请先清理材料或修正任务卡/运行仓库内容。
+HARD case-001 diff:8 [plugin-commit] +// loadedShaReadback: abc123
+
+PASS B4-01 私有映射可按 blindId 还原 runId/arm/taskId 且不进入材料目录 :: entries=[{"runId":"selftest-t2-native","arm":"native"},{"runId":"selftest-t1-off","arm":"off"}] leakedIntoMaterial=false
+SELF-TEST: PASS
+[exit=0]   # B4-01：export.mjs --self-test → 期望 0
+
+==== B4-02 读回/校验自测（合成标注）====
+$ node eval/label/import.mjs --self-test
+PASS 完整标注 → exit 0 :: exit=0
+PASS 负例：缺 case → exit 1 且列出 missing :: exit=1
+PASS 负例：非法枚举 → exit 1 :: exit=1
+PASS 负例：has=true 但缺 notes/positions → exit 1 :: exit=1
+PASS B4-02 负例：未知 case → exit 1 且列出未知 blindId :: exit=1
+PASS B4-02 负例：labels 中 blindId 重复键 → exit 1 :: exit=1
+PASS B4-02 负例：manifest blindId 重复 → exit 1 :: exit=1
+PASS B4-02 负例：has-defect 但 notes 无位置 → exit 1 :: exit=1
+PASS B4-02 正例：has-defect 且 notes 含文件+行 → exit 0 :: exit=0
+PASS 带私有映射 → 还原为 run 级标注 :: exit=0
+SELF-TEST: PASS
+[exit=0]   # B4-02：import.mjs --self-test → 期望 0
+
+==== B4-03/04/05 statsmodels kappa 已知答案 ====
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --self-test
+PASS [deps] kappa 实现来自 statsmodels.stats.inter_rater.cohens_kappa :: module=statsmodels.stats.inter_rater
+PASS [B4-03] 完全一致 → kappa=1 且 pass :: exit=0 kappa=1.0 pass=True err=
+PASS [B4-03] 完全一致时 statsmodels 输入矩阵正确 :: {"table": [[3, 0], [0, 3]], "po": 1.0}
+PASS [B4-04] 边际平衡 po=0.5 → kappa=0 且不达标 exit 1 :: exit=1 kappa=0.0 po=0.5 pe=0.5
+PASS [B4-04] po/pe 均为 0.5（已知答案） :: {"po": 0.5, "pe": 0.5}
+PASS [B4-05] 全同标签 → kappa=null/undefined，pass=false，exit 1，绝不为 1 :: exit=1 kappa=None undefined=True pass=False
+PASS [invalid] 文件不存在 → exit 2 :: exit=2 err=[kappa] 输入不合法：评分文件不存在：/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-kappa-amdgsj6s/does-not-exist.json
+
+PASS [invalid] 非法 JSON → exit 2 :: exit=2 err=[kappa] 输入不合法：评分文件不是合法 JSON：Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+
+PASS [invalid] items 为空 → exit 2 :: exit=2 err=[kappa] 输入不合法：items 为空，无法计算 kappa
+
+PASS [invalid] 未知标签 → exit 2 :: exit=2 err=[kappa] 输入不合法：items[0].raterB 是未知标签：'maybe'，labels=['pass', 'fail']
+
+PASS [invalid] 缺 --scores → exit 2 :: exit=2 err=[kappa] 需要 --scores <scores.json>（或使用 --self-test）
+
+PASS [invalid] --min 非数字 → exit 2 :: exit=2 err=[kappa] --min 必须是数字
+
+SELF-TEST: PASS
+[exit=0]   # B4：kappa.py --self-test → 期望 0
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-03.json
+文件：/tmp/b4b6-fixtures/b4-03.json
+样本数 n：4
+标签：pass,fail
+观测一致率 po：1.0000
+期望一致率 pe：0.5000
+Cohen's kappa：1.0000（statsmodels 0.14.5）
+门槛 threshold：0.7
+判定：PASS（达标）
+[exit=0]   # B4-03：完全一致 → 期望 kappa=1，exit 0
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-03.json --json
+{
+  "n": 4,
+  "kappa": 1.0,
+  "threshold": 0.7,
+  "pass": true,
+  "undefined": false,
+  "labels": [
+    "pass",
+    "fail"
+  ],
+  "po": 1.0,
+  "pe": 0.5,
+  "method": "statsmodels.stats.inter_rater.cohens_kappa",
+  "statsmodels_version": "0.14.5"
+}
+[exit=0]   # B4-03：--json 输出（n/kappa/threshold/pass）
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-04.json
+文件：/tmp/b4b6-fixtures/b4-04.json
+样本数 n：4
+标签：pass,fail
+观测一致率 po：0.5000
+期望一致率 pe：0.5000
+Cohen's kappa：0.0000（statsmodels 0.14.5）
+门槛 threshold：0.7
+判定：FAIL（不达标或无定义）
+[exit=1]   # B4-04：平衡边际 po=0.5 → 期望 kappa=0，exit 1
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-04.json --json
+{
+  "n": 4,
+  "kappa": 0.0,
+  "threshold": 0.7,
+  "pass": false,
+  "undefined": false,
+  "labels": [
+    "pass",
+    "fail"
+  ],
+  "po": 0.5,
+  "pe": 0.5,
+  "method": "statsmodels.stats.inter_rater.cohens_kappa",
+  "statsmodels_version": "0.14.5"
+}
+[exit=1]   # B4-04：--json 输出（po/pe/kappa）
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-05.json
+[kappa] kappa 无定义（所有标签相同/零方差），按“不达标”处理，不得视为 1。
+文件：/tmp/b4b6-fixtures/b4-05.json
+样本数 n：3
+标签：pass,fail
+观测一致率 po：1.0000
+期望一致率 pe：1.0000
+Cohen's kappa：undefined（无定义：全同标签/零方差，不得视为 1）
+门槛 threshold：0.7
+判定：FAIL（不达标或无定义）
+[exit=1]   # B4-05：全同标签 → 期望 undefined，exit 1，不得为 1
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-05.json --json
+[kappa] kappa 无定义（所有标签相同/零方差），按“不达标”处理，不得视为 1。
+{
+  "n": 3,
+  "kappa": null,
+  "threshold": 0.7,
+  "pass": false,
+  "undefined": true,
+  "labels": [
+    "pass",
+    "fail"
+  ],
+  "po": 1.0,
+  "pe": 1.0,
+  "method": "statsmodels.stats.inter_rater.cohens_kappa",
+  "statsmodels_version": "0.14.5"
+}
+[exit=1]   # B4-05：--json 输出（kappa:null / undefined:true）
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/all-same-no-labels.json --json
+[kappa] kappa 无定义（所有标签相同/零方差），按“不达标”处理，不得视为 1。
+{
+  "n": 2,
+  "kappa": null,
+  "threshold": 0.7,
+  "pass": false,
+  "undefined": true,
+  "labels": [
+    "pass"
+  ],
+  "po": 1.0,
+  "pe": 1.0,
+  "method": "statsmodels.stats.inter_rater.cohens_kappa",
+  "statsmodels_version": "0.14.5"
+}
+[exit=1]   # B4-05 变体：未给 labels、标签从数据推导且全同 → 期望 undefined，exit 1
+
+$ /tmp/b4b6-venv/bin/python eval/stats/kappa.py --scores /tmp/b4b6-fixtures/b4-04.json --min 0 --json
+{
+  "n": 4,
+  "kappa": 0.0,
+  "threshold": 0.0,
+  "pass": true,
+  "undefined": false,
+  "labels": [
+    "pass",
+    "fail"
+  ],
+  "po": 0.5,
+  "pe": 0.5,
+  "method": "statsmodels.stats.inter_rater.cohens_kappa",
+  "statsmodels_version": "0.14.5"
+}
+[exit=0]   # B4 参数：--min 0 时 kappa=0 判定为达标（边界）
+
+==== B6 report.py 自测 ====
+$ /tmp/b4b6-venv/bin/python eval/stats/report.py --self-test
+PASS CI 已知答案：6 个任务差值恒为 -1 → CI=[-1,-1] :: ci=[-1.0, -1.0]
+PASS 精确 McNemar：改善6/恶化0 → p=2*0.5^6 :: p=0.03125 expected=0.03125
+PASS 主指标判定：显著改善 :: {"improved": true, "worsened": false}
+PASS 精确 McNemar：5/5 → p=1 :: p=1.0
+PASS 精确 McNemar：10/0 → p=0.001953125 :: p=0.001953125
+PASS 非劣效反例：CI 下界 -1 <= -0.05 → 非劣效不成立 :: {"margin": -0.05, "ci_lower": -1.0, "non_inferior": false, "direction": "larger is better\uff08\u5df2\u5f52\u4e00\u5316\uff09"}
+PASS 非劣效正例：差值 0 → CI 下界 0 > -0.05 :: {"margin": -0.05, "ci_lower": 0.0, "non_inferior": true, "direction": "larger is better\uff08\u5df2\u5f52\u4e00\u5316\uff09"}
+PASS 成本超限：native 中位耗时 40 > 上限 30 :: ["median_minutes_max", "very_slow_share_max"]
+PASS 成本未超限：native 中位耗时 10 <= 上限 30 :: []
+PASS 样本不足：n_pairs=1 < min_pairs=5 → evidence_insufficient :: evidence_insufficient
+PASS 输入校验：缺字段抛清晰 ValueError :: 运行记录缺少字段：batch; validationEnvironment.status 必须是 available/unavailable
+SELF-TEST: PASS
+[exit=0]   # B6：report.py --self-test → 期望 0
+
+==== B6 已知答案（合成数据；不代表正式实验）====
+$ /tmp/b4b6-venv/bin/python eval/stats/b6_known_answers.py
+PASS [B6-01] 6 改善 / 0 恶化 → McNemar p=0.03125 且 CI=[-1,-1] :: p=0.03125 ci=[-1.0, -1.0] improved=True
+PASS [B6-02] 守护指标 native 低 10pp（更差方向）→ 不得判非劣效 :: diff=-0.1 ci=[-0.3, 0.0] non_inferior=False
+PASS [B6-02] 主指标 native 高 10pp（越界率更差）→ 不得判改善/达标 :: diff=0.1 improved=False conclusion=not_meets_prereg
+PASS [B6-04] 部分 token 缺失 → 中位数只用已知值（1 个 100 + 1 个 200 → 150，而非按 0 混入） :: native_median_tokens=150.0
+PASS [B6-04] 全部 token 缺失 → 中位数 N/A、成本检查不通过（缺失不等于 0） :: median=None exceeded=['median_tokens_max', 'p90_tokens_max']
+PASS [B6-05] 对照组 off 比率=0 → relative_change=None 且标注不适用（不除零） :: off_rate=0.0 relative=None note=对照组为 0，相对变化不适用
+PASS [B6-05] 分层不足（4 对 < min_pairs=5）→ 该层结论“证据不足”，不强行下结论 :: repo/a={'n_pairs': 4, 'evidence_insufficient': True, 'conclusion': '证据不足'} repo/b={'n_pairs': 6, 'evidence_insufficient': False, 'primary': {'outOfScopeRate': 0.0, 'unrelatedRate': None, 'objectiveChangedRate': 0.0}, 'conclusion': '已计算（点估计；分层只做描述性报告）'}
+PASS [B6-06] 环境不可用运行不计效果（n_pairs=2）但仍保留成本（tokens 中位数 200、耗时中位数 20） :: env_unavailable=1 pairs=2 tokens=200.0 minutes=20.0
+PASS [B6-07] 同数据 + 同 seed 两次 CLI 输出逐字节一致（可复算） :: exit=0/0 bytes=7467 identical=True
+KNOWN-ANSWERS: PASS
+[exit=0]   # B6-01/02/04/05/06/07：b6_known_answers.py → 期望 0
+
+$ /tmp/b4b6-venv/bin/python eval/stats/b6_known_answers.py --json
+{
+  "knownAnswers": true,
+  "versions": {
+    "numpy": "2.3.4",
+    "scipy": "1.16.2",
+    "statsmodels": "0.14.5"
+  },
+  "steps": [
+    {
+      "id": "B6-01",
+      "name": "6 改善 / 0 恶化 → McNemar p=0.03125 且 CI=[-1,-1]",
+      "ok": true,
+      "detail": "p=0.03125 ci=[-1.0, -1.0] improved=True"
+    },
+    {
+      "id": "B6-02",
+      "name": "守护指标 native 低 10pp（更差方向）→ 不得判非劣效",
+      "ok": true,
+      "detail": "diff=-0.1 ci=[-0.3, 0.0] non_inferior=False"
+    },
+    {
+      "id": "B6-02",
+      "name": "主指标 native 高 10pp（越界率更差）→ 不得判改善/达标",
+      "ok": true,
+      "detail": "diff=0.1 improved=False conclusion=not_meets_prereg"
+    },
+    {
+      "id": "B6-04",
+      "name": "部分 token 缺失 → 中位数只用已知值（1 个 100 + 1 个 200 → 150，而非按 0 混入）",
+      "ok": true,
+      "detail": "native_median_tokens=150.0"
+    },
+    {
+      "id": "B6-04",
+      "name": "全部 token 缺失 → 中位数 N/A、成本检查不通过（缺失不等于 0）",
+      "ok": true,
+      "detail": "median=None exceeded=['median_tokens_max', 'p90_tokens_max']"
+    },
+    {
+      "id": "B6-05",
+      "name": "对照组 off 比率=0 → relative_change=None 且标注不适用（不除零）",
+      "ok": true,
+      "detail": "off_rate=0.0 relative=None note=对照组为 0，相对变化不适用"
+    },
+    {
+      "id": "B6-05",
+      "name": "分层不足（4 对 < min_pairs=5）→ 该层结论“证据不足”，不强行下结论",
+      "ok": true,
+      "detail": "repo/a={'n_pairs': 4, 'evidence_insufficient': True, 'conclusion': '证据不足'} repo/b={'n_pairs': 6, 'evidence_insufficient': False, 'primary': {'outOfScopeRate': 0.0, 'unrelatedRate': None, 'objectiveChangedRate': 0.0}, 'conclusion': '已计算（点估计；分层只做描述性报告）'}"
+    },
+    {
+      "id": "B6-06",
+      "name": "环境不可用运行不计效果（n_pairs=2）但仍保留成本（tokens 中位数 200、耗时中位数 20）",
+      "ok": true,
+      "detail": "env_unavailable=1 pairs=2 tokens=200.0 minutes=20.0"
+    },
+    {
+      "id": "B6-07",
+      "name": "同数据 + 同 seed 两次 CLI 输出逐字节一致（可复算）",
+      "ok": true,
+      "detail": "exit=0/0 bytes=7467 identical=True"
+    }
+  ]
+}
+[exit=0]   # B6 已知答案 --json（含依赖版本与逐项 detail）
+
+==== 静态检查与卫生 ====
+$ node --check eval/label/export.mjs
+[exit=0]   # 静态：node --check export.mjs
+
+$ node --check eval/label/import.mjs
+[exit=0]   # 静态：node --check import.mjs
+
+$ node --check eval/kappa.mjs
+[exit=0]   # 静态：node --check kappa.mjs（未修改文件，回归）
+
+$ /tmp/b4b6-venv/bin/python -m py_compile eval/stats/kappa.py eval/stats/report.py eval/stats/b6_known_answers.py
+[exit=0]   # 静态：python -m py_compile 三个脚本
+
+$ git diff --check
+[exit=0]   # 卫生：git diff --check（期望 0）
+
+$ git diff --stat
+ eval/label/export.mjs | 68 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ eval/label/import.mjs | 68 ++++++++++++++++++++++++++++++++++++++++++++++++---
+ eval/stats/report.py  |  8 +++---
+ 3 files changed, 137 insertions(+), 7 deletions(-)
+[exit=0]   # 卫生：git diff --stat

@@ -1,0 +1,16 @@
+# B4/B6 环境证据（第 3 次尝试 / agent/b4b6-stats，独立克隆 /tmp/b4b6）
+# 生成时间：2026-11-08 02:24:59 CST
+# venv 位于仓库外，不提交；仓库内无 .venv。
+venv=/tmp/b4b6-venv
+python=3.14.2
+pip=25.3
+numpy=2.3.4
+scipy=1.16.2
+statsmodels=0.14.5
+pandas=3.1.1   # statsmodels 0.14.5 的传递依赖
+node=v26.1.0
+git=git version 2.54.0 (Apple Git-157)
+install_command=python3 -m venv /tmp/b4b6-venv && /tmp/b4b6-venv/bin/pip install --no-input -r eval/stats/requirements.txt
+install_exit=0
+install_log=eval/evidence/b4b6/pip-install.log
+requirements=eval/stats/requirements.txt

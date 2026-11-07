@@ -427,6 +427,74 @@ function selfTest(asJson) {
     const traced = runCliSafe(['--manifest', tracedManifest, '--out', join(root, 'out-traced'), '--mapping', join(root, 'private', 'mapping-traced.json')])
     record('负例：材料含 hephi 痕迹 → 拒绝导出（exit 1）', traced.status === 1, `exit=${traced.status} ${traced.stderr.slice(0, 200)}`)
 
+    // B4-01：分支名/提交信息类组别痕迹 → 拒绝导出（fail-closed）。
+    const gitAt = (cwd, args) => execFileSync('git', args, { cwd, encoding: 'utf8', env: gitEnv })
+    const makeTracedRepo = (dirName, headContent) => {
+      const tracedRepo = join(root, dirName)
+      mkdirSync(join(tracedRepo, 'src'), { recursive: true })
+      writeFileSync(join(tracedRepo, 'src', 'calc.mjs'), 'export const add = (a, b) => a - b\n', 'utf8')
+      gitAt(tracedRepo, ['init', '--quiet'])
+      gitAt(tracedRepo, ['add', '-A'])
+      gitAt(tracedRepo, ['commit', '--quiet', '-m', 'base'])
+      const tracedBase = gitAt(tracedRepo, ['rev-parse', 'HEAD']).trim()
+      writeFileSync(join(tracedRepo, 'src', 'calc.mjs'), headContent, 'utf8')
+      gitAt(tracedRepo, ['add', '-A'])
+      gitAt(tracedRepo, ['commit', '--quiet', '-m', 'fix'])
+      return { tracedRepo, tracedBase, tracedHead: gitAt(tracedRepo, ['rev-parse', 'HEAD']).trim() }
+    }
+    const branchTrace = makeTracedRepo('repo-branch-trace', 'export const add = (a, b) => a + b\n// 来自 agent/b4b6-stats 分支\n')
+    const branchManifest = join(root, 'manifest-branch.json')
+    writeFileSync(branchManifest, JSON.stringify({
+      batch: 'selftest-b4-branch',
+      seed: 7,
+      tasks: { t1: { taskDir } },
+      runs: [{ runId: 'selftest-t1-off', taskId: 't1', arm: 'off', repo: branchTrace.tracedRepo, base: branchTrace.tracedBase, head: branchTrace.tracedHead }],
+    }), 'utf8')
+    const branchTraceRun = runCliSafe(['--manifest', branchManifest, '--out', join(root, 'out-branch-trace'), '--mapping', join(root, 'private', 'mapping-branch.json')])
+    record('B4-01 负例：diff 含分支名 agent/... → 拒绝导出（exit 1）', branchTraceRun.status === 1, `exit=${branchTraceRun.status} ${branchTraceRun.stderr.slice(0, 200)}`)
+
+    const redactionRepo = makeTracedRepo('repo-redaction-trace', 'export const add = (a, b) => a + b\n// loadedShaReadback: abc123\n')
+    const redactionManifest = join(root, 'manifest-redaction.json')
+    writeFileSync(redactionManifest, JSON.stringify({
+      batch: 'selftest-b4-plugin-trace',
+      seed: 7,
+      tasks: { t1: { taskDir } },
+      runs: [{ runId: 'selftest-t1-native', taskId: 't1', arm: 'native', repo: redactionRepo.tracedRepo, base: redactionRepo.tracedBase, head: redactionRepo.tracedHead }],
+    }), 'utf8')
+    const redactionRun = runCliSafe(['--manifest', redactionManifest, '--out', join(root, 'out-redaction-trace'), '--mapping', join(root, 'private', 'mapping-redaction.json')])
+    record('B4-01 负例：diff 含插件输出 loadedShaReadback → 拒绝导出（exit 1）', redactionRun.status === 1, `exit=${redactionRun.status} ${redactionRun.stderr.slice(0, 200)}`)
+
+    // B4-01：私有映射可还原（blindId → runId/arm/taskId），且不泄漏进材料目录。
+    const mappingManifest = join(root, 'manifest-mapping.json')
+    writeFileSync(mappingManifest, JSON.stringify({
+      batch: 'selftest-b4-mapping',
+      seed: 7,
+      tasks: { t1: { taskDir } },
+      runs: [
+        { runId: 'selftest-t1-off', taskId: 't1', arm: 'off', repo, base, head },
+        { runId: 'selftest-t2-native', taskId: 't1', arm: 'native', repo, base, head },
+      ],
+    }), 'utf8')
+    const mappingOut = join(root, 'out-mapping')
+    const mappingFile = join(root, 'private', 'mapping-restore.json')
+    const mappingRun = runCliSafe(['--manifest', mappingManifest, '--out', mappingOut, '--mapping', mappingFile])
+    let restoreDetail = 'mapping 未生成'
+    let restoreOk = false
+    if (mappingRun.status === 0 && existsSync(mappingFile)) {
+      const privateMapping = JSON.parse(readFileSync(mappingFile, 'utf8')).mapping ?? {}
+      const entries = Object.values(privateMapping)
+      const arms = new Set(entries.map((entry) => entry.arm))
+      const leaked = existsSync(join(mappingOut, 'mapping-restore.json'))
+      restoreOk = entries.length === 2
+        && [...arms].sort().join(',') === 'native,off'
+        && entries.every((entry) => entry.runId && entry.taskId === 't1' && /^[0-9a-f]{40}$/.test(entry.base) && /^[0-9a-f]{40}$/.test(entry.head))
+        && !leaked
+      restoreDetail = `entries=${JSON.stringify(entries.map((entry) => ({ runId: entry.runId, arm: entry.arm })))} leakedIntoMaterial=${leaked}`
+    } else {
+      restoreDetail = `exit=${mappingRun.status} ${mappingRun.stderr.slice(0, 200)}`
+    }
+    record('B4-01 私有映射可按 blindId 还原 runId/arm/taskId 且不进入材料目录', restoreOk, restoreDetail)
+
     const ok = steps.every((step) => step.ok)
     if (asJson) console.log(JSON.stringify({ selfTest: ok, steps }, null, 2))
     else {

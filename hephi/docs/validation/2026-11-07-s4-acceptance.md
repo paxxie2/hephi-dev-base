@@ -50,7 +50,7 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 | E10 | **pass** | `e2e/2026-11-07-E10.md`：Issue #60、ticket 1612ffac、run passed、PR #61（2 文件） |
 | E1-on | **PASS（正式场景，流程级）** | `e2e/2026-11-08-E1-on.md`：Issue #62 / ticket `e2419b28…` / run `9ffe2a11…` passed/exit0 / ready.pass / PR #63；改动为等价清理（非缺陷修复） |
 | E5/E9 | **blocked** | 前置未满足（H0 停机已做、H3 真实宿主探针 manual） |
-| E-PR1 | **PARTIAL（SMOKE_ONLY 流程证据）** | `e2e/2026-11-07-E-PR1.md`：PR #50 首次创建、ready.pass、HEAD 一致 |
+| E-PR1 | **PASS（正式场景，来自 E1-on run）** | `e2e/2026-11-08-E-PR1.md`：PR #63 首次创建、ready.pass、HEAD=run before/after head |
 
 ## 6. P8 / D1 / D2 / P2 / P5 现状
 
@@ -64,20 +64,20 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 - 真实 A2 H1–H6 未在生产实载构建上复跑（生产快照 check record pluginCommit=efdd406）。
 - 真实 supervisor 自动重启行为、非零 effect 等待、运行期网络隔离。
 - C3 review→Trigger、C4.2 真实工具可见性、C1 真实 E2E。
-- E5/E9；E1-off 的干净 off 环境；E1-on 仅等价清理（未验证真实缺陷修复类型）。
+- E5/E9；E1-off 的干净 off 环境。E1-on 仅等价清理（未验证真实缺陷修复类型）；E-PR1 依赖同一 run。
 - F2–F5 仍开（issue #35）；F1 已由 PR38 修复，但**新 main `d9d70b1` 的 S1/S3/S4 复跑未做**。
 - B 线实验（B5/B7/B8）未开始。
 
 ## 8. 结论
 
 A 线本轮完成了：旧 main S1 PASS、PR30 独立复核（request changes）、A2 定案、E4/E10 真实验收、E1-on 正式场景验收、E1-off 对照（partial）。
-**S4 仍为 partial**：F1 已修复（PR38），但 F2–F5 仍开、E1-off/E-PR1 partial、E5/E9 blocked，
+**S4 仍为 partial**：F1 已修复（PR38），但 F2–F5 仍开（PR #40 待合并）、E1-off partial、E5/E9 blocked，
 且新 main 的 S1 未重跑。不得将本记录当作 A5/D5 通过或 S4 验收通过。
 
 ## 9. 更新（E10 完成后）
 
-- A5 非 blocked 场景均已有记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1；其中 **E1-on/E4/E10/E2/E3/E6/E7/E8 为 pass**，**E1-off/E-PR1 为 partial**（前置/来源限制）。
-- E5/E9 保持 blocked；E-PR1 仍为 SMOKE_ONLY 流程证据、E1-off 前置/provenance 无法核验（E1-on 已正式重跑但修改为等价清理）、E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——因此 A5 **仍未达到“全部应执行场景 pass + 人工复核通过”**，需补 E-PR1 正式场景与负责人签收。
+- A5 非 blocked 场景均已有记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1；其中 **E1-on/E-PR1/E4/E10/E2/E3/E6/E7/E8 为 pass**，**E1-off 为 partial**（前置限制）。
+- E5/E9 保持 blocked；E1-off 前置/provenance 无法核验；E1-on/E-PR1 来自同一等价清理 run；E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——A5 仍缺 E1-off 干净环境与负责人签收，**不得记为通过**。
 - PR30 复审 F1（activation legacy 降级绕过）**已由 PR38 修复**（`formatVersion=2` + legacy 仅 `--allow-legacy-rollback`，F1-A..G 负例）；
   F2–F5 仍开（issue #35）。S3 真实部署门禁仍需 F2–F5 处置或明确书面降级；新 main 的 S1 重跑未做。
 
@@ -93,7 +93,8 @@ A 线本轮完成了：旧 main S1 PASS、PR30 独立复核（request changes）
 | E10 记录 | `hephi/docs/validation/e2e/2026-11-07-E10.md`；stateDir `…/state/hephi/1612ffac…`；PR #61 | passed，2 文件 |
 | E1-off 记录 | `hephi/docs/validation/e2e/2026-11-07-E1-off.md`；Issue #54 / PR #55 | partial（前置/provenance 无法核验） |
 | E1-on 正式记录 | `hephi/docs/validation/e2e/2026-11-08-E1-on.md`；Issue #62 / ticket `e2419b28…` / run `9ffe2a11…` / PR #63 | PASS（等价清理，非缺陷修复） |
-| E1-on/E-PR1 历史记录 | `e2e/2026-11-07-E1-on.md`、`E-PR1.md`；Issue #49 / ticket ad3d5016 / PR #50 | partial（SMOKE_ONLY） |
+| E-PR1 正式记录 | `hephi/docs/validation/e2e/2026-11-08-E-PR1.md`；PR #63 / run `9ffe2a11…` | PASS（流程级，来自 E1-on run） |
+| E1-on/E-PR1 历史记录 | `e2e/2026-11-07-E1-on.md`、`E-PR1.md`；Issue #49 / ticket ad3d5016 / PR #50 | partial（SMOKE_ONLY，已被正式记录取代） |
 | E2/E3/E6/E7 记录 | `e2e/2026-11-07-E2.md`、`E3.md`、`E6.md`、`E7.md`；stateDir `…/state/hephi/90150d23…`；PR #53 | 外部执行，决策日志已核对 |
 | 部署记录 | `<instance>/logs/deploy-20261107T141210Z-57984.json`（sha256 804ba302…） | D1/D2/D4/D5 证据 |
 | 记录 PR | `paxxie2/super-agent-hephi-review` PR #34（docs-only） | 本文件与 e2e 记录所在分支 |

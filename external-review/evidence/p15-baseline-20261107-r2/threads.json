@@ -1,0 +1,3412 @@
+[
+  {
+    "key": "github:2",
+    "value": {
+      "key": "github:2",
+      "ref": {
+        "source": "github",
+        "id": "2"
+      },
+      "createdAt": "2026-10-31T19:24:26.787Z",
+      "subscriptions": [
+        "6c5b2c3d20598e608c59e611315f28e1"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] Triple REST cuts mapping and filter patterns at '?', so '?' wildcards and regular expressions with '?' do not work",
+        "label": "#2 [Hephi test] [Bug] Triple REST cuts mapping and filter patterns at '?', so '?' wildcards and regular expressions with '?' do not work",
+        "facts": {
+          "number": {
+            "value": "#2"
+          }
+        },
+        "number": 2,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/2"
+      },
+      "lastAt": "2026-10-31T19:23:46.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:3",
+    "value": {
+      "key": "github:3",
+      "ref": {
+        "source": "github",
+        "id": "3"
+      },
+      "createdAt": "2026-10-31T19:24:26.792Z",
+      "subscriptions": [
+        "f2e975294545985c8f3d970540842461"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] Triple server (NettyPortUnificationServer) never cleans up half-open connections after network failure (no idle detection, no SO_KEEPALIVE)",
+        "label": "#3 [Hephi test] [Bug] Triple server (NettyPortUnificationServer) never cleans up half-open connections after network failure (no idle detection, no SO_KEEPALIVE)",
+        "facts": {
+          "number": {
+            "value": "#3"
+          }
+        },
+        "number": 3,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/3"
+      },
+      "lastAt": "2026-10-31T19:23:48.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:4",
+    "value": {
+      "key": "github:4",
+      "ref": {
+        "source": "github",
+        "id": "4"
+      },
+      "createdAt": "2026-10-31T19:24:26.794Z",
+      "subscriptions": [
+        "887445ed2dd1a971766f25f9bdd59a5e"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "label": "#4 [Hephi test] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "facts": {
+          "number": {
+            "value": "#4"
+          }
+        },
+        "number": 4,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/4"
+      },
+      "lastAt": "2026-10-31T19:23:51.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:5",
+    "value": {
+      "key": "github:5",
+      "ref": {
+        "source": "github",
+        "id": "5"
+      },
+      "createdAt": "2026-10-31T19:24:26.795Z",
+      "subscriptions": [
+        "c9743737c8f774761d92926defac7e30"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] Config merging mutates incoming parameters and rejects read-only maps",
+        "label": "#5 [Hephi test] [Bug] Config merging mutates incoming parameters and rejects read-only maps",
+        "facts": {
+          "number": {
+            "value": "#5"
+          }
+        },
+        "number": 5,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/5"
+      },
+      "lastAt": "2026-10-31T19:23:53.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:6",
+    "value": {
+      "key": "github:6",
+      "ref": {
+        "source": "github",
+        "id": "6"
+      },
+      "createdAt": "2026-10-31T19:24:26.797Z",
+      "subscriptions": [
+        "a3a3b165ae7a6cef931d175e1d09e8d4"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] DefaultFuture.cancel throws NullPointerException after request completion",
+        "label": "#6 [Hephi test] [Bug] DefaultFuture.cancel throws NullPointerException after request completion",
+        "facts": {
+          "number": {
+            "value": "#6"
+          }
+        },
+        "number": 6,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/6"
+      },
+      "lastAt": "2026-10-31T19:23:55.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:7",
+    "value": {
+      "key": "github:7",
+      "ref": {
+        "source": "github",
+        "id": "7"
+      },
+      "createdAt": "2026-10-31T19:24:26.798Z",
+      "subscriptions": [
+        "d11da74fbc40b7ce3dfa4380ab8f15da"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] QoS count command ignores the times argument after cd",
+        "label": "#7 [Hephi test] [Bug] QoS count command ignores the times argument after cd",
+        "facts": {
+          "number": {
+            "value": "#7"
+          }
+        },
+        "number": 7,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/7"
+      },
+      "lastAt": "2026-10-31T19:23:57.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:8",
+    "value": {
+      "key": "github:8",
+      "ref": {
+        "source": "github",
+        "id": "8"
+      },
+      "createdAt": "2026-10-31T19:24:26.799Z",
+      "subscriptions": [
+        "d4fe4269f72696220ed34e7b185f268c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] AccessLogFilter accesslog path warnings are garbled and name the wrong accesslog.fixed.path value",
+        "label": "#8 [Hephi test] [Bug] AccessLogFilter accesslog path warnings are garbled and name the wrong accesslog.fixed.path value",
+        "facts": {
+          "number": {
+            "value": "#8"
+          }
+        },
+        "number": 8,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/8"
+      },
+      "lastAt": "2026-10-31T19:23:59.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:9",
+    "value": {
+      "key": "github:9",
+      "ref": {
+        "source": "github",
+        "id": "9"
+      },
+      "createdAt": "2026-10-31T19:24:26.800Z",
+      "subscriptions": [
+        "c42f65481bb9e3f65b1b85f8257e63de"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] UnsafeByteArrayInputStream large skips can overflow and rewind the cursor",
+        "label": "#9 [Hephi test] [Bug] UnsafeByteArrayInputStream large skips can overflow and rewind the cursor",
+        "facts": {
+          "number": {
+            "value": "#9"
+          }
+        },
+        "number": 9,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/9"
+      },
+      "lastAt": "2026-10-31T19:24:01.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:10",
+    "value": {
+      "key": "github:10",
+      "ref": {
+        "source": "github",
+        "id": "10"
+      },
+      "createdAt": "2026-10-31T19:24:26.806Z",
+      "subscriptions": [
+        "b11c279696ae9c394c41e10b364a3626"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] dubbo.protocol.triple.max-message-size is only read from OS environment variables",
+        "label": "#10 [Hephi test] [Bug] dubbo.protocol.triple.max-message-size is only read from OS environment variables",
+        "facts": {
+          "number": {
+            "value": "#10"
+          }
+        },
+        "number": 10,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/10"
+      },
+      "lastAt": "2026-10-31T19:24:03.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:11",
+    "value": {
+      "key": "github:11",
+      "ref": {
+        "source": "github",
+        "id": "11"
+      },
+      "createdAt": "2026-10-31T19:24:26.807Z",
+      "subscriptions": [
+        "a2813fe24ca0241ff4a632826a0e7166"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi test] [Bug] Nested configuration properties ignore OVERRIDE_IF_ABSENT during refresh",
+        "label": "#11 [Hephi test] [Bug] Nested configuration properties ignore OVERRIDE_IF_ABSENT during refresh",
+        "facts": {
+          "number": {
+            "value": "#11"
+          }
+        },
+        "number": 11,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/11"
+      },
+      "lastAt": "2026-10-31T19:24:05.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:12",
+    "value": {
+      "key": "github:12",
+      "ref": {
+        "source": "github",
+        "id": "12"
+      },
+      "createdAt": "2026-10-31T19:27:46.004Z",
+      "subscriptions": [
+        "887445ed2dd1a971766f25f9bdd59a5e"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 12,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/12",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#12"
+          }
+        },
+        "title": "Fix zero-length reads at EOF",
+        "label": "#12 Fix zero-length reads at EOF"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:13",
+    "value": {
+      "key": "github:13",
+      "ref": {
+        "source": "github",
+        "id": "13"
+      },
+      "createdAt": "2026-10-31T19:29:33.476Z",
+      "subscriptions": [
+        "f2e975294545985c8f3d970540842461"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 13,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/13",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#13"
+          }
+        },
+        "title": "Honor keep-alive in port-unification server",
+        "label": "#13 Honor keep-alive in port-unification server"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:14",
+    "value": {
+      "key": "github:14",
+      "ref": {
+        "source": "github",
+        "id": "14"
+      },
+      "createdAt": "2026-10-31T19:30:40.184Z",
+      "subscriptions": [
+        "6c5b2c3d20598e608c59e611315f28e1"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 14,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/14",
+        "prAuthor": "paxxie2",
+        "title": "Fix Triple REST question-mark path patterns",
+        "label": "#14 Fix Triple REST question-mark path patterns",
+        "facts": {
+          "number": {
+            "value": "#14"
+          },
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          }
+        }
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:15",
+    "value": {
+      "key": "github:15",
+      "ref": {
+        "source": "github",
+        "id": "15"
+      },
+      "createdAt": "2026-10-31T19:33:06.820Z",
+      "subscriptions": [
+        "6e10e69705ee003ea811340a2796832f"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi post-fix test] [Bug] StreamUtils treats InputStream.available() as the remaining stream length",
+        "label": "#15 [Hephi post-fix test] [Bug] StreamUtils treats InputStream.available() as the remaining stream length",
+        "facts": {
+          "number": {
+            "value": "#15"
+          }
+        },
+        "number": 15,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/15"
+      },
+      "lastAt": "2026-10-31T19:32:31.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:16",
+    "value": {
+      "key": "github:16",
+      "ref": {
+        "source": "github",
+        "id": "16"
+      },
+      "createdAt": "2026-10-31T19:33:31.345Z",
+      "subscriptions": [
+        "c9743737c8f774761d92926defac7e30"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 16,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/16",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#16"
+          }
+        },
+        "title": "Fix config merge mutation of incoming parameters",
+        "label": "#16 Fix config merge mutation of incoming parameters"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:18",
+    "value": {
+      "key": "github:18",
+      "ref": {
+        "source": "github",
+        "id": "18"
+      },
+      "createdAt": "2026-10-31T19:35:26.226Z",
+      "subscriptions": [
+        "d11da74fbc40b7ce3dfa4380ab8f15da"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 18,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/18",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#18"
+          }
+        },
+        "title": "fix: honor count times after cd",
+        "label": "#18 fix: honor count times after cd"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:19",
+    "value": {
+      "key": "github:19",
+      "ref": {
+        "source": "github",
+        "id": "19"
+      },
+      "createdAt": "2026-10-31T19:36:02.004Z",
+      "subscriptions": [
+        "a3a3b165ae7a6cef931d175e1d09e8d4"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 19,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/19",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#19"
+          }
+        },
+        "title": "Fix DefaultFuture cancellation cleanup",
+        "label": "#19 Fix DefaultFuture cancellation cleanup"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:20",
+    "value": {
+      "key": "github:20",
+      "ref": {
+        "source": "github",
+        "id": "20"
+      },
+      "createdAt": "2026-10-31T19:37:54.543Z",
+      "subscriptions": [
+        "c42f65481bb9e3f65b1b85f8257e63de"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 20,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/20",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#20"
+          }
+        },
+        "title": "Fix overflow in UnsafeByteArrayInputStream.skip",
+        "label": "#20 Fix overflow in UnsafeByteArrayInputStream.skip"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:21",
+    "value": {
+      "key": "github:21",
+      "ref": {
+        "source": "github",
+        "id": "21"
+      },
+      "createdAt": "2026-10-31T19:41:04.204Z",
+      "subscriptions": [
+        "d4fe4269f72696220ed34e7b185f268c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 21,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/21",
+        "prAuthor": "paxxie2",
+        "title": "Fix AccessLogFilter path warning messages",
+        "label": "#21 Fix AccessLogFilter path warning messages",
+        "facts": {
+          "number": {
+            "value": "#21"
+          }
+        }
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "feishu:oc_547df10a09e3fc9432cf34ef2d4c4b92:om_x100b615082167ca0de1ff851672f89d",
+    "value": {
+      "key": "feishu:oc_547df10a09e3fc9432cf34ef2d4c4b92:om_x100b615082167ca0de1ff851672f89d",
+      "ref": {
+        "source": "feishu",
+        "id": "oc_547df10a09e3fc9432cf34ef2d4c4b92:om_x100b615082167ca0de1ff851672f89d"
+      },
+      "createdAt": "2026-10-31T20:17:18.360Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "url": "https://applink.feishu.cn/client/chat/open?openChatId=oc_547df10a09e3fc9432cf34ef2d4c4b92",
+        "facts": {
+          "chat": {
+            "value": {
+              "zh": "私聊",
+              "en": "Direct message"
+            }
+          }
+        }
+      },
+      "lastAt": "2026-10-31T20:17:17.858Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:29",
+    "value": {
+      "key": "github:29",
+      "ref": {
+        "source": "github",
+        "id": "29"
+      },
+      "createdAt": "2026-10-31T23:37:50.423Z",
+      "subscriptions": [
+        "051457410f388b7a7d1265ae60f27a82"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi auto test] [Bug] LRU2Cache.put ignores updates for keys already promoted to the main cache",
+        "label": "#29 [Hephi auto test] [Bug] LRU2Cache.put ignores updates for keys already promoted to the main cache",
+        "facts": {
+          "number": {
+            "value": "#29"
+          }
+        },
+        "number": 29,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/29"
+      },
+      "lastAt": "2026-10-31T23:37:32.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:30",
+    "value": {
+      "key": "github:30",
+      "ref": {
+        "source": "github",
+        "id": "30"
+      },
+      "createdAt": "2026-10-31T23:41:40.955Z",
+      "subscriptions": [
+        "ebc0b53b707a14c33c7f7b963b6efb02"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi auto test] [Bug] CacheFilter returns the wrong result for distinct string argument tuples containing commas",
+        "label": "#30 [Hephi auto test] [Bug] CacheFilter returns the wrong result for distinct string argument tuples containing commas",
+        "facts": {
+          "number": {
+            "value": "#30"
+          }
+        },
+        "number": 30,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/30"
+      },
+      "lastAt": "2026-10-31T23:41:18.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:31",
+    "value": {
+      "key": "github:31",
+      "ref": {
+        "source": "github",
+        "id": "31"
+      },
+      "createdAt": "2026-10-31T23:45:04.213Z",
+      "subscriptions": [
+        "ebc0b53b707a14c33c7f7b963b6efb02"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 31,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/31",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#31"
+          }
+        },
+        "title": "Fix CacheFilter argument key collisions",
+        "label": "#31 Fix CacheFilter argument key collisions"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:33",
+    "value": {
+      "key": "github:33",
+      "ref": {
+        "source": "github",
+        "id": "33"
+      },
+      "createdAt": "2026-11-01T00:12:14.025Z",
+      "subscriptions": [
+        "dc3149d7a86c0290e378700cc065d4c3"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi verification] CacheFilter tuple key collision with gate",
+        "label": "#33 [Hephi verification] CacheFilter tuple key collision with gate",
+        "facts": {
+          "number": {
+            "value": "#33"
+          }
+        },
+        "number": 33,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/33"
+      },
+      "lastAt": "2026-11-01T00:10:54.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:34",
+    "value": {
+      "key": "github:34",
+      "ref": {
+        "source": "github",
+        "id": "34"
+      },
+      "createdAt": "2026-11-01T00:17:22.655Z",
+      "subscriptions": [
+        "dc3149d7a86c0290e378700cc065d4c3"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 34,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/34",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#34"
+          }
+        },
+        "title": "Fix CacheFilter tuple key collisions",
+        "label": "#34 Fix CacheFilter tuple key collisions"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:35",
+    "value": {
+      "key": "github:35",
+      "ref": {
+        "source": "github",
+        "id": "35"
+      },
+      "createdAt": "2026-11-01T00:25:18.094Z",
+      "subscriptions": [
+        "062bcb763e992bda4fa6f61dc87b8ea6"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Bug] CacheFilter returns the wrong result for distinct string argument tuples containing commas (Hephi validation run)",
+        "label": "#35 [Bug] CacheFilter returns the wrong result for distinct string argument tuples containing commas (Hephi validation run)",
+        "facts": {
+          "number": {
+            "value": "#35"
+          }
+        },
+        "number": 35,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/35"
+      },
+      "lastAt": "2026-11-01T00:23:56.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:36",
+    "value": {
+      "key": "github:36",
+      "ref": {
+        "source": "github",
+        "id": "36"
+      },
+      "createdAt": "2026-11-01T00:30:47.225Z",
+      "subscriptions": [
+        "062bcb763e992bda4fa6f61dc87b8ea6"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 36,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/36",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#36"
+          }
+        },
+        "title": "Fix CacheFilter comma-containing argument collisions",
+        "label": "#36 Fix CacheFilter comma-containing argument collisions"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:37",
+    "value": {
+      "key": "github:37",
+      "ref": {
+        "source": "github",
+        "id": "37"
+      },
+      "createdAt": "2026-11-01T09:37:03.338Z",
+      "subscriptions": [
+        "df7785b8a4f63cbf06ec1da71a9c9e1f"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi E2E] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "label": "#37 [Hephi E2E] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "facts": {
+          "number": {
+            "value": "#37"
+          }
+        },
+        "number": 37,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/37"
+      },
+      "lastAt": "2026-11-01T09:26:53.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:38",
+    "value": {
+      "key": "github:38",
+      "ref": {
+        "source": "github",
+        "id": "38"
+      },
+      "createdAt": "2026-11-01T09:48:51.645Z",
+      "subscriptions": [
+        "df7785b8a4f63cbf06ec1da71a9c9e1f"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 38,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/38",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#38"
+          }
+        },
+        "title": "Fix zero-length reads at EOF",
+        "label": "#38 Fix zero-length reads at EOF"
+      },
+      "lastAt": "2026-11-01T09:53:02.765Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:39",
+    "value": {
+      "key": "github:39",
+      "ref": {
+        "source": "github",
+        "id": "39"
+      },
+      "createdAt": "2026-11-01T10:15:26.627Z",
+      "subscriptions": [
+        "1df23f2c96b09a2326d87989eeafa98c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Hephi E2E] [Bug] LRU2Cache.put ignores updates for keys already promoted to the main cache",
+        "label": "#39 [Hephi E2E] [Bug] LRU2Cache.put ignores updates for keys already promoted to the main cache",
+        "facts": {
+          "number": {
+            "value": "#39"
+          }
+        },
+        "number": 39,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/39"
+      },
+      "lastAt": "2026-11-01T10:14:04.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:40",
+    "value": {
+      "key": "github:40",
+      "ref": {
+        "source": "github",
+        "id": "40"
+      },
+      "createdAt": "2026-11-01T10:22:37.796Z",
+      "subscriptions": [
+        "1df23f2c96b09a2326d87989eeafa98c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 40,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/40",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#40"
+          }
+        },
+        "title": "Fix updates for promoted LRU2 cache entries",
+        "label": "#40 Fix updates for promoted LRU2 cache entries"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:41",
+    "value": {
+      "key": "github:41",
+      "ref": {
+        "source": "github",
+        "id": "41"
+      },
+      "createdAt": "2026-11-01T11:13:38.496Z",
+      "subscriptions": [
+        "2699c7b7b0e0d6b7e513e43b1ea22907"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Bug] Config merging mutates incoming parameters and rejects read-only maps",
+        "label": "#41 [Bug] Config merging mutates incoming parameters and rejects read-only maps",
+        "facts": {
+          "number": {
+            "value": "#41"
+          }
+        },
+        "number": 41,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/41"
+      },
+      "lastAt": "2026-11-01T11:12:37.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:42",
+    "value": {
+      "key": "github:42",
+      "ref": {
+        "source": "github",
+        "id": "42"
+      },
+      "createdAt": "2026-11-01T11:18:35.772Z",
+      "subscriptions": [
+        "2699c7b7b0e0d6b7e513e43b1ea22907"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 42,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/42",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#42"
+          }
+        },
+        "title": "Fix config merge parameter map mutation",
+        "label": "#42 Fix config merge parameter map mutation"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:43",
+    "value": {
+      "key": "github:43",
+      "ref": {
+        "source": "github",
+        "id": "43"
+      },
+      "createdAt": "2026-11-01T11:29:19.871Z",
+      "subscriptions": [
+        "e2c14b27a36f57482a2da13b60dd094c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Bug] QoS count command ignores the times argument after cd",
+        "label": "#43 [Bug] QoS count command ignores the times argument after cd",
+        "facts": {
+          "number": {
+            "value": "#43"
+          }
+        },
+        "number": 43,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/43"
+      },
+      "lastAt": "2026-11-01T11:29:03.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:44",
+    "value": {
+      "key": "github:44",
+      "ref": {
+        "source": "github",
+        "id": "44"
+      },
+      "createdAt": "2026-11-01T11:34:39.379Z",
+      "subscriptions": [
+        "e2c14b27a36f57482a2da13b60dd094c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 44,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/44",
+        "prAuthor": "paxxie2",
+        "title": "fix: honor count times after cd",
+        "label": "#44 fix: honor count times after cd",
+        "facts": {
+          "number": {
+            "value": "#44"
+          },
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          }
+        }
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:46",
+    "value": {
+      "key": "github:46",
+      "ref": {
+        "source": "github",
+        "id": "46"
+      },
+      "createdAt": "2026-11-01T14:41:30.690Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied] [Bug] Triple REST cuts mapping at question mark (Classic PAT KB verification)",
+        "label": "#46 [Copied] [Bug] Triple REST cuts mapping at question mark (Classic PAT KB verification)",
+        "facts": {
+          "number": {
+            "value": "#46"
+          }
+        }
+      },
+      "lastAt": "2026-11-01T14:39:52.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:47",
+    "value": {
+      "key": "github:47",
+      "ref": {
+        "source": "github",
+        "id": "47"
+      },
+      "createdAt": "2026-11-01T14:48:15.747Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied] [Bug] Triple REST question mark path truncation (KB live trigger)",
+        "label": "#47 [Copied] [Bug] Triple REST question mark path truncation (KB live trigger)",
+        "facts": {
+          "number": {
+            "value": "#47"
+          }
+        }
+      },
+      "lastAt": "2026-11-01T14:46:46.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:48",
+    "value": {
+      "key": "github:48",
+      "ref": {
+        "source": "github",
+        "id": "48"
+      },
+      "createdAt": "2026-11-01T14:52:07.402Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied] [Bug] Triple REST question mark path truncation (KB trigger after restart)",
+        "label": "#48 [Copied] [Bug] Triple REST question mark path truncation (KB trigger after restart)",
+        "facts": {
+          "number": {
+            "value": "#48"
+          }
+        }
+      },
+      "lastAt": "2026-11-01T14:51:19.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:49",
+    "value": {
+      "key": "github:49",
+      "ref": {
+        "source": "github",
+        "id": "49"
+      },
+      "createdAt": "2026-11-01T14:58:56.865Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[KB verification] Triple REST question-mark path truncation minimal fix",
+        "label": "#49 [KB verification] Triple REST question-mark path truncation minimal fix",
+        "facts": {
+          "number": {
+            "value": "#49"
+          }
+        }
+      },
+      "lastAt": "2026-11-01T14:57:51.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:50",
+    "value": {
+      "key": "github:50",
+      "ref": {
+        "source": "github",
+        "id": "50"
+      },
+      "createdAt": "2026-11-01T15:02:20.355Z",
+      "subscriptions": [
+        "37408253eda5510f8570060f84eb2d5a"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[KB verification] @paxxie2 minimal Triple REST fix",
+        "label": "#50 [KB verification] @paxxie2 minimal Triple REST fix",
+        "facts": {
+          "number": {
+            "value": "#50"
+          }
+        },
+        "number": 50,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/50"
+      },
+      "lastAt": "2026-11-01T15:01:39.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:45",
+    "value": {
+      "key": "github:45",
+      "ref": {
+        "source": "github",
+        "id": "45"
+      },
+      "createdAt": "2026-11-01T15:39:24.286Z",
+      "subscriptions": [
+        "9656c5311ac7bea529f10e09e378f6ae"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied] [Bug] Triple REST cuts mapping at question mark",
+        "label": "#45 [Copied] [Bug] Triple REST cuts mapping at question mark",
+        "facts": {
+          "number": {
+            "value": "#45"
+          }
+        },
+        "number": 45,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/45"
+      },
+      "lastAt": "2026-11-01T13:36:53.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:51",
+    "value": {
+      "key": "github:51",
+      "ref": {
+        "source": "github",
+        "id": "51"
+      },
+      "createdAt": "2026-11-01T15:52:32.654Z",
+      "subscriptions": [
+        "8c6d37965ad7229d8ecf360266129f23"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied from apache/dubbo #16561] KB E2E",
+        "label": "#51 [Copied from apache/dubbo #16561] KB E2E",
+        "facts": {
+          "number": {
+            "value": "#51"
+          }
+        },
+        "number": 51,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/51"
+      },
+      "lastAt": "2026-11-01T15:50:05.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:52",
+    "value": {
+      "key": "github:52",
+      "ref": {
+        "source": "github",
+        "id": "52"
+      },
+      "createdAt": "2026-11-01T15:58:43.551Z",
+      "subscriptions": [
+        "6d5c2660f83a9e76d83c19539181c25d",
+        "69f5c32499468a0fcbbb75f6631f65c6",
+        "23d348ccecb5ef2119dc2e1695c7a352"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "label": "#52 [Copied] [Bug] UnsafeByteArrayInputStream returns EOF for zero-length reads",
+        "facts": {
+          "number": {
+            "value": "#52"
+          }
+        },
+        "number": 52,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/52"
+      },
+      "lastAt": "2026-11-01T17:44:24.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:53",
+    "value": {
+      "key": "github:53",
+      "ref": {
+        "source": "github",
+        "id": "53"
+      },
+      "createdAt": "2026-11-01T16:04:49.822Z",
+      "subscriptions": [
+        "d63b7b27cc49f59f1edeee54a99f62da"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied from apache/dubbo #16561] Super Agent native HEPHI flow",
+        "label": "#53 [Copied from apache/dubbo #16561] Super Agent native HEPHI flow",
+        "facts": {
+          "number": {
+            "value": "#53"
+          }
+        },
+        "number": 53,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/53"
+      },
+      "lastAt": "2026-11-01T16:01:33.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:54",
+    "value": {
+      "key": "github:54",
+      "ref": {
+        "source": "github",
+        "id": "54"
+      },
+      "createdAt": "2026-11-01T16:12:20.310Z",
+      "subscriptions": [
+        "d63b7b27cc49f59f1edeee54a99f62da"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 54,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/54",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#54"
+          }
+        },
+        "title": "Fix Triple REST question-mark pattern truncation",
+        "label": "#54 Fix Triple REST question-mark pattern truncation"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:55",
+    "value": {
+      "key": "github:55",
+      "ref": {
+        "source": "github",
+        "id": "55"
+      },
+      "createdAt": "2026-11-01T17:10:14.105Z",
+      "subscriptions": [
+        "c1c479198ff05be1b01b2d0080cb9d90"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied apache/dubbo#16440] [Bug] hessian2 loses Byte/Short/Float element types in nested generic collections (List<List<Byte>>, Map<String, List<Byte>>)",
+        "label": "#55 [Copied apache/dubbo#16440] [Bug] hessian2 loses Byte/Short/Float element types in nested generic collections (List<List<Byte>>, Map<String, List<Byte>>)",
+        "facts": {
+          "number": {
+            "value": "#55"
+          }
+        },
+        "number": 55,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/55"
+      },
+      "lastAt": "2026-11-01T17:07:45.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:56",
+    "value": {
+      "key": "github:56",
+      "ref": {
+        "source": "github",
+        "id": "56"
+      },
+      "createdAt": "2026-11-01T17:12:08.672Z",
+      "subscriptions": [
+        "69f5c32499468a0fcbbb75f6631f65c6"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 56,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/56",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#56"
+          }
+        },
+        "title": "Fix zero-length reads at EOF in UnsafeByteArrayInputStream",
+        "label": "#56 Fix zero-length reads at EOF in UnsafeByteArrayInputStream"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:57",
+    "value": {
+      "key": "github:57",
+      "ref": {
+        "source": "github",
+        "id": "57"
+      },
+      "createdAt": "2026-11-01T17:19:00.633Z",
+      "subscriptions": [
+        "bddd2e933a711dd80a72fabe9009a230",
+        "c8e0a67fd4effc6ed3de98cebb64ea90"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied apache/dubbo#15718] OpenAPI nested response schemas and Schema annotations",
+        "label": "#57 [Copied apache/dubbo#15718] OpenAPI nested response schemas and Schema annotations",
+        "facts": {
+          "number": {
+            "value": "#57"
+          }
+        },
+        "number": 57,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/57"
+      },
+      "lastAt": "2026-11-01T17:51:27.000Z",
+      "context": [
+        "bddd2e933a711dd80a72fabe9009a230"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:58",
+    "value": {
+      "key": "github:58",
+      "ref": {
+        "source": "github",
+        "id": "58"
+      },
+      "createdAt": "2026-11-01T17:23:43.341Z",
+      "subscriptions": [
+        "c1c479198ff05be1b01b2d0080cb9d90"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 58,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/58",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#58"
+          }
+        },
+        "title": "Fix Hessian2 element types in nested generic collections",
+        "label": "#58 Fix Hessian2 element types in nested generic collections"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:59",
+    "value": {
+      "key": "github:59",
+      "ref": {
+        "source": "github",
+        "id": "59"
+      },
+      "createdAt": "2026-11-01T17:32:06.014Z",
+      "subscriptions": [
+        "9beb45630e079ee3ae1c03b34eb15876"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 59,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/59",
+        "prAuthor": "paxxie2",
+        "title": "Fix OpenAPI nested generic response schemas and @Schema annotations",
+        "label": "#59 Fix OpenAPI nested generic response schemas and @Schema annotations",
+        "facts": {
+          "number": {
+            "value": "#59"
+          },
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          }
+        }
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:60",
+    "value": {
+      "key": "github:60",
+      "ref": {
+        "source": "github",
+        "id": "60"
+      },
+      "createdAt": "2026-11-01T17:50:21.733Z",
+      "subscriptions": [
+        "bddd2e933a711dd80a72fabe9009a230"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 60,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/60",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#60"
+          }
+        },
+        "title": "Acceptance replay of #57: fix nested OpenAPI response schemas and @Schema annotations",
+        "label": "#60 Acceptance replay of #57: fix nested OpenAPI response schemas and @Schema annotations"
+      },
+      "lastAt": "2026-11-01T17:54:38.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:61",
+    "value": {
+      "key": "github:61",
+      "ref": {
+        "source": "github",
+        "id": "61"
+      },
+      "createdAt": "2026-11-01T17:50:46.527Z",
+      "subscriptions": [
+        "23d348ccecb5ef2119dc2e1695c7a352"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 61,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/61",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#61"
+          }
+        },
+        "title": "Acceptance replay of Issue #52: fix zero-length reads at EOF in UnsafeByteArrayInputStream",
+        "label": "#61 Acceptance replay of Issue #52: fix zero-length reads at EOF in UnsafeByteArrayInputStream"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:62",
+    "value": {
+      "key": "github:62",
+      "ref": {
+        "source": "github",
+        "id": "62"
+      },
+      "createdAt": "2026-11-01T18:10:51.767Z",
+      "subscriptions": [
+        "c8e0a67fd4effc6ed3de98cebb64ea90"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 62,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/62",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#62"
+          }
+        },
+        "title": "Acceptance replay 91fa6cf of #57: nested generic OpenAPI response schemas and @Schema annotations",
+        "label": "#62 Acceptance replay 91fa6cf of #57: nested generic OpenAPI response schemas and @Schema annotations"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:63",
+    "value": {
+      "key": "github:63",
+      "ref": {
+        "source": "github",
+        "id": "63"
+      },
+      "createdAt": "2026-11-01T19:08:53.740Z",
+      "subscriptions": [
+        "a13a31eba85394fd66a564b32d4988cb"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied apache/dubbo#16432] [Bug] JavaBeanSerializeUtil.serialize() throws IllegalArgumentException on a Map containing a null key",
+        "label": "#63 [Copied apache/dubbo#16432] [Bug] JavaBeanSerializeUtil.serialize() throws IllegalArgumentException on a Map containing a null key",
+        "facts": {
+          "number": {
+            "value": "#63"
+          }
+        },
+        "number": 63,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/63"
+      },
+      "lastAt": "2026-11-01T19:08:47.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:64",
+    "value": {
+      "key": "github:64",
+      "ref": {
+        "source": "github",
+        "id": "64"
+      },
+      "createdAt": "2026-11-01T19:11:30.438Z",
+      "subscriptions": [
+        "a13a31eba85394fd66a564b32d4988cb"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 64,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/64",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#64"
+          }
+        },
+        "title": "Fix JavaBeanSerializeUtil serialization of maps with null keys",
+        "label": "#64 Fix JavaBeanSerializeUtil serialization of maps with null keys"
+      },
+      "lastAt": "2026-11-01T19:15:18.689Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/topic-bench:1",
+    "value": {
+      "key": "github:paxxie2/topic-bench:1",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/topic-bench:1"
+      },
+      "createdAt": "2026-11-01T21:45:35.566Z",
+      "subscriptions": [
+        "531f0daa5420e2f8e1bcb50d2780b2bb"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "升级课题管理 UI：统一现代工作台设计与响应式布局",
+        "label": "#1 升级课题管理 UI：统一现代工作台设计与响应式布局",
+        "facts": {
+          "number": {
+            "value": "#1"
+          }
+        },
+        "number": 1,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/topic-bench/issues/1"
+      },
+      "lastAt": "2026-11-01T21:45:07.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/topic-bench:2",
+    "value": {
+      "key": "github:paxxie2/topic-bench:2",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/topic-bench:2"
+      },
+      "createdAt": "2026-11-01T22:01:48.329Z",
+      "subscriptions": [
+        "531f0daa5420e2f8e1bcb50d2780b2bb"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 2,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/topic-bench/pull/2",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#2"
+          }
+        },
+        "title": "升级课题管理 UI：统一现代工作台设计与响应式布局",
+        "label": "#2 升级课题管理 UI：统一现代工作台设计与响应式布局"
+      },
+      "lastAt": "2026-11-01T22:53:01.556Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-agent:2",
+    "value": {
+      "key": "github:paxxie2/site-pnl-agent:2",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-agent:2"
+      },
+      "createdAt": "2026-11-03T20:24:02.163Z",
+      "subscriptions": [
+        "1c41d4815a9bca2299f3eb3342b459ae"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "开发点位 P&L 诊断 Web Agent：完整需求与验收",
+        "label": "#2 开发点位 P&L 诊断 Web Agent：完整需求与验收",
+        "facts": {
+          "number": {
+            "value": "#2"
+          }
+        },
+        "number": 2,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-agent/issues/2"
+      },
+      "lastAt": "2026-11-03T20:21:03.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-agent:3",
+    "value": {
+      "key": "github:paxxie2/site-pnl-agent:3",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-agent:3"
+      },
+      "createdAt": "2026-11-03T20:52:25.144Z",
+      "subscriptions": [
+        "7c36250a6afdde7bfb11a7ebdac77ee6"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "开发点位 P&L 诊断 Web Agent：完整需求与验收",
+        "label": "#3 开发点位 P&L 诊断 Web Agent：完整需求与验收",
+        "facts": {
+          "number": {
+            "value": "#3"
+          }
+        },
+        "number": 3,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-agent/issues/3"
+      },
+      "lastAt": "2026-11-03T20:51:17.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-agent:4",
+    "value": {
+      "key": "github:paxxie2/site-pnl-agent:4",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-agent:4"
+      },
+      "createdAt": "2026-11-03T21:43:07.374Z",
+      "subscriptions": [
+        "7c36250a6afdde7bfb11a7ebdac77ee6"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 4,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-agent/pull/4",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#4"
+          }
+        },
+        "title": "点位 P&L 诊断 Web Agent：完整实现与验收证据（Issue #3）",
+        "label": "#4 点位 P&L 诊断 Web Agent：完整实现与验收证据（Issue #3）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:65",
+    "value": {
+      "key": "github:65",
+      "ref": {
+        "source": "github",
+        "id": "65"
+      },
+      "createdAt": "2026-11-04T00:02:25.498Z",
+      "subscriptions": [
+        "c6d113b3ace851a40c02da981e8ddec0"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[Copied apache/dubbo#16567] [Bug] ExpiringMap expiration can remove a concurrent replacement",
+        "label": "#65 [Copied apache/dubbo#16567] [Bug] ExpiringMap expiration can remove a concurrent replacement",
+        "facts": {
+          "number": {
+            "value": "#65"
+          }
+        },
+        "number": 65,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/dubbo/issues/65"
+      },
+      "lastAt": "2026-11-03T23:55:24.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:66",
+    "value": {
+      "key": "github:66",
+      "ref": {
+        "source": "github",
+        "id": "66"
+      },
+      "createdAt": "2026-11-04T00:06:47.795Z",
+      "subscriptions": [
+        "c6d113b3ace851a40c02da981e8ddec0"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 66,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/dubbo/pull/66",
+        "prAuthor": "paxxie2",
+        "title": "Fix ExpiringMap expiration removing a concurrent replacement",
+        "label": "#66 Fix ExpiringMap expiration removing a concurrent replacement",
+        "facts": {
+          "number": {
+            "value": "#66"
+          },
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          }
+        }
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:2",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:2",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:2"
+      },
+      "createdAt": "2026-11-04T01:09:11.629Z",
+      "subscriptions": [
+        "f757211299cc39538fbec6b4c572a8b3"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "需求：直营点位 P&L 诊断 Web 系统（替代 #1，完整设计与实施计划）",
+        "label": "#2 需求：直营点位 P&L 诊断 Web 系统（替代 #1，完整设计与实施计划）",
+        "facts": {
+          "number": {
+            "value": "#2"
+          }
+        },
+        "number": 2,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/2"
+      },
+      "lastAt": "2026-11-04T01:07:57.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:3",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:3",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:3"
+      },
+      "createdAt": "2026-11-04T01:42:24.924Z",
+      "subscriptions": [
+        "f757211299cc39538fbec6b4c572a8b3"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 3,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/3",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#3"
+          }
+        },
+        "title": "feat: 直营点位 P&L 诊断 Web 系统（模拟数据，完整前后端与真实验收）",
+        "label": "#3 feat: 直营点位 P&L 诊断 Web 系统（模拟数据，完整前后端与真实验收）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:4",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:4",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:4"
+      },
+      "createdAt": "2026-11-04T11:36:01.800Z",
+      "subscriptions": [
+        "dc324d706dcb86363bbae9f806e2e472"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 诊断历史默认每页 10 条及翻页体验",
+        "label": "#4 [native] 诊断历史默认每页 10 条及翻页体验",
+        "facts": {
+          "number": {
+            "value": "#4"
+          }
+        },
+        "number": 4,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/4"
+      },
+      "lastAt": "2026-11-04T11:34:13.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:5",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:5",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:5"
+      },
+      "createdAt": "2026-11-04T11:36:01.805Z",
+      "subscriptions": [
+        "368b272636e721fb82e533eeca4f2e62"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 假设测算输入校验与错误提示（赫菲串行）",
+        "label": "#5 [staged] 假设测算输入校验与错误提示（赫菲串行）",
+        "facts": {
+          "number": {
+            "value": "#5"
+          }
+        },
+        "number": 5,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/5"
+      },
+      "lastAt": "2026-11-04T11:34:20.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:6",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:6",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:6"
+      },
+      "createdAt": "2026-11-04T12:06:57.553Z",
+      "subscriptions": [
+        "407257e408507785be89912e76f1c9ed"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 诊断历史默认每页 10 条及翻页体验（替代 #4）",
+        "label": "#6 [native] 诊断历史默认每页 10 条及翻页体验（替代 #4）",
+        "facts": {
+          "number": {
+            "value": "#6"
+          }
+        },
+        "number": 6,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/6"
+      },
+      "lastAt": "2026-11-04T12:03:45.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:7",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:7",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:7"
+      },
+      "createdAt": "2026-11-04T12:06:57.559Z",
+      "subscriptions": [
+        "165fa85a37369382271e4a43cf5943b1"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 假设测算输入校验与错误提示（赫菲串行，替代 #5）",
+        "label": "#7 [staged] 假设测算输入校验与错误提示（赫菲串行，替代 #5）",
+        "facts": {
+          "number": {
+            "value": "#7"
+          }
+        },
+        "number": 7,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/7"
+      },
+      "lastAt": "2026-11-04T12:03:49.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:8",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:8",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:8"
+      },
+      "createdAt": "2026-11-04T12:20:22.170Z",
+      "subscriptions": [
+        "407257e408507785be89912e76f1c9ed"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 8,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/8",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#8"
+          }
+        },
+        "title": "fix: 诊断历史默认每页 10 条及翻页体验（Issue #6）",
+        "label": "#8 fix: 诊断历史默认每页 10 条及翻页体验（Issue #6）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:9",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:9",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:9"
+      },
+      "createdAt": "2026-11-04T12:23:07.869Z",
+      "subscriptions": [
+        "165fa85a37369382271e4a43cf5943b1"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 9,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/9",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#9"
+          }
+        },
+        "title": "fix: 假设测算输入校验与中文错误提示（后端+前端，含基线数据包修复）",
+        "label": "#9 fix: 假设测算输入校验与中文错误提示（后端+前端，含基线数据包修复）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:10",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:10",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:10"
+      },
+      "createdAt": "2026-11-04T18:17:59.888Z",
+      "subscriptions": [
+        "f94f5d0bcffcbc2c2b1881b5d75404be"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 日常实例重新端到端验收：诊断历史每页10条",
+        "label": "#10 [native] 日常实例重新端到端验收：诊断历史每页10条",
+        "facts": {
+          "number": {
+            "value": "#10"
+          }
+        },
+        "number": 10,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/10"
+      },
+      "lastAt": "2026-11-04T18:15:12.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:11",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:11",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:11"
+      },
+      "createdAt": "2026-11-04T18:17:59.893Z",
+      "subscriptions": [
+        "78753e771f23779b6b6320a5190fe22e"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 日常实例重新端到端验收：测算校验与表单反馈（串行）",
+        "label": "#11 [staged] 日常实例重新端到端验收：测算校验与表单反馈（串行）",
+        "facts": {
+          "number": {
+            "value": "#11"
+          }
+        },
+        "number": 11,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/11"
+      },
+      "lastAt": "2026-11-04T18:15:16.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:12",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:12",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:12"
+      },
+      "createdAt": "2026-11-04T18:45:42.283Z",
+      "subscriptions": [
+        "58c521b5ac242bc49400ae40c8d8bd63"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 重启后新任务端到端验收：诊断历史每页10条",
+        "label": "#12 [native] 重启后新任务端到端验收：诊断历史每页10条",
+        "facts": {
+          "number": {
+            "value": "#12"
+          }
+        },
+        "number": 12,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/12"
+      },
+      "lastAt": "2026-11-04T18:44:01.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:13",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:13",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:13"
+      },
+      "createdAt": "2026-11-04T18:45:42.292Z",
+      "subscriptions": [
+        "ba1a4b2c8a2a182207a0ea6d6e135faf"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 重启后新任务端到端验收：测算校验与表单反馈（串行）",
+        "label": "#13 [staged] 重启后新任务端到端验收：测算校验与表单反馈（串行）",
+        "facts": {
+          "number": {
+            "value": "#13"
+          }
+        },
+        "number": 13,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/13"
+      },
+      "lastAt": "2026-11-04T18:44:05.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:14",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:14",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:14"
+      },
+      "createdAt": "2026-11-04T19:02:42.476Z",
+      "subscriptions": [
+        "58c521b5ac242bc49400ae40c8d8bd63"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 14,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/14",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#14"
+          }
+        },
+        "title": "fix: 诊断历史默认每页 10 条（Issue #12 端到端验收）",
+        "label": "#14 fix: 诊断历史默认每页 10 条（Issue #12 端到端验收）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:15",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:15",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:15"
+      },
+      "createdAt": "2026-11-04T19:05:06.591Z",
+      "subscriptions": [
+        "ba1a4b2c8a2a182207a0ea6d6e135faf"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 15,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/15",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#15"
+          }
+        },
+        "title": "fix: 测算输入校验与表单反馈（后端中文字段错误 + 前端单位/范围/后端错误提示）",
+        "label": "#15 fix: 测算输入校验与表单反馈（后端中文字段错误 + 前端单位/范围/后端错误提示）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:16",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:16",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:16"
+      },
+      "createdAt": "2026-11-04T19:31:56.704Z",
+      "subscriptions": [
+        "cfb0b21fe73b22c6bc4a42b297287166"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 后台检查修复后全新端到端验收：诊断历史每页10条",
+        "label": "#16 [native] 后台检查修复后全新端到端验收：诊断历史每页10条",
+        "facts": {
+          "number": {
+            "value": "#16"
+          }
+        },
+        "number": 16,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/16"
+      },
+      "lastAt": "2026-11-04T19:29:18.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:17",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:17",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:17"
+      },
+      "createdAt": "2026-11-04T19:41:54.506Z",
+      "subscriptions": [
+        "cfb0b21fe73b22c6bc4a42b297287166"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 17,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/17",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#17"
+          }
+        },
+        "title": "fix: 诊断历史默认每页 10 条（Issue #16 端到端验收）",
+        "label": "#17 fix: 诊断历史默认每页 10 条（Issue #16 端到端验收）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:18",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:18",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:18"
+      },
+      "createdAt": "2026-11-04T19:59:51.516Z",
+      "subscriptions": [
+        "a14940729e3a3880095e8413336a08a2"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] 当前版本完整端到端验收：诊断历史每页10条",
+        "label": "#18 [native] 当前版本完整端到端验收：诊断历史每页10条",
+        "facts": {
+          "number": {
+            "value": "#18"
+          }
+        },
+        "number": 18,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/18"
+      },
+      "lastAt": "2026-11-04T19:56:02.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:19",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:19",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:19"
+      },
+      "createdAt": "2026-11-04T19:59:51.521Z",
+      "subscriptions": [
+        "145961661edbca85111cf210a00a2dad"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 当前版本完整端到端验收：测算校验与表单反馈（赫菲串行）",
+        "label": "#19 [staged] 当前版本完整端到端验收：测算校验与表单反馈（赫菲串行）",
+        "facts": {
+          "number": {
+            "value": "#19"
+          }
+        },
+        "number": 19,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/19"
+      },
+      "lastAt": "2026-11-04T19:56:04.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:20",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:20",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:20"
+      },
+      "createdAt": "2026-11-04T20:09:52.634Z",
+      "subscriptions": [
+        "a14940729e3a3880095e8413336a08a2"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 20,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/20",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#20"
+          }
+        },
+        "title": "fix: 诊断历史默认每页 10 条（Issue #18 真实端到端验收）",
+        "label": "#20 fix: 诊断历史默认每页 10 条（Issue #18 真实端到端验收）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:21",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:21",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:21"
+      },
+      "createdAt": "2026-11-04T20:16:51.409Z",
+      "subscriptions": [
+        "145961661edbca85111cf210a00a2dad"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 21,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/21",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#21"
+          }
+        },
+        "title": "fix: 测算输入校验与表单反馈（后端中文字段错误 + 前端单位/范围/内联错误，Issue #19）",
+        "label": "#21 fix: 测算输入校验与表单反馈（后端中文字段错误 + 前端单位/范围/内联错误，Issue #19）"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:22",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:22",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:22"
+      },
+      "createdAt": "2026-11-04T20:22:47.408Z",
+      "subscriptions": [
+        "3a680328c1f1ac449cc53a2e3006c29d"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[staged] 简单真实端到端：修复缺失数据源码与启动说明",
+        "label": "#22 [staged] 简单真实端到端：修复缺失数据源码与启动说明",
+        "facts": {
+          "number": {
+            "value": "#22"
+          }
+        },
+        "number": 22,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/22"
+      },
+      "lastAt": "2026-11-04T20:22:19.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:23",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:23",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:23"
+      },
+      "createdAt": "2026-11-04T20:26:58.422Z",
+      "subscriptions": [
+        "3a680328c1f1ac449cc53a2e3006c29d"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 23,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/23",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#23"
+          }
+        },
+        "title": "fix: 恢复 backend/app/data 源码包与 .gitignore 规则，补充启动说明",
+        "label": "#23 fix: 恢复 backend/app/data 源码包与 .gitignore 规则，补充启动说明"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:24",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:24",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:24"
+      },
+      "createdAt": "2026-11-06T18:06:26.105Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#24 B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#24"
+          }
+        }
+      },
+      "lastAt": "2026-11-05T20:20:12.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:25",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:25",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:25"
+      },
+      "createdAt": "2026-11-06T18:06:26.111Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#25 B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#25"
+          }
+        }
+      },
+      "lastAt": "2026-11-05T20:35:07.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:26",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:26",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:26"
+      },
+      "createdAt": "2026-11-06T18:06:26.115Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#26 [native] B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#26"
+          }
+        }
+      },
+      "lastAt": "2026-11-05T20:47:23.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:28",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:28",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:28"
+      },
+      "createdAt": "2026-11-06T18:06:26.119Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] B：恢复指定 data 源码并为健康接口增加固定 service 字段",
+        "label": "#28 [native] B：恢复指定 data 源码并为健康接口增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#28"
+          }
+        }
+      },
+      "lastAt": "2026-11-05T21:46:23.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:30",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:30",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:30"
+      },
+      "createdAt": "2026-11-06T18:06:26.123Z",
+      "subscriptions": [
+        "06ec5471c429f1e4f2ccbbcbe56b26a0"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+        "label": "#30 [native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+        "facts": {
+          "number": {
+            "value": "#30"
+          }
+        },
+        "number": 30,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/30"
+      },
+      "lastAt": "2026-11-06T03:33:55.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:31",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:31",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:31"
+      },
+      "createdAt": "2026-11-06T18:17:53.275Z",
+      "subscriptions": [
+        "06ec5471c429f1e4f2ccbbcbe56b26a0"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 31,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/31",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#31"
+          }
+        },
+        "title": "docs: G1 host capability probe report (incomplete: gate blocked, wrong host)",
+        "label": "#31 docs: G1 host capability probe report (incomplete: gate blocked, wrong host)"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:32",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:32",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:32"
+      },
+      "createdAt": "2026-11-06T20:02:30.749Z",
+      "subscriptions": [
+        "166f70890d3eab8eaf4154499e43f341"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] smoke: 原生入口链路验证（仅记录，不合并）",
+        "label": "#32 [native] smoke: 原生入口链路验证（仅记录，不合并）",
+        "facts": {
+          "number": {
+            "value": "#32"
+          }
+        },
+        "number": 32,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/32"
+      },
+      "lastAt": "2026-11-06T19:58:32.000Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:34",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:34",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:34"
+      },
+      "createdAt": "2026-11-06T20:04:54.083Z",
+      "subscriptions": [
+        "166f70890d3eab8eaf4154499e43f341"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 34,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/34",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#34"
+          }
+        },
+        "title": "docs: add hephi smoke marker to README (smoke check, do not merge)",
+        "label": "#34 docs: add hephi smoke marker to README (smoke check, do not merge)"
+      }
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "key": "github:3",
+    "value": {
+      "key": "github:3",
+      "ref": {
+        "source": "github",
+        "id": "3"
+      },
+      "createdAt": "2026-11-05T19:57:04.232Z",
+      "subscriptions": [
+        "c040bd53efbeba7f1236b5969be9df23"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "评估输出纠偏：移除伪语义指标与未经验证的效果判定",
+        "label": "#3 评估输出纠偏：移除伪语义指标与未经验证的效果判定",
+        "facts": {
+          "number": {
+            "value": "#3"
+          }
+        },
+        "number": 3,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/issues/3"
+      },
+      "lastAt": "2026-11-05T19:56:50.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:4",
+    "value": {
+      "key": "github:4",
+      "ref": {
+        "source": "github",
+        "id": "4"
+      },
+      "createdAt": "2026-11-05T20:00:22.594Z",
+      "subscriptions": [
+        "c040bd53efbeba7f1236b5969be9df23"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 4,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/4",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#4"
+          }
+        },
+        "title": "评估输出纠偏：移除伪语义指标与未经验证的效果判定",
+        "label": "#4 评估输出纠偏：移除伪语义指标与未经验证的效果判定"
+      }
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:5",
+    "value": {
+      "key": "github:5",
+      "ref": {
+        "source": "github",
+        "id": "5"
+      },
+      "createdAt": "2026-11-05T21:16:27.644Z",
+      "subscriptions": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "feat: 独立 Claude 网页飞书常驻桥接（原生 A）",
+        "label": "#5 feat: 独立 Claude 网页飞书常驻桥接（原生 A）",
+        "facts": {
+          "number": {
+            "value": "#5"
+          }
+        },
+        "number": 5,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/issues/5"
+      },
+      "lastAt": "2026-11-05T21:16:17.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:6",
+    "value": {
+      "key": "github:6",
+      "ref": {
+        "source": "github",
+        "id": "6"
+      },
+      "createdAt": "2026-11-05T21:48:45.773Z",
+      "subscriptions": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 6,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/6",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#6"
+          }
+        },
+        "title": "feat: add independent Claude web Feishu bridge",
+        "label": "#6 feat: add independent Claude web Feishu bridge"
+      },
+      "lastAt": "2026-11-05T22:35:49.480Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "gitlab:1",
+    "value": {
+      "key": "gitlab:1",
+      "ref": {
+        "source": "gitlab",
+        "id": "1"
+      },
+      "createdAt": "2026-11-06T03:23:34.871Z",
+      "subscriptions": [
+        "d200b45343133759740e64b70e76c18a",
+        "95e452f83325c5dc126d018ca40da9fc"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {},
+      "lastAt": "2026-11-06T02:58:18.739Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "gitlab:2",
+    "value": {
+      "key": "gitlab:2",
+      "ref": {
+        "source": "gitlab",
+        "id": "2"
+      },
+      "createdAt": "2026-11-06T03:30:55.229Z",
+      "subscriptions": [
+        "9fdc1eeaedbb590e4885ef354b87bfd5"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {},
+      "lastAt": "2026-11-06T03:30:54.322Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "gitlab:3",
+    "value": {
+      "key": "gitlab:3",
+      "ref": {
+        "source": "gitlab",
+        "id": "3"
+      },
+      "createdAt": "2026-11-06T10:53:01.802Z",
+      "subscriptions": [
+        "2cdb4afb4c2cb82fc887b59143ddd59c"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {},
+      "lastAt": "2026-11-06T10:52:53.314Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "gitlab:6",
+    "value": {
+      "key": "gitlab:6",
+      "ref": {
+        "source": "gitlab",
+        "id": "6"
+      },
+      "createdAt": "2026-11-06T11:55:43.851Z",
+      "subscriptions": [
+        "d0f78a5fcf8a08554776bb03469120f7"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {},
+      "lastAt": "2026-11-06T11:55:41.548Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:24",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:24",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:24"
+      },
+      "createdAt": "2026-11-05T20:20:43.975Z",
+      "subscriptions": [],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#24 B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#24"
+          }
+        }
+      },
+      "lastAt": "2026-11-05T20:20:12.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:25",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:25",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:25"
+      },
+      "createdAt": "2026-11-05T20:36:11.050Z",
+      "subscriptions": [
+        "24983dd77e986b48866bb016a909d490"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#25 B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#25"
+          }
+        },
+        "number": 25,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/25"
+      },
+      "lastAt": "2026-11-05T20:35:07.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:26",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:26",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:26"
+      },
+      "createdAt": "2026-11-05T20:48:29.694Z",
+      "subscriptions": [
+        "b3a7d823bad0339e77dde1fb22f2060b"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] B：健康检查的 200/503 响应增加固定 service 字段",
+        "label": "#26 [native] B：健康检查的 200/503 响应增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#26"
+          }
+        },
+        "number": 26,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/26"
+      },
+      "lastAt": "2026-11-05T20:47:23.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:27",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:27",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:27"
+      },
+      "createdAt": "2026-11-05T20:51:54.858Z",
+      "subscriptions": [
+        "b3a7d823bad0339e77dde1fb22f2060b"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 27,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/27",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#27"
+          }
+        },
+        "title": "feat: 健康检查 200/503 响应新增固定 service 字段（草稿：受基线阻塞）",
+        "label": "#27 feat: 健康检查 200/503 响应新增固定 service 字段（草稿：受基线阻塞）"
+      }
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:28",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:28",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:28"
+      },
+      "createdAt": "2026-11-05T21:47:13.114Z",
+      "subscriptions": [
+        "f6c1954920dad4c1c76a89e48bca888d"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] B：恢复指定 data 源码并为健康接口增加固定 service 字段",
+        "label": "#28 [native] B：恢复指定 data 源码并为健康接口增加固定 service 字段",
+        "facts": {
+          "number": {
+            "value": "#28"
+          }
+        },
+        "number": 28,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/28"
+      },
+      "lastAt": "2026-11-05T21:46:23.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:29",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:29",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:29"
+      },
+      "createdAt": "2026-11-05T21:51:10.559Z",
+      "subscriptions": [
+        "f6c1954920dad4c1c76a89e48bca888d"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "number": 29,
+        "isPr": true,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/29",
+        "prAuthor": "paxxie2",
+        "facts": {
+          "ci": {
+            "label": "CI",
+            "value": {
+              "zh": "通过",
+              "en": "passed"
+            }
+          },
+          "number": {
+            "value": "#29"
+          }
+        },
+        "title": "fix: 恢复 data 源码并为健康接口增加固定 service 字段",
+        "label": "#29 fix: 恢复 data 源码并为健康接口增加固定 service 字段"
+      }
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "key": "github:paxxie2/site-pnl-diagnosis:30",
+    "value": {
+      "key": "github:paxxie2/site-pnl-diagnosis:30",
+      "ref": {
+        "source": "github",
+        "id": "paxxie2/site-pnl-diagnosis:30"
+      },
+      "createdAt": "2026-11-06T03:35:07.571Z",
+      "subscriptions": [
+        "b61dfbe3525e29fedf3ecf071023f80e"
+      ],
+      "correlated": [],
+      "pending": [],
+      "meta": {
+        "title": "[native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+        "label": "#30 [native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+        "facts": {
+          "number": {
+            "value": "#30"
+          }
+        },
+        "number": 30,
+        "isPr": false,
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/issues/30"
+      },
+      "lastAt": "2026-11-06T03:33:55.000Z"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  }
+]

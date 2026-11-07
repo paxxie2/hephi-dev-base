@@ -1,0 +1,9 @@
+c7a518ca2c6990dc0b0f5a0504c99e85064dbf00389337f10b5d5ebb5bbb2ace  hephi/src/control/evidence-verifier.ts
+075fb363b853ae81de52dab6a9ca724f091124b3f381360587a0aa6ce692b4aa  hephi/src/control/check-runner.ts
+4d2d7366c925fd642756f42495496388c784cd519af0a042d4598ca176b5008e  hephi/src/control/check-store.ts
+5dc3291e1dca393efc17534bad388a4c9f15ec6422d428efc043f46713748b61  hephi/src/control/worker-mount.ts
+e30a682df4948b86cd5987f1c7f0514cea8e77580187f6017bd5bb4a4f3174ed  hephi/src/control/decision-log.ts
+5850d6ce128f3b331f624aee79acaac34f352015fcfa26405da0e079509b8992  hephi/tests/control/evidence-verifier.test.ts
+2036017a60895eab949d14139ffd35d17b5212f69898f6d246c079eeff21c785  hephi/tests/control/plugin-version.test.ts
+235757d2f8a36d64c2828cbf28234128f2b1dcdc367650018d18ba0187ba124c  hephi/tests/control/decision-log.test.ts
+cc0099e9115c5ff3a631e1d515753ebea9dede348fcc01a8d02d6c87b66c2f1e  hephi/tests/control/worker-mount.test.ts

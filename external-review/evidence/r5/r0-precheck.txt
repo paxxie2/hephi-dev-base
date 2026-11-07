@@ -1,0 +1,25 @@
+== date ==
+2026-11-06T22:55:10Z
+== branch ==
+agent/hephi-r2-remediation
+== HEAD ==
+0d58bc39ed246c6c9084766c6b495ce2300795d4
+== origin/main ==
+5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1
+== tag ==
+1e93e4bf6530bfa1329b5c7f073d83e75d73cac1
+3f276a533bceaa63f3e43ff8d0d1e75af9dac8c8
+== remote heads ==
+5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1	refs/heads/main
+== versions ==
+v22.19.0
+11.7.0
+== status ==
+ M docs/implementation-index.md
+ M docs/p11-hephi-smoke-record.md
+ M docs/p8-deploy-record.md
+ M docs/p8-race-record.md
+ M docs/self-check-2026-11-07.md
+ M docs/source-consistency.md
+?? docs/remediation-r1-validation.md
+?? docs/remediation-r3-validation.md

@@ -1,0 +1,6 @@
+REPRODUCED N1 regular-directory migration fails at pointer rename
+REPRODUCED N2 rollback without --target silently rolls to HEAD
+REPRODUCED N3 failed rollback without current build claims previous restored
+REPRODUCED N4 recovery rename failure bypasses double-failure recording
+REPRODUCED N5 success record hardcodes paused=true instead of readback
+Evidence: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/pr20-independent/negative-tests.json

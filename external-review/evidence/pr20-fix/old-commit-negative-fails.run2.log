@@ -1,0 +1,123 @@
+# env: node v22.19.0 pnpm 11.7.0
+# cwd: /tmp/pr20-verify-old @ 17d3827 (old deploy-hephi.sh sha256 8a8a1eb290b7b569edf3a059e0a2b872389ed41f8aad3e0c55127b83676f8f83)
+# run2 determinism check, 2026-11-06T23:39:28Z
+===== BEGIN =====
+PASS R3-T01 first publish exits 0
+PASS R3-T01 release A lib exists
+PASS R3-T01 meta fields complete
+PASS R3-T01 pointer points to release A
+PASS R3-T02 republish fails
+PASS R3-T02 sentinel and release unchanged
+PASS R3-T02 no restart
+PASS R3-T03 missing target fails before switch
+PASS R3-T04 meta/dir SHA mismatch rejected
+PASS R3-T05 content tamper rejected
+PASS R3-T06 switch to B exits 0
+PASS R3-T06 pointer is B
+PASS R3-T06 release A unchanged
+PASS R3-T07 switch back to A exits 0
+PASS R3-T07 pointer is A; both immutable
+PASS R3-T11 dry-run exits 0 and does not switch/restart
+PASS R3-T12 open tickets refuse
+PASS R3-T13 --allow-open-tickets is an unknown argument
+PASS R3-T14 missing/empty hostVersion rejected
+PASS R3-T15 nonzero running refused
+PASS R3-T15 unknown running refused
+PASS R3-T15 nonzero queued refused
+PASS R3-T15 unknown queued refused
+PASS R3-T15 nonzero startupReservations refused
+PASS R3-T15 unknown startupReservations refused
+PASS R3-T15 nonzero effects refused
+PASS R3-T15 unknown effects refused
+PASS R3-T15 nonzero jobs refused
+PASS R3-T15 unknown jobs refused
+PASS R3-T15 nonzero subagents refused
+PASS R3-T15 unknown subagents refused
+PASS R3-T15 nonzero unknown refused
+PASS R3-T15 unknown unknown refused
+PASS R3-T08 restart failure exits nonzero
+PASS R3-T08 auto-restores A and stays paused
+PASS R3-T09 github=starting is not accepted as success
+PASS R3-T09 pointer restored to A
+PASS R3-T10 double failure exits nonzero
+PASS R3-T10 stays paused with both attempts recorded
+PASS R3-T17 success record complete
+PASS R3-T17 failure record complete
+FAIL R3-T17 success record uses real paused/load/health readback :: {"at":"2026-11-06T23:39:32.979Z","action":"deploy","result":"ok","hostVersion":"host-1.0.0","paused":true,"target":"d4d2ad0e83eadec9c369c97466297bedb9797833","previous":"99dfb636eb2cd537be007cddeb55ad66c6b32af5","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-YG1zTH/instance/releases/hephi/99dfb636eb2cd537be007cddeb55ad66c6b32af5/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-YG1zTH/instance/releases/hephi/d4d2ad0e83eadec9c369c97466297bedb9797833/lib","health":"all-required-ready","loadedCommitReadback":"unverified"}
+FAIL R3-T08 restored record keeps both health evidences :: {"at":"2026-11-06T23:39:43.794Z","action":"deploy","result":"failed-restored-previous","hostVersion":"host-1.0.0","paused":true,"target":"d4d2ad0e83eadec9c369c97466297bedb9797833","previous":"99dfb636eb2cd537be007cddeb55ad66c6b32af5","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-YG1zTH/instance/releases/hephi/99dfb636eb2cd537be007cddeb55ad66c6b32af5/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-YG1zTH/instance/releases/hephi/99dfb636eb2cd537be007cddeb55ad66c6b32af5/lib","health":"all-required-ready"}
+PASS R3-T16 releases A/B unchanged after all scenarios
+PASS R3-T07b explicit rollback exits 0
+PASS R3-T07b rollback record exists
+FAIL N1 plain-lib first deploy exits 0 :: ✓ Lockfile passes supply-chain policies (verified 44s ago)
+Already up to date
+
+Done in 270ms using pnpm v11.7.0
+$ node build.mjs
+snapshot existing lib: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-T2lMWG/instance/releases/hephi/.migration-20261106T234016Z
+node:fs:1020
+  binding.rename(
+          ^
+
+Error: EISDIR: illegal operation on a directory, rename '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-T2lMWG/instance/hephi/.lib-new-39150' -> '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-T2lMWG/instance/hephi/lib'
+    at Object.renameSync (node:fs:1020:11)
+    at [eval]:1:27
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:446:12
+    at [eval]-wrapper:6:24
+    at runScriptInContext (node:internal/process/execution:444:60)
+    at evalFunction (node:internal/process/execution:279:30)
+    at evalTypeScript (node:internal/process/execution:291:3)
+    at node:internal/main/eval_string:74:3 {
+  errno: -21,
+  code: 'EISDIR',
+  syscall: 'rename',
+  path: '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-T2lMWG/instance/hephi/.lib-new-39150',
+  dest: '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-T2lMWG/instance/hephi/lib'
+}
+
+Node.js v22.19.0
+
+FAIL N1 lib becomes symlink to release A
+FAIL N1 migration backup keeps old lib content :: undefined
+FAIL N1 success record keeps migration evidence
+PASS N1b migration rename failure exits nonzero
+PASS N1b old plain lib directory restored
+FAIL N1b failure record written :: []
+PASS N2 setup: release A loaded
+FAIL N2 rollback without --target rejected :: release lib missing: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-rzBgeZ/instance/releases/hephi/749f181c4774b4d7549b156a29cc878ccfe91df9/lib
+rollback target release is invalid: 749f181c4774b4d7549b156a29cc878ccfe91df9
+
+FAIL N2 empty rollback target rejected :: release lib missing: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-rzBgeZ/instance/releases/hephi/749f181c4774b4d7549b156a29cc878ccfe91df9/lib
+rollback target release is invalid: 749f181c4774b4d7549b156a29cc878ccfe91df9
+
+PASS N2 invalid rollback target rejected
+FAIL N2 rejected rollbacks have no side effects :: pointer=/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-rzBgeZ/instance/releases/hephi/dba2e03d31e35b58c1da8a52980aa20dd645e110/lib starts=1 records=1
+PASS N3 rollback failure exits nonzero
+FAIL N3 restore record only after real pointer restore ::  undefined
+FAIL N3 record keeps target failure health evidence
+FAIL N3 record keeps restore health evidence
+FAIL N4 recovery rename failure exits nonzero without raw 42 :: code=0 ✓ Lockfile passes supply-chain policies (verified 1s ago)
+Already up to date
+
+Done in 240ms using pnpm v11.7.0
+$ node build.mjs
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-i7EPIl/instance/logs/deploy-20261106T234027Z.json
+deploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)
+
+FAIL N4 double-failure record written :: [{"at":"2026-11-06T23:40:26.423Z","action":"deploy","result":"ok","hostVersion":"host-1.0.0","paused":true,"target":"7f658527ae4ff4b9c9b681dba2f17e034d06021f","previous":"","pointerBefore":"","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-i7EPIl/instance/releases/hephi/7f658527ae4ff4b9c9b681dba2f17e034d06021f/lib","health":"all-required-ready","loadedCommitReadback":"unverified"},{"at":"2026-11-06T23:40:27.895Z","action":"deploy","result":"ok","hostVersion":"host-1.0.0","paused":true,"target":"9a13f8b24dad552ef69a7f589c17a7a31b102748","previous":"7f658527ae4ff4b9c9b681dba2f17e034d06021f","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-i7EPIl/instance/releases/hephi/7f658527ae4ff4b9c9b681dba2f17e034d06021f/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-i7EPIl/instance/releases/hephi/9a13f8b24dad552ef69a7f589c17a7a31b102748/lib","health":"all-required-ready","loadedCommitReadback":"unverified"}]
+FAIL N4 record keeps both failure evidences
+FAIL N4 double-failure record keeps real paused readback
+FAIL N5 deploy refuses success when host is not paused :: ✓ Lockfile passes supply-chain policies (verified 1s ago)
+Already up to date
+
+Done in 283ms using pnpm v11.7.0
+$ node build.mjs
+first install: no previous release and no existing lib; a failed switch will keep the host paused
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-4REQUm/instance/logs/deploy-20261106T234029Z.json
+deploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)
+
+FAIL N5 record uses real paused readback (false)
+FAIL N5 record keeps health readback
+
+FAILED: 20 assertion(s)
+EXIT=1

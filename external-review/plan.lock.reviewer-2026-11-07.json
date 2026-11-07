@@ -1,0 +1,11 @@
+{
+  "acceptance_commands": [
+    "git diff --exit-code",
+    "cd hephi && pnpm check"
+  ],
+  "allowed_files": [],
+  "base_commit": "5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1",
+  "protected_files": {},
+  "repo": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/hephi-review",
+  "task": "独立复核 HEPHI-PREREQ-R2 的 main 5efd708，不修改产品仓库"
+}

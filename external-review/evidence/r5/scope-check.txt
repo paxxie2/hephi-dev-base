@@ -1,0 +1,21 @@
+base 5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1
+HEAD 17d3827d3a73d3afb7a3b8de130d1615bd351769
+changed files (16):
+docs/implementation-index.md
+docs/p11-hephi-smoke-record.md
+docs/p8-deploy-record.md
+docs/p8-race-record.md
+docs/remediation-r1-validation.md
+docs/remediation-r3-validation.md
+docs/self-check-2026-11-07.md
+docs/source-consistency.md
+hephi/docs/versioning.md
+hephi/src/control/activation.ts
+hephi/tests/control/activation.test.ts
+hephi/tests/control/build-commit.test.ts
+hephi/tests/control/deploy-script.test.ts
+hephi/tsdown.config.ts
+scripts/host/deploy-hephi.sh
+scripts/host/test-deploy-hephi.mjs
+
+outside allowed: []

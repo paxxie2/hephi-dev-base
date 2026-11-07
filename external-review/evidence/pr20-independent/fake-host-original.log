@@ -1,0 +1,46 @@
+PASS R3-T01 first publish exits 0
+PASS R3-T01 release A lib exists
+PASS R3-T01 meta fields complete
+PASS R3-T01 pointer points to release A
+PASS R3-T02 republish fails
+PASS R3-T02 sentinel and release unchanged
+PASS R3-T02 no restart
+PASS R3-T03 missing target fails before switch
+PASS R3-T04 meta/dir SHA mismatch rejected
+PASS R3-T05 content tamper rejected
+PASS R3-T06 switch to B exits 0
+PASS R3-T06 pointer is B
+PASS R3-T06 release A unchanged
+PASS R3-T07 switch back to A exits 0
+PASS R3-T07 pointer is A; both immutable
+PASS R3-T11 dry-run exits 0 and does not switch/restart
+PASS R3-T12 open tickets refuse
+PASS R3-T13 --allow-open-tickets is an unknown argument
+PASS R3-T14 missing/empty hostVersion rejected
+PASS R3-T15 nonzero running refused
+PASS R3-T15 unknown running refused
+PASS R3-T15 nonzero queued refused
+PASS R3-T15 unknown queued refused
+PASS R3-T15 nonzero startupReservations refused
+PASS R3-T15 unknown startupReservations refused
+PASS R3-T15 nonzero effects refused
+PASS R3-T15 unknown effects refused
+PASS R3-T15 nonzero jobs refused
+PASS R3-T15 unknown jobs refused
+PASS R3-T15 nonzero subagents refused
+PASS R3-T15 unknown subagents refused
+PASS R3-T15 nonzero unknown refused
+PASS R3-T15 unknown unknown refused
+PASS R3-T08 restart failure exits nonzero
+PASS R3-T08 auto-restores A and stays paused
+PASS R3-T09 github=starting is not accepted as success
+PASS R3-T09 pointer restored to A
+PASS R3-T10 double failure exits nonzero
+PASS R3-T10 stays paused with both attempts recorded
+PASS R3-T17 success record complete
+PASS R3-T17 failure record complete
+PASS R3-T16 releases A/B unchanged after all scenarios
+PASS R3-T07b explicit rollback exits 0
+PASS R3-T07b rollback record exists
+
+PASS: 44 assertions (R3 fake-host suite)

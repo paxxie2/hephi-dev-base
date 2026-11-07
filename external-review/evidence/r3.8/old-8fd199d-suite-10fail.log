@@ -1,0 +1,158 @@
+PASS R3-T01 first publish exits 0
+PASS R3-T01 release A lib exists
+PASS R3-T01 meta fields complete
+PASS R3-T01 pointer points to release A
+PASS R3-T02 republish fails
+PASS R3-T02 sentinel and release unchanged
+PASS R3-T02 no restart
+PASS R3-T03 missing target fails before switch
+PASS R3-T04 meta/dir SHA mismatch rejected
+PASS R3-T05 content tamper rejected
+PASS R3-T06 switch to B exits 0
+PASS R3-T06 pointer is B
+PASS R3-T06 release A unchanged
+PASS R3-T07 switch back to A exits 0
+PASS R3-T07 pointer is A; both immutable
+PASS R3-T11 dry-run exits 0 and does not switch/restart
+PASS R3-T12 open tickets refuse
+PASS R3-T13 --allow-open-tickets is an unknown argument
+PASS R3-T14 missing/empty hostVersion rejected
+PASS R3-T15 nonzero running refused
+PASS R3-T15 unknown running refused
+PASS R3-T15 nonzero queued refused
+PASS R3-T15 unknown queued refused
+PASS R3-T15 nonzero startupReservations refused
+PASS R3-T15 unknown startupReservations refused
+PASS R3-T15 nonzero effects refused
+PASS R3-T15 unknown effects refused
+PASS R3-T15 nonzero jobs refused
+PASS R3-T15 unknown jobs refused
+PASS R3-T15 nonzero subagents refused
+PASS R3-T15 unknown subagents refused
+PASS R3-T15 nonzero unknown refused
+PASS R3-T15 unknown unknown refused
+PASS R3-T08 restart failure exits nonzero
+PASS R3-T08 auto-restores A and stays paused
+PASS R3-T09 github=starting is not accepted as success
+PASS R3-T09 pointer restored to A
+PASS R3-T10 double failure exits nonzero
+PASS R3-T10 stays paused with both attempts recorded
+PASS R3-T17 success record complete
+PASS R3-T17 failure record complete
+PASS R3-T17 success record uses real paused/load/health readback
+PASS R3-T08 restored record keeps both health evidences
+PASS R3-T16 releases A/B unchanged after all scenarios
+PASS R3-T07b explicit rollback exits 0
+PASS R3-T07b rollback record exists
+PASS N1 plain-lib first deploy exits 0
+PASS N1 lib becomes symlink to release A
+PASS N1 migration backup keeps old lib content
+PASS N1 success record keeps migration evidence
+PASS N1b migration rename failure exits nonzero
+PASS N1b old plain lib directory restored
+PASS N1b failure record written
+PASS N2 setup: release A loaded
+PASS N2 rollback without --target rejected
+PASS N2 empty rollback target rejected
+PASS N2 invalid rollback target rejected
+PASS N2 rejected rollbacks have no side effects
+PASS N3 rollback failure exits nonzero
+PASS N3 restore record only after real pointer restore
+PASS N3 record keeps target failure health evidence
+PASS N3 record keeps restore health evidence
+PASS N4 recovery rename failure exits nonzero without raw 42
+PASS N4 double-failure record written
+PASS N4 record keeps both failure evidences
+PASS N4 double-failure record keeps real paused readback
+PASS N5 deploy refuses success when host is not paused
+PASS N5 record uses real paused readback (false)
+PASS N5 record keeps health readback
+PASS X1 double failure exits nonzero
+PASS X1 failed-twice keeps real paused=false
+FAIL X1 output does not claim kept paused :: Already up to date
+
+Done in 165ms using pnpm v10.7.0
+
+> stub-hephi@0.0.0 check /private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/.build-a7645c8e67941d5f7790c060e9f544b3e74559fc-bVWQqE/hephi
+> node build.mjs
+
+instance did not reach full health within 3s
+instance did not reach full health within 3s
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/logs/deploy-20261107T023453Z-41882.json
+target and automatic recovery both failed; host kept paused with both errors recorded
+
+FAIL X1 output/record flags host not confirmed paused :: out=Already up to date
+
+Done in 165ms using pnpm v10.7.0
+
+> stub-hephi@0.0.0 check /private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/.build-a7645c8e67941d5f7790c060e9f544b3e74559fc-bVWQqE/hephi
+> node build.mjs
+
+instance did not reach full health within 3s
+instance did not reach full health within 3s
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/logs/deploy-20261107T023453Z-41882.json
+target and automatic recovery both failed; host kept paused with both errors recorded
+ rec={"at":"2026-11-07T02:34:53.378Z","action":"deploy","result":"failed-twice","hostVersion":"host-1.0.0","paused":false,"load":{"running":0,"queued":0,"startupReservations":0,"effects":0,"jobs":0,"subagents":0,"unknown":0},"healthReadback":{"runtime":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"relay":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"notice":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"launch":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"delivery":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"assessment":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"reply":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"evals":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"models":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"github":{"state":"error","detail":"x1-target-failure","at":"2026-11-07T02:34:53.346Z"}},"target":"a7645c8e67941d5f7790c060e9f544b3e74559fc","previous":"previous:/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","health":"not-ready","migration":"none","targetFailure":"{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"github\":{\"state\":\"error\",\"detail\":\"x1-target-failure\",\"at\":\"2026-11-07T02:34:48.891Z\"}}}","restoreFailure":"{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"github\":{\"state\":\"error\",\"detail\":\"x1-target-failure\",\"at\":\"2026-11-07T02:34:53.285Z\"}}}","error":"target and automatic recovery both failed; host kept paused with both errors recorded"}
+FAIL X1 record keeps keptPaused=no :: {"at":"2026-11-07T02:34:53.378Z","action":"deploy","result":"failed-twice","hostVersion":"host-1.0.0","paused":false,"load":{"running":0,"queued":0,"startupReservations":0,"effects":0,"jobs":0,"subagents":0,"unknown":0},"healthReadback":{"runtime":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"relay":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"notice":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"launch":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"delivery":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"assessment":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"reply":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"evals":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"models":{"state":"ready","detail":"ready","at":"2026-11-07T02:34:53.346Z"},"github":{"state":"error","detail":"x1-target-failure","at":"2026-11-07T02:34:53.346Z"}},"target":"a7645c8e67941d5f7790c060e9f544b3e74559fc","previous":"previous:/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-PDA2oG/instance/releases/hephi/6bed202c389d5366c8add6e873aaaf19db2b4d35/lib","health":"not-ready","migration":"none","targetFailure":"{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:48.891Z\"},\"github\":{\"state\":\"error\",\"detail\":\"x1-target-failure\",\"at\":\"2026-11-07T02:34:48.891Z\"}}}","restoreFailure":"{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:34:53.285Z\"},\"github\":{\"state\":\"error\",\"detail\":\"x1-target-failure\",\"at\":\"2026-11-07T02:34:53.285Z\"}}}","error":"target and automatic recovery both failed; host kept paused with both errors recorded"}
+PASS X2 restore state unreadable exits nonzero
+PASS X2 failed-twice record written
+PASS X2 targetFailure keeps target-phase evidence
+FAIL X2 targetFailureKind recorded :: {"at":"2026-11-07T02:35:05.361Z","action":"deploy","result":"failed-twice","hostVersion":"host-1.0.0","paused":"unverified","load":"unverified","healthReadback":"unverified","target":"5308aa343906e87e442d041438da0044aa2378a3","previous":"previous:/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","health":"not-ready","migration":"none","targetFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","restoreFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","error":"target and automatic recovery both failed; host kept paused with both errors recorded"}
+FAIL X2 restoreFailureKind state-unreadable or restoreFailure unverified :: {"at":"2026-11-07T02:35:05.361Z","action":"deploy","result":"failed-twice","hostVersion":"host-1.0.0","paused":"unverified","load":"unverified","healthReadback":"unverified","target":"5308aa343906e87e442d041438da0044aa2378a3","previous":"previous:/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","health":"not-ready","migration":"none","targetFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","restoreFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","error":"target and automatic recovery both failed; host kept paused with both errors recorded"}
+FAIL X2 restoreFailure is not the target-phase string :: {"at":"2026-11-07T02:35:05.361Z","action":"deploy","result":"failed-twice","hostVersion":"host-1.0.0","paused":"unverified","load":"unverified","healthReadback":"unverified","target":"5308aa343906e87e442d041438da0044aa2378a3","previous":"previous:/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerBefore":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","pointerAfter":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/b5878a9e907557df310139faed07ceb3c011d65c/lib","health":"not-ready","migration":"none","targetFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","restoreFailure":"{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T02:35:01.040Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T02:35:01.040Z\"}}}","error":"target and automatic recovery both failed; host kept paused with both errors recorded"}
+FAIL X2 unverified paused path does not claim kept paused :: Already up to date
+
+Done in 154ms using pnpm v10.7.0
+
+> stub-hephi@0.0.0 check /private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/releases/hephi/.build-5308aa343906e87e442d041438da0044aa2378a3-AhxQCM/hephi
+> node build.mjs
+
+instance did not reach full health within 3s
+instance did not reach full health within 3s
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-ij2e8j/instance/logs/deploy-20261107T023505Z-43619.json
+target and automatic recovery both failed; host kept paused with both errors recorded
+
+PASS X3 migration restore double failure exits nonzero
+PASS X3 live lib is absent after failed migration restore
+PASS X3 migration backup keeps legacy content
+FAIL X3 failed-pointer record marks migrationRestore failed :: {"at":"2026-11-07T02:35:07.303Z","action":"deploy","result":"failed-pointer","hostVersion":"host-1.0.0","paused":true,"load":{"running":0,"queued":0,"startupReservations":0,"effects":0,"jobs":0,"subagents":0,"unknown":0},"healthReadback":{"runtime":{"state":"starting","detail":"waiting for start","at":"2026-11-07T02:35:07.272Z"},"relay":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"notice":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"launch":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"delivery":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"assessment":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"reply":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"evals":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"models":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"},"github":{"state":"ready","detail":"ready","at":"2026-11-07T02:35:07.272Z"}},"target":"89c11af143634911b2b3570177e4a764aa68bcaa","previous":"","pointerBefore":"","pointerAfter":"","health":"not-ready","migration":"/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/hephi/.migration-20261107T023507Z-44607","error":"pointer switch failed"}
+PASS X3 failed-pointer record carries migration backup path
+FAIL X3 output does not claim restored or preserved :: Already up to date
+
+Done in 158ms using pnpm v10.7.0
+
+> stub-hephi@0.0.0 check /private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/releases/hephi/.build-89c11af143634911b2b3570177e4a764aa68bcaa-y8N53F/hephi
+> node build.mjs
+
+snapshot existing lib: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/releases/hephi/.migration-20261107T023507Z
+injected pointer rename failure
+cannot restore plain lib directory from /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/hephi/.migration-20261107T023507Z-44607
+pointer rename failed during plain-directory migration; old lib directory restored
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/logs/deploy-20261107T023507Z-44607.json
+could not switch the loaded pointer; host kept paused and previous state preserved
+
+FAIL X3 output states restore failure and backup path :: backup=/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/hephi/.migration-20261107T023507Z-44607 out=Already up to date
+
+Done in 158ms using pnpm v10.7.0
+
+> stub-hephi@0.0.0 check /private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/releases/hephi/.build-89c11af143634911b2b3570177e4a764aa68bcaa-y8N53F/hephi
+> node build.mjs
+
+snapshot existing lib: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/releases/hephi/.migration-20261107T023507Z
+injected pointer rename failure
+cannot restore plain lib directory from /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/hephi/.migration-20261107T023507Z-44607
+pointer rename failed during plain-directory migration; old lib directory restored
+record: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-r3-NpYR9I/instance/logs/deploy-20261107T023507Z-44607.json
+could not switch the loaded pointer; host kept paused and previous state preserved
+
+PASS P1 rollback target failure exits nonzero
+PASS P1 tampered current is not a restore target
+PASS P1 failed-no-previous record written
+PASS P2 invalid previous rejected before host read
+PASS P2 invalid previous has no side effects
+PASS P3 target health failure exits nonzero
+PASS P3 previous release restored as pointer
+PASS P3 failed-restored-previous keeps restoreHealth all-required-ready
+PASS P3 record keeps real paused=true
+
+FAILED: 10 assertion(s)

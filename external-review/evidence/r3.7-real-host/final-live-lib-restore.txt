@@ -1,0 +1,14 @@
+== before final restore ==
+live entry: 1b9fd4ec58192e3b02bbe38594472a2b2fb170f99d72b5aaffbfadc2955743d6
+live tree:  515be21c62264f65ec634e9c56fa08d147a61f75e5c43f1f56ff3ae2931964e7  -
+release tree: 10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+== after final restore (moved rebuilt to evidence/live-lib-rebuilt-20261107T012623Z) ==
+live entry: fe404c0ddc7bb6fa798f99be08213571789696e431fcf3e4b2054bf3da078438
+live tree:  10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+release tree: 10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+lib type: plain-directory
+== host health ==
+paused=false load={"running":0,"queued":0,"maxWorkers":3}
+states={"runtime":"ready","relay":"ready","notice":"ready","launch":"ready","delivery":"ready","assessment":"ready","reply":"ready","evals":"ready","models":"ready","github":"ready"}
+== repo worktree status (should be clean) ==
+(end)

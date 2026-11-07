@@ -1,0 +1,13 @@
+{
+  "acceptance_commands": [
+    "git diff --exit-code",
+    "cd hephi && pnpm check",
+    "node scripts/host/test-deploy-hephi.mjs",
+    "git diff --check 5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1..HEAD"
+  ],
+  "allowed_files": [],
+  "base_commit": "8fd199da1d2437ccc9da90a0cfcca64d1646549d",
+  "protected_files": {},
+  "repo": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r37-review",
+  "task": "独立复核合并后 R3 修复、R3.7 blocked 交接与证据，不修改审查工作树，不操作真实宿主"
+}

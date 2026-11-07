@@ -1,0 +1,78 @@
++ date -u +%FT%TZ
+2026-11-06T22:56:35Z
++ node -v
+v22.19.0
++ pnpm -v
+11.7.0
++ echo '== harness =='
+== harness ==
++ node scripts/host/test-deploy-hephi.mjs
++ tail -2
+
+PASS: 44 assertions (R3 fake-host suite)
++ echo HARNESS_EXIT=0
+HARNESS_EXIT=0
++ echo '== diff --check =='
+== diff --check ==
++ git diff --check 5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1..HEAD
++ echo DIFFCHECK_EXIT=0
+DIFFCHECK_EXIT=0
++ echo '== status =='
+== status ==
++ git status --short
++ echo STATUS_END
+STATUS_END
++ echo '== node --check mjs =='
+== node --check mjs ==
++ fail=0
+++ git ls-files '*.mjs'
++ for f in $(git ls-files '*.mjs')
++ node --check eval/ab-metrics.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/check-baseline.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/check-budget.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/check-data-package.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/check-roles.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/export-baseline.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check eval/kappa.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check hephi/scripts/check-stage-host.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check hephi/scripts/host-capabilities.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check projects/hephi/scripts/check-stage-host.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check scripts/experimental/check-shadow-parity.mjs
++ for f in $(git ls-files '*.mjs')
++ node --check scripts/host/test-deploy-hephi.mjs
++ echo MJS_EXIT=0
+MJS_EXIT=0
++ echo '== sh -n sh =='
+== sh -n sh ==
++ fail=0
+++ git ls-files '*.sh'
++ for f in $(git ls-files '*.sh')
++ sh -n hephi/scripts/prepare-dubbo.sh
++ for f in $(git ls-files '*.sh')
++ sh -n projects/hephi/scripts/prepare-dubbo.sh
++ for f in $(git ls-files '*.sh')
++ sh -n scripts/experimental/check-dubbo-offline.sh
++ for f in $(git ls-files '*.sh')
++ sh -n scripts/experimental/check-github-entry.sh
++ for f in $(git ls-files '*.sh')
++ sh -n scripts/experimental/check-github-permissions.sh
++ for f in $(git ls-files '*.sh')
++ sh -n scripts/host/deploy-hephi.sh
++ for f in $(git ls-files '*.sh')
++ sh -n scripts/host/rebuild-isolated.sh
++ echo SH_EXIT=0
+SH_EXIT=0
++ echo '== describePlugin =='
+== describePlugin ==
++ node -e 'import('\''./hephi/lib/index.mjs'\'').then(m=>console.log(JSON.stringify(m.describePlugin())))'
+{"name":"hephi-superagent-plugin","version":"0.1.0","commit":"17d3827d3a73d3afb7a3b8de130d1615bd351769"}

@@ -1,0 +1,970 @@
+[
+  {
+    "id": "4fde7c589eb8c49aed8fff56415f0e11",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.786Z",
+      "evalId": "e36583b4467ee00670a17c533ae98342",
+      "decisionId": "1cd72b22ede7c1883a918f3b0263af84",
+      "acked": [
+        "6c5b2c3d20598e608c59e611315f28e1"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a15501c1f508f9e84e3578dfa9bf04e8",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.792Z",
+      "evalId": "4385430fd02a20371d1f343fe820991c",
+      "decisionId": "4bab345036725bc8977f1d05fb55c83b",
+      "acked": [
+        "f2e975294545985c8f3d970540842461"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "f3b4775b89e1e826e49fb1f7a2f374d1",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.794Z",
+      "evalId": "546d7c841dd57edfb287cd46ede72eaf",
+      "decisionId": "43ee2dc03688bcbb94e4b7bb1fd57527",
+      "acked": [
+        "887445ed2dd1a971766f25f9bdd59a5e"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "02ba12d14c5bf71b8b2927352df07f93",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.795Z",
+      "evalId": "c036c766c59722ea72e9b390cd621565",
+      "decisionId": "a408ecfc1aefc969a09fae8c9ec95c91",
+      "acked": [
+        "c9743737c8f774761d92926defac7e30"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "88b7f7eb9c745f5ceafb6e8543206bba",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.797Z",
+      "evalId": "116e4de3845672cf287b5d4d162b5e55",
+      "decisionId": "5a4b65a379d4dffc27bb7fee41eb4f3e",
+      "acked": [
+        "a3a3b165ae7a6cef931d175e1d09e8d4"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "6618ff4acad5e9586f4bba62b50b259c",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.798Z",
+      "evalId": "f771c96d0b2bec0f4470bdbb4253c3ed",
+      "decisionId": "f27383ff833306298ac4fd415a8390c6",
+      "acked": [
+        "d11da74fbc40b7ce3dfa4380ab8f15da"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "722725aa8aa2478bed81caab4d0fb66f",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.799Z",
+      "evalId": "3b1607a1f93d309df4a06b7aca33ae6e",
+      "decisionId": "df0f12d99b715dc8910c37a4753255f5",
+      "acked": [
+        "d4fe4269f72696220ed34e7b185f268c"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "69c9cbfd9356e497a59a2c8ba4380e06",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.800Z",
+      "evalId": "8263dd1b683309e21d19292adb496d2f",
+      "decisionId": "311c137407d3e80a38a026b4387af147",
+      "acked": [
+        "c42f65481bb9e3f65b1b85f8257e63de"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "754e48815bfddfb352c2cb03bd49228e",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.806Z",
+      "evalId": "39360a8c6046481dd957710d3fd8df9a",
+      "decisionId": "61098d10bdc0a729d481791590721f03",
+      "acked": [
+        "b11c279696ae9c394c41e10b364a3626"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e0ff764eae6358a00874c2829ddac0e8",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:24:26.807Z",
+      "evalId": "89d5471efc139b3260dc2511b1a4374b",
+      "decisionId": "1c95e56903e2858b2728c9176897625b",
+      "acked": [
+        "a2813fe24ca0241ff4a632826a0e7166"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e14fae7ac6141be7354aef089c602228",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T19:33:06.819Z",
+      "evalId": "e97a8690cda6c6cb3e4c31b32149026b",
+      "decisionId": "2088dd8d0b2dc069549915aef5461a21",
+      "acked": [
+        "6e10e69705ee003ea811340a2796832f"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "9010b41b2ccb2d841a0c8fea94f24720",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T20:17:18.359Z",
+      "evalId": "bdeb07221d35041a9bd62230f35a4910",
+      "decisionId": "ef2fb16a970339ef70844456508dd35d"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "b4af7cd3862202a1a3281681f0840bc0",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T23:37:50.423Z",
+      "evalId": "b3e8603ada98dd2818b9cecdae46981a",
+      "decisionId": "780840bc85acd6ef6de1c9ae74ad4520",
+      "acked": [
+        "051457410f388b7a7d1265ae60f27a82"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "5fca961ea224896d75cafc7e284faecd",
+    "value": {
+      "fanout": [],
+      "at": "2026-10-31T23:41:40.954Z",
+      "evalId": "556625b8aec82bcd1b870806e754abfa",
+      "decisionId": "3cc87c64533fc124f2282b94ad2e1c29",
+      "acked": [
+        "ebc0b53b707a14c33c7f7b963b6efb02"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "3e2485312d5eec61fd463ae09eb4a72d",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T00:12:14.024Z",
+      "evalId": "d62011dc64e82bca43b14088f5cd3545",
+      "decisionId": "ebc940b50a2eb6af0180249ddb43c0f1",
+      "acked": [
+        "dc3149d7a86c0290e378700cc065d4c3"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ebf86d0ac4d40c35482adbe54203c582",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T00:25:18.093Z",
+      "evalId": "96274248a3fb54e81589effd1d76ed6f",
+      "decisionId": "c4923d226c9d51f1ad901b4a8dbc5a9f",
+      "acked": [
+        "062bcb763e992bda4fa6f61dc87b8ea6"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "b60cc718e5498e652f1ed16e7a9a3235",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T09:37:03.337Z",
+      "evalId": "9f3efa580aaea85e3ba5f9dc45bf47cd",
+      "decisionId": "ecb99c5e85217c3a4e86fe6c5936bc42",
+      "acked": [
+        "df7785b8a4f63cbf06ec1da71a9c9e1f"
+      ],
+      "requeued": true
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "6c1877fae8ca455d124ddf4539b1a673",
+    "value": {
+      "fanout": [
+        "df7785b8a4f63cbf06ec1da71a9c9e1f"
+      ],
+      "at": "2026-11-01T09:53:02.765Z",
+      "evalId": "5f00670932df8482763c8aeee16ed4ea",
+      "decisionId": "c3387f50d5fca5353294fd28c14182ad"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "fba9f912aff040827eca1c9df73d0642",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T10:15:26.626Z",
+      "evalId": "ec72dfdc6e7b6c3f6251cb15eafd33fb",
+      "decisionId": "1d527f1c75f5f049394b2b43952a6061",
+      "acked": [
+        "1df23f2c96b09a2326d87989eeafa98c"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "3f8da52ddea8c3b589a16098f3cae7fb",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T11:13:38.496Z",
+      "evalId": "4d724851cfc964b0bc07d1feb123bf4f",
+      "decisionId": "507546a77a839a5c10a1cac7dab62581",
+      "acked": [
+        "2699c7b7b0e0d6b7e513e43b1ea22907"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "da944b0f785c7f274563b137e0bd504e",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T11:29:19.870Z",
+      "evalId": "a70139d0871b6c8c7db02626da73539f",
+      "decisionId": "28a0e44121fe15640af276cd4e3c5c8c",
+      "acked": [
+        "e2c14b27a36f57482a2da13b60dd094c"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "9ebfe2537170156a71a6c91754192c67",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T14:41:30.690Z",
+      "evalId": "4ce2fa0330bb5a674d3cd64b656fd193",
+      "decisionId": "7c239435b2d92934bbfad481718ccc5e"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7c695a58ca26607b65b8a8391730029b",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T14:48:15.747Z",
+      "evalId": "f04229f6bf4c9e039b682c19b15a7699",
+      "decisionId": "e424836c6451dd5be5b9b82480ebc86e"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "2ff02f2c29046102b89dc2c5b7791aad",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T14:52:07.402Z",
+      "evalId": "3c565c73ae3315c31dc3371519d32f9b",
+      "decisionId": "0185216846fbfb4715f8e2c3fc52f624",
+      "requeued": true
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a219a21fd0c37402df44612e3ebda52d",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T14:58:56.865Z",
+      "evalId": "cde39a056e6d03ede39220631aff513a",
+      "decisionId": "435d19b0b845500ce03d6d2cf245faed",
+      "requeued": true
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a169275ef57574abc32b9df08734f1b1",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T15:02:20.355Z",
+      "evalId": "5b5c046db5c588af968ca04368d96735",
+      "decisionId": "fcea1c325f767a5680e1e93e3e4e392a",
+      "acked": [
+        "37408253eda5510f8570060f84eb2d5a"
+      ],
+      "requeued": true
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "3cadf97b73712dc7666c5b4dcb48d477",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T15:39:24.286Z",
+      "evalId": "efde76c224b2c62232dd917ac073f0a6",
+      "decisionId": "5c9bbb0495d328c90ce195761a23f8f0",
+      "acked": [
+        "9656c5311ac7bea529f10e09e378f6ae"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a7b0ec7154b907a1e5be75283c6d9032",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T15:52:32.654Z",
+      "evalId": "4f017c576d30966911385e128e75de17",
+      "decisionId": "479a3bfbeabc60805eb56d2d45a9d435",
+      "acked": [
+        "8c6d37965ad7229d8ecf360266129f23"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "faaf1d73ca1cf88462f371f4360719f9",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T15:58:43.550Z",
+      "evalId": "c75996ff0c15e1646a9ac49b49aef1be",
+      "decisionId": "f72c32ebed31369f62da037d0eb01813",
+      "acked": [
+        "6d5c2660f83a9e76d83c19539181c25d"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "2f75cd37d1db763f00a79b7da84d9b84",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T16:04:49.821Z",
+      "evalId": "5d5466bf16e4dc93770eb27f537127f6",
+      "decisionId": "211ff95e8c51b2d7d569b2b2ed1b18bd",
+      "acked": [
+        "d63b7b27cc49f59f1edeee54a99f62da"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ef9d5d0a9dfdcb8bc674b172e5e196d0",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:09:06.951Z",
+      "evalId": "6a05d2811609e6e1ce51def44080be31",
+      "decisionId": "eae0c4e46af61cc11b19f23c3da73129",
+      "acked": [
+        "69f5c32499468a0fcbbb75f6631f65c6"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a98f6a40687add395536df2a54d895cc",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:10:14.105Z",
+      "evalId": "6192d97ec6f43082db4fa19f3e8a6d89",
+      "decisionId": "e6b5c92fadf5b50295b858b30b48458c"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "635cf78eda1144a3a19ed603f9db2445",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:19:00.633Z",
+      "evalId": "3e7c8b39b801eb127f2319890648d12f",
+      "decisionId": "d10b53632fccb5600787a0344ebcf3e5"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7a98ef1c68a2679d7e3e0b75d9e96d9b",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:40:29.989Z",
+      "evalId": "7b3af8ca8e1ba6c172a52780271eb535",
+      "decisionId": "7a554239d1ca3d5c40c9dcfb795e5cf8"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "99bc0de88b6cf1d3329abff57a661719",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:40:29.994Z",
+      "evalId": "a0c745fe124cac7b7aee842ababb9a4f",
+      "decisionId": "8d1c3225a8cd8d057f26ee712303238c"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e644e0b93d5e55dc3ba4185d6e01b0a5",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T17:47:28.379Z",
+      "evalId": "8c568368b39311da299b044de37159cd",
+      "decisionId": "4db15368c51d614511bb4d7c48f49f95"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7e6515111f946e1b7dde266f587ae3f4",
+    "value": {
+      "fanout": [
+        "bddd2e933a711dd80a72fabe9009a230"
+      ],
+      "at": "2026-11-01T17:57:18.438Z"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "40237a9be47156601eee636f9e760991",
+    "value": {
+      "fanout": [
+        "bddd2e933a711dd80a72fabe9009a230"
+      ],
+      "context": [
+        "bddd2e933a711dd80a72fabe9009a230"
+      ],
+      "at": "2026-11-01T18:00:39.566Z",
+      "evalId": "332fc2fff254a5b17655ad602488b95e",
+      "handbacks": [
+        {
+          "ticketId": "bddd2e933a711dd80a72fabe9009a230",
+          "reason": "This comment authorizes a separate further replay on a new native Ticket/Worker/workspace/branch, which is beyond this completed replay ticket and needs fresh assessment as its own ticket.",
+          "at": "2026-11-01T18:00:50.869Z"
+        }
+      ],
+      "decisionId": "40f1cc22f881c579d7007f69b2bc3896"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "9989a35d6f8ef0b3cf5750380bf7800b",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T19:08:53.739Z",
+      "evalId": "10d8c716f860cdb64dbb928902e0748d",
+      "decisionId": "efdb8897d5ae7237b6d99bcd8137911b"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "fbac79a2239edf548fbe6b3d8e9493d5",
+    "value": {
+      "fanout": [
+        "a13a31eba85394fd66a564b32d4988cb"
+      ],
+      "at": "2026-11-01T19:15:18.689Z",
+      "evalId": "a48575daf83cf72bdbfe6b47a937ab2a",
+      "decisionId": "308f725e3f20137dabe22084d16bee1c"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c264935f1b4e3ee3656878bf845e9ba1",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-01T21:45:35.565Z",
+      "evalId": "5cc014d6c413ee378f2097c7292169b5",
+      "decisionId": "146210c6a9de2abda019292f0b7f0272"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "d39de8568c9720da44272ec1ddbb1c19",
+    "value": {
+      "fanout": [
+        "531f0daa5420e2f8e1bcb50d2780b2bb"
+      ],
+      "at": "2026-11-01T22:07:26.483Z",
+      "evalId": "301414c2b1dbc3df8df6f98de101e9f0",
+      "decisionId": "65ee0a1ff33415a5a4b3662d6745b5a9"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ae57e9aa5dbbb200291bb6f0f924bb7f",
+    "value": {
+      "fanout": [
+        "531f0daa5420e2f8e1bcb50d2780b2bb"
+      ],
+      "at": "2026-11-01T22:53:01.556Z",
+      "evalId": "84d8654d6daf29d7514cd29ed40546f1",
+      "decisionId": "965f8aaf52e4644e1fe76921af1a8c71"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "4a2de63fa4ae1fe7f406c3ccd62afffd",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-03T20:24:02.162Z",
+      "evalId": "7926a985b8639022cb2a2a7800dfd863",
+      "decisionId": "613f2464cd5d4ce62d139849cdecf5e9",
+      "requeued": true
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "f4561cb5c3b1821731a20abc86ba4c11",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-03T20:52:25.144Z",
+      "evalId": "32b1b88fc1e9861cf11cee3d77d36fc6",
+      "decisionId": "929b43c485df44835135e8022403b907"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "cfa0a2ca29c8272cc9add6954ec218a0",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T00:02:25.497Z",
+      "evalId": "c4691b651164ef6a9bc71d1e1f5fe70c",
+      "decisionId": "16dcfe83d65f4a325f9d5c623e0d149d"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "74d02d080e3f46c25cd1fb1730f8396f",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T01:09:11.628Z",
+      "evalId": "4f088d7006d4850c42c9075e959ba8b9",
+      "decisionId": "91aa1776322d1bca2e72945738269c9c"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ad3d6ad688bc718fd97145a6ec0bec51",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T11:36:01.799Z",
+      "evalId": "17368a171811a64976316bd67f36a859",
+      "decisionId": "da2900f241ffcbf354aff4686a32bf40"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "55d3f1f0573abff2158dbaf321487aa2",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T11:36:01.805Z",
+      "evalId": "ca1218929c24e05da92252fbf1646b83",
+      "decisionId": "6485caed651bc41dd0ed8cb63ec4c842",
+      "acked": [
+        "368b272636e721fb82e533eeca4f2e62"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "d78af429ec9c9d8d31bd28aebd82efcf",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T12:06:57.552Z",
+      "evalId": "9bf093e73543043ba1152e4a6e0ffc32",
+      "decisionId": "3805aa4496f7c23f5542d1288ffad224"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "86269be1c935c5b489e4dd127f613798",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T12:06:57.559Z",
+      "evalId": "e71cb3af2824a0e7ac8a47683537ecd9",
+      "decisionId": "00c40fa26a559a481f6d3495417f905c"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e3cc2c2f923d7a6fc227ebe5e814fd3b",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T18:17:59.887Z",
+      "evalId": "bdcb9dd331d450b068d3cf215b6bc5a4",
+      "decisionId": "a0bf1c836a7025b98e75c4036f2da4f9"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "1005d44d2d9386c293e316203b5a8c02",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T18:17:59.893Z",
+      "evalId": "86f0e8ada3ad72cf7cdbf31bd9fdb524",
+      "decisionId": "0b73c129da2f22d9a9ec99129280f925"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e0a573d3bcd0df76b665e6d43c1620dc",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T18:45:42.282Z",
+      "evalId": "0078e9a5f95f183ae5ffac25dcedbd28",
+      "decisionId": "05c68ab4c1307fc7e4013e9d787c09b5"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "eb11c62afeaa7468276156a48202586f",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T18:45:42.292Z",
+      "evalId": "baca9eaaef9ec5c789d0673ce3080e14",
+      "decisionId": "e1a80f8629bd72a274cf035a3f4318e8"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7970942c12a660ccf93a0687b1acec71",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T19:31:56.703Z",
+      "evalId": "aa70ffb2cf7b0ff56ad023f220fa7124",
+      "decisionId": "21ccc8640f7c4ab32c6706ab6ad1697b"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "b9988dd54be3b3b76eff312823a157e6",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T19:59:51.515Z",
+      "evalId": "5b74e3b12ea54b0a0c4ccec6f4f0900b",
+      "decisionId": "5dd3c70cd341078684fa5e729b873d97"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "39561780fe1f182832e6039f34ce8bab",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T19:59:51.521Z",
+      "evalId": "23d804439b21ce8db640fe4749c8c56c",
+      "decisionId": "1a10f31af33aeab9c936db0e815570e4"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "5183985b53a9dbd1464e151232177c63",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-04T20:22:47.408Z",
+      "evalId": "017dc67784a20b1034c76e2ff6a2c59d",
+      "decisionId": "6a7b61f13452a00faee3eb3fbf644e3b"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "4323a54cdd0018293ff208ff50eb76b2",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T18:06:26.104Z",
+      "evalId": "2933dd51b9ebb1191638bb6183a0b31a",
+      "decisionId": "e9b5a9048a594b6ce2ec284027c526bd"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "cc25a1d17b324340ffa7c57aed782d51",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T18:06:26.111Z",
+      "evalId": "838a4001b8abd09515658bde26e99e66",
+      "decisionId": "04b831bd12dbd401d35b3e7e377c91a0"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "20b5b75d948c4cf65887e8a7abaae749",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T18:06:26.115Z",
+      "evalId": "fd206d5178471e54244bc8dc878dad56",
+      "decisionId": "56053bcb452ce6076cb429507005eac4"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7b5d7b0bc06fb76a600be07532dcb540",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T18:06:26.119Z",
+      "evalId": "d2ca9255a9a4b4529e413ab3e02ef069",
+      "decisionId": "f460a33bf42bad8fedcf74ef24f20124"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a00b67e3f921767e87840bd3bf688a93",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T18:06:26.122Z",
+      "evalId": "50fab031ac4bab7dd608760d101f9a0f",
+      "decisionId": "b409c1ec0e974caebfc1ea5250bb6539"
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e9a4b8b1abb3a95ab48c2c7ca8138a5b",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T20:02:30.749Z",
+      "evalId": "6031e5090f2fa0a4ee681a6e86415c9b",
+      "decisionId": "413f0e554bc1b60c711ad9aa9469378a",
+      "acked": [
+        "166f70890d3eab8eaf4154499e43f341"
+      ]
+    },
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a15501c1f508f9e84e3578dfa9bf04e8",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T19:57:04.231Z",
+      "evalId": "121c8226143c2f5956259e4603f892f1",
+      "decisionId": "eef076eec5d6cdb94c2292888a89d86c",
+      "acked": [
+        "c040bd53efbeba7f1236b5969be9df23"
+      ]
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "02ba12d14c5bf71b8b2927352df07f93",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T21:16:27.643Z",
+      "evalId": "0a603ea95ce91a57c2d3b0d23852b3af",
+      "decisionId": "cea14336be259c0e96009158f72b1c32",
+      "acked": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ]
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "7bd892df84e63a77b80ed53334b1e1ea",
+    "value": {
+      "fanout": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ],
+      "at": "2026-11-05T21:50:29.021Z",
+      "evalId": "6731a9d552ca1aca48520daa6ca2607d",
+      "decisionId": "5fa26de30c85348ca357bb63a32798be"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "5387fab648d964398d376dd8936da3b8",
+    "value": {
+      "fanout": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ],
+      "at": "2026-11-05T22:28:11.398Z",
+      "evalId": "548acdf912cdef12fac3e0286ec995aa",
+      "decisionId": "30c7e3c2ebcbc8dd4cf17e55cb5432e1"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "48f0c06f774e531a0f435d8ff0b4c2d4",
+    "value": {
+      "fanout": [
+        "ea83956bfdd92aaf42eb34feb8884578"
+      ],
+      "at": "2026-11-05T22:35:49.480Z",
+      "evalId": "e94c365f3f2b803bced7466cae1a3c50",
+      "decisionId": "c0e5172b5c85077aee9b8acba99c5f46"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "a0260245f961f93e5aef5716b3bcb6d8",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T03:23:34.871Z",
+      "evalId": "4914270675a5db867954e443b1b613c5",
+      "decisionId": "4daedc40cf817eafc47d70a175effe24"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "dddb16126be13421f22a0cb688f18598",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T03:30:55.229Z",
+      "evalId": "9d60f1f4f309c491aab864c32b1e09ae",
+      "decisionId": "c9c230b187e93d33427e59c68a607fb3"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "28f94bddee1b692f156ef56d92542877",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T10:17:50.928Z",
+      "evalId": "bd2df60c640b4063676542d42b86a173",
+      "decisionId": "589d43111cfdec4fcf861c0762b9e6b7"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "d3d1e219abd5e0ac876d801fd768c994",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T10:53:01.802Z",
+      "evalId": "04a5c2e09c398323432bbfd1abcd7211",
+      "decisionId": "6f716bc5970ad09b088aef649c67c826"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "6199dffda82b465010b4e3b0bb45101a",
+    "value": {
+      "fanout": [
+        "2cdb4afb4c2cb82fc887b59143ddd59c"
+      ],
+      "at": "2026-11-06T11:35:22.831Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "cf127e196bd11300a40ed4d2774726c9",
+    "value": {
+      "fanout": [
+        "95e452f83325c5dc126d018ca40da9fc"
+      ],
+      "at": "2026-11-06T11:42:03.372Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "4b0c3ee182f48300c421ba8ffbec7970",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T11:55:43.850Z",
+      "evalId": "d02e061a9f416d75725c0aad8315e6aa",
+      "decisionId": "050eb3a246c9c1aa27fdfa7a5c129924"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ff39c4c9719c3acb4d6228bf87453e37",
+    "value": {
+      "fanout": [
+        "d0f78a5fcf8a08554776bb03469120f7"
+      ],
+      "at": "2026-11-06T11:59:14.260Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "1f7b230f62088aa69cc6a13254cbdc07",
+    "value": {
+      "fanout": [
+        "2cdb4afb4c2cb82fc887b59143ddd59c"
+      ],
+      "at": "2026-11-06T12:05:54.667Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "9403b31b8fe2c2cc9ecb049bb6045760",
+    "value": {
+      "fanout": [
+        "2cdb4afb4c2cb82fc887b59143ddd59c"
+      ],
+      "at": "2026-11-06T12:11:15.279Z"
+    },
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "4323a54cdd0018293ff208ff50eb76b2",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T20:20:43.974Z",
+      "evalId": "899f72b91272ceb3a5958e5bc3de520f",
+      "decisionId": "d3201c850e6f1d6d25829b1f534e061c"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "cc25a1d17b324340ffa7c57aed782d51",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T20:36:11.049Z",
+      "evalId": "8d27c35fdf805a794652a2ada5e2b820",
+      "decisionId": "6728543f7678ade6c43f545b450d3f98"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "20b5b75d948c4cf65887e8a7abaae749",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T20:48:29.693Z",
+      "evalId": "f5e4a1d2b981a5a1bb04528851c7e1aa",
+      "decisionId": "f0f6a0ee2406aad20c98576154f14bc3"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "7b5d7b0bc06fb76a600be07532dcb540",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-05T21:47:13.112Z",
+      "evalId": "ad45b37723111bda1f82b7e8b4ef94a1",
+      "decisionId": "b329fde4257d5eca605df0d0839498a8"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "a00b67e3f921767e87840bd3bf688a93",
+    "value": {
+      "fanout": [],
+      "at": "2026-11-06T03:35:07.568Z",
+      "evalId": "a0a1212137a14a997ced7a43d31137f3",
+      "decisionId": "6c1c91c24542bce19839cb658443813a"
+    },
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  }
+]

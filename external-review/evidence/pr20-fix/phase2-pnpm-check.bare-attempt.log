@@ -1,0 +1,248 @@
+# node: v22.19.0  pnpm: 11.7.0
+# cwd: /tmp/pr20-verify-new @ 07c5d83
+# command: cd hephi && pnpm check   (first attempt, fresh clone, no pre-installed node_modules)
+===== BEGIN =====
+✓ Lockfile passes supply-chain policies (verified 2d ago)
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +92
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 92, reused 92, downloaded 0, added 92, done
+
+dependencies:
++ zod 4.6.7
+
+devDependencies:
++ @deepseek-ai/cordis 4.0.5-alpha.1
++ @deepseek-ai/dsh-agent 0.2.1-alpha.2
++ @deepseek-ai/dsh-tools 0.2.1-alpha.2
++ @types/node 22.20.5
++ tsdown 0.22.14
++ typescript 6.0.3
++ vitest 4.1.12
+
+Done in 732ms using pnpm v11.7.0
+$ pnpm typecheck && pnpm test && pnpm build
+$ tsc --noEmit
+$ vitest run
+
+ RUN  v4.1.12 /private/tmp/pr20-verify-new/hephi
+
+ ✓ tests/contracts/checks.test.ts (5 tests) 64ms
+ ✓ tests/contracts/task.test.ts (5 tests) 38ms
+ ✓ tests/control/ready-gate.test.ts (4 tests) 4ms
+ ✓ tests/tools/worker-context.test.ts (4 tests) 238ms
+ ✓ tests/control/build-commit.test.ts (9 tests) 5ms
+ ✓ tests/control/activation.test.ts (30 tests) 690ms
+ ✓ tests/control/decision-log.test.ts (3 tests) 435ms
+     ✓ serializes concurrent appends into unique ordered seq  366ms
+ ✓ tests/control/plugin-version.test.ts (2 tests) 21ms
+ ✓ tests/eval/cli.test.ts (4 tests) 1149ms
+     ✓ exports a baseline archive with relation tables and verifies it end to end  355ms
+     ✓ compares visible surfaces and runs repeated offline commands  348ms
+ ✓ tests/control/prepare-dubbo.test.ts (4 tests) 544ms
+     ✓ leaves unlabelled GitHub issues without a workspace or activation  376ms
+ ✓ tests/control/workspace.test.ts (10 tests) 1315ms
+ ✓ tests/verification/fingerprint.test.ts (2 tests) 934ms
+   ✓ hashes the complete binary patch above 1 MiB with unchanged SHA-256 semantics  691ms
+ ✓ tests/kb/index.test.ts (7 tests) 3192ms
+     ✓ reads Topic Bench source objects and binds the query to its contract  493ms
+     ✓ builds a baseSha-bound map and records the query  433ms
+     ✓ preserves an earlier successful query for the same contract after a later failure  396ms
+     ✓ keeps precise symbols beyond introductory words and returns full source modules  781ms
+     ✓ ranks distinct keyword hits before truncation and ignores repeated matching lines  521ms
+ ✓ tests/control/check-runner.test.ts (11 tests) 7749ms
+     ✓ waits on a promoted Job and records its real output and exit code  850ms
+     ✓ polls again while the Job is still running instead of treating one wait as completion  686ms
+     ✓ preserves a failed Job real exit code and blocks it  717ms
+     ✓ kills and confirms a Job that outlives the contract deadline  658ms
+     ✓ cancels through the caller signal, kills the Job and confirms it stopped  519ms
+     ✓ stays unknown when termination cannot be confirmed  555ms
+     ✓ rejects a source change while the background Job was running  767ms
+     ✓ blocks a confirmed terminal Job when its output ring lost bytes  611ms
+     ✓ blocks a confirmed terminal Job when its result cannot be parsed  584ms
+     ✓ records a non-cancellation wait failure and still stops and confirms the Job  566ms
+     ✓ keeps the original foreground pass, non-zero and source-change behavior  1235ms
+ ✓ tests/control/worker-mount.test.ts (23 tests) 7897ms
+     ✓ injects ctx.get("jobs") into hephi_check and settles a promoted native Job  760ms
+     ✓ checks Jobs for every child even after its Agent unloads, without treating settled work as active  3154ms
+     ✓ allows a progress report but does not complete a checkpoint while a child is active  1139ms
+     ✓ allows a progress report but does not complete a checkpoint after the contract changes  1143ms
+     ✓ records write-scope decisions in the per-ticket decision log  357ms
+     ✓ shadow mode observes scope and ready but never denies, registers checks or injects prompts  347ms
+ ✓ tests/probes/effectiveness.test.ts (11 tests) 12788ms
+     ✓ the focused fix passes with Session-bound evidence  1946ms
+     ✓ a behaviour-preserving rewrite is accepted: the named check need not fail on base  1544ms
+     ✓ an ordinary task without a budget is not limited by one  1880ms
+     ✓ editing a file outside the item scope is refused at check time and at ready  1235ms
+     ✓ a budget the Issue asked for refuses a sweeping rewrite inside a broad scope  1487ms
+     ✓ not fixing total() is refused even though the project tests pass  1208ms
+     ✓ deleting an existing test is refused  1191ms
+     ✓ a hand-written passing record is refused because the Session has no such native execution  1747ms
+     ✓ a contract whose task card was edited no longer loads  339ms
+ ✓ tests/probes/issue1-regression.test.ts (18 tests) 20948ms
+     ✓ a behaviour-preserving rewrite is accepted  1520ms
+     ✓ a check broken by a missing module fails on HEAD instead of posing as reproduction, and runs once  1628ms
+     ✓ an acceptance check that was never run cannot be skipped  1196ms
+     ✓ an indentation change in Python is a change, not a formatting-only edit to reject  791ms
+     ✓ accepts the genuine bash call and result  1839ms
+     ✓ rejects an edit error event that only shares the call id  1296ms
+     ✓ rejects a non-bash call  1301ms
+     ✓ rejects an error result  1211ms
+     ✓ rejects a call with no terminal result  1232ms
+     ✓ rejects a result whose exit code differs from the record  1319ms
+     ✓ rejects a different command or directory  1101ms
+     ✓ rejects another Session and events inherited from a parent Session  1322ms
+     ✓ the plugin entry passes the binding requirement through to ready  1360ms
+     ✓ rejects a ready report without a Session id when binding is required  1150ms
+     ✓ a missing cwd is recorded as a not-started failure and can be retried after the fix  884ms
+     ✓ an execution that may still be running stays closed and leaves the workspace in place  831ms
+     ✓ resolves paths against the root checkout  368ms
+     ✓ resolves paths against the nested checkout  597ms
+ ✓ tests/control/evidence-verifier.test.ts (14 tests) 21504ms
+     ✓ requires successful exit in recorded evidence  2099ms
+     ✓ requires each frozen check and accepts bound evidence without executing tests at ready  2523ms
+     ✓ rejects changed source, contract and PR head  2022ms
+     ✓ blocks nonzero exits and preserves failures across retries  4082ms
+     ✓ does not use an earlier pass after a later failing check  1256ms
+     ✓ records a real foreground project command failure and retry without XML (local integration)  1719ms
+     ✓ blocks background or uncertain execution without claiming completion  634ms
+     ✓ rejects evidence whose recorded argv differs from the frozen check  1326ms
+     ✓ rejects evidence whose recorded cwd differs from the frozen check directory  927ms
+     ✓ rejects evidence recorded by another plugin build and delivers again after a rerun  1332ms
+     ✓ rejects a contract frozen by another plugin build  1626ms
+     ✓ refuses check records written before plugin commit tracking  737ms
+     ✓ records ready decisions in the per-ticket decision log  1215ms
+ ✓ tests/control/stage-control.test.ts (35 tests) 31665ms
+     ✓ runs a real Node test without a report adapter  1353ms
+     ✓ ordinary task is untouched; stages enforce checks, progress and final delivery freshness  2458ms
+     ✓ allows hephi_check only after every stage is completed and reported  1923ms
+     ✓ checking blocks mutation while actual slow process is running and drains accepted writes  1035ms
+     ✓ failed checks reopen A; failed log remains after retry  1295ms
+     ✓ reopens completed A and invalidates B without deleting earlier evidence  1500ms
+     ✓ resumes receipt without duplicate commit and recovers received progress  1262ms
+     ✓ rejects out-of-scope changes and checks that alter source  502ms
+     ✓ timeout terminates the check and allows A to be repaired, not B  475ms
+     ✓ missing executable is a check failure, never a reproduction  456ms
+     ✓ reopens while preserving dirty changes made during delivery  2567ms
+     ✓ does not repeat a commit after a lost receipt  927ms
+     ✓ serializes repeated finish without duplicate commits or checkpoints  833ms
+     ✓ drains promoted native jobs before executing checks  619ms
+     ✓ a checkpoint changed before progress stays incomplete and can be reopened explicitly  1697ms
+     ✓ a source check that changes only the Git index invalidates evidence  508ms
+     ✓ cannot commit a stale staged version hidden behind unchanged working content  766ms
+     ✓ changed source after a received progress can be reopened after restart  1096ms
+     ✓ final ready closes writes and stage updates until the report settles  1096ms
+     ✓ recovers a successful progress whose ledger update was lost  739ms
+     ✓ does not accept failed, inherited or unacknowledged report events  422ms
+     ✓ rejects completed or active stages after unfinished predecessors  954ms
+     ✓ rejects completed evidence for a different declared check  582ms
+     ✓ does not complete a recovered checkpoint with missing check evidence  496ms
+     ✓ blocks tool entry if the loaded stage record is replaced or removed  336ms
+     ✓ refuses B when A checkpoint was replaced by a clean intervening commit  1772ms
+     ✓ keeps writes closed while an already-active child is recorded, then resumes after it ends  660ms
+     ✓ does not treat finished jobs as blockers and refuses delegation after all stages complete  1896ms
+ ❯ tests/control/deploy-script.test.ts (1 test | 1 failed) 87239ms
+     × 全部场景通过 87238ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  tests/control/deploy-script.test.ts > deploy-hephi.sh 假宿主契约（R3-T01..T17） > 全部场景通过
+AssertionError: expected 'PASS R3-T01 first publish exits 0\nPA…' to contain 'PASS: 44 assertions (R3 fake-host sui…'
+
+- Expected
++ Received
+
+- PASS: 44 assertions (R3 fake-host suite)
++ PASS R3-T01 first publish exits 0
++ PASS R3-T01 release A lib exists
++ PASS R3-T01 meta fields complete
++ PASS R3-T01 pointer points to release A
++ PASS R3-T02 republish fails
++ PASS R3-T02 sentinel and release unchanged
++ PASS R3-T02 no restart
++ PASS R3-T03 missing target fails before switch
++ PASS R3-T04 meta/dir SHA mismatch rejected
++ PASS R3-T05 content tamper rejected
++ PASS R3-T06 switch to B exits 0
++ PASS R3-T06 pointer is B
++ PASS R3-T06 release A unchanged
++ PASS R3-T07 switch back to A exits 0
++ PASS R3-T07 pointer is A; both immutable
++ PASS R3-T11 dry-run exits 0 and does not switch/restart
++ PASS R3-T12 open tickets refuse
++ PASS R3-T13 --allow-open-tickets is an unknown argument
++ PASS R3-T14 missing/empty hostVersion rejected
++ PASS R3-T15 nonzero running refused
++ PASS R3-T15 unknown running refused
++ PASS R3-T15 nonzero queued refused
++ PASS R3-T15 unknown queued refused
++ PASS R3-T15 nonzero startupReservations refused
++ PASS R3-T15 unknown startupReservations refused
++ PASS R3-T15 nonzero effects refused
++ PASS R3-T15 unknown effects refused
++ PASS R3-T15 nonzero jobs refused
++ PASS R3-T15 unknown jobs refused
++ PASS R3-T15 nonzero subagents refused
++ PASS R3-T15 unknown subagents refused
++ PASS R3-T15 nonzero unknown refused
++ PASS R3-T15 unknown unknown refused
++ PASS R3-T08 restart failure exits nonzero
++ PASS R3-T08 auto-restores A and stays paused
++ PASS R3-T09 github=starting is not accepted as success
++ PASS R3-T09 pointer restored to A
++ PASS R3-T10 double failure exits nonzero
++ PASS R3-T10 stays paused with both attempts recorded
++ PASS R3-T17 success record complete
++ PASS R3-T17 failure record complete
++ PASS R3-T17 success record uses real paused/load/health readback
++ PASS R3-T08 restored record keeps both health evidences
++ PASS R3-T16 releases A/B unchanged after all scenarios
++ PASS R3-T07b explicit rollback exits 0
++ PASS R3-T07b rollback record exists
++ PASS N1 plain-lib first deploy exits 0
++ PASS N1 lib becomes symlink to release A
++ PASS N1 migration backup keeps old lib content
++ PASS N1 success record keeps migration evidence
++ PASS N1b migration rename failure exits nonzero
++ PASS N1b old plain lib directory restored
++ PASS N1b failure record written
++ PASS N2 setup: release A loaded
++ PASS N2 rollback without --target rejected
++ PASS N2 empty rollback target rejected
++ PASS N2 invalid rollback target rejected
++ PASS N2 rejected rollbacks have no side effects
++ PASS N3 rollback failure exits nonzero
++ PASS N3 restore record only after real pointer restore
++ PASS N3 record keeps target failure health evidence
++ PASS N3 record keeps restore health evidence
++ PASS N4 recovery rename failure exits nonzero without raw 42
++ PASS N4 double-failure record written
++ PASS N4 record keeps both failure evidences
++ PASS N4 double-failure record keeps real paused readback
++ PASS N5 deploy refuses success when host is not paused
++ PASS N5 record uses real paused readback (false)
++ PASS N5 record keeps health readback
++
++ PASS: 69 assertions (R3 fake-host suite)
++
+
+ ❯ tests/control/deploy-script.test.ts:16:20
+     14|   it('全部场景通过', async () => {
+     15|     const { stdout } = await run(process.execPath, [harness], { timeou…
+     16|     expect(stdout).toContain('PASS: 44 assertions (R3 fake-host suite)…
+       |                    ^
+     17|     expect(stdout).not.toMatch(/^FAIL /m)
+     18|   }, 180_000)
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 19 passed (20)
+      Tests  1 failed | 201 passed (202)
+   Start at  07:53:03
+   Duration  88.50s (transform 1.95s, setup 0ms, import 4.31s, tests 198.42s, environment 1ms)
+
+[ELIFECYCLE] Test failed. See above for more details.
+[ELIFECYCLE] Command failed with exit code 1.
+EXIT=1

@@ -1,0 +1,173 @@
++ date -u +%FT%TZ
+2026-11-06T22:55:26Z
++ node -v
+v22.19.0
++ pnpm -v
+11.7.0
++ git rev-parse HEAD
+17d3827d3a73d3afb7a3b8de130d1615bd351769
++ git status --short
++ cd hephi
++ pnpm install --frozen-lockfile
+Already up to date
+Done in 299ms using pnpm v11.7.0
++ pnpm check
+$ pnpm typecheck && pnpm test && pnpm build
+$ tsc --noEmit
+$ vitest run
+
+ RUN  v4.1.12 /Users/zm/dsh-instances/experiment/hephi-review/hephi
+
+ ✓ tests/control/decision-log.test.ts (3 tests) 135ms
+ ✓ tests/control/activation.test.ts (30 tests) 824ms
+ ✓ tests/verification/fingerprint.test.ts (2 tests) 1224ms
+   ✓ hashes the complete binary patch above 1 MiB with unchanged SHA-256 semantics  946ms
+ ✓ tests/control/prepare-dubbo.test.ts (4 tests) 845ms
+     ✓ leaves unlabelled GitHub issues without a workspace or activation  645ms
+ ✓ tests/control/workspace.test.ts (10 tests) 1551ms
+ ✓ tests/eval/cli.test.ts (4 tests) 1628ms
+     ✓ exports a baseline archive with relation tables and verifies it end to end  540ms
+     ✓ checks role conflicts, budget appendix and data packages  330ms
+     ✓ compares visible surfaces and runs repeated offline commands  560ms
+ ✓ tests/contracts/task.test.ts (5 tests) 122ms
+ ✓ tests/control/plugin-version.test.ts (2 tests) 27ms
+ ✓ tests/control/build-commit.test.ts (9 tests) 5ms
+ ✓ tests/tools/worker-context.test.ts (4 tests) 198ms
+ ✓ tests/contracts/checks.test.ts (5 tests) 57ms
+ ✓ tests/control/ready-gate.test.ts (4 tests) 4ms
+ ✓ tests/kb/index.test.ts (7 tests) 3640ms
+     ✓ reads Topic Bench source objects and binds the query to its contract  655ms
+     ✓ builds a baseSha-bound map and records the query  577ms
+     ✓ returns an empty base map for a query with no matches  363ms
+     ✓ does not record success when baseMap fails  379ms
+     ✓ preserves an earlier successful query for the same contract after a later failure  361ms
+     ✓ keeps precise symbols beyond introductory words and returns full source modules  719ms
+     ✓ ranks distinct keyword hits before truncation and ignores repeated matching lines  584ms
+ ✓ tests/control/check-runner.test.ts (11 tests) 8282ms
+     ✓ waits on a promoted Job and records its real output and exit code  1133ms
+     ✓ polls again while the Job is still running instead of treating one wait as completion  850ms
+     ✓ preserves a failed Job real exit code and blocks it  584ms
+     ✓ kills and confirms a Job that outlives the contract deadline  633ms
+     ✓ cancels through the caller signal, kills the Job and confirms it stopped  554ms
+     ✓ stays unknown when termination cannot be confirmed  629ms
+     ✓ rejects a source change while the background Job was running  830ms
+     ✓ blocks a confirmed terminal Job when its output ring lost bytes  655ms
+     ✓ blocks a confirmed terminal Job when its result cannot be parsed  576ms
+     ✓ records a non-cancellation wait failure and still stops and confirms the Job  585ms
+     ✓ keeps the original foreground pass, non-zero and source-change behavior  1249ms
+ ✓ tests/control/worker-mount.test.ts (23 tests) 8573ms
+     ✓ injects ctx.get("jobs") into hephi_check and settles a promoted native Job  1012ms
+     ✓ staged mode registers stage control and closes delegation and mutation before plan  334ms
+     ✓ staged mode fails closed when the Job registry is missing without affecting native tasks  329ms
+     ✓ checks Jobs for every child even after its Agent unloads, without treating settled work as active  3273ms
+     ✓ allows a progress report but does not complete a checkpoint while a child is active  1185ms
+     ✓ allows a progress report but does not complete a checkpoint after the contract changes  1165ms
+     ✓ records write-scope decisions in the per-ticket decision log  380ms
+     ✓ shadow mode observes scope and ready but never denies, registers checks or injects prompts  392ms
+ ✓ tests/probes/effectiveness.test.ts (11 tests) 14060ms
+     ✓ the focused fix passes with Session-bound evidence  2338ms
+     ✓ a behaviour-preserving rewrite is accepted: the named check need not fail on base  1660ms
+     ✓ an ordinary task without a budget is not limited by one  1929ms
+     ✓ editing a file outside the item scope is refused at check time and at ready  1274ms
+     ✓ a budget the Issue asked for refuses a sweeping rewrite inside a broad scope  1618ms
+     ✓ not fixing total() is refused even though the project tests pass  1329ms
+     ✓ deleting an existing test is refused  1457ms
+     ✓ a hand-written passing record is refused because the Session has no such native execution  1915ms
+ ✓ tests/probes/issue1-regression.test.ts (18 tests) 24023ms
+     ✓ a behaviour-preserving rewrite is accepted  2028ms
+     ✓ a check broken by a missing module fails on HEAD instead of posing as reproduction, and runs once  1516ms
+     ✓ an acceptance check that was never run cannot be skipped  1266ms
+     ✓ an indentation change in Python is a change, not a formatting-only edit to reject  825ms
+     ✓ accepts the genuine bash call and result  1844ms
+     ✓ rejects an edit error event that only shares the call id  1522ms
+     ✓ rejects a non-bash call  1483ms
+     ✓ rejects an error result  1420ms
+     ✓ rejects a call with no terminal result  1449ms
+     ✓ rejects a result whose exit code differs from the record  1415ms
+     ✓ rejects a different command or directory  1436ms
+     ✓ rejects another Session and events inherited from a parent Session  1636ms
+     ✓ the plugin entry passes the binding requirement through to ready  1868ms
+     ✓ rejects a ready report without a Session id when binding is required  1399ms
+     ✓ a missing cwd is recorded as a not-started failure and can be retried after the fix  926ms
+     ✓ an execution that may still be running stays closed and leaves the workspace in place  892ms
+     ✓ resolves paths against the root checkout  434ms
+     ✓ resolves paths against the nested checkout  662ms
+ ✓ tests/control/evidence-verifier.test.ts (14 tests) 24415ms
+     ✓ requires successful exit in recorded evidence  2462ms
+     ✓ requires each frozen check and accepts bound evidence without executing tests at ready  2676ms
+     ✓ rejects changed source, contract and PR head  2097ms
+     ✓ blocks nonzero exits and preserves failures across retries  4574ms
+     ✓ does not use an earlier pass after a later failing check  1444ms
+     ✓ records a real foreground project command failure and retry without XML (local integration)  2000ms
+     ✓ blocks background or uncertain execution without claiming completion  828ms
+     ✓ rejects evidence whose recorded argv differs from the frozen check  1535ms
+     ✓ rejects evidence whose recorded cwd differs from the frozen check directory  1116ms
+     ✓ rejects evidence recorded by another plugin build and delivers again after a rerun  1726ms
+     ✓ rejects a contract frozen by another plugin build  1716ms
+     ✓ refuses check records written before plugin commit tracking  960ms
+     ✓ records ready decisions in the per-ticket decision log  1272ms
+ ✓ tests/control/stage-control.test.ts (35 tests) 35793ms
+     ✓ runs a real Node test without a report adapter  1903ms
+     ✓ ordinary task is untouched; stages enforce checks, progress and final delivery freshness  2474ms
+     ✓ allows hephi_check only after every stage is completed and reported  1979ms
+     ✓ checking blocks mutation while actual slow process is running and drains accepted writes  1080ms
+     ✓ failed checks reopen A; failed log remains after retry  1360ms
+     ✓ reopens completed A and invalidates B without deleting earlier evidence  1707ms
+     ✓ resumes receipt without duplicate commit and recovers received progress  1477ms
+     ✓ rejects out-of-scope changes and checks that alter source  633ms
+     ✓ timeout terminates the check and allows A to be repaired, not B  504ms
+     ✓ missing executable is a check failure, never a reproduction  459ms
+     ✓ reopens while preserving dirty changes made during delivery  3326ms
+     ✓ does not repeat a commit after a lost receipt  1096ms
+     ✓ serializes repeated finish without duplicate commits or checkpoints  1160ms
+     ✓ drains promoted native jobs before executing checks  722ms
+     ✓ a checkpoint changed before progress stays incomplete and can be reopened explicitly  1834ms
+     ✓ a source check that changes only the Git index invalidates evidence  630ms
+     ✓ cannot commit a stale staged version hidden behind unchanged working content  901ms
+     ✓ changed source after a received progress can be reopened after restart  1165ms
+     ✓ final ready closes writes and stage updates until the report settles  1297ms
+     ✓ recovers a successful progress whose ledger update was lost  866ms
+     ✓ does not accept failed, inherited or unacknowledged report events  540ms
+     ✓ rejects completed or active stages after unfinished predecessors  1161ms
+     ✓ rejects completed evidence for a different declared check  665ms
+     ✓ does not complete a recovered checkpoint with missing check evidence  564ms
+     ✓ blocks tool entry if the loaded stage record is replaced or removed  415ms
+     ✓ refuses B when A checkpoint was replaced by a clean intervening commit  1931ms
+     ✓ keeps writes closed while an already-active child is recorded, then resumes after it ends  672ms
+     ✓ does not treat finished jobs as blockers and refuses delegation after all stages complete  1671ms
+ ✓ tests/control/deploy-script.test.ts (1 test) 52061ms
+     ✓ 全部场景通过  52058ms
+
+ Test Files  20 passed (20)
+      Tests  202 passed (202)
+   Start at  06:55:30
+   Duration  52.31s (transform 2.06s, setup 0ms, import 5.36s, tests 177.47s, environment 17ms)
+
+$ tsdown -c tsdown.config.ts
+ℹ tsdown v0.22.14 powered by rolldown v1.2.16
+ℹ config file: /Users/zm/dsh-instances/experiment/hephi-review/hephi/tsdown.config.ts 
+ℹ entry: src/index.ts, src/tools.ts, src/cli.ts
+ℹ target: node22.19.0
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Cleaning 15 files
+ℹ Granting execute permission to lib/cli.mjs
+ℹ lib/index.mjs                       11.36 kB │ gzip:  3.76 kB
+ℹ lib/tools.mjs                        2.67 kB │ gzip:  1.17 kB
+ℹ lib/cli.mjs                          0.50 kB │ gzip:  0.33 kB
+ℹ lib/worker-mount-BJYzUjMO.mjs.map  151.50 kB │ gzip: 38.99 kB
+ℹ lib/worker-mount-BJYzUjMO.mjs       78.85 kB │ gzip: 21.48 kB
+ℹ lib/activation-hIXv0HoQ.mjs.map     35.82 kB │ gzip: 10.20 kB
+ℹ lib/activation-hIXv0HoQ.mjs         19.40 kB │ gzip:  6.01 kB
+ℹ lib/index.mjs.map                   17.68 kB │ gzip:  5.58 kB
+ℹ lib/tools.mjs.map                    4.38 kB │ gzip:  1.76 kB
+ℹ lib/index.d.mts.map                  2.68 kB │ gzip:  1.05 kB
+ℹ lib/cli.mjs.map                      0.85 kB │ gzip:  0.50 kB
+ℹ lib/tools.d.mts.map                  0.15 kB │ gzip:  0.14 kB
+ℹ lib/index.d.mts                     13.31 kB │ gzip:  4.16 kB
+ℹ lib/tools.d.mts                      0.53 kB │ gzip:  0.33 kB
+ℹ lib/cli.d.mts                        0.01 kB │ gzip:  0.03 kB
+ℹ 15 files, total: 339.66 kB
+✔ Build complete in 1386ms
++ echo CHECK_EXIT=0
+CHECK_EXIT=0

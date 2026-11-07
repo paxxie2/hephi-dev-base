@@ -1,0 +1,20 @@
+FAIL R3-T17 success record uses real paused/load/health readback
+FAIL R3-T08 restored record keeps both health evidences
+FAIL N1 plain-lib first deploy exits 0
+FAIL N1 lib becomes symlink to release A
+FAIL N1 migration backup keeps old lib content
+FAIL N1 success record keeps migration evidence
+FAIL N1b failure record written
+FAIL N2 rollback without --target rejected
+FAIL N2 empty rollback target rejected
+FAIL N2 rejected rollbacks have no side effects
+FAIL N3 restore record only after real pointer restore
+FAIL N3 record keeps target failure health evidence
+FAIL N3 record keeps restore health evidence
+FAIL N4 recovery rename failure exits nonzero without raw 42
+FAIL N4 double-failure record written
+FAIL N4 record keeps both failure evidences
+FAIL N4 double-failure record keeps real paused readback
+FAIL N5 deploy refuses success when host is not paused
+FAIL N5 record uses real paused readback (false)
+FAIL N5 record keeps health readback

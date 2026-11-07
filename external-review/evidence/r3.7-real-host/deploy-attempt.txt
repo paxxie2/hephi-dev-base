@@ -1,0 +1,25 @@
+======== 2026-11-07T01:18:03Z PAUSE ========
+{"paused":true}
+paused=true
+load {"running":0,"queued":0,"maxWorkers":3} health-states {
+  runtime: 'ready',
+  relay: 'ready',
+  notice: 'ready',
+  launch: 'ready',
+  delivery: 'ready',
+  assessment: 'ready',
+  reply: 'ready',
+  evals: 'ready',
+  models: 'ready',
+  github: 'ready'
+}
+======== 2026-11-07T01:18:04Z DEPLOY ATTEMPT (dry-run) ========
+unverified drain field: startupReservations; unverified drain field: effects; unverified drain field: jobs; unverified drain field: subagents; unverified drain field: unknown
+drain check failed; refusing to upgrade
+DEPLOY_ATTEMPT_EXIT=1
+======== 2026-11-07T01:18:04Z SIDE EFFECT CHECK ========
+host.pid=29031
+releases=       6
+logs=       8
+live-lib-type=plain-directory
+acbe88bac5048858a582e1d896e43addcb7b8dad5ff74c8a37c2087edec032b0  -

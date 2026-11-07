@@ -1,0 +1,58 @@
+# Final SHA: 4664e96325a70dab4809cb5df82b6949ad5b4dbd (origin/agent/hephi-r2-remediation, pushed)
+# plan.lock: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/plan.lock.json
+# sha256(plan.lock): 2523425a4aaed619fd51ac397e33c874a289cb2c830d1f87c39a60a4891000df  (frozen plan.lock.hash: sha256:2523425a4aaed619fd51ac397e33c874a289cb2c830d1f87c39a60a4891000df  plan.lock.json)
+
+=== 0) clone provenance ===
+origin	https://github.com/paxxie2/super-agent-hephi-review.git (fetch)
+origin	https://github.com/paxxie2/super-agent-hephi-review.git (push)
+(empty status above = clean tree)
+
+=== 1) git diff --name-status 5efd7084..4664e96325a70dab4809cb5df82b6949ad5b4dbd ===
+M	docs/implementation-index.md
+M	docs/p11-hephi-smoke-record.md
+M	docs/p8-deploy-record.md
+M	docs/p8-race-record.md
+A	docs/remediation-r1-validation.md
+A	docs/remediation-r3-review-fix.md
+A	docs/remediation-r3-validation.md
+M	docs/self-check-2026-11-07.md
+M	docs/source-consistency.md
+M	hephi/docs/versioning.md
+M	hephi/src/control/activation.ts
+M	hephi/tests/control/activation.test.ts
+A	hephi/tests/control/build-commit.test.ts
+A	hephi/tests/control/deploy-script.test.ts
+M	hephi/tsdown.config.ts
+M	scripts/host/deploy-hephi.sh
+A	scripts/host/test-deploy-hephi.mjs
+
+=== 2) out-of-scope check (changed - allowed_files) ===
+changed=17  allowed=16
+OUT-OF-SCOPE:
+docs/remediation-r3-review-fix.md
+
+=== 3) protected file diff base..SHA ===
+(empty) — protected files unchanged
+
+=== 4) protected file sha256 base vs SHA ===
+SAME  c7a518ca2c6990dc0b0f5a0504c99e85064dbf00389337f10b5d5ebb5bbb2ace  c7a518ca2c6990dc0b0f5a0504c99e85064dbf00389337f10b5d5ebb5bbb2ace  hephi/src/control/evidence-verifier.ts
+SAME  075fb363b853ae81de52dab6a9ca724f091124b3f381360587a0aa6ce692b4aa  075fb363b853ae81de52dab6a9ca724f091124b3f381360587a0aa6ce692b4aa  hephi/src/control/check-runner.ts
+SAME  4d2d7366c925fd642756f42495496388c784cd519af0a042d4598ca176b5008e  4d2d7366c925fd642756f42495496388c784cd519af0a042d4598ca176b5008e  hephi/src/control/check-store.ts
+SAME  5dc3291e1dca393efc17534bad388a4c9f15ec6422d428efc043f46713748b61  5dc3291e1dca393efc17534bad388a4c9f15ec6422d428efc043f46713748b61  hephi/src/control/worker-mount.ts
+SAME  e30a682df4948b86cd5987f1c7f0514cea8e77580187f6017bd5bb4a4f3174ed  e30a682df4948b86cd5987f1c7f0514cea8e77580187f6017bd5bb4a4f3174ed  hephi/src/control/decision-log.ts
+SAME  5850d6ce128f3b331f624aee79acaac34f352015fcfa26405da0e079509b8992  5850d6ce128f3b331f624aee79acaac34f352015fcfa26405da0e079509b8992  hephi/tests/control/evidence-verifier.test.ts
+SAME  2036017a60895eab949d14139ffd35d17b5212f69898f6d246c079eeff21c785  2036017a60895eab949d14139ffd35d17b5212f69898f6d246c079eeff21c785  hephi/tests/control/plugin-version.test.ts
+SAME  235757d2f8a36d64c2828cbf28234128f2b1dcdc367650018d18ba0187ba124c  235757d2f8a36d64c2828cbf28234128f2b1dcdc367650018d18ba0187ba124c  hephi/tests/control/decision-log.test.ts
+SAME  cc0099e9115c5ff3a631e1d515753ebea9dede348fcc01a8d02d6c87b66c2f1e  cc0099e9115c5ff3a631e1d515753ebea9dede348fcc01a8d02d6c87b66c2f1e  hephi/tests/control/worker-mount.test.ts
+RESULT: all 9 protected files identical to base 5efd708
+
+=== 5) acceptance #3: git diff --check base..SHA ===
+EXIT=0
+
+=== 6) file hashes at final SHA ===
+20d41d340a7680a29e71c9b5a72fd3c0f76b0db0649c979f837d6c7d4911e787  /tmp/pr20-verify-final/scripts/host/deploy-hephi.sh
+ef703f2598b614ed1a0c554a27e188d65c0263f2ace402081b125394cec7a621  /tmp/pr20-verify-final/scripts/host/test-deploy-hephi.mjs
+1f197d346557c62003852b0e85da1e812211f73712863fc5de31f0d93420dc76  /tmp/pr20-verify-final/hephi/tests/control/deploy-script.test.ts
+
+=== 7) deploy-script.test.ts expectation ===
+16:    expect(stdout).toContain('PASS: 69 assertions (R3 fake-host suite)')

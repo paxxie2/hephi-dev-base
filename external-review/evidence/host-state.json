@@ -1,0 +1,103 @@
+{
+  "probe": "G1 host-capabilities (state readback only)",
+  "host": "http://127.0.0.1:3083",
+  "at": "2026-11-06T19:45:10.442Z",
+  "derivedFromStateOnly": true,
+  "state": {
+    "setup": {
+      "machine": {
+        "stateDir": "/Users/zm/dsh-instances/experiment/state",
+        "promptMaxChars": 100000,
+        "admissionContextMaxPages": 10,
+        "admissionContextTimeoutMs": 15000
+      },
+      "problem": null,
+      "feishuProblem": null,
+      "accounts": {
+        "repository": "paxxie2/dubbo",
+        "agent": "paxxie2",
+        "feishu": null
+      }
+    },
+    "load": {
+      "running": 0,
+      "queued": 0,
+      "maxWorkers": 3
+    },
+    "masterId": "orchestrator-f5b8e0011e2b3b326d60b5bf4563f098",
+    "paused": false,
+    "health": {
+      "runtime": {
+        "state": "ready",
+        "detail": "Orchestrator is ready",
+        "at": "2026-11-05T17:16:05.014Z"
+      },
+      "relay": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-05T21:51:22.787Z"
+      },
+      "notice": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-06T03:36:03.012Z"
+      },
+      "launch": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-06T03:35:49.992Z"
+      },
+      "delivery": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-05T17:16:00.180Z"
+      },
+      "assessment": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-06T03:35:07.604Z"
+      },
+      "reply": {
+        "state": "ready",
+        "detail": "Nothing waiting",
+        "at": "2026-11-06T03:35:38.233Z"
+      },
+      "evals": {
+        "state": "ready",
+        "detail": "No unavailable Eval in the last hour"
+      },
+      "models": {
+        "state": "ready",
+        "detail": "No managed Session is waiting on a model budget retry"
+      },
+      "github": {
+        "state": "ready",
+        "detail": "Watching paxxie2/dubbo, paxxie2/topic-bench, paxxie2/site-pnl-diagnosis; next poll ≥ 60s",
+        "at": "2026-11-06T19:44:51.424Z"
+      }
+    }
+  },
+  "capabilities": [
+    {
+      "item": "state_readable",
+      "value": "具备"
+    },
+    {
+      "item": "paused_flag",
+      "value": "具备"
+    },
+    {
+      "item": "load_counters",
+      "value": "具备"
+    },
+    {
+      "item": "plugin_version_readback",
+      "value": "不具备（仓库内 describePlugin 无调用入口，需人工确认宿主 API）"
+    },
+    {
+      "item": "other_items_1_2_3a_3_to_10",
+      "value": "未验证（需按 ROADMAP-95-PREREQUISITES.md G1 清单人工探测）"
+    }
+  ],
+  "manualChecks": "第 1、2、3a、3–10 项及新增的工具结果告警、实载版本回读、维护排空必须人工执行并记录原始输出。"
+}

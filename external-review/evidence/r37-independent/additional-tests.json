@@ -1,0 +1,390 @@
+{
+  "schema": 1,
+  "reviewedCommit": "8fd199da1d2437ccc9da90a0cfcca64d1646549d",
+  "node": "v22.19.0",
+  "executedAt": "2026-11-07T01:52:55.402Z",
+  "note": "PASS is an expected-behavior check. REPRODUCED confirms a suspected defect; neither is real-host acceptance.",
+  "results": [
+    {
+      "id": "P1 invalid current is not restored and records failed-no-previous",
+      "kind": "expected-behavior",
+      "passed": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "instance did not reach full health within 1s\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p1-invalid-current/instance/logs/rollback-20261107T015246Z-70137.json\nrollback target failed and no validated previous release exists; host kept paused\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p1-invalid-current/instance/releases/hephi/3d9cbdefcc6c0f1d6cb979f45de89105fbb031e4/lib",
+        "record": {
+          "at": "2026-11-07T01:52:46.770Z",
+          "action": "rollback",
+          "result": "failed-no-previous",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "load": {
+            "running": 0,
+            "queued": 0,
+            "startupReservations": 0,
+            "effects": 0,
+            "jobs": 0,
+            "subagents": 0,
+            "unknown": 0
+          },
+          "healthReadback": {
+            "runtime": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "relay": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "notice": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "launch": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "delivery": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "assessment": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "reply": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "evals": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "models": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "github": {
+              "state": "error",
+              "detail": "target-failed",
+              "at": "2026-11-07T00:00:00Z"
+            }
+          },
+          "target": "3d9cbdefcc6c0f1d6cb979f45de89105fbb031e4",
+          "previous": "0c7cf6017fffb905e040b545a706d95326ccaa8a",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p1-invalid-current/instance/releases/hephi/0c7cf6017fffb905e040b545a706d95326ccaa8a/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p1-invalid-current/instance/releases/hephi/3d9cbdefcc6c0f1d6cb979f45de89105fbb031e4/lib",
+          "health": "not-ready",
+          "targetFailure": "{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-failed\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "error": "rollback target failed and no validated previous release exists; host kept paused"
+        }
+      }
+    },
+    {
+      "id": "P2 invalid rollback previous rejected without side effects",
+      "kind": "expected-behavior",
+      "passed": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "--rollback previous must be a full 40-char SHA: abc\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p2-invalid-previous/instance/releases/hephi/4f3d817cf5b8ecb46ffb5825c6d4fff6faa4fe48/lib",
+        "recordCount": 0
+      }
+    },
+    {
+      "id": "P3 target health failure recovers previous to full health",
+      "kind": "expected-behavior",
+      "passed": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "instance did not reach full health within 1s\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p3-health-failure-recovery/instance/logs/deploy-20261107T015248Z-70512.json\ntarget failed after switch; previous build restored and host kept paused\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p3-health-failure-recovery/instance/releases/hephi/516c13a98a154d2105f197edbe033b3c56e11841/lib",
+        "record": {
+          "at": "2026-11-07T01:52:48.782Z",
+          "action": "deploy",
+          "result": "failed-restored-previous",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "load": {
+            "running": 0,
+            "queued": 0,
+            "startupReservations": 0,
+            "effects": 0,
+            "jobs": 0,
+            "subagents": 0,
+            "unknown": 0
+          },
+          "healthReadback": {
+            "runtime": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "relay": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "notice": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "launch": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "delivery": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "assessment": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "reply": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "evals": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "models": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "github": {
+              "state": "ready",
+              "detail": "recovered",
+              "at": "2026-11-07T00:00:00Z"
+            }
+          },
+          "target": "16997fba35d0d0c81c8c9fff8cce02649d6d8a7e",
+          "previous": "previous:/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p3-health-failure-recovery/instance/releases/hephi/516c13a98a154d2105f197edbe033b3c56e11841/lib",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p3-health-failure-recovery/instance/releases/hephi/516c13a98a154d2105f197edbe033b3c56e11841/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/p3-health-failure-recovery/instance/releases/hephi/516c13a98a154d2105f197edbe033b3c56e11841/lib",
+          "health": "not-ready",
+          "migration": "none",
+          "targetFailure": "{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-health-failed\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "restoreHealth": "all-required-ready",
+          "error": "target failed after switch; previous build restored and host kept paused"
+        }
+      }
+    },
+    {
+      "id": "X1 double failure exits with real paused=false but claims kept paused",
+      "kind": "defect-reproduction",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "instance did not reach full health within 1s\ninstance did not reach full health within 1s\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x1-double-failure-unpaused/instance/logs/deploy-20261107T015251Z-70755.json\ntarget and automatic recovery both failed; host kept paused with both errors recorded\n",
+        "record": {
+          "at": "2026-11-07T01:52:51.638Z",
+          "action": "deploy",
+          "result": "failed-twice",
+          "hostVersion": "host-1.0.0",
+          "paused": false,
+          "load": {
+            "running": 0,
+            "queued": 0,
+            "startupReservations": 0,
+            "effects": 0,
+            "jobs": 0,
+            "subagents": 0,
+            "unknown": 0
+          },
+          "healthReadback": {
+            "runtime": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "relay": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "notice": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "launch": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "delivery": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "assessment": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "reply": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "evals": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "models": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "github": {
+              "state": "error",
+              "detail": "still-unhealthy",
+              "at": "2026-11-07T00:00:00Z"
+            }
+          },
+          "target": "4cd766f7b176d91afae7c7c4b7dcae4b20a00577",
+          "previous": "previous:/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x1-double-failure-unpaused/instance/releases/hephi/430a7a592636614cff7c2d96df76780cbbb13b00/lib",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x1-double-failure-unpaused/instance/releases/hephi/430a7a592636614cff7c2d96df76780cbbb13b00/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x1-double-failure-unpaused/instance/releases/hephi/430a7a592636614cff7c2d96df76780cbbb13b00/lib",
+          "health": "not-ready",
+          "migration": "none",
+          "targetFailure": "{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"still-unhealthy\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "restoreFailure": "{\"paused\":false,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"still-unhealthy\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "error": "target and automatic recovery both failed; host kept paused with both errors recorded"
+        }
+      }
+    },
+    {
+      "id": "X2 unreadable restore state is replaced by stale target state",
+      "kind": "defect-reproduction",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "instance did not reach full health within 1s\ninstance did not reach full health within 1s\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x2-stale-restore-state/instance/logs/deploy-20261107T015254Z-71021.json\ntarget and automatic recovery both failed; host kept paused with both errors recorded\n",
+        "record": {
+          "at": "2026-11-07T01:52:54.433Z",
+          "action": "deploy",
+          "result": "failed-twice",
+          "hostVersion": "host-1.0.0",
+          "paused": "unverified",
+          "load": "unverified",
+          "healthReadback": "unverified",
+          "target": "72c0a4491d12447761959a23890de2ebc243d235",
+          "previous": "previous:/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x2-stale-restore-state/instance/releases/hephi/6866c138aa0540c0597f4ab3294b4cd533a0acae/lib",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x2-stale-restore-state/instance/releases/hephi/6866c138aa0540c0597f4ab3294b4cd533a0acae/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x2-stale-restore-state/instance/releases/hephi/6866c138aa0540c0597f4ab3294b4cd533a0acae/lib",
+          "health": "not-ready",
+          "migration": "none",
+          "targetFailure": "{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "restoreFailure": "{\"paused\":true,\"load\":{\"running\":0,\"queued\":0,\"startupReservations\":0,\"effects\":0,\"jobs\":0,\"subagents\":0,\"unknown\":0},\"health\":{\"runtime\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"relay\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"notice\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"launch\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"delivery\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"assessment\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"reply\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"evals\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"models\":{\"state\":\"ready\",\"detail\":\"ready\",\"at\":\"2026-11-07T00:00:00Z\"},\"github\":{\"state\":\"error\",\"detail\":\"target-only-evidence\",\"at\":\"2026-11-07T00:00:00Z\"}}}",
+          "error": "target and automatic recovery both failed; host kept paused with both errors recorded"
+        }
+      }
+    },
+    {
+      "id": "X3 failed old-directory restore is still reported as restored/preserved",
+      "kind": "defect-reproduction",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "snapshot existing lib: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x3-migration-restore-failure/instance/releases/hephi/.migration-20261107T015255Z\ninjected migration rename failure\ncannot restore plain lib directory from /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x3-migration-restore-failure/instance/hephi/.migration-20261107T015255Z-71305\npointer rename failed during plain-directory migration; old lib directory restored\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x3-migration-restore-failure/instance/logs/deploy-20261107T015255Z-71305.json\ncould not switch the loaded pointer; host kept paused and previous state preserved\n",
+        "libExists": false,
+        "record": {
+          "at": "2026-11-07T01:52:55.363Z",
+          "action": "deploy",
+          "result": "failed-pointer",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "load": {
+            "running": 0,
+            "queued": 0,
+            "startupReservations": 0,
+            "effects": 0,
+            "jobs": 0,
+            "subagents": 0,
+            "unknown": 0
+          },
+          "healthReadback": {
+            "runtime": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "relay": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "notice": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "launch": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "delivery": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "assessment": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "reply": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "evals": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "models": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            },
+            "github": {
+              "state": "ready",
+              "detail": "ready",
+              "at": "2026-11-07T00:00:00Z"
+            }
+          },
+          "target": "27eddc06d3ded74e15ee876d47ff0e158c4048c9",
+          "previous": "",
+          "pointerBefore": "",
+          "pointerAfter": "",
+          "health": "not-ready",
+          "migration": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.r37-additional-3vfCKP/x3-migration-restore-failure/instance/hephi/.migration-20261107T015255Z-71305",
+          "error": "pointer switch failed"
+        }
+      }
+    }
+  ]
+}

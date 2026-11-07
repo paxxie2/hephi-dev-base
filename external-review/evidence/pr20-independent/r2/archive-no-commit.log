@@ -1,0 +1,15 @@
+$ tsdown -c tsdown.config.ts
+ℹ tsdown v0.22.14 powered by rolldown v1.2.16
+ℹ config file: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/tsdown.config.ts 
+fatal: not a git repository (or any of the parent directories): .git
+
+ ERROR  Error: cannot determine the plugin commit: no git checkout, and HEPHI_BUILD_COMMIT must be a full 40-character hex SHA
+    at resolveBuildCommit (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/tsdown.config.ts?no-cache=2c07bba1-e226-446c-8a2d-27543ea92fdc:43:11)
+    at file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/tsdown.config.ts?no-cache=2c07bba1-e226-446c-8a2d-27543ea92fdc:59:46
+    at loadConfigFile (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/node_modules/.pnpm/tsdown@0.22.14_typescript@6.0.3/node_modules/tsdown/dist/options-C1CN2x0L.mjs:545:56)
+    at async resolveConfig (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/node_modules/.pnpm/tsdown@0.22.14_typescript@6.0.3/node_modules/tsdown/dist/build-D_enfyvD.mjs:93:51)
+    at async build$1 (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/node_modules/.pnpm/tsdown@0.22.14_typescript@6.0.3/node_modules/tsdown/dist/build-D_enfyvD.mjs:733:40)
+    at async CAC.<anonymous> (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/node_modules/.pnpm/tsdown@0.22.14_typescript@6.0.3/node_modules/tsdown/dist/run.mjs:21:2)
+    at async runCLI (file:///Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/node_modules/.pnpm/tsdown@0.22.14_typescript@6.0.3/node_modules/tsdown/dist/run.mjs:45:3)
+
+[ELIFECYCLE] Command failed with exit code 1.

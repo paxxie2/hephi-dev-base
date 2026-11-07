@@ -121,28 +121,46 @@ function shellSegments(line: string): string[][] {
 }
 
 const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
-const SUDO_OPTIONS_WITH_VALUE = new Set(['-u', '-g', '-p', '-C', '-h', '-r', '-t', '-U'])
+const ENV_OPTIONS_WITH_VALUE = new Set(['-u', '-C', '-S', '--unset', '--chdir', '--split-string'])
+const SUDO_OPTIONS_WITH_VALUE = new Set([
+  '-u', '-g', '-p', '-C', '-h', '-r', '-t', '-U',
+  '--user', '--group', '--prompt', '--chdir', '--close-from', '--host', '--role', '--type', '--other-user',
+])
 
-/** Drop leading VAR=value assignments and env/sudo/nohup wrappers. */
+function prefixOptionTakesValue(wrapper: 'env' | 'sudo', token: string): boolean {
+  return (wrapper === 'env' ? ENV_OPTIONS_WITH_VALUE : SUDO_OPTIONS_WITH_VALUE).has(token)
+}
+
+/** Drop leading VAR=value assignments and env/sudo/nohup wrappers (including option values). */
 function stripShellPrefixes(tokens: string[]): string[] {
   let index = 0
   while (index < tokens.length) {
-    const command = basename(tokens[index]!)
+    const name = basename(tokens[index]!)
     if (ENV_ASSIGNMENT.test(tokens[index]!)) { index += 1; continue }
-    if (command === 'env') {
+    if (name === 'env') {
       index += 1
-      while (index < tokens.length && (tokens[index]!.startsWith('-') || ENV_ASSIGNMENT.test(tokens[index]!))) index += 1
-      continue
-    }
-    if (command === 'sudo') {
-      index += 1
-      while (index < tokens.length && tokens[index]!.startsWith('-')) {
-        if (SUDO_OPTIONS_WITH_VALUE.has(tokens[index]!) && tokens[index + 1] !== undefined && !tokens[index + 1]!.startsWith('-')) index += 1
+      while (index < tokens.length) {
+        const value = tokens[index]!
+        if (ENV_ASSIGNMENT.test(value)) { index += 1; continue }
+        if (value === '-' || !value.startsWith('-')) break
+        if (value.startsWith('--') && value.includes('=')) { index += 1; continue }
+        // -u/--unset, -C/--chdir and -S/--split-string take a separate value argument.
+        if (prefixOptionTakesValue('env', value) && tokens[index + 1] !== undefined) index += 1
         index += 1
       }
       continue
     }
-    if (command === 'nohup') {
+    if (name === 'sudo') {
+      index += 1
+      while (index < tokens.length && tokens[index]!.startsWith('-')) {
+        const value = tokens[index]!
+        if (value.startsWith('--') && value.includes('=')) { index += 1; continue }
+        if (prefixOptionTakesValue('sudo', value) && tokens[index + 1] !== undefined) index += 1
+        index += 1
+      }
+      continue
+    }
+    if (name === 'nohup') {
       index += 1
       while (index < tokens.length && tokens[index]!.startsWith('-')) index += 1
       continue
@@ -155,29 +173,31 @@ function stripShellPrefixes(tokens: string[]): string[] {
 const hasFlag = (args: string[], ...flags: string[]): boolean =>
   args.some(arg => flags.some(flag => arg === flag || arg.startsWith(`${flag}=`)))
 
-/** Problems of one already-split command (argv or shell segment); no prefix stripping here. */
-function commandProblem(tokens: string[], depth: number): string | undefined {
-  const command = basename(tokens[0]!)
-  const args = tokens.slice(1)
-  const shellWrapper = command === 'sh' || command === 'bash' || command === 'zsh'
-  if (shellWrapper) {
-    for (let index = 0; index < args.length; index++) {
-      const arg = args[index]!
-      const payload = arg === '-c' ? args[index + 1] : arg.startsWith('-c') && arg.length > 2 ? arg.slice(2) : undefined
-      if (payload === undefined) continue
-      if (depth >= MAX_SHELL_SCAN_DEPTH) return `shell -c payload nesting exceeds the static scan depth (${MAX_SHELL_SCAN_DEPTH})`
-      return shellLineProblem(payload, depth + 1)
-    }
-    return undefined
+/** The -c payload of a shell wrapper, including combined short flags such as `-lc`. */
+function shellCommandPayload(args: string[]): string | undefined {
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index]!
+    if (arg === '-c') return args[index + 1]
+    if (/^-[A-Za-z]+$/.test(arg) && arg.slice(1).includes('c')) return args[index + 1]
+    if (arg.startsWith('-c') && arg.length > 2) return arg.slice(2)
+    if (arg === '--') break
+    if (!arg.startsWith('-')) break
   }
+  return undefined
+}
+
+type OfflineProblem = { problem: string; command: string }
+
+/** Problem of one non-wrapper command in command position. */
+function singleCommandProblem(command: string, args: string[]): string | undefined {
   switch (command) {
     case 'git': return args[0] === 'clone' ? 'git clone is a networked command' : undefined
     case 'curl': case 'wget': return 'curl/wget are networked commands'
     case 'npm': {
       const subcommand = args[0]
       if (subcommand === 'install' || subcommand === 'i' || subcommand === 'add') {
-        if (hasFlag(args, '--offline', '--prefer-offline', '--cache')) return undefined
-        return 'npm install without --offline/--prefer-offline/--cache'
+        if (hasFlag(args, '--offline')) return undefined
+        return 'npm install without --offline'
       }
       if (subcommand === 'exec') return 'npm exec can download packages from the network'
       if (subcommand === 'create') return 'npm create can download packages from the network'
@@ -186,8 +206,8 @@ function commandProblem(tokens: string[], depth: number): string | undefined {
     case 'pnpm': {
       const subcommand = args[0]
       if (subcommand === 'install' || subcommand === 'i' || subcommand === 'add') {
-        if (hasFlag(args, '--frozen-lockfile', '--offline')) return undefined
-        return 'pnpm install without --frozen-lockfile or --offline'
+        if (hasFlag(args, '--offline')) return undefined
+        return 'pnpm install without --offline'
       }
       if (subcommand === 'dlx') return 'pnpm dlx downloads packages from the network'
       if (subcommand === 'create') return 'pnpm create can download packages from the network'
@@ -197,12 +217,12 @@ function commandProblem(tokens: string[], depth: number): string | undefined {
     case 'yarn': {
       const subcommand = args[0]
       if (subcommand === 'install') {
-        if (hasFlag(args, '--offline', '--frozen-lockfile')) return undefined
-        return 'yarn install without an offline/frozen flag'
+        if (hasFlag(args, '--offline')) return undefined
+        return 'yarn install without --offline'
       }
       if (subcommand === 'add') {
-        if (hasFlag(args, '--offline', '--frozen-lockfile')) return undefined
-        return 'yarn add without an offline/frozen flag'
+        if (hasFlag(args, '--offline')) return undefined
+        return 'yarn add without --offline'
       }
       if (subcommand === 'dlx') return 'yarn dlx downloads packages from the network'
       if (subcommand === 'create') return 'yarn create can download packages from the network'
@@ -218,8 +238,8 @@ function commandProblem(tokens: string[], depth: number): string | undefined {
     case 'pip': case 'pip3': {
       const subcommand = args[0]
       if (subcommand === 'install') {
-        if (hasFlag(args, '--no-index', '--find-links')) return undefined
-        return 'pip install without --no-index/--find-links'
+        if (hasFlag(args, '--no-index')) return undefined
+        return 'pip install without --no-index'
       }
       if (subcommand === 'download') {
         if (hasFlag(args, '--no-index')) return undefined
@@ -240,28 +260,48 @@ function commandProblem(tokens: string[], depth: number): string | undefined {
   }
 }
 
-/** Scan one shell text line (used for a shell -c payload, which may hold several commands). */
-function shellLineProblem(line: string, depth: number): string | undefined {
+/** Every problem in one already-split command; a shell wrapper recurses into its payload. */
+function commandProblems(tokens: string[], depth: number): OfflineProblem[] {
+  const command = basename(tokens[0]!)
+  const args = tokens.slice(1)
+  if (command === 'sh' || command === 'bash' || command === 'zsh') {
+    const payload = shellCommandPayload(args)
+    if (payload === undefined) return []
+    if (depth >= MAX_SHELL_SCAN_DEPTH) {
+      return [{ problem: `shell -c payload nesting exceeds the static scan depth (${MAX_SHELL_SCAN_DEPTH})`, command: payload }]
+    }
+    return shellLineProblems(payload, depth + 1)
+  }
+  const problem = singleCommandProblem(command, args)
+  return problem === undefined ? [] : [{ problem, command: tokens.join(' ') }]
+}
+
+/** Every problem in one shell text line (used for a shell -c payload); duplicate hits stay listed. */
+function shellLineProblems(line: string, depth: number): OfflineProblem[] {
+  const problems: OfflineProblem[] = []
   for (const tokens of shellSegments(line)) {
     const stripped = stripShellPrefixes(tokens)
     if (stripped.length === 0) continue
-    const problem = commandProblem(stripped, depth)
-    if (problem) return problem
+    problems.push(...commandProblems(stripped, depth))
   }
-  return undefined
+  return problems
 }
 
 /**
  * A declared check is spawned as one quoted argv, so operators only take effect inside
  * a `sh -c` payload (or in the command token of a legacy config). Scan the command
- * position, then recurse into a shell wrapper's payload.
+ * position, then recurse into a shell wrapper's payload; every hit is returned.
  */
-function offlineCommandProblem(command: string, args: string[]): string | undefined {
+function offlineCommandProblems(command: string, args: string[]): OfflineProblem[] {
+  const problems: OfflineProblem[] = []
   const stripped = stripShellPrefixes([command, ...args])
-  const direct = stripped.length === 0 ? undefined : commandProblem(stripped, 0)
-  if (direct) return direct
-  if (/[;&|\n]/.test(command)) return shellLineProblem(command, 0)
-  return undefined
+  if (stripped.length > 0) problems.push(...commandProblems(stripped, 0))
+  if (/[;&|\n]/.test(command)) {
+    for (const problem of shellLineProblems(command, 0)) {
+      if (!problems.some(existing => existing.problem === problem.problem && existing.command === problem.command)) problems.push(problem)
+    }
+  }
+  return problems
 }
 
 /**
@@ -281,9 +321,9 @@ function offlineEnvironmentProblems(verification: VerificationConfig, workspace:
     else if (!existsSync(join(root, environment.lockfile))) problems.push(`lockfile not found in the workspace: ${environment.lockfile}`)
   }
   for (const check of verification.checks) {
-    const line = [check.command, ...check.args].join(' ')
-    const problem = offlineCommandProblem(check.command, check.args)
-    if (problem) problems.push(`check "${check.id}" runs a non-offline command (${problem}): ${line}`)
+    for (const { problem, command: offending } of offlineCommandProblems(check.command, check.args)) {
+      problems.push(`check "${check.id}" runs a non-offline command (${problem}): ${offending}`)
+    }
   }
   return problems
 }

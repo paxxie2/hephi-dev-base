@@ -43,7 +43,7 @@ function env(stateDir: string, workspace: string, checks: Check[], environment?:
 const OFFLINE = { offline: true, lockfile: 'pnpm-lock.yaml' }
 
 const bypassCases: Array<{ command: string; args: string[]; expected: RegExp }> = [
-  { command: 'yarn', args: ['add', 'left-pad'], expected: /yarn add without an offline\/frozen flag/ },
+  { command: 'yarn', args: ['add', 'left-pad'], expected: /yarn add without --offline/ },
   { command: 'pnpm', args: ['dlx', 'create-something'], expected: /pnpm dlx downloads packages from the network/ },
   { command: 'npx', args: ['--yes', 'left-pad'], expected: /npx can download packages from the network/ },
   { command: 'bun', args: ['add', 'left-pad'], expected: /bun add\/install can download packages from the network/ },
@@ -54,7 +54,7 @@ const bypassCases: Array<{ command: string; args: string[]; expected: RegExp }> 
   { command: 'corepack', args: ['prepare', 'pnpm@9'], expected: /corepack prepare downloads package managers from the network/ },
   // Equivalent pre-existing patterns must keep failing too.
   { command: 'npm', args: ['i', 'left-pad'], expected: /npm install without --offline/ },
-  { command: 'yarn', args: ['install'], expected: /yarn install without an offline\/frozen flag/ },
+  { command: 'yarn', args: ['install'], expected: /yarn install without --offline/ },
 ]
 
 describe('C4.6 prepare-time offline scan (PR #25 M4 regressions)', () => {
@@ -72,7 +72,7 @@ describe('C4.6 prepare-time offline scan (PR #25 M4 regressions)', () => {
     const { stateDir, workspace } = await fixtures()
     const attempt = prepareActivation(env(stateDir, workspace, [check('sh', ['-c', 'yarn add left-pad'])], OFFLINE))
     await expect(attempt).rejects.toThrow('check "fixture-build"')
-    await expect(attempt).rejects.toThrow(/yarn add without an offline\/frozen flag/)
+    await expect(attempt).rejects.toThrow(/yarn add without --offline/)
   })
 
   it('lists every offending check and command in one failure', async () => {
@@ -125,10 +125,10 @@ const rejectFamilies: Array<{ name: string; command: string; args: string[]; exp
   { name: 'npm install', command: 'npm', args: ['install', 'left-pad'], expected: /npm install without --offline/ },
   { name: 'npm exec', command: 'npm', args: ['exec', 'left-pad'], expected: /npm exec can download packages/ },
   { name: 'npm create', command: 'npm', args: ['create', 'vite'], expected: /npm create can download packages/ },
-  { name: 'pnpm add', command: 'pnpm', args: ['add', 'left-pad'], expected: /pnpm install without --frozen-lockfile/ },
+  { name: 'pnpm add', command: 'pnpm', args: ['add', 'left-pad'], expected: /pnpm install without --offline/ },
   { name: 'pnpm dlx', command: 'pnpm', args: ['dlx', 'create-x'], expected: /pnpm dlx downloads packages/ },
   { name: 'npx', command: 'npx', args: ['left-pad'], expected: /npx can download packages/ },
-  { name: 'yarn add', command: 'yarn', args: ['add', 'left-pad'], expected: /yarn add without an offline\/frozen flag/ },
+  { name: 'yarn add', command: 'yarn', args: ['add', 'left-pad'], expected: /yarn add without --offline/ },
   { name: 'yarn dlx', command: 'yarn', args: ['dlx', 'create-x'], expected: /yarn dlx downloads packages/ },
   { name: 'bun add', command: 'bun', args: ['add', 'left-pad'], expected: /bun add\/install can download/ },
   { name: 'bun x', command: 'bun', args: ['x', 'left-pad'], expected: /bun x can download packages/ },
@@ -158,7 +158,6 @@ describe('C4.6 offline scan N2/N4: command families', () => {
 const offlineAccept: Array<{ name: string; command: string; args: string[] }> = [
   { name: 'node script', command: 'node', args: ['build.mjs'] },
   { name: 'pnpm test', command: 'pnpm', args: ['test'] },
-  { name: 'pnpm install --frozen-lockfile', command: 'pnpm', args: ['install', '--frozen-lockfile'] },
   { name: 'pnpm install --offline', command: 'pnpm', args: ['install', '--offline'] },
   { name: 'npm ci', command: 'npm', args: ['ci'] },
   { name: 'npm install --offline', command: 'npm', args: ['install', '--offline'] },
@@ -182,7 +181,7 @@ describe('C4.6 offline scan N2/N4: genuine offline commands', () => {
 })
 
 const shellWrappers: Array<{ name: string; command: string; args: string[]; expected: RegExp }> = [
-  { name: 'sh -c pnpm', command: 'sh', args: ['-c', 'pnpm install'], expected: /pnpm install without --frozen-lockfile/ },
+  { name: 'sh -c pnpm', command: 'sh', args: ['-c', 'pnpm install'], expected: /pnpm install without --offline/ },
   { name: 'bash -c &&', command: 'bash', args: ['-c', 'cd repo && uv add left-pad'], expected: /uv add\/pip\/run can download/ },
   { name: 'zsh -c ;', command: 'zsh', args: ['-c', 'echo ok; npm install left-pad'], expected: /npm install without --offline/ },
   { name: 'nested sh -c', command: 'sh', args: ['-c', 'sh -c "npm install left-pad"'], expected: /npm install without --offline/ },
@@ -215,13 +214,58 @@ describe('C4.6 offline scan N2/N4: false-positive guards and prefixes', () => {
     { name: 'env assignment', command: 'env', args: ['CI=1', 'npm', 'install', 'left-pad'], expected: /npm install without --offline/ },
     { name: 'env option', command: 'env', args: ['-i', 'npm', 'install', 'left-pad'], expected: /npm install without --offline/ },
     { name: 'sudo prefix', command: 'sudo', args: ['npm', 'install', 'left-pad'], expected: /npm install without --offline/ },
-    { name: 'nohup wrapper', command: 'nohup', args: ['sh', '-c', 'yarn add left-pad'], expected: /yarn add without an offline\/frozen flag/ },
+    { name: 'nohup wrapper', command: 'nohup', args: ['sh', '-c', 'yarn add left-pad'], expected: /yarn add without --offline/ },
   ])('OS-PREFIX strips a leading $name before scanning the command', async ({ command, args, expected }) => {
     const { stateDir, workspace } = await fixtures()
     const attempt = prepareActivation(env(stateDir, workspace, [check(command, args)], OFFLINE))
     await expect(attempt).rejects.toThrow(REJECT_PREFIX)
     await expect(attempt).rejects.toThrow(expected)
   })
+
+
+describe('C4.6 offline scan N2/N4: flags that do not isolate the network', () => {
+  it.each([
+    { name: 'npm install --prefer-offline', command: 'npm', args: ['install', '--prefer-offline', 'left-pad'] },
+    { name: 'npm install --cache', command: 'npm', args: ['install', '--cache', '/tmp/npm-cache', 'left-pad'] },
+    { name: 'npm install --cache=dir', command: 'npm', args: ['install', '--cache=/tmp/npm-cache', 'left-pad'] },
+    { name: 'pnpm install --frozen-lockfile', command: 'pnpm', args: ['install', '--frozen-lockfile'] },
+    { name: 'yarn install --frozen-lockfile', command: 'yarn', args: ['install', '--frozen-lockfile'] },
+    { name: 'yarn add --frozen-lockfile', command: 'yarn', args: ['add', 'left-pad', '--frozen-lockfile'] },
+    { name: 'pip install --find-links', command: 'pip', args: ['install', '--find-links', '/tmp/wheels', 'left-pad'] },
+    { name: 'pip download --find-links', command: 'pip', args: ['download', '--find-links', '/tmp/wheels', 'left-pad'] },
+  ])('OS-FLAG rejects $name because it can still use the network', async ({ command, args }) => {
+    const { stateDir, workspace } = await fixtures()
+    const attempt = prepareActivation(env(stateDir, workspace, [check(command, args)], OFFLINE))
+    await expect(attempt).rejects.toThrow(REJECT_PREFIX)
+  })
+})
+
+describe('C4.6 offline scan N2/N4: combined shell flags, wrappers and multiple hits', () => {
+  it.each([
+    { name: 'sh -lc', command: 'sh', args: ['-lc', 'npm install left-pad'], expected: /npm install without --offline/ },
+    { name: 'bash -ec', command: 'bash', args: ['-ec', 'uv add left-pad'], expected: /uv add\/pip\/run can download/ },
+    { name: 'env assignment before curl', command: 'env', args: ['FOO=1', 'curl', 'https://example.invalid'], expected: /curl\/wget are networked commands/ },
+    { name: 'env -u value before curl', command: 'env', args: ['-u', 'FOO', 'curl', 'https://example.invalid'], expected: /curl\/wget are networked commands/ },
+    { name: 'env --unset value before curl', command: 'env', args: ['--unset', 'FOO', 'wget', 'https://example.invalid'], expected: /curl\/wget are networked commands/ },
+    { name: 'sudo -u value before npx', command: 'sudo', args: ['-u', 'builder', 'npx', 'left-pad'], expected: /npx can download packages/ },
+  ])('OS-SH2 rejects $name', async ({ command, args, expected }) => {
+    const { stateDir, workspace } = await fixtures()
+    const attempt = prepareActivation(env(stateDir, workspace, [check(command, args)], OFFLINE))
+    await expect(attempt).rejects.toThrow(REJECT_PREFIX)
+    await expect(attempt).rejects.toThrow(expected)
+  })
+
+  it('OS-MULTI-PAYLOAD lists every offending command in one shell payload', async () => {
+    const { stateDir, workspace } = await fixtures()
+    const attempt = prepareActivation(env(stateDir, workspace, [
+      check('sh', ['-c', 'npm install one; curl https://example.invalid; pipx run two']),
+    ], OFFLINE))
+    await expect(attempt).rejects.toThrow(/check "fixture-build"/)
+    await expect(attempt).rejects.toThrow(/npm install without --offline\): npm install one/)
+    await expect(attempt).rejects.toThrow(/curl\/wget are networked commands\): curl https:\/\/example.invalid/)
+    await expect(attempt).rejects.toThrow(/pipx run\/install can download packages from the network\): pipx run two/)
+  })
+})
 
   it('OS-MULTI lists every offending check and command before writing a contract', async () => {
     const { stateDir, workspace } = await fixtures()

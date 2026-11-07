@@ -1,0 +1,53 @@
+# site-pnl offline run ab7c8e03b6938df9fc52d486477402db313ae1ca 2026-11-07T22:40:29Z
+# uv sync --offline exit 0; npm --prefix web ci --offline --no-audit --no-fund exit 0
+==> 后端确定性测试 (pytest)
+...............................s........................................ [ 51%]
+.....................................................................    [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/starlette/testclient.py:37
+  /private/tmp/b7-site2/.venv/lib/python3.13/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==> 前端类型检查
+
+> site-pnl-web@0.1.0 typecheck
+> tsc -b --noEmit
+
+==> 前端组件测试
+
+> site-pnl-web@0.1.0 test
+> vitest --run
+
+
+ RUN  v3.2.4 /private/tmp/b7-site2/web
+
+ ✓ src/api/client.test.ts (8 tests) 7ms
+ ✓ src/lib/format.test.ts (15 tests) 5ms
+ ✓ src/features/diagnosis/PnlTable.test.tsx (4 tests) 110ms
+ ✓ src/features/diagnosis/DiagnosisPanel.test.tsx (5 tests) 260ms
+ ✓ src/features/chat/ChatPanel.test.tsx (8 tests) 396ms
+ ✓ src/features/scenarios/ScenarioSection.test.tsx (10 tests) 657ms
+ ✓ src/App.test.tsx (9 tests) 727ms
+
+ Test Files  7 passed (7)
+      Tests  59 passed (59)
+   Start at  06:40:56
+   Duration  2.46s (transform 1.13s, setup 953ms, collect 2.94s, tests 2.16s, environment 3.63s, prepare 631ms)
+
+==> 前端生产构建
+
+> site-pnl-web@0.1.0 build
+> tsc -b && vite build
+
+vite v7.1.12 building for production...
+transforming...
+✓ 49 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.41 kB │ gzip:  0.31 kB
+dist/assets/index-CvY4Ojfi.css   15.23 kB │ gzip:  3.67 kB
+dist/assets/index-v-qHYAnS.js   251.32 kB │ gzip: 77.55 kB │ map: 1,103.42 kB
+✓ built in 630ms
+全部检查通过。
+offline check.sh exit=0

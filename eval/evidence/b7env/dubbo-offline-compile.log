@@ -1,0 +1,715 @@
+# dubbo clean clone 42bd630514371db37b09afb36dae7190a82662d6 2026-11-07T22:40:19Z
+# JAVA_HOME=/opt/homebrew/opt/openjdk@17
+Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)
+Maven home: /opt/homebrew/Cellar/maven/3.9.9/libexec
+Java version: 17.0.18, vendor: Homebrew, runtime: /opt/homebrew/Cellar/openjdk@17/17.0.18/libexec/openjdk.jdk/Contents/Home
+# command: mvn -o -B -DskipTests -Dmaven.javadoc.skip=true -Dcheckstyle.skip=true -Drat.skip=true -Dmaven.source.skip=true compile
+[INFO] Loading cache configuration from /private/tmp/b7-dubbo/.mvn/maven-build-cache-config.xml
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Detecting the operating system and CPU architecture
+[INFO] ------------------------------------------------------------------------
+[INFO] os.detected.name: osx
+[INFO] os.detected.arch: aarch_64
+[INFO] os.detected.bitness: 64
+[INFO] os.detected.version: 27.0
+[INFO] os.detected.version.major: 27
+[INFO] os.detected.version.minor: 0
+[INFO] os.detected.classifier: osx-aarch_64
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] dubbo-parent                                                       [pom]
+[INFO] dubbo-common                                                       [jar]
+[INFO] dubbo-test                                                         [pom]
+[INFO] dubbo-test-check                                                   [jar]
+[INFO] dubbo-serialization                                                [pom]
+[INFO] dubbo-serialization-api                                            [jar]
+[INFO] dubbo-native                                                       [jar]
+[INFO] dubbo-serialization-hessian2                                       [jar]
+[INFO] dubbo-serialization-fastjson2                                      [jar]
+[INFO] dubbo-remoting                                                     [pom]
+[INFO] dubbo-remoting-api                                                 [jar]
+[INFO] dubbo-remoting-netty                                               [jar]
+[INFO] dubbo-remoting-zookeeper-curator5                                  [jar]
+[INFO] dubbo-metrics                                                      [pom]
+[INFO] dubbo-metrics-event                                                [jar]
+[INFO] dubbo-rpc                                                          [pom]
+[INFO] dubbo-rpc-api                                                      [jar]
+[INFO] dubbo-metrics-api                                                  [jar]
+[INFO] dubbo-metrics-netty                                                [jar]
+[INFO] dubbo-remoting-netty4                                              [jar]
+[INFO] dubbo-remoting-http12                                              [jar]
+[INFO] dubbo-remoting-http3                                               [jar]
+[INFO] dubbo-remoting-websocket                                           [jar]
+[INFO] dubbo-rpc-injvm                                                    [jar]
+[INFO] dubbo-metrics-registry                                             [jar]
+[INFO] dubbo-metrics-default                                              [jar]
+[INFO] dubbo-cluster                                                      [jar]
+[INFO] dubbo-rpc-dubbo                                                    [jar]
+[INFO] dubbo-compiler                                                     [jar]
+[INFO] dubbo-maven-plugin                                        [maven-plugin]
+[INFO] dubbo-rpc-triple                                                   [jar]
+[INFO] dubbo-metrics-metadata                                             [jar]
+[INFO] dubbo-metadata                                                     [pom]
+[INFO] dubbo-metadata-api                                                 [jar]
+[INFO] dubbo-registry                                                     [pom]
+[INFO] dubbo-registry-api                                                 [jar]
+[INFO] dubbo-registry-multicast                                           [jar]
+[INFO] dubbo-registry-zookeeper                                           [jar]
+[INFO] dubbo-registry-nacos                                               [jar]
+[INFO] dubbo-test-common                                                  [jar]
+[INFO] dubbo-registry-multiple                                            [jar]
+[INFO] dubbo-qos-api                                                      [jar]
+[INFO] dubbo-metrics-prometheus                                           [jar]
+[INFO] dubbo-metrics-config-center                                        [jar]
+[INFO] dubbo-configcenter                                                 [pom]
+[INFO] dubbo-configcenter-zookeeper                                       [jar]
+[INFO] dubbo-configcenter-apollo                                          [jar]
+[INFO] dubbo-configcenter-nacos                                           [jar]
+[INFO] dubbo-configcenter-file                                            [jar]
+[INFO] dubbo-tracing                                                      [jar]
+[INFO] dubbo-metadata-report-zookeeper                                    [jar]
+[INFO] dubbo-filter-cache                                                 [jar]
+[INFO] dubbo-filter-validation                                            [jar]
+[INFO] dubbo-config                                                       [pom]
+[INFO] dubbo-config-api                                                   [jar]
+[INFO] dubbo-config-spring                                                [jar]
+[INFO] dubbo-config-spring6                                               [jar]
+[INFO] dubbo-qos                                                          [jar]
+[INFO] dubbo-metadata-processor                                           [jar]
+[INFO] dubbo-compatible                                                   [jar]
+[INFO] dubbo-dependencies-bom                                             [pom]
+[INFO] dubbo-metadata-definition-protobuf                                 [jar]
+[INFO] dubbo-metadata-report-nacos                                        [jar]
+[INFO] dubbo-test-spring                                                  [jar]
+[INFO] dubbo-test-spring3.2                                               [jar]
+[INFO] dubbo-test-spring4.1                                               [jar]
+[INFO] dubbo-test-spring4.2                                               [jar]
+[INFO] dubbo-auth                                                         [jar]
+[INFO] dubbo-security                                                     [jar]
+[INFO] dubbo-reactive                                                     [jar]
+[INFO] dubbo-spring-security                                              [jar]
+[INFO] dubbo-rest-jaxrs                                                   [jar]
+[INFO] dubbo-triple-servlet                                               [jar]
+[INFO] dubbo-rest-spring                                                  [jar]
+[INFO] dubbo-rest-openapi                                                 [jar]
+[INFO] dubbo-triple-websocket                                             [jar]
+[INFO] dubbo                                                              [jar]
+[INFO] dubbo-spring-boot                                                  [jar]
+[INFO] dubbo-spring-boot-actuator                                         [jar]
+[INFO] dubbo-spring-boot-compatible                                       [pom]
+[INFO] dubbo-spring-boot-autoconfigure-compatible                         [jar]
+[INFO] dubbo-spring-boot-autoconfigure                                    [jar]
+[INFO] dubbo-spring-boot-actuator-autoconfigure-compatible                [jar]
+[INFO] dubbo-spring-boot-actuator-autoconfigure                           [jar]
+[INFO] dubbo-spring-boot-starters                                         [pom]
+[INFO] dubbo-spring-boot-starter                                          [jar]
+[INFO] dubbo-tracing-otel-zipkin-spring-boot-starter                      [jar]
+[INFO] dubbo-tracing-otel-otlp-spring-boot-starter                        [jar]
+[INFO] dubbo-tracing-brave-zipkin-spring-boot-starter                     [jar]
+[INFO] dubbo-observability-spring-boot-starter                            [jar]
+[INFO] dubbo-nacos-spring-boot-starter                                    [jar]
+[INFO] dubbo-zookeeper-curator5-spring-boot-starter                       [jar]
+[INFO] dubbo-sentinel-spring-boot-starter                                 [jar]
+[INFO] dubbo-seata-spring-boot-starter                                    [jar]
+[INFO] dubbo-test-modules                                                 [jar]
+[INFO] dubbo-spring-boot-3-autoconfigure                                  [jar]
+[INFO] dubbo-dependencies-all                                             [jar]
+[INFO] dubbo-demo-api                                                     [pom]
+[INFO] dubbo-demo-api-interface                                           [jar]
+[INFO] dubbo-demo-api-provider                                            [jar]
+[INFO] dubbo-demo-api-consumer                                            [jar]
+[INFO] dubbo-demo-spring-boot                                             [pom]
+[INFO] dubbo-demo-spring-boot-interface                                   [jar]
+[INFO] dubbo-demo-spring-boot-consumer                                    [jar]
+[INFO] dubbo-demo-spring-boot-provider                                    [jar]
+[INFO] dubbo-demo-spring-boot-servlet                                     [jar]
+[INFO] dubbo-demo-spring-boot-idl                                         [pom]
+[INFO] dubbo-demo-spring-boot-idl-provider                                [jar]
+[INFO] dubbo-demo-spring-boot-idl-consumer                                [jar]
+[INFO] dubbo-bom                                                          [pom]
+[INFO]
+[INFO] -------------------< org.apache.dubbo:dubbo-parent >--------------------
+[INFO] Building dubbo-parent 3.3.4-SNAPSHOT                             [1/110]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-parent ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-parent ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-parent ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-parent ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-parent ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-parent ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom16851017655439225545.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-parent ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-parent ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-parent:pom:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-parent ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -------------------< org.apache.dubbo:dubbo-common >--------------------
+[INFO] Building dubbo-common 3.3.4-SNAPSHOT                             [2/110]
+[INFO]   from dubbo-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-common ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-common ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-common ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-common ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-common ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-common ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 862 files clean - 0 needs changes to be clean, 862 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom5362139662072898624.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-common ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-common ---
+[INFO] Copying 27 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-common ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-common:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-common ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 451 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-common ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] --------------------< org.apache.dubbo:dubbo-test >---------------------
+[INFO] Building dubbo-test 3.3.4-SNAPSHOT                               [3/110]
+[INFO]   from dubbo-test/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-test ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-test ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-test ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-test ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-test ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-test ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom13780856160400707427.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-test ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-test ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-test:pom:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-test ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -----------------< org.apache.dubbo:dubbo-test-check >------------------
+[INFO] Building dubbo-test-check 3.3.4-SNAPSHOT                         [4/110]
+[INFO]   from dubbo-test/dubbo-test-check/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-test-check ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-test-check ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-test-check ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-test-check ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-test-check ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-test-check ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 29 files clean - 0 needs changes to be clean, 29 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom14272910028839788717.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-test-check ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-test-check ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-test-check ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-test-check:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-test-check ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 29 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-test-check ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] ----------------< org.apache.dubbo:dubbo-serialization >----------------
+[INFO] Building dubbo-serialization 3.3.4-SNAPSHOT                      [5/110]
+[INFO]   from dubbo-serialization/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-serialization ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-serialization ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-serialization ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-serialization ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-serialization ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-serialization ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom2060634805661440141.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-serialization ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-serialization ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-serialization:pom:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-serialization ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] --------------< org.apache.dubbo:dubbo-serialization-api >--------------
+[INFO] Building dubbo-serialization-api 3.3.4-SNAPSHOT                  [6/110]
+[INFO]   from dubbo-serialization/dubbo-serialization-api/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-serialization-api ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-serialization-api ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-serialization-api ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-serialization-api ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-serialization-api ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-serialization-api ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 16 files clean - 0 needs changes to be clean, 16 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom10614084004768026451.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-serialization-api ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-serialization-api ---
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-serialization-api ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-serialization-api:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-serialization-api ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 16 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-serialization-api ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -------------------< org.apache.dubbo:dubbo-native >--------------------
+[INFO] Building dubbo-native 3.3.4-SNAPSHOT                             [7/110]
+[INFO]   from dubbo-plugin/dubbo-native/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-native ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-native ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-native ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-native ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-native ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-native ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 24 files clean - 0 needs changes to be clean, 24 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom4697901353275039908.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-native ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-native ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-native ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-native:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-native ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 26 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-native ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -----------< org.apache.dubbo:dubbo-serialization-hessian2 >------------
+[INFO] Building dubbo-serialization-hessian2 3.3.4-SNAPSHOT             [8/110]
+[INFO]   from dubbo-serialization/dubbo-serialization-hessian2/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-serialization-hessian2 ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-serialization-hessian2 ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-serialization-hessian2 ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-serialization-hessian2 ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-serialization-hessian2 ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-serialization-hessian2 ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 15 files clean - 0 needs changes to be clean, 15 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom8335199473394609221.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-serialization-hessian2 ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-serialization-hessian2 ---
+[INFO] Copying 4 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-serialization-hessian2 ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-serialization-hessian2:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-serialization-hessian2 ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 9 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-serialization-hessian2 ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -----------< org.apache.dubbo:dubbo-serialization-fastjson2 >-----------
+[INFO] Building dubbo-serialization-fastjson2 3.3.4-SNAPSHOT            [9/110]
+[INFO]   from dubbo-serialization/dubbo-serialization-fastjson2/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-serialization-fastjson2 ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-serialization-fastjson2 ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-serialization-fastjson2 ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-serialization-fastjson2 ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-serialization-fastjson2 ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-serialization-fastjson2 ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 12 files clean - 0 needs changes to be clean, 12 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom15110561964840024565.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-serialization-fastjson2 ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-serialization-fastjson2 ---
+[INFO] Copying 2 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-serialization-fastjson2 ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-serialization-fastjson2:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-serialization-fastjson2 ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 6 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-serialization-fastjson2 ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] ------------------< org.apache.dubbo:dubbo-remoting >-------------------
+[INFO] Building dubbo-remoting 3.3.4-SNAPSHOT                          [10/110]
+[INFO]   from dubbo-remoting/pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-remoting ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-remoting ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-remoting ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-remoting ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-remoting ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-remoting ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom8016900163505245454.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-remoting ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-remoting ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-remoting:pom:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-remoting ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] ----------------< org.apache.dubbo:dubbo-remoting-api >-----------------
+[INFO] Building dubbo-remoting-api 3.3.4-SNAPSHOT                      [11/110]
+[INFO]   from dubbo-remoting/dubbo-remoting-api/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-remoting-api ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-remoting-api ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-remoting-api ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-remoting-api ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-remoting-api ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-remoting-api ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 172 files clean - 0 needs changes to be clean, 172 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] Sorting file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/pom17537163329584240796.xml
+[INFO] Pom file is already sorted, exiting
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 1 were already clean, 0 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-remoting-api ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-remoting-api ---
+[INFO] Copying 5 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-remoting-api ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-remoting-api:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-remoting-api ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 115 source files with javac [forked debug release 8] to target/classes
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-remoting-api ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] ---------------< org.apache.dubbo:dubbo-remoting-netty >----------------
+[INFO] Building dubbo-remoting-netty 3.3.4-SNAPSHOT                    [12/110]
+[INFO]   from dubbo-remoting/dubbo-remoting-netty/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] Artifact org.jboss.netty:netty:pom:3.2.10.Final is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [mirror (https://maven.aliyun.com/nexus/content/groups/public, default, releases), snapshots (https://maven.aliyun.com/nexus/content/groups/public, default, snapshots), 2446926-snapshot-41pf7N (https://packages.aliyun.com/6595f901d4109184de2dd1b1/maven/2446926-snapshot-41pf7n, default, releases+snapshots), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[WARNING] The POM for org.jboss.netty:netty:jar:3.2.10.Final is missing, no dependency information available
+[INFO] Artifact org.jboss.netty:netty:jar:3.2.10.Final is present in the local repository, but cached from a remote repository ID that is unavailable in current build context, verifying that is downloadable from [mirror (https://maven.aliyun.com/nexus/content/groups/public, default, releases), snapshots (https://maven.aliyun.com/nexus/content/groups/public, default, snapshots), 2446926-snapshot-41pf7N (https://packages.aliyun.com/6595f901d4109184de2dd1b1/maven/2446926-snapshot-41pf7n, default, releases+snapshots), apache.snapshots (https://repository.apache.org/snapshots, default, snapshots)]
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for dubbo-parent 3.3.4-SNAPSHOT:
+[INFO]
+[INFO] dubbo-parent ....................................... SUCCESS [  2.243 s]
+[INFO] dubbo-common ....................................... SUCCESS [ 12.383 s]
+[INFO] dubbo-test ......................................... SUCCESS [  0.175 s]
+[INFO] dubbo-test-check ................................... SUCCESS [  2.008 s]
+[INFO] dubbo-serialization ................................ SUCCESS [  0.163 s]
+[INFO] dubbo-serialization-api ............................ SUCCESS [  1.003 s]
+[INFO] dubbo-native ....................................... SUCCESS [  1.249 s]
+[INFO] dubbo-serialization-hessian2 ....................... SUCCESS [  0.967 s]
+[INFO] dubbo-serialization-fastjson2 ...................... SUCCESS [  1.106 s]
+[INFO] dubbo-remoting ..................................... SUCCESS [  0.118 s]
+[INFO] dubbo-remoting-api ................................. SUCCESS [  2.963 s]
+[INFO] dubbo-remoting-netty ............................... FAILURE [  0.011 s]
+[INFO] dubbo-remoting-zookeeper-curator5 .................. SKIPPED
+[INFO] dubbo-metrics ...................................... SKIPPED
+[INFO] dubbo-metrics-event ................................ SKIPPED
+[INFO] dubbo-rpc .......................................... SKIPPED
+[INFO] dubbo-rpc-api ...................................... SKIPPED
+[INFO] dubbo-metrics-api .................................. SKIPPED
+[INFO] dubbo-metrics-netty ................................ SKIPPED
+[INFO] dubbo-remoting-netty4 .............................. SKIPPED
+[INFO] dubbo-remoting-http12 .............................. SKIPPED
+[INFO] dubbo-remoting-http3 ............................... SKIPPED
+[INFO] dubbo-remoting-websocket ........................... SKIPPED
+[INFO] dubbo-rpc-injvm .................................... SKIPPED
+[INFO] dubbo-metrics-registry ............................. SKIPPED
+[INFO] dubbo-metrics-default .............................. SKIPPED
+[INFO] dubbo-cluster ...................................... SKIPPED
+[INFO] dubbo-rpc-dubbo .................................... SKIPPED
+[INFO] dubbo-compiler ..................................... SKIPPED
+[INFO] dubbo-maven-plugin ................................. SKIPPED
+[INFO] dubbo-rpc-triple ................................... SKIPPED
+[INFO] dubbo-metrics-metadata ............................. SKIPPED
+[INFO] dubbo-metadata ..................................... SKIPPED
+[INFO] dubbo-metadata-api ................................. SKIPPED
+[INFO] dubbo-registry ..................................... SKIPPED
+[INFO] dubbo-registry-api ................................. SKIPPED
+[INFO] dubbo-registry-multicast ........................... SKIPPED
+[INFO] dubbo-registry-zookeeper ........................... SKIPPED
+[INFO] dubbo-registry-nacos ............................... SKIPPED
+[INFO] dubbo-test-common .................................. SKIPPED
+[INFO] dubbo-registry-multiple ............................ SKIPPED
+[INFO] dubbo-qos-api ...................................... SKIPPED
+[INFO] dubbo-metrics-prometheus ........................... SKIPPED
+[INFO] dubbo-metrics-config-center ........................ SKIPPED
+[INFO] dubbo-configcenter ................................. SKIPPED
+[INFO] dubbo-configcenter-zookeeper ....................... SKIPPED
+[INFO] dubbo-configcenter-apollo .......................... SKIPPED
+[INFO] dubbo-configcenter-nacos ........................... SKIPPED
+[INFO] dubbo-configcenter-file ............................ SKIPPED
+[INFO] dubbo-tracing ...................................... SKIPPED
+[INFO] dubbo-metadata-report-zookeeper .................... SKIPPED
+[INFO] dubbo-filter-cache ................................. SKIPPED
+[INFO] dubbo-filter-validation ............................ SKIPPED
+[INFO] dubbo-config ....................................... SKIPPED
+[INFO] dubbo-config-api ................................... SKIPPED
+[INFO] dubbo-config-spring ................................ SKIPPED
+[INFO] dubbo-config-spring6 ............................... SKIPPED
+[INFO] dubbo-qos .......................................... SKIPPED
+[INFO] dubbo-metadata-processor ........................... SKIPPED
+[INFO] dubbo-compatible ................................... SKIPPED
+[INFO] dubbo-dependencies-bom ............................. SKIPPED
+[INFO] dubbo-metadata-definition-protobuf ................. SKIPPED
+[INFO] dubbo-metadata-report-nacos ........................ SKIPPED
+[INFO] dubbo-test-spring .................................. SKIPPED
+[INFO] dubbo-test-spring3.2 ............................... SKIPPED
+[INFO] dubbo-test-spring4.1 ............................... SKIPPED
+[INFO] dubbo-test-spring4.2 ............................... SKIPPED
+[INFO] dubbo-auth ......................................... SKIPPED
+[INFO] dubbo-security ..................................... SKIPPED
+[INFO] dubbo-reactive ..................................... SKIPPED
+[INFO] dubbo-spring-security .............................. SKIPPED
+[INFO] dubbo-rest-jaxrs ................................... SKIPPED
+[INFO] dubbo-triple-servlet ............................... SKIPPED
+[INFO] dubbo-rest-spring .................................. SKIPPED
+[INFO] dubbo-rest-openapi ................................. SKIPPED
+[INFO] dubbo-triple-websocket ............................. SKIPPED
+[INFO] dubbo .............................................. SKIPPED
+[INFO] dubbo-spring-boot .................................. SKIPPED
+[INFO] dubbo-spring-boot-actuator ......................... SKIPPED
+[INFO] dubbo-spring-boot-compatible ....................... SKIPPED
+[INFO] dubbo-spring-boot-autoconfigure-compatible ......... SKIPPED
+[INFO] dubbo-spring-boot-autoconfigure .................... SKIPPED
+[INFO] dubbo-spring-boot-actuator-autoconfigure-compatible  SKIPPED
+[INFO] dubbo-spring-boot-actuator-autoconfigure ........... SKIPPED
+[INFO] dubbo-spring-boot-starters ......................... SKIPPED
+[INFO] dubbo-spring-boot-starter .......................... SKIPPED
+[INFO] dubbo-tracing-otel-zipkin-spring-boot-starter ...... SKIPPED
+[INFO] dubbo-tracing-otel-otlp-spring-boot-starter ........ SKIPPED
+[INFO] dubbo-tracing-brave-zipkin-spring-boot-starter ..... SKIPPED
+[INFO] dubbo-observability-spring-boot-starter ............ SKIPPED
+[INFO] dubbo-nacos-spring-boot-starter .................... SKIPPED
+[INFO] dubbo-zookeeper-curator5-spring-boot-starter ....... SKIPPED
+[INFO] dubbo-sentinel-spring-boot-starter ................. SKIPPED
+[INFO] dubbo-seata-spring-boot-starter .................... SKIPPED
+[INFO] dubbo-test-modules ................................. SKIPPED
+[INFO] dubbo-spring-boot-3-autoconfigure .................. SKIPPED
+[INFO] dubbo-dependencies-all ............................. SKIPPED
+[INFO] dubbo-demo-api ..................................... SKIPPED
+[INFO] dubbo-demo-api-interface ........................... SKIPPED
+[INFO] dubbo-demo-api-provider ............................ SKIPPED
+[INFO] dubbo-demo-api-consumer ............................ SKIPPED
+[INFO] dubbo-demo-spring-boot ............................. SKIPPED
+[INFO] dubbo-demo-spring-boot-interface ................... SKIPPED
+[INFO] dubbo-demo-spring-boot-consumer .................... SKIPPED
+[INFO] dubbo-demo-spring-boot-provider .................... SKIPPED
+[INFO] dubbo-demo-spring-boot-servlet ..................... SKIPPED
+[INFO] dubbo-demo-spring-boot-idl ......................... SKIPPED
+[INFO] dubbo-demo-spring-boot-idl-provider ................ SKIPPED
+[INFO] dubbo-demo-spring-boot-idl-consumer ................ SKIPPED
+[INFO] dubbo-bom .......................................... SKIPPED
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  25.308 s
+[INFO] Finished at: 2026-11-08T06:40:47+08:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal on project dubbo-remoting-netty: Could not resolve dependencies for project org.apache.dubbo:dubbo-remoting-netty:jar:3.3.4-SNAPSHOT
+[ERROR] dependency: org.jboss.netty:netty:jar:3.2.10.Final (compile)
+[ERROR] 	Cannot access mirror (https://maven.aliyun.com/nexus/content/groups/public) in offline mode and the artifact org.jboss.netty:netty:jar:3.2.10.Final has not been downloaded from it before.
+[ERROR] 	Cannot access 2446926-snapshot-41pf7N (https://packages.aliyun.com/6595f901d4109184de2dd1b1/maven/2446926-snapshot-41pf7n) in offline mode and the artifact org.jboss.netty:netty:jar:3.2.10.Final has not been downloaded from it before.
+[ERROR] -> [Help 1]
+[ERROR]
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR]
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/DependencyResolutionException
+[ERROR]
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :dubbo-remoting-netty
+dubbo compile exit=1

@@ -1,0 +1,17 @@
+# site-pnl root-cause diagnosis 2026-11-07T22:42:19Z
+## base 1e166fb:
+20:data/
+tracked app/data files at base: 0
+## restore commit ab7c8e0:
+ab7c8e0 fix: restore data sources and expose fixed health service id
+ .gitignore                           |   2 +-
+ README.md                            |   9 +
+ backend/app/data/__init__.py         |   0
+ backend/app/data/loader.py           | 249 ++++++++++++++++++++++
+ backend/app/data/seed.py             | 400 +++++++++++++++++++++++++++++++++++
+ backend/app/schemas.py               |   1 +
+ backend/tests/test_health_service.py | 106 ++++++++++
+ 7 files changed, 766 insertions(+), 1 deletion(-)
+tracked app/data files after restore: 3
+## base check.sh exit: 2 (ModuleNotFoundError: No module named 'app.data')
+## verified commit check.sh exit: 0

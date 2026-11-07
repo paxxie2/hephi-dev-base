@@ -1,0 +1,56 @@
+# site-pnl project-config/site-pnl-checks.json command at ab7c8e03b6938df9fc52d486477402db313ae1ca 2026-11-07T22:41:47Z
+# command: sh -c 'npm --prefix web ci --no-audit --no-fund && bash scripts/check.sh'
+npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+
+added 175 packages in 2s
+==> 后端确定性测试 (pytest)
+...............................s........................................ [ 51%]
+.....................................................................    [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/starlette/testclient.py:37
+  /private/tmp/b7-site2/.venv/lib/python3.13/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==> 前端类型检查
+
+> site-pnl-web@0.1.0 typecheck
+> tsc -b --noEmit
+
+==> 前端组件测试
+
+> site-pnl-web@0.1.0 test
+> vitest --run
+
+
+ RUN  v3.2.4 /private/tmp/b7-site2/web
+
+ ✓ src/api/client.test.ts (8 tests) 4ms
+ ✓ src/lib/format.test.ts (15 tests) 6ms
+ ✓ src/features/diagnosis/PnlTable.test.tsx (4 tests) 48ms
+ ✓ src/features/chat/ChatPanel.test.tsx (8 tests) 323ms
+ ✓ src/features/diagnosis/DiagnosisPanel.test.tsx (5 tests) 203ms
+ ✓ src/features/scenarios/ScenarioSection.test.tsx (10 tests) 603ms
+ ✓ src/App.test.tsx (9 tests) 621ms
+
+ Test Files  7 passed (7)
+      Tests  59 passed (59)
+   Start at  06:42:11
+   Duration  2.58s (transform 917ms, setup 953ms, collect 2.58s, tests 1.81s, environment 3.73s, prepare 993ms)
+
+==> 前端生产构建
+
+> site-pnl-web@0.1.0 build
+> tsc -b && vite build
+
+vite v7.1.12 building for production...
+transforming...
+✓ 49 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.41 kB │ gzip:  0.31 kB
+dist/assets/index-CvY4Ojfi.css   15.23 kB │ gzip:  3.67 kB
+dist/assets/index-v-qHYAnS.js   251.32 kB │ gzip: 77.55 kB │ map: 1,103.42 kB
+✓ built in 594ms
+全部检查通过。
+site-pnl-checks.json command exit=0

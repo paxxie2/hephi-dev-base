@@ -1,0 +1,97 @@
+# dubbo clean clone 42bd630514371db37b09afb36dae7190a82662d6 2026-11-07T22:41:13Z
+# JAVA_HOME=/opt/homebrew/opt/openjdk@17 (openjdk version "17.0.18" 2026-01-20)
+Apache Maven 3.9.9 (8e8579a9e76f7d015ee5ec7bfcdc97d260186937)
+Maven home: /opt/homebrew/Cellar/maven/3.9.9/libexec
+Java version: 17.0.18, vendor: Homebrew, runtime: /opt/homebrew/Cellar/openjdk@17/17.0.18/libexec/openjdk.jdk/Contents/Home
+# command (docs/p10-offline-build.md §2): mvn -o -B -pl dubbo-common -am -DskipTests -Dmaven.javadoc.skip=true -Dcheckstyle.skip=true -Drat.skip=true -Dmaven.source.skip=true compile
+[INFO] Loading cache configuration from /private/tmp/b7-dubbo/.mvn/maven-build-cache-config.xml
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO]
+[INFO] dubbo-parent                                                       [pom]
+[INFO] dubbo-common                                                       [jar]
+[INFO]
+[INFO] -------------------< org.apache.dubbo:dubbo-parent >--------------------
+[INFO] Building dubbo-parent 3.3.4-SNAPSHOT                               [1/2]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-parent ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-parent ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-parent ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-parent ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-parent ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-parent ---
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 0 were already clean, 1 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-parent ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-parent ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-parent:pom:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-parent ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO]
+[INFO] -------------------< org.apache.dubbo:dubbo-common >--------------------
+[INFO] Building dubbo-common 3.3.4-SNAPSHOT                               [2/2]
+[INFO]   from dubbo-common/pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-maven-version) @ dubbo-common ---
+[INFO]
+[INFO] --- enforcer:3.4.1:enforce (enforce-java-version) @ dubbo-common ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-validation) @ dubbo-common ---
+[INFO]
+[INFO] --- checkstyle:3.6.0:check (checkstyle-unix-validation) @ dubbo-common ---
+[INFO]
+[INFO] --- jacoco:0.8.12:prepare-agent (jacoco-initialize) @ dubbo-common ---
+[INFO] Skipping JaCoCo execution because property jacoco.skip is set.
+[INFO]
+[INFO] --- spotless:2.44.3:check (default) @ dubbo-common ---
+[INFO] Spotless.Java is keeping 862 files clean - 0 needs changes to be clean, 0 were already clean, 862 were skipped because caching determined they were already clean
+[INFO] Spotless.Pom is keeping 1 files clean - 0 needs changes to be clean, 0 were already clean, 1 were skipped because caching determined they were already clean
+[INFO]
+[INFO] --- remote-resources:3.1.0:process (process-resource-bundles) @ dubbo-common ---
+[INFO] Preparing remote bundle org.apache.apache.resources:apache-jar-resource-bundle:1.5
+[INFO] Copying 3 resources from 1 bundle.
+[INFO]
+[INFO] --- resources:3.3.1:resources (default-resources) @ dubbo-common ---
+[INFO] Copying 27 resources from src/main/resources to target/classes
+[INFO] Copying 2 resources from ../../../../tmp/b7-dubbo to target/classes/META-INF
+[INFO] Copying 1 resource from ../../../../tmp/b7-dubbo to target/classes/META-INF/dubbo-versions
+[INFO] Copying 3 resources from target/maven-shared-archive-resources to target/classes
+[INFO]
+[INFO] --- flatten:1.7.0:flatten (flatten) @ dubbo-common ---
+[INFO] Generating flattened POM of project org.apache.dubbo:dubbo-common:jar:3.3.4-SNAPSHOT...
+[INFO]
+[INFO] --- compiler:3.14.0:compile (default-compile) @ dubbo-common ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO]
+[INFO] --- antrun:3.1.0:run (get-version-infos) @ dubbo-common ---
+[INFO] Executing tasks
+[INFO] Executed tasks
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for dubbo-parent 3.3.4-SNAPSHOT:
+[INFO]
+[INFO] dubbo-parent ....................................... SUCCESS [  2.049 s]
+[INFO] dubbo-common ....................................... SUCCESS [  0.672 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  3.591 s
+[INFO] Finished at: 2026-11-08T06:41:20+08:00
+[INFO] ------------------------------------------------------------------------
+p10 compile exit=0

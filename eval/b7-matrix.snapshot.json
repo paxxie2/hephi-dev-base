@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "generatedBy": "eval/b7-matrix.mjs",
-  "generatedAt": "2026-11-07T19:00:36.533Z",
+  "generatedAt": "2026-11-07T22:43:18.182Z",
   "preregLocked": false,
   "notes": [
     "This file is a B7 preparation matrix, not an experiment result: no run was executed, no host was accessed and no model was called.",
@@ -18,17 +18,17 @@
     "modelsMet": true
   },
   "totalCombinations": 6,
-  "eligibleCombinations": 2,
-  "blockedCombinations": 4,
+  "eligibleCombinations": 4,
+  "blockedCombinations": 2,
   "repos": [
     {
       "repoId": "dubbo",
       "language": "java",
       "stack": "Java / Maven",
-      "environmentReady": false,
+      "environmentReady": true,
       "checksConfig": false,
-      "offlineBuild": false,
-      "notes": "Local Git base 42bd630514371db37b09afb36dae7190a82662d6 verified. docs/p10-offline-build.md is historical evidence only; current offline build/checks/environment not verified."
+      "offlineBuild": true,
+      "notes": "2026-11-08 clean clone /tmp/b7-dubbo at 42bd630514371db37b09afb36dae7190a82662d6 (JAVA_HOME=openjdk@17, Maven 3.9.9, ~/.m2 5.4G). P10 documented offline commands pass: `mvn -o -B -pl dubbo-common -am -DskipTests ... compile` exit 0 (BUILD SUCCESS 3.591s); `mvn -o -B -pl dubbo-common -Dtest=StringUtilsTest test` exit 0 (37 tests, 0 failures). Full-reactor `mvn -o ... compile` exit 1: org.jboss.netty:netty:3.2.10.Final missing from local ~/.m2 and offline mode forbids download — offline build proven for dubbo-common scope only. checksConfig=false: /Users/zm/dsh-instances/experiment/project-config has no dubbo-checks.json (host untouched). Evidence: eval/evidence/b7env/dubbo-*.log"
     },
     {
       "repoId": "hephi",
@@ -43,10 +43,10 @@
       "repoId": "site-pnl-diagnosis",
       "language": "python",
       "stack": "Python backend / TypeScript frontend",
-      "environmentReady": false,
-      "checksConfig": false,
-      "offlineBuild": false,
-      "notes": "2026-11-08 tried on base 1e166fb (clean clone /tmp/b2b7-site): `npm --prefix web ci --offline` exit 0, but `bash scripts/check.sh` exit 2: pytest collection errors in backend/tests/test_db.py and test_seed.py (DB/seed environment prerequisites missing). Environment/checks not ready."
+      "environmentReady": true,
+      "checksConfig": true,
+      "offlineBuild": true,
+      "notes": "2026-11-08 clean clone /tmp/b7-site2. Default HEAD 1e166fb (B2 task base) FAILS `bash scripts/check.sh` exit 2: ModuleNotFoundError 'app.data' — backend/app/data was untracked until PR#29 because .gitignore used `data/`. Verified on commit ab7c8e03b6938df9fc52d486477402db313ae1ca (PR#29 restore-data): `uv sync --offline` exit 0; `npm --prefix web ci --offline --no-audit --no-fund` exit 0; `bash scripts/check.sh` exit 0 (pytest passed/1 skipped, vitest 59 passed, typecheck+build OK); project-config command `npm --prefix web ci --no-audit --no-fund && bash scripts/check.sh` exit 0. Caveat: task base 1e166fb still needs PR#29 data restore before this check can run there. Evidence: eval/evidence/b7env/site-*.log"
     }
   ],
   "models": [
@@ -66,12 +66,10 @@
       "comboId": "b7-dubbo-deepseek-flash",
       "repo": "dubbo",
       "model": "deepseek-flash",
-      "environmentReady": false,
+      "environmentReady": true,
       "checksReady": false,
       "eligible": false,
       "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
         "checks-config-not-ready"
       ],
       "sampleSizeStatus": "pending-prereg"
@@ -80,12 +78,10 @@
       "comboId": "b7-dubbo-gpt-6-astra",
       "repo": "dubbo",
       "model": "gpt-6-astra",
-      "environmentReady": false,
+      "environmentReady": true,
       "checksReady": false,
       "eligible": false,
       "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
         "checks-config-not-ready"
       ],
       "sampleSizeStatus": "pending-prereg"
@@ -114,28 +110,20 @@
       "comboId": "b7-site-pnl-diagnosis-deepseek-flash",
       "repo": "site-pnl-diagnosis",
       "model": "deepseek-flash",
-      "environmentReady": false,
-      "checksReady": false,
-      "eligible": false,
-      "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
-        "checks-config-not-ready"
-      ],
+      "environmentReady": true,
+      "checksReady": true,
+      "eligible": true,
+      "blockers": [],
       "sampleSizeStatus": "pending-prereg"
     },
     {
       "comboId": "b7-site-pnl-diagnosis-gpt-6-astra",
       "repo": "site-pnl-diagnosis",
       "model": "gpt-6-astra",
-      "environmentReady": false,
-      "checksReady": false,
-      "eligible": false,
-      "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
-        "checks-config-not-ready"
-      ],
+      "environmentReady": true,
+      "checksReady": true,
+      "eligible": true,
+      "blockers": [],
       "sampleSizeStatus": "pending-prereg"
     }
   ]

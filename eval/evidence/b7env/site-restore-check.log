@@ -1,0 +1,53 @@
+# site-pnl restore-commit ab7c8e03b6938df9fc52d486477402db313ae1ca 2026-11-07T22:38:59Z
+# command: bash scripts/check.sh (after uv sync; npm --prefix web ci --offline)
+==> 后端确定性测试 (pytest)
+...............................s........................................ [ 51%]
+.....................................................................    [100%]
+=============================== warnings summary ===============================
+.venv/lib/python3.13/site-packages/starlette/testclient.py:37
+  /private/tmp/b7-site2/.venv/lib/python3.13/site-packages/starlette/testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+==> 前端类型检查
+
+> site-pnl-web@0.1.0 typecheck
+> tsc -b --noEmit
+
+==> 前端组件测试
+
+> site-pnl-web@0.1.0 test
+> vitest --run
+
+
+ RUN  v3.2.4 /private/tmp/b7-site2/web
+
+ ✓ src/api/client.test.ts (8 tests) 11ms
+ ✓ src/lib/format.test.ts (15 tests) 7ms
+ ✓ src/features/diagnosis/PnlTable.test.tsx (4 tests) 121ms
+ ✓ src/features/diagnosis/DiagnosisPanel.test.tsx (5 tests) 229ms
+ ✓ src/features/chat/ChatPanel.test.tsx (8 tests) 389ms
+ ✓ src/features/scenarios/ScenarioSection.test.tsx (10 tests) 580ms
+ ✓ src/App.test.tsx (9 tests) 812ms
+
+ Test Files  7 passed (7)
+      Tests  59 passed (59)
+   Start at  06:39:19
+   Duration  2.38s (transform 639ms, setup 597ms, collect 1.87s, tests 2.15s, environment 4.25s, prepare 652ms)
+
+==> 前端生产构建
+
+> site-pnl-web@0.1.0 build
+> tsc -b && vite build
+
+vite v7.1.12 building for production...
+transforming...
+✓ 49 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.41 kB │ gzip:  0.31 kB
+dist/assets/index-CvY4Ojfi.css   15.23 kB │ gzip:  3.67 kB
+dist/assets/index-v-qHYAnS.js   251.32 kB │ gzip: 77.55 kB │ map: 1,103.42 kB
+✓ built in 697ms
+全部检查通过。
+restore check exit=0

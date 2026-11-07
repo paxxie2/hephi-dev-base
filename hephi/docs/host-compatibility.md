@@ -37,6 +37,16 @@
 4. 升级前后各记录一次宿主版本（DSH 版本 + composed-config sha256 或 API 提供的版本）；`hostVersion` 的正式语义仍待 D2 决定。
 5. 兼容性记录路径：`hephi/docs/validation/<date>-host-compatibility.md`（本模板只定义规则，不含结论）。
 
+## 2b. 2026-11-08 已验证（实载 bc21cac）
+
+| 项 | 结果 |
+| --- | --- |
+| S3 停机式部署（`--drain effects`） | **PASS**：pause → effects precheck(total=0) → stop CLI → copy final(total=0) → switch → start → 10/10 health；记录 `deploy-20261107T181639Z-43593.json` |
+| 实载回读 | activation markers：pid 44914，index/tools 均 `bc21cac`；与 release meta pluginCommit 一致 |
+| 部署后 smoke | Issue #65 → run `6bda58a8` passed/exit0/pluginCommit=bc21cac → ready.pass → PR #66 |
+| A2 on 实载构建 | H1 pass(path-B)、H2 fail、H4 pass、H3/H5/H6 manual（详见 A2 定案文档 §11） |
+| 部署脚本前置 | `--hephi` 必须指向实载插件目录（默认 `$instance/hephi` 在本机不是实载路径）；旧 legacy previous 作为恢复目标可自动接受（PR51 修复）；target 必须 v2 |
+
 ## 3. 已观察到的宿主差异（历史，需在当前候选复验）
 
 | 观察 | 来源 | 影响 |
@@ -46,6 +56,8 @@
 | `jobs.get` 对错误 Session 的行为（undefined/抛错）未验证 | H3 未做 | 影响后台证据归属判定 |
 | 宿主 `load` 只有 running/queued/maxWorkers | G1/H0 | 5 个 drain 字段不可用 → §4.5 停机式排空 |
 | clean shutdown 后 `sqlite3 -readonly` 无法打开（无 -shm） | H0/H7 | 停机后必须 copy 模式查询 |
+
+> 说明：上表为 2026-11-08 实测；真实 zero-effect 之外的 drain 等待、supervisor 行为仍未验证。
 
 ## 4. 未验证 / 待完成
 

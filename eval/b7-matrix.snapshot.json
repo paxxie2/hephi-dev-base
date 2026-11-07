@@ -1,12 +1,11 @@
 {
   "schemaVersion": 1,
   "generatedBy": "eval/b7-matrix.mjs",
-  "generatedAt": "2026-11-07T15:27:20.606Z",
+  "generatedAt": "2026-11-07T19:00:36.533Z",
   "preregLocked": false,
   "notes": [
     "This file is a B7 preparation matrix, not an experiment result: no run was executed, no host was accessed and no model was called.",
-    "sampleSizeStatus is fixed to \"pending-prereg\": per repo/model sample sizes must be locked in eval/PREREG.md §6 (D-4) before any run. This tool does not compute or invent any sample size.",
-    "No eligible combination: at least one P10 environment or checks-config precondition is missing for every supplied repository."
+    "sampleSizeStatus is fixed to \"pending-prereg\": per repo/model sample sizes must be locked in eval/PREREG.md §6 (D-4) before any run. This tool does not compute or invent any sample size."
   ],
   "source": {
     "repos": "eval/b7-data.json",
@@ -19,8 +18,8 @@
     "modelsMet": true
   },
   "totalCombinations": 6,
-  "eligibleCombinations": 0,
-  "blockedCombinations": 6,
+  "eligibleCombinations": 2,
+  "blockedCombinations": 4,
   "repos": [
     {
       "repoId": "dubbo",
@@ -35,10 +34,10 @@
       "repoId": "hephi",
       "language": "typescript",
       "stack": "Node / TypeScript",
-      "environmentReady": false,
-      "checksConfig": false,
-      "offlineBuild": false,
-      "notes": "Local Git base 9fa8598f2beabe179b28733e484275c3775279d3 verified; focused fixture is not full offline build or host checks evidence; current matrix readiness unverified."
+      "environmentReady": true,
+      "checksConfig": true,
+      "offlineBuild": true,
+      "notes": "2026-11-08 verified on main 2eb05b1 (clean clone /tmp/b7-hephi): `cd hephi && pnpm install --frozen-lockfile --offline` exit 0; `pnpm check` exit 0 (39 files / 545 tests, build 1394ms). Offline install proven from the local pnpm store; check run locally, not on host B."
     },
     {
       "repoId": "site-pnl-diagnosis",
@@ -47,7 +46,7 @@
       "environmentReady": false,
       "checksConfig": false,
       "offlineBuild": false,
-      "notes": "Local Git base 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f verified; stdlib fixture does not prove backend/frontend offline build or host checks readiness."
+      "notes": "2026-11-08 tried on base 1e166fb (clean clone /tmp/b2b7-site): `npm --prefix web ci --offline` exit 0, but `bash scripts/check.sh` exit 2: pytest collection errors in backend/tests/test_db.py and test_seed.py (DB/seed environment prerequisites missing). Environment/checks not ready."
     }
   ],
   "models": [
@@ -95,28 +94,20 @@
       "comboId": "b7-hephi-deepseek-flash",
       "repo": "hephi",
       "model": "deepseek-flash",
-      "environmentReady": false,
-      "checksReady": false,
-      "eligible": false,
-      "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
-        "checks-config-not-ready"
-      ],
+      "environmentReady": true,
+      "checksReady": true,
+      "eligible": true,
+      "blockers": [],
       "sampleSizeStatus": "pending-prereg"
     },
     {
       "comboId": "b7-hephi-gpt-6-astra",
       "repo": "hephi",
       "model": "gpt-6-astra",
-      "environmentReady": false,
-      "checksReady": false,
-      "eligible": false,
-      "blockers": [
-        "environment-not-ready",
-        "offline-build-not-ready",
-        "checks-config-not-ready"
-      ],
+      "environmentReady": true,
+      "checksReady": true,
+      "eligible": true,
+      "blockers": [],
       "sampleSizeStatus": "pending-prereg"
     },
     {

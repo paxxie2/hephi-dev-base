@@ -3,10 +3,10 @@
     "repoId": "hephi",
     "language": "typescript",
     "stack": "Node / TypeScript",
-    "environmentReady": false,
-    "checksConfig": false,
-    "offlineBuild": false,
-    "notes": "Local Git base 9fa8598f2beabe179b28733e484275c3775279d3 verified; focused fixture is not full offline build or host checks evidence; current matrix readiness unverified."
+    "environmentReady": true,
+    "checksConfig": true,
+    "offlineBuild": true,
+    "notes": "2026-11-08 verified on main 2eb05b1 (clean clone /tmp/b7-hephi): `cd hephi && pnpm install --frozen-lockfile --offline` exit 0; `pnpm check` exit 0 (39 files / 545 tests, build 1394ms). Offline install proven from the local pnpm store; check run locally, not on host B."
   },
   {
     "repoId": "site-pnl-diagnosis",
@@ -15,7 +15,7 @@
     "environmentReady": false,
     "checksConfig": false,
     "offlineBuild": false,
-    "notes": "Local Git base 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f verified; stdlib fixture does not prove backend/frontend offline build or host checks readiness."
+    "notes": "2026-11-08 tried on base 1e166fb (clean clone /tmp/b2b7-site): `npm --prefix web ci --offline` exit 0, but `bash scripts/check.sh` exit 2: pytest collection errors in backend/tests/test_db.py and test_seed.py (DB/seed environment prerequisites missing). Environment/checks not ready."
   },
   {
     "repoId": "dubbo",

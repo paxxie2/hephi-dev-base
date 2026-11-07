@@ -1,0 +1,204 @@
++ node eval/check-task.mjs eval/tasks/hephi/b5-task-key-whitelist --repo /tmp/b2b7-lead --repeats 3 --json
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2b7-lead/eval/tasks/hephi/b5-task-key-whitelist",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Missing expected exception (UsageError): unknown key extra must be rejected\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-kZQLua/checkout/[eval1]:7:10\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: [class UsageError extends Error],\n  operator: 'throws',\n  diff: 'simple'\n}\n\nNode.js v26.1.0\n",
+          "outputSha256": "a7b60fbb20ed77d39fd117f99d2b557a65a54aaef5ebcb436219060d8ee5c791"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Missing expected exception (UsageError): unknown key extra must be rejected\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-kZQLua/checkout/[eval1]:7:10\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: [class UsageError extends Error],\n  operator: 'throws',\n  diff: 'simple'\n}\n\nNode.js v26.1.0\n",
+          "outputSha256": "a7b60fbb20ed77d39fd117f99d2b557a65a54aaef5ebcb436219060d8ee5c791"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: Missing expected exception (UsageError): unknown key extra must be rejected\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-kZQLua/checkout/[eval1]:7:10\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: undefined,\n  expected: [class UsageError extends Error],\n  operator: 'throws',\n  diff: 'simple'\n}\n\nNode.js v26.1.0\n",
+          "outputSha256": "a7b60fbb20ed77d39fd117f99d2b557a65a54aaef5ebcb436219060d8ee5c791"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/b5-plan.mjs"
+      ],
+      "changedFiles": [
+        "eval/b5-plan.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "B5 task key boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "8b411f28e90e0a6dadc11e24eb9ff2fc266de2dc28d4413cee4a05191af0adad"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "B5 task key boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "8b411f28e90e0a6dadc11e24eb9ff2fc266de2dc28d4413cee4a05191af0adad"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "B5 task key boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "8b411f28e90e0a6dadc11e24eb9ff2fc266de2dc28d4413cee4a05191af0adad"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "9fa8598f2beabe179b28733e484275c3775279d3",
+  "repo": "/private/tmp/b2b7-lead",
+  "repeats": 3
+}
++ echo HEPHI_FULL=0
+HEPHI_FULL=0
++ node eval/check-task.mjs eval/tasks/site-pnl-diagnosis/previous-window-order --repo /tmp/b2b7-site --base 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f --repeats 3 --json
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2b7-lead/eval/tasks/site-pnl-diagnosis/previous-window-order",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+  "repo": "/private/tmp/b2b7-site",
+  "repeats": 3
+}
++ echo SITE_FULL=0
+SITE_FULL=0

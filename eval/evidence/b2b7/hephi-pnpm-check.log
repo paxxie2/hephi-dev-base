@@ -1,0 +1,371 @@
+$ pnpm typecheck && pnpm test && pnpm build
+$ tsc --noEmit
+$ vitest run
+
+ RUN  v4.1.12 /private/tmp/b7-hephi/hephi
+
+ ✓ tests/control/summary.test.ts (10 tests) 992ms
+ ✓ tests/control/activation.test.ts (37 tests) 1154ms
+ ✓ tests/control/offline-scan.test.ts (82 tests) 1840ms
+ ✓ tests/control/cli-stats.test.ts (14 tests) 1049ms
+ ✓ tests/kb/index.test.ts (7 tests) 5297ms
+     ✓ reads Topic Bench source objects and binds the query to its contract  874ms
+     ✓ builds a baseSha-bound map and records the query  738ms
+     ✓ returns an empty base map for a query with no matches  528ms
+     ✓ does not record success when baseMap fails  355ms
+     ✓ preserves an earlier successful query for the same contract after a later failure  527ms
+     ✓ keeps precise symbols beyond introductory words and returns full source modules  1263ms
+     ✓ ranks distinct keyword hits before truncation and ignores repeated matching lines  1011ms
+ ✓ tests/probes/check-binding-host.test.ts (20 tests) 19ms
+ ✓ tests/control/plan-tool.test.ts (16 tests) 13373ms
+     ✓ PT-01: registers the tool for enforce native and staged Workers (task-card contracts)  957ms
+     ✓ PT-02: does not register the tool in shadow mode and only records wouldDecision  1429ms
+     ✓ PT-03: does not register the tool when the contract is unavailable  905ms
+     ✓ PT-04: records an appended plan version, returns files/entries and logs plan.recorded  792ms
+     ✓ PT-05: rejects planned files outside the contract allowedPaths and writes nothing  781ms
+     ✓ PT-06: with no plan and requirePlan unset (default OPTIONAL), in-scope writes/edits are allowed  675ms
+     ✓ PT-07: exact and glob plans allow declared targets, and deny undeclared ones with plan.outside-plan  869ms
+     ✓ PT-08: a plan from another contract hash does not constrain the current Worker  679ms
+     ✓ PT-09: re-prepare (new contract) makes the old plan ineffective for edits  928ms
+     ✓ PT-10: C1 and plan denials stay distinguishable  833ms
+     ✓ PT-11: shadow mode records the plan wouldDecision but never denies  875ms
+     ✓ PT-13: requirePlan=true is fail-closed: no plan denies write/edit with plan.not-declared, then a declared plan allows  922ms
+     ✓ PT-14: requirePlan=true registers hephi_plan even without a task card (otherwise fail-closed would deadlock)  715ms
+     ✓ PT-15: requirePlan=true in shadow mode records wouldDecision plan.not-declared but never denies  557ms
+     ✓ PT-16: requirePlan=true after re-prepare: the old contract plan is not effective, so edits need a new plan  827ms
+     ✓ PT-12: the tool revalidates the mounted contract hash before recording  627ms
+stdout | tests/control/trust-boundary.test.ts > A3 trust boundary: plugin config passthrough > TB-08: apply(ctx, config) is the only plugin-side switch; env and invalid retryLimit are handled
+[hephi-activation] entry=index plugin=hephi-superagent-plugin commit=unknown pid=26638
+
+stdout | tests/control/trust-boundary.test.ts > A3 trust boundary: plugin config passthrough > TB-08: apply(ctx, config) is the only plugin-side switch; env and invalid retryLimit are handled
+[hephi-activation] entry=index plugin=hephi-superagent-plugin commit=unknown pid=26638
+
+ ✓ tests/control/worker-mount.test.ts (23 tests) 14268ms
+     ✓ injects ctx.get("jobs") into hephi_check and settles a promoted native Job  2013ms
+     ✓ staged mode registers stage control and closes delegation and mutation before plan  797ms
+     ✓ staged mode fails closed when the Job registry is missing without affecting native tasks  649ms
+     ✓ checks Jobs for every child even after its Agent unloads, without treating settled work as active  5556ms
+     ✓ allows a progress report but does not complete a checkpoint while a child is active  1505ms
+     ✓ allows a progress report but does not complete a checkpoint after the contract changes  1434ms
+     ✓ lets blocked and progress reports reach the host after a staged service load failure  413ms
+     ✓ records write-scope decisions in the per-ticket decision log  593ms
+     ✓ shadow mode observes scope and ready but never denies, registers checks or injects prompts  879ms
+ ✓ tests/control/prepare-offline.test.ts (11 tests) 714ms
+     ✓ rejects networked install commands and lists every hit by check id and command  408ms
+ ✓ tests/control/trust-boundary.test.ts (8 tests) 14671ms
+     ✓ TB-01: the runner ignores a Worker-inherited env switch; only an explicit option enables resolutions  2531ms
+     ✓ TB-02: the verifier ignores the env switch; only an explicit option enables resolutions  2614ms
+     ✓ TB-03: env-only (including HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1) does not enable the CLI  866ms
+     ✓ TB-04: a mode-0600 config with allowOperatorResolutions=true enables resolve (run-unblock and retry-reset)  2779ms
+     ✓ TB-05: a config readable by group/other is refused (0644/0640) and writes nothing  990ms
+     ✓ TB-06: missing, disabled (false) or invalid configs are refused and write nothing  938ms
+     ✓ TB-07: mountWorkerGate passes allowOperatorResolutions and retryLimit to runCheck  2451ms
+     ✓ TB-08: apply(ctx, config) is the only plugin-side switch; env and invalid retryLimit are handled  1499ms
+ ✓ tests/control/check-runner.test.ts (11 tests) 12249ms
+     ✓ waits on a promoted Job and records its real output and exit code  1669ms
+     ✓ polls again while the Job is still running instead of treating one wait as completion  1223ms
+     ✓ preserves a failed Job real exit code and blocks it  861ms
+     ✓ kills and confirms a Job that outlives the contract deadline  949ms
+     ✓ cancels through the caller signal, kills the Job and confirms it stopped  1067ms
+     ✓ stays unknown when termination cannot be confirmed  1046ms
+     ✓ rejects a source change while the background Job was running  1088ms
+     ✓ blocks a confirmed terminal Job when its output ring lost bytes  876ms
+     ✓ blocks a confirmed terminal Job when its result cannot be parsed  762ms
+     ✓ records a non-cancellation wait failure and still stops and confirms the Job  845ms
+     ✓ keeps the original foreground pass, non-zero and source-change behavior  1859ms
+ ✓ tests/eval/cli.test.ts (4 tests) 1842ms
+     ✓ kappa passes at full agreement and fails below the threshold  305ms
+     ✓ exports a baseline archive with relation tables and verifies it end to end  685ms
+     ✓ checks role conflicts, budget appendix and data packages  399ms
+     ✓ compares visible surfaces and runs repeated offline commands  451ms
+ ✓ tests/control/lint-task.test.ts (13 tests) 4811ms
+     ✓ check-task --self-test covers valid offline, missing lockfile, online command and undeclared  4246ms
+ ✓ tests/control/protected-assets.test.ts (22 tests) 21222ms
+     ✓ C1-02: prepare rejects a v3-style task card and freezes v4 contracts with protected assets  1223ms
+     ✓ C1-03: an authorization outside allowedPaths or outside its acceptance paths is rejected  1094ms
+     ✓ C1-04: an old version 3 contract still loads and carries no protection (read-only compatible)  1120ms
+     ✓ C1-05: unauthorized modify of a protected asset is denied and logged  919ms
+     ✓ C1-06: authorized modify is allowed and recorded as asset.authorized  842ms
+     ✓ C1-07: creating a new file under a protected glob is allowed (no authorization needed)  758ms
+     ✓ C1-08: shell modification of a protected asset is denied at ready and logged  1919ms
+     ✓ C1-09: a modify authorization does not cover delete  1192ms
+     ✓ C1-10: modification of a non-protected existing test is allowed and records asset.modified  1057ms
+     ✓ C1-11: an authorized deletion of an old test with an added replacement can be delivered  1366ms
+     ✓ C1-12: without C1 fields (task card v1) behaviour is unchanged  1172ms
+     ✓ C1-13: cross-item / cross-file / cross-op authorizations do not apply  647ms
+     ✓ C1-15: a migrate authorization covers deletion only when its replacement file is added  607ms
+     ✓ C1-14: project-level protectedAssets are honoured without task-card protection  975ms
+     ✓ C1-MIG-01: a migrate authorization with the exact added replacement is allowed and audited  1172ms
+     ✓ C1-MIG-02: prepare rejects a migrate authorization without replacement, or whose replacement is the original path  659ms
+     ✓ C1-MIG-03: a declared replacement that was not added denies the delete and records asset.unauthorized-delete  1108ms
+     ✓ C1-MIG-04: an unrelated new file does not satisfy the migrate replacement  1097ms
+     ✓ C1-MIG-05: a migrate authorization does not cover a modification of the original file  935ms
+     ✓ C1-MIG-06: a replacement outside allowedPaths or outside the acceptance item paths is rejected at prepare  623ms
+     ✓ C1-MIG-07: modify/delete authorizations must not carry a replacement  726ms
+ ✓ tests/contracts/task.test.ts (5 tests) 110ms
+ ✓ tests/control/activation-marker.test.ts (5 tests) 11ms
+ ✓ tests/control/check-resolution.test.ts (22 tests) 22732ms
+     ✓ rejects invalid resolution records without writing  1451ms
+     ✓ resolves once per run and reports repeats as idempotent  1655ms
+     ✓ never rebinds an already resolved run to another contract  1120ms
+     ✓ rejects every resolve while the host switch is off and writes nothing  1090ms
+     ✓ refuses to resolve an execution the host still reports as running  846ms
+     ✓ resolves a confirmed terminated execution and keeps the original evidence bytes  861ms
+     ✓ reads the host query from --host-query-file  1134ms
+     ✓ is idempotent through the CLI  1073ms
+     ✓ requires explicit risk acceptance only when the host query is unavailable  856ms
+     ✓ rejects unsafe or incomplete arguments before touching state  951ms
+     ✓ rejects an unknown run and an already settled run  1052ms
+     ✓ unblocks a rerun after a terminated resolution without touching the old record  1440ms
+     ✓ resolves a leftover running record left by a host crash  1156ms
+     ✓ ignores resolutions entirely while the host switch is off  1265ms
+     ✓ does not apply a resolution across tickets  1108ms
+     ✓ does not apply a resolution recorded for another contract  1371ms
+     ✓ keeps a resolved execution out of passing evidence  844ms
+     ✓ leaves the run scanner unaffected by resolutions.jsonl  833ms
+     ✓ fails closed when the resolution log is corrupt  833ms
+     ✓ fails closed when duplicate resolution lines for one run disagree  881ms
+     ✓ deduplicates an identical retried line written with another timestamp  907ms
+ ✓ tests/control/decision-log.test.ts (4 tests) 548ms
+     ✓ serializes concurrent appends into unique ordered seq  307ms
+ ✓ tests/control/retry-limit.test.ts (9 tests) 23865ms
+     ✓ C45-01: the fourth run is refused after three actual-run failures, logged as check.retry-limit  2926ms
+     ✓ C45-02: a passing run clears the counter  3276ms
+     ✓ C45-03: a not-started failure is not counted  3724ms
+     ✓ C45-04: the operator retry-reset clears exactly one counter and keeps running  2021ms
+     ✓ C45-05: a Worker cannot reset the counter  1566ms
+     ✓ C45-06: resetting one check does not reset another check  3102ms
+     ✓ C45-07: a contract change starts the counter from zero  1856ms
+     ✓ C45-08: the limit is configurable through runCheck({ retryLimit })  2015ms
+     ✓ C45-LEGAL-01: after a reset and a real pass, ready succeeds  3379ms
+ ✓ tests/contracts/checks.test.ts (5 tests) 72ms
+ ✓ tests/tools/worker-context.test.ts (4 tests) 472ms
+ ✓ tests/control/workspace.test.ts (10 tests) 1654ms
+ ✓ tests/control/ready-gate.test.ts (4 tests) 3ms
+ ✓ tests/control/build-commit.test.ts (9 tests) 4ms
+ ✓ tests/control/prepare-dubbo.test.ts (4 tests) 687ms
+     ✓ leaves unlabelled GitHub issues without a workspace or activation  329ms
+ ✓ tests/control/plugin-version.test.ts (2 tests) 38ms
+ ✓ tests/redteam/recovery.test.ts (5 tests) 7528ms
+     ✓ RT-REC-01: resolving an execution the host still reports as running is refused  1087ms
+     ✓ RT-REC-02: an unresolved unknown run blocks ready with the recovery gate  1516ms
+     ✓ RT-REC-03: an enabled resolution only restores retry eligibility; the old run never becomes evidence  1464ms
+     ✓ RT-REC-04: the CLI refuses every resolution while the host switch is off  778ms
+     ✓ RT-REC-LEGAL-01: after a recorded resolution, fresh checks pass ready  2682ms
+ ✓ tests/verification/fingerprint.test.ts (2 tests) 1435ms
+   ✓ hashes the complete binary patch above 1 MiB with unchanged SHA-256 semantics  1224ms
+ ✓ tests/redteam/background.test.ts (6 tests) 13913ms
+     ✓ RT-JOB-01: a Session Job id that differs from the record is refused  2375ms
+     ✓ RT-JOB-02: a Job not readable for this Session is refused as ready.job-unavailable  2298ms
+     ✓ RT-JOB-03: a failed Job is refused  2235ms
+     ✓ RT-JOB-04: a still-running Job is refused  2119ms
+     ✓ RT-JOB-05: a cleared Job output is refused as unverified output  2767ms
+     ✓ RT-JOB-06: a healthy foreground execution is refused when the record names a Job  2118ms
+stdout | tests/probes/issue1-regression.test.ts > Session binding (criterion 3) > the plugin entry passes the binding requirement through to ready
+[hephi-activation] entry=index plugin=hephi-superagent-plugin commit=unknown pid=26642
+
+ ✓ tests/redteam/scope.test.ts (5 tests) 8864ms
+     ✓ RT-SCOPE-01: a committed out-of-scope change is refused by the ready diff check  2309ms
+     ✓ RT-SCOPE-02: an uncommitted out-of-scope write is refused by the clean-tree check  1722ms
+     ✓ RT-SCOPE-03: a symlink escape is not mapped into the checkout and is not an allowed path  497ms
+     ✓ RT-SCOPE-04: hiding an out-of-scope edit in git stash is invisible while hidden (known limit) and refused after restore  2492ms
+     ✓ RT-SCOPE-LEGAL-01: an in-scope committed change with fresh checks passes  1842ms
+stdout | tests/probes/issue1-regression.test.ts > Session binding (criterion 3) > the plugin entry passes the binding requirement through to ready
+[hephi-activation] entry=index plugin=hephi-superagent-plugin commit=unknown pid=26642
+
+ ✓ tests/redteam/forgery.test.ts (11 tests) 23830ms
+     ✓ RT-FORGE-01: a hand-written record has no matching native call and is refused  2364ms
+     ✓ RT-FORGE-02: harmless command plus hand-written record is refused by the frozen-command comparison  2125ms
+     ✓ RT-FORGE-03: a snapshot from another Session cannot back this Worker report  2853ms
+     ✓ RT-FORGE-04: replaying another ticket's run is refused (cross-ticket binding)  2334ms
+     ✓ RT-OUT-01: editing only output.log is refused  2089ms
+     ✓ RT-OUT-02: editing output.log and outputHash together is NOT detectable without authoritative output (known limit)  2232ms
+     ✓ RT-OUT-03: with authoritative output (binding on) the same double edit is refused  2052ms
+     ✓ RT-OUT-04: truncated authoritative output is refused (no silent downgrade)  2092ms
+     ✓ RT-FORGE-LEGAL-01: a genuine foreground execution passes with binding on  2109ms
+     ✓ RT-FORGE-LEGAL-02: the same evidence passes with binding off  1662ms
+     ✓ RT-FORGE-LEGAL-03: a completed background Job with matching output passes  1917ms
+ ✓ tests/probes/effectiveness.test.ts (11 tests) 19303ms
+     ✓ the focused fix passes with Session-bound evidence  2862ms
+     ✓ a behaviour-preserving rewrite is accepted: the named check need not fail on base  2379ms
+     ✓ an ordinary task without a budget is not limited by one  2737ms
+     ✓ editing a file outside the item scope is refused at check time and at ready  1681ms
+     ✓ a budget the Issue asked for refuses a sweeping rewrite inside a broad scope  2488ms
+     ✓ not fixing total() is refused even though the project tests pass  2050ms
+     ✓ deleting an existing test is refused  1736ms
+     ✓ a build check cannot be named as acceptance  304ms
+     ✓ a hand-written passing record is refused because the Session has no such native execution  2693ms
+     ✓ a contract whose task card was edited no longer loads  368ms
+ ✓ tests/redteam/stale.test.ts (7 tests) 17740ms
+     ✓ RT-STALE-01: evidence produced before a later commit is refused for the new HEAD  2560ms
+     ✓ RT-STALE-02: evidence bound to an old contract hash is refused  2265ms
+     ✓ RT-STALE-03: evidence produced by another plugin build is refused  2049ms
+     ✓ RT-STALE-04: an edited task card/contract is refused after the hash check  2150ms
+     ✓ RT-STALE-LEGAL-01: re-running checks for the new HEAD passes with binding off  3246ms
+     ✓ RT-STALE-LEGAL-02: re-running checks after an authorized contract change passes  2551ms
+     ✓ RT-STALE-LEGAL-03: the re-run evidence also passes with binding on  2917ms
+ ✓ tests/control/plan.test.ts (16 tests) 33656ms
+     ✓ does not disturb the check evidence scanner  2629ms
+     ✓ accepts a diff fully inside an exact-path plan  2473ms
+     ✓ rejects a diff outside the plan, names the files and audits rule plan.outside-plan  3005ms
+     ✓ supports glob plans and unions appended plan versions  3119ms
+     ✓ keeps C4.2 OPTIONAL when requirePlan is not set (no plan -> no plan check)  2226ms
+     ✓ fails closed with plan.not-declared when requirePlan=true and no plan exists  2176ms
+     ✓ passes with requirePlan=true once a current-contract plan covers the final diff  2242ms
+     ✓ with requirePlan=true, a plan bound to another contract hash does not satisfy ready  2180ms
+     ✓ with requirePlan=true, an out-of-plan diff is still plan.outside-plan  2240ms
+     ✓ treats an empty plan log as no plan  2109ms
+     ✓ ignores a plan bound to a different contract hash  2880ms
+     ✓ fails closed on a corrupt plan log  1987ms
+     ✓ fails closed on an invalid plan line (path escape or empty files)  2456ms
+     ✓ lists at most 10 outside files with a remainder count  1848ms
+ ✓ tests/control/approval.test.ts (19 tests) 36079ms
+     ✓ keeps the legacy behavior when approvers are absent  4958ms
+     ✓ keeps the legacy behavior when approvers is an empty list  2490ms
+     ✓ accepts an approval from a listed approver for the current PR HEAD  2709ms
+     ✓ matches approver logins case-insensitively (GitHub logins are case-insensitive)  2348ms
+     ✓ does not accept an approval from someone outside the approver list  2182ms
+     ✓ does not accept an approval that targets an older HEAD  2042ms
+     ✓ rejects after the same approver requests changes (latest review wins)  2107ms
+     ✓ rejects an approval that was later dismissed  1998ms
+     ✓ rejects when a listed approver requests changes even if another approver approves  2136ms
+     ✓ uses only the latest review per approver (a later comment invalidates approval)  2081ms
+     ✓ is a wait state, not a failed check: no check records or retry counters change  1956ms
+     ✓ keeps the existing PR/base/HEAD denial semantics, including with approvers  3788ms
+     ✓ keeps the existing missing-PR failure (gh not found) instead of waiting  1545ms
+     ✓ waits for a pr_number when approvers are configured but requirePullRequest is false  2409ms
+     ✓ fails closed when the host returns no reviews for a configured approver list  1282ms
+ ✓ tests/probes/issue1-regression.test.ts (18 tests) 37900ms
+     ✓ a behaviour-preserving rewrite is accepted  3797ms
+     ✓ a check broken by a missing module fails on HEAD instead of posing as reproduction, and runs once  2462ms
+     ✓ an acceptance check that was never run cannot be skipped  2184ms
+     ✓ an indentation change in Python is a change, not a formatting-only edit to reject  1291ms
+     ✓ accepts the genuine bash call and result  2724ms
+     ✓ rejects an edit error event that only shares the call id  2458ms
+     ✓ rejects a non-bash call  2464ms
+     ✓ rejects an error result  2416ms
+     ✓ rejects a call with no terminal result  2424ms
+     ✓ rejects a result whose exit code differs from the record  2272ms
+     ✓ rejects a different command or directory  2246ms
+     ✓ rejects another Session and events inherited from a parent Session  2746ms
+     ✓ the plugin entry passes the binding requirement through to ready  2896ms
+     ✓ rejects a ready report without a Session id when binding is required  2093ms
+     ✓ a missing cwd is recorded as a not-started failure and can be retried after the fix  1003ms
+     ✓ an execution that may still be running stays closed and leaves the workspace in place  1057ms
+     ✓ resolves paths against the root checkout  615ms
+     ✓ resolves paths against the nested checkout  747ms
+ ✓ tests/control/stage-control.test.ts (35 tests) 50697ms
+     ✓ runs a real Node test without a report adapter  3525ms
+     ✓ ordinary task is untouched; stages enforce checks, progress and final delivery freshness  4160ms
+     ✓ allows hephi_check only after every stage is completed and reported  3012ms
+     ✓ checking blocks mutation while actual slow process is running and drains accepted writes  1372ms
+     ✓ failed checks reopen A; failed log remains after retry  2062ms
+     ✓ reopens completed A and invalidates B without deleting earlier evidence  2885ms
+     ✓ resumes receipt without duplicate commit and recovers received progress  2382ms
+     ✓ denies corrupt records and contract changes  366ms
+     ✓ rejects out-of-scope changes and checks that alter source  896ms
+     ✓ timeout terminates the check and allows A to be repaired, not B  820ms
+     ✓ missing executable is a check failure, never a reproduction  800ms
+     ✓ rejects removed parser/reproduction options instead of silently accepting them  377ms
+     ✓ fails closed when record is deleted after activation  321ms
+     ✓ reopens while preserving dirty changes made during delivery  5463ms
+     ✓ does not repeat a commit after a lost receipt  1789ms
+     ✓ serializes repeated finish without duplicate commits or checkpoints  1304ms
+     ✓ drains promoted native jobs before executing checks  976ms
+     ✓ a checkpoint changed before progress stays incomplete and can be reopened explicitly  2403ms
+     ✓ a source check that changes only the Git index invalidates evidence  604ms
+     ✓ cannot commit a stale staged version hidden behind unchanged working content  1066ms
+     ✓ unknown process identity after an interrupted launch keeps writes closed  320ms
+     ✓ changed source after a received progress can be reopened after restart  1623ms
+     ✓ final ready closes writes and stage updates until the report settles  1915ms
+     ✓ recovers a successful progress whose ledger update was lost  1100ms
+     ✓ does not accept failed, inherited or unacknowledged report events  689ms
+     ✓ rejects completed or active stages after unfinished predecessors  1456ms
+     ✓ rejects completed evidence for a different declared check  982ms
+     ✓ does not complete a recovered checkpoint with missing check evidence  551ms
+     ✓ blocks tool entry if the loaded stage record is replaced or removed  418ms
+     ✓ refuses B when A checkpoint was replaced by a clean intervening commit  1940ms
+     ✓ keeps writes closed while an already-active child is recorded, then resumes after it ends  920ms
+     ✓ does not treat finished jobs as blockers and refuses delegation after all stages complete  1477ms
+ ✓ tests/control/evidence-verifier.test.ts (48 tests) 80711ms
+     ✓ requires successful exit in recorded evidence  4674ms
+     ✓ requires each frozen check and accepts bound evidence without executing tests at ready  4556ms
+     ✓ rejects changed source, contract and PR head  2962ms
+     ✓ blocks nonzero exits and preserves failures across retries  7679ms
+     ✓ does not use an earlier pass after a later failing check  2515ms
+     ✓ records a real foreground project command failure and retry without XML (local integration)  3053ms
+     ✓ blocks background or uncertain execution without claiming completion  1356ms
+     ✓ A3: an enabled operator resolution unblocks re-runs but never turns the old unknown run into passing evidence  3404ms
+     ✓ rejects evidence whose recorded argv differs from the frozen check  2086ms
+     ✓ rejects evidence whose recorded cwd differs from the frozen check directory  1768ms
+     ✓ rejects evidence recorded by another plugin build and delivers again after a rerun  2012ms
+     ✓ rejects a contract frozen by another plugin build  1974ms
+     ✓ refuses check records written before plugin commit tracking  1083ms
+     ✓ U-K5-04: a contract requirement is enforced even when the host configuration is off  2192ms
+     ✓ U-K5-05: the host configuration can tighten a contract that leaves binding off, never relax it  1812ms
+     ✓ U-K4-01: a check record written by another Worker Session is rejected with binding on or off  1871ms
+     ✓ U-K4-02: evidence recorded by the same Worker Session passes with binding on or off  1546ms
+     ✓ U-K5-06: ready decisions record the real binding policy in the decision log  1420ms
+     ✓ records ready decisions in the per-ticket decision log  1648ms
+     ✓ U-BIND-F1: a legal foreground execution matching the frozen check passes  1029ms
+     ✓ U-BIND-F2: a Session call that ran a different command is rejected  965ms
+     ✓ U-BIND-F3: a Session call that ran in a different directory is rejected  863ms
+     ✓ U-BIND-F4: a foreground result without a confirmed clean exit is rejected  2574ms
+     ✓ U-BIND-B1: a promoted Job completed with exit code 0 is bound  992ms
+     ✓ U-BIND-B2: a background Job completed with exit code 0 is bound  1084ms
+     ✓ U-BIND-B3: a Session Job id that differs from the record is rejected  769ms
+     ✓ U-BIND-B4: a Job cleared before ready is rejected and logged as ready.job-unavailable  1081ms
+     ✓ U-BIND-B5: a host without a Job registry rejects background evidence as ready.job-unavailable  959ms
+     ✓ U-BIND-B6: a Job that terminated with a non-completed status is rejected  930ms
+     ✓ U-BIND-B7: a completed Job without the documented exit-code detail is rejected  898ms
+     ✓ U-BIND-B8: a Job exit code that is not 0 is rejected  822ms
+     ✓ U-BIND-B9: a background Session result cannot back a record without a Job id  1076ms
+     ✓ U-BIND-X1: a native call inherited from a parent Session is not evidence  1093ms
+     ✓ U-OUT-01: foreground authoritative output matches record.outputHash and output.log  1174ms
+     ✓ U-OUT-02: Session output that differs from the record is rejected as ready.output-unverified  1231ms
+     ✓ U-OUT-03: truncated foreground output cannot be verified and is rejected  927ms
+     ✓ U-OUT-04: lossy or cleared Job output cannot be verified and is rejected  1387ms
+     ✓ U-BIND-J1: a background Job binds through the real-host Job events (workdir absent is noted, not guessed)  1241ms
+     ✓ U-BIND-J2: a Job whose raw arguments carry a matching workdir also binds  1395ms
+     ✓ U-BIND-J3: a Job id in the Session events that differs from the record is rejected  997ms
+     ✓ U-BIND-J4: Job events owned by another Session are rejected  844ms
+     ✓ U-BIND-J5: a job/settled exit code that differs from the record is rejected  954ms
+     ✓ U-BIND-J6: a job/settled without a parseable exit code is rejected  1507ms
+     ✓ U-BIND-J7: structured evidence and Job events present at once are rejected as ambiguous  843ms
+     ✓ U-BIND-J8: missing workdir is annotated but a mismatched command still fails  1241ms
+     ✓ U-BIND-J9: a foreground record can only produce ready.output-unverified on path B (no structured output)  1103ms
+     ✓ U-BIND-J10: a non-completed job/settled status is rejected  1116ms
+ ✓ tests/control/deploy-script.test.ts (1 test) 409735ms
+     ✓ 全部场景通过  409734ms
+
+ Test Files  39 passed (39)
+      Tests  545 passed (545)
+   Start at  02:52:34
+   Duration  437.36s (transform 5.14s, setup 0ms, import 15.09s, tests 885.09s, environment 2ms)
+
+$ tsdown -c tsdown.config.ts
+ℹ tsdown v0.22.14 powered by rolldown v1.2.16
+ℹ config file: /private/tmp/b7-hephi/hephi/tsdown.config.ts 
+ℹ entry: src/index.ts, src/tools.ts, src/cli.ts
+ℹ target: node22.19.0
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Granting execute permission to lib/cli.mjs
+ℹ lib/cli.mjs                         46.59 kB │ gzip: 12.26 kB
+ℹ lib/index.mjs                       29.64 kB │ gzip:  8.20 kB
+ℹ lib/tools.mjs                        2.73 kB │ gzip:  1.20 kB
+ℹ lib/worker-mount-DCvd7TLD.mjs.map  161.93 kB │ gzip: 41.89 kB
+ℹ lib/plan-store-DEjYPB51.mjs.map    126.00 kB │ gzip: 32.06 kB
+ℹ lib/worker-mount-DCvd7TLD.mjs       84.24 kB │ gzip: 22.53 kB
+ℹ lib/cli.mjs.map                     81.35 kB │ gzip: 20.35 kB
+ℹ lib/plan-store-DEjYPB51.mjs         66.40 kB │ gzip: 17.81 kB
+ℹ lib/index.mjs.map                   53.23 kB │ gzip: 14.66 kB
+ℹ lib/tools.mjs.map                    4.59 kB │ gzip:  1.84 kB
+ℹ lib/index.d.mts.map                  3.68 kB │ gzip:  1.37 kB
+ℹ lib/cli.d.mts.map                    0.17 kB │ gzip:  0.16 kB
+ℹ lib/tools.d.mts.map                  0.15 kB │ gzip:  0.14 kB
+ℹ lib/index.d.mts                     24.95 kB │ gzip:  7.72 kB
+ℹ lib/cli.d.mts                        3.87 kB │ gzip:  1.64 kB
+ℹ lib/tools.d.mts                      0.53 kB │ gzip:  0.33 kB
+ℹ 16 files, total: 690.02 kB
+✔ Build complete in 1394ms

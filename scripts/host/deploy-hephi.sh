@@ -17,13 +17,19 @@
 # 用法：deploy-hephi.sh --instance <dir> --host <url> --host-version <单行值>
 #        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
 #        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <秒>]
+#        [--drain effects] [--effects-db <path>] [--stop-command <command>]
+#        [--stop-timeout <秒>] [--process-file <path>]
 set -eu
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+effects_tool="$script_dir/check-effects-db.mjs"
 
 usage() {
   cat >&2 <<'USAGE'
 usage: deploy-hephi.sh --instance <dir> --host <url> --host-version <single-line value>
        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <seconds>]
+       [--drain effects] [--effects-db <path>] [--stop-command <command>]
+       [--stop-timeout <seconds>] [--process-file <path>]
 USAGE
   exit 2
 }
@@ -31,6 +37,7 @@ USAGE
 instance=""; host=""; host_version=""; target=""; previous=""; rollback="no"; dry_run="no"
 target_set="no"; previous_set="no"
 releases=""; repo=""; hephi=""; timeout=120
+drain_mode=""; effects_db=""; stop_command=""; stop_timeout=""; process_file=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --instance) [ $# -ge 2 ] || usage; instance="$2"; shift 2 ;;
@@ -44,6 +51,11 @@ while [ $# -gt 0 ]; do
     --repo) [ $# -ge 2 ] || usage; repo="$2"; shift 2 ;;
     --hephi) [ $# -ge 2 ] || usage; hephi="$2"; shift 2 ;;
     --timeout) [ $# -ge 2 ] || usage; timeout="$2"; shift 2 ;;
+    --drain) [ $# -ge 2 ] || usage; drain_mode="$2"; shift 2 ;;
+    --effects-db) [ $# -ge 2 ] || usage; effects_db="$2"; shift 2 ;;
+    --stop-command) [ $# -ge 2 ] || usage; stop_command="$2"; shift 2 ;;
+    --stop-timeout) [ $# -ge 2 ] || usage; stop_timeout="$2"; shift 2 ;;
+    --process-file) [ $# -ge 2 ] || usage; process_file="$2"; shift 2 ;;
     -h|--help) usage ;;
     *) echo "unknown argument: $1" >&2; usage ;;
   esac
@@ -60,6 +72,21 @@ printf '%s' "$host_version" | grep -qE '^[[:print:]]+$' || { echo "host version 
 [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || { echo "not a git repository: $repo" >&2; exit 2; }
 [ -f "$instance/host.pid" ] || { echo "missing host.pid: $instance/host.pid" >&2; exit 2; }
 host=${host%/}
+
+# §4.5 停机式排空模式：与默认的 API 字段排空模式互斥，且不能用于 rollback。
+if [ -n "$drain_mode" ] && [ "$drain_mode" != "effects" ]; then
+  echo "unknown --drain mode: $drain_mode (only effects is supported)" >&2; exit 2
+fi
+if [ "$drain_mode" = "effects" ] && [ "$rollback" = "yes" ]; then
+  echo "--drain effects cannot be combined with --rollback" >&2; exit 2
+fi
+if [ "$drain_mode" = "effects" ]; then
+  [ -n "$effects_db" ] || effects_db="$instance/state/orchestrator.sqlite"
+  [ -n "$stop_timeout" ] || stop_timeout="$timeout"
+  case "$stop_timeout" in ''|*[!0-9]*) echo "--stop-timeout must be a positive integer" >&2; exit 2 ;; esac
+  [ "$stop_timeout" -gt 0 ] || { echo "--stop-timeout must be a positive integer" >&2; exit 2; }
+  [ -f "$effects_tool" ] || { echo "effects checker not found: $effects_tool" >&2; exit 2; }
+fi
 release_sha() { printf '%s' "$1" | sed -n 's#.*/\([0-9a-f]\{40\}\)/lib$#\1#p'; }
 is_sha() { printf '%s' "$1" | grep -qE '^[0-9a-f]{40}$'; }
 sha256_file() { if command -v shasum >/dev/null 2>&1; then shasum -a 256 "$1" | awk '{print $1}'; else sha256sum "$1" | awk '{print $1}'; fi; }
@@ -199,20 +226,9 @@ build_release() {
 }
 
 LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
-# 每次重启尝试都重置本阶段状态，禁止沿用上一阶段（target/restore）的字符串。
-restart_instance() {
+# 启动 $instance/start.sh 并等待 10 项全量健康；用于重启与 §4.5 停机后的启动。
+start_instance() {
   LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
-  pid=$(cat "$instance/host.pid")
-  kill -TERM "$pid" 2>/dev/null || true
-  waited=0
-  while kill -0 "$pid" 2>/dev/null; do
-    if [ "$waited" -ge "$timeout" ]; then
-      FAIL_KIND="stop-timeout"; FAIL_STATE="$LAST_STATE"
-      echo "instance did not stop within ${timeout}s" >&2
-      return 1
-    fi
-    sleep 1; waited=$((waited+1))
-  done
   nohup "$instance/start.sh" >> "$instance/logs/host.log" 2>&1 &
   echo $! > "$instance/host.pid"
   waited=0; got_state="no"
@@ -229,6 +245,22 @@ restart_instance() {
     fi
     sleep 1; waited=$((waited+1))
   done
+}
+# 每次重启尝试都重置本阶段状态，禁止沿用上一阶段（target/restore）的字符串。
+restart_instance() {
+  LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
+  pid=$(cat "$instance/host.pid")
+  kill -TERM "$pid" 2>/dev/null || true
+  waited=0
+  while kill -0 "$pid" 2>/dev/null; do
+    if [ "$waited" -ge "$timeout" ]; then
+      FAIL_KIND="stop-timeout"; FAIL_STATE="$LAST_STATE"
+      echo "instance did not stop within ${timeout}s" >&2
+      return 1
+    fi
+    sleep 1; waited=$((waited+1))
+  done
+  start_instance
 }
 
 # 记录真实宿主状态回读：paused/load/healthReadback 一律来自 read_state；读不到就写 unverified。
@@ -289,6 +321,365 @@ fail_after_switch() {
   esac
 }
 
+
+# ============================================================================
+# §4.5 停机式排空（--drain effects）
+#
+# 流程（H0/H7 实测结论）：pause API 已 paused=true → 运行中 ro 预检查 effect 表
+# （只作预检查，不是最终证据）→ 记录受管进程（host.pid + lstart + 后代）→ 构建
+# 目标 release（缩短停机窗口）→ 停止宿主（默认 SIGINT host.pid，或 --stop-command）
+# → 停机后唯一权威证据：check-effects-db --mode copy（replay WAL、不动原库；
+# 禁止 immutable=1 与 sqlite3 -readonly 兜底）→ 残留进程按 pid+lstart 核对 →
+# 等 2s 确认无自动重启 → 原子切换指针 → start.sh 启动 → 10 项健康 + paused 回读
+# → 记录全部证据。
+#
+# 停止方式：默认 SIGINT 到 host.pid 在真实宿主上尚未验证；真实部署应显式给
+#   --stop-command "python3 <instance>/superagent/scripts/dsh-superagent stop --profile experiment --url http://127.0.0.1:3083 --stop-timeout 30"
+# 中止恢复：已停机则用 $instance/start.sh（H0 实测约 11s 到 10 项健康）；不使用管理器 start（依赖 dsh/tmux）。
+#
+# 任一中止路径：不切换 release。若已停机则按原版本重启并全量健康检查；非零退出，
+# 并把 precheck/final JSON、进程清单、stop 输出写入记录。
+# 例外：停机后宿主动重启/被 supervisor 拉起时，只记录并中止，不杀新进程、不再启动第二份实例，
+# 记录 autoRestartedPid 与 autoRestartAction="left-running"，交操作者接管。
+#
+# 构建时机：目标 release 在停机前构建（缩短停机窗口），故 stop/final 等中止路径可能留下
+# 未激活的不可变 releases/<sha>；指针与实载不变，这属预期。
+# ============================================================================
+EFFECT_PRECHECK_JSON=""; EFFECT_FINAL_JSON=""; EFFECT_STOPPED="no"; EFFECT_SWITCHED="no"
+EFFECT_STOP_EXIT=""; EFFECT_STOP_OUTPUT=""; EFFECT_OLD_PID=""; AUTO_RESTART_PID=""
+EFFECT_LEAVE_RUNNING="no"; EFFECT_AUTO_RESTART_ACTION="none"
+EFFECT_RESTORE_TARGET=""; EFFECT_RECOVER_HEALTH="not-attempted"
+managed_file="none"; managed_processes=""; managed_count=0; host_pid=""; host_lstart=""
+residual_lines="none"; EFFECT_QUERY_FILE=""
+
+# 运行 check-effects-db（不改该工具）；stdout 存入 EFFECT_JSON，退出码存入 EFFECT_CODE。
+effects_query() {
+  mode="$1"
+  [ -f "$effects_tool" ] || { echo "effects checker missing: $effects_tool" >&2; EFFECT_JSON=""; EFFECT_CODE=1; return 1; }
+  EFFECT_QUERY_FILE="$instance/logs/effects-$mode-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
+  if node "$effects_tool" --db "$effects_db" --mode "$mode" --json > "$EFFECT_QUERY_FILE" 2>"$instance/logs/effects-$mode.err"; then
+    EFFECT_CODE=0
+  else
+    EFFECT_CODE=1
+  fi
+  EFFECT_JSON=$(cat "$EFFECT_QUERY_FILE" 2>/dev/null || true)
+  return 0
+}
+
+# 解析 EFFECT_JSON 的 ok/journalMode/total；JSON 非法返回 1。
+effects_read_fields() {
+  parsed=$(printf '%s' "$EFFECT_JSON" | node -e '
+    let s = ""; process.stdin.on("data", d => s += d).on("end", () => {
+      let j; try { j = JSON.parse(s) } catch (e) { process.exit(1) }
+      const total = (typeof j.total === "number" && Number.isSafeInteger(j.total)) ? String(j.total) : "NaN";
+      process.stdout.write(String(j.ok === true) + "\t" + String(typeof j.journalMode === "string" ? j.journalMode : "") + "\t" + total);
+    });' 2>/dev/null) || return 1
+  EFFECT_OK=$(printf '%s' "$parsed" | cut -f1)
+  EFFECT_JOURNAL=$(printf '%s' "$parsed" | cut -f2)
+  EFFECT_TOTAL=$(printf '%s' "$parsed" | cut -f3)
+  return 0
+}
+
+# 预检查与最终证据的共同判据：ok=true、journalMode=wal、effect 表 total=0。
+effects_ok_with_zero() {
+  label="$1"
+  if ! effects_read_fields; then
+    echo "effects $label check: invalid JSON: $EFFECT_JSON" >&2
+    return 1
+  fi
+  if [ "$EFFECT_OK" != "true" ] || [ "$EFFECT_JOURNAL" != "wal" ] || [ "$EFFECT_TOTAL" != "0" ]; then
+    echo "effects $label check failed: ok=$EFFECT_OK journal=$EFFECT_JOURNAL total=$EFFECT_TOTAL" >&2
+    return 1
+  fi
+  return 0
+}
+
+# 记录受管进程表：ps 全表（pid/ppid/lstart/command），并按 ppid 关系从 host.pid 计算后代。
+effects_process_table() {
+  managed_ts=$(date -u +%Y%m%dT%H%M%SZ)
+  if [ -n "$process_file" ]; then
+    managed_file="$process_file"
+  else
+    managed_file="$instance/logs/managed-$managed_ts-$$.txt"
+  fi
+  host_pid=$(cat "$instance/host.pid" 2>/dev/null || true)
+  host_lstart=""
+  if [ -n "$host_pid" ] && kill -0 "$host_pid" 2>/dev/null; then
+    host_lstart=$(ps -p "$host_pid" -o lstart= 2>/dev/null | sed 's/^ *//;s/ *$//' | tr -s ' ' || true)
+  fi
+  # 文件格式按 §4.5 约定：ps -ax -o pid=,lstart=,command=（后代关系另取 ppid 计算）。
+  if ! ps -ax -o pid=,lstart=,command= > "$managed_file" 2>/dev/null; then
+    echo "cannot record managed process table: $managed_file" >&2
+    return 1
+  fi
+  managed_processes=$(node -e '
+    const fs = require("fs");
+    const { execFileSync } = require("child_process");
+    const [file, root] = process.argv.slice(1);
+    if (root === "") process.exit(0);
+    const rows = fs.readFileSync(file, "utf8").split("\n").map(line => line.trim()).filter(Boolean).map(line => {
+      const parts = line.split(/\s+/);
+      return { pid: parts[0], lstart: parts.slice(1, 6).join(" "), command: parts.slice(6).join(" ") };
+    });
+    let ppidText = "";
+    try { ppidText = execFileSync("ps", ["-ax", "-o", "pid=,ppid="], { encoding: "utf8" }); } catch (error) { process.exit(0); }
+    const parentOf = new Map();
+    for (const line of ppidText.split("\n")) {
+      const parts = line.trim().split(/\s+/);
+      if (parts.length >= 2) parentOf.set(parts[0], parts[1]);
+    }
+    const byPid = new Map(rows.map(row => [row.pid, row]));
+    const out = [];
+    const rootRow = byPid.get(root);
+    if (rootRow) out.push(rootRow);
+    for (const pid of byPid.keys()) {
+      if (pid === root) continue;
+      let current = pid;
+      let depth = 0;
+      let descendant = false;
+      while (depth < 64) {
+        const parent = parentOf.get(current);
+        if (parent === undefined) break;
+        if (parent === root) { descendant = true; break; }
+        current = parent;
+        depth += 1;
+      }
+      if (descendant) out.push(byPid.get(pid));
+    }
+    process.stdout.write(out.map(row => [row.pid, row.lstart, row.command].join("|")).join("\n"));
+  ' "$managed_file" "$host_pid" 2>/dev/null || true)
+  if [ -n "$managed_processes" ]; then
+    managed_count=$(printf '%s\n' "$managed_processes" | grep -c . || true)
+  else
+    managed_count=0
+  fi
+  echo "managed processes: $managed_file (host pid=${host_pid:-none} lstart=${host_lstart:-none} managed=${managed_count})" >&2
+}
+
+# 停机后按「pid 仍存在且 lstart 相同」核对残留；pid 复用但 lstart 不同不算残留。
+effects_residuals() {
+  [ -n "$managed_processes" ] || return 0
+  printf '%s\n' "$managed_processes" | while IFS='|' read -r rpid rlstart rcommand; do
+    [ -n "$rpid" ] || continue
+    pid_running "$rpid" || continue
+    now_lstart=$(ps -p "$rpid" -o lstart= 2>/dev/null | sed 's/^ *//;s/ *$//' | tr -s ' ' || true)
+    [ -n "$now_lstart" ] || continue
+    if [ "$now_lstart" = "$rlstart" ]; then printf '%s|%s|%s\n' "$rpid" "$rlstart" "$rcommand"; fi
+  done
+}
+
+# pid 是否仍在运行：kill -0 对僵尸进程也成立，故读 ps stat 把 Z 视为已停止。
+pid_running() {
+  p="$1"
+  [ -n "$p" ] || return 1
+  kill -0 "$p" 2>/dev/null || return 1
+  s=$(ps -p "$p" -o stat= 2>/dev/null | tr -d ' ' || true)
+  case "$s" in ''|Z*) return 1 ;; esac
+  return 0
+}
+
+# 停掉当前 host.pid 进程（用于已停机后清理未通过健康检查的本次启动进程）。
+kill_current_host() {
+  pid=$(cat "$instance/host.pid" 2>/dev/null || true)
+  [ -n "$pid" ] || return 0
+  kill -TERM "$pid" 2>/dev/null || true
+  waited=0
+  while pid_running "$pid"; do
+    [ "$waited" -ge "$timeout" ] && return 1
+    sleep 1; waited=$((waited+1))
+  done
+  return 0
+}
+
+# 停机：默认 SIGINT host.pid；--stop-command 通过 sh -c 执行并记录输出/退出码。
+# EFFECT_STOPPED 表示旧 host pid 是否已消失（即使 stop 命令非零，也要据此决定是否重启原版本）。
+effects_stop() {
+  EFFECT_OLD_PID=$(cat "$instance/host.pid" 2>/dev/null || true)
+  [ -n "$EFFECT_OLD_PID" ] || { echo "missing host.pid before stop" >&2; EFFECT_STOPPED="no"; return 1; }
+  EFFECT_STOP_EXIT=""; EFFECT_STOP_OUTPUT=""
+  if [ -n "$stop_command" ]; then
+    set +e
+    EFFECT_STOP_OUTPUT=$(sh -c "$stop_command" 2>&1)
+    EFFECT_STOP_EXIT=$?
+    set -e
+    printf '%s\n' "$EFFECT_STOP_OUTPUT" > "$instance/logs/managed-stop-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>/dev/null || true
+  else
+    kill -INT "$EFFECT_OLD_PID" 2>/dev/null || true
+    EFFECT_STOP_EXIT=0
+  fi
+  waited=0
+  while pid_running "$EFFECT_OLD_PID"; do
+    if [ "$waited" -ge "$stop_timeout" ]; then
+      echo "host did not stop within ${stop_timeout}s (pid=$EFFECT_OLD_PID)" >&2
+      EFFECT_STOPPED="no"; return 1
+    fi
+    sleep 1; waited=$((waited+1))
+  done
+  EFFECT_STOPPED="yes"
+  if [ "$EFFECT_STOP_EXIT" != "0" ]; then
+    echo "stop command failed (exit=$EFFECT_STOP_EXIT)" >&2
+    return 1
+  fi
+  return 0
+}
+
+# 停机后等 2s，确认宿主没有自动回来（host.pid 出现新的存活 pid）。
+effects_no_auto_restart() {
+  sleep 2
+  auto_pid=$(cat "$instance/host.pid" 2>/dev/null || true)
+  if [ -n "$auto_pid" ] && [ "$auto_pid" != "$EFFECT_OLD_PID" ] && pid_running "$auto_pid"; then
+    AUTO_RESTART_PID="$auto_pid"; return 1
+  fi
+  if [ -n "$EFFECT_OLD_PID" ] && pid_running "$EFFECT_OLD_PID"; then return 1; fi
+  return 0
+}
+
+# 统一中止出口：若已停机则按原版本重启（必要时先恢复指针）并全量健康检查；
+# 记录 precheck/final JSON、进程清单与 stop 输出；最后 fail_after_switch 非零退出。
+effects_abort() {
+  result="$1"; errors="$2"
+  EFFECT_RECOVER_HEALTH="not-attempted"
+  if [ "$EFFECT_LEAVE_RUNNING" = "yes" ]; then
+    # 宿主已自行回来：不杀它、不再启动第二份实例，只记录并交给操作者接管。
+    EFFECT_RECOVER_HEALTH="left-running"
+    EFFECT_AUTO_RESTART_ACTION="left-running"
+    echo "host came back after stop (pid=${AUTO_RESTART_PID:-unknown}); leaving it running for operator takeover" >&2
+  elif [ "$EFFECT_STOPPED" = "yes" ]; then
+    kill_current_host || true
+    if [ "$EFFECT_SWITCHED" = "yes" ] && [ -n "$EFFECT_RESTORE_TARGET" ]; then
+      if ! set_pointer "$EFFECT_RESTORE_TARGET"; then
+        echo "FATAL: could not restore pointer to ${EFFECT_RESTORE_TARGET}" >&2
+      fi
+    elif [ "$EFFECT_SWITCHED" = "yes" ]; then
+      echo "FATAL: no validated previous release/snapshot to restore the pointer to" >&2
+    fi
+    if start_instance; then
+      EFFECT_RECOVER_HEALTH="all-required-ready"
+      p=$(paused_now 2>/dev/null || true)
+      if [ "$p" != "true" ]; then echo "warning: restored host did not report paused=true (paused=$p)" >&2; fi
+    else
+      EFFECT_RECOVER_HEALTH="not-restarted"
+      echo "FATAL: original version restart failed after effects-drain abort" >&2
+    fi
+  elif state_now=$(read_state 2>/dev/null) && health_ok "$state_now" 2>/dev/null; then
+    EFFECT_RECOVER_HEALTH="all-required-ready"
+  else
+    EFFECT_RECOVER_HEALTH="not-verified"
+  fi
+  flag=$(paused_flag)
+  record deploy deploy "$result" drainMode effects target "$target" previous "${previous:-$current}" \
+    pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready \
+    precheckJson "${EFFECT_PRECHECK_JSON:-}" finalCheckJson "${EFFECT_FINAL_JSON:-}" \
+    processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
+    managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
+    stopCommand "${stop_command:-none}" residualProcesses "${residual_lines:-none}" \
+    autoRestartedPid "${AUTO_RESTART_PID:-none}" autoRestartAction "$EFFECT_AUTO_RESTART_ACTION" recoverHealth "$EFFECT_RECOVER_HEALTH" \
+    migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" \
+    keptPaused "$flag" error "$errors"
+  fail_after_switch "$errors"
+}
+
+# §4.5 主流程；所有出口都 exit。
+deploy_effects() {
+  echo "deploy mode: stop-based drain (--drain effects); effects db: $effects_db" >&2
+
+  # 1) 记录受管进程（含 host.pid 与 lstart；无子进程时 managed=1 也是合法结果）。
+  #    先记录，保证任何中止路径（包括 effect 预检查失败）的记录都带进程清单。
+  if ! effects_process_table; then
+    effects_abort failed-drain-processes "could not record the managed process table"
+  fi
+
+  # 2) 运行中 effect 预检查（只作预检查；最终证据在停机后用 copy 模式取）。
+  effects_query ro
+  EFFECT_PRECHECK_JSON="$EFFECT_JSON"
+  if [ "$EFFECT_CODE" != "0" ] || ! effects_ok_with_zero "precheck"; then
+    effects_abort failed-drain-precheck "effect precheck before stop failed: ok=${EFFECT_OK:-unknown} journal=${EFFECT_JOURNAL:-unknown} total=${EFFECT_TOTAL:-unknown}"
+  fi
+
+  # 3) dry-run：只做 pause 前置 + effect 预检查 + 进程清单，不停机不切换不构建。
+  if [ "$dry_run" = "yes" ]; then
+    echo "dry-run: drain=effects precheck passed (total=0, journal=wal); managed processes recorded at $managed_file; no stop, no switch, no release build"
+    exit 0
+  fi
+
+  # 4) 构建/校验目标 release（停机前完成，缩短停机窗口）。
+  if [ -d "$releases/$target/lib" ]; then
+    release_validate "$releases/$target" || effects_abort failed-drain-release "target release is invalid: $target"
+  else
+    build_release "$target"
+    release_validate "$releases/$target" || effects_abort failed-drain-release "new release failed validation: $target"
+  fi
+
+  # 5) previous 校验与回滚点（供中止/启动失败时恢复原版本）。
+  [ -n "$previous" ] || previous="$current"
+  if [ -n "$previous" ]; then
+    release_validate "$releases/$previous" || effects_abort failed-drain-previous "previous release is invalid: $previous"
+  fi
+  previous_valid="no"; [ -n "$previous" ] && previous_valid="yes"
+  snapshot_existing_lib
+  if [ "$previous_valid" = "yes" ]; then
+    EFFECT_RESTORE_TARGET="$releases/$previous/lib"
+  elif [ -n "$SNAP_ROOT" ] && [ -d "$SNAP_ROOT/lib" ]; then
+    EFFECT_RESTORE_TARGET="$SNAP_ROOT/lib"
+  fi
+
+  # 6) 停机前重新记录受管进程（构建可能耗时；记录时间点必须紧邻停机）。
+  if ! effects_process_table; then
+    effects_abort failed-drain-processes "could not refresh the managed process table before stop"
+  fi
+
+  # 7) 停机。
+  if ! effects_stop; then
+    effects_abort failed-drain-stop "host stop failed; stopExit=${EFFECT_STOP_EXIT:-none}"
+  fi
+
+  # 8) 停机后最终查询：copy 模式（replay WAL、不动原库）；ok/journalMode/total 全部满足才继续。
+  effects_query copy
+  EFFECT_FINAL_JSON="$EFFECT_JSON"
+  if [ "$EFFECT_CODE" != "0" ] || ! effects_ok_with_zero "final"; then
+    effects_abort failed-drain-final "post-stop effect final check failed: ok=${EFFECT_OK:-unknown} journal=${EFFECT_JOURNAL:-unknown} total=${EFFECT_TOTAL:-unknown} exit=$EFFECT_CODE"
+  fi
+
+  # 9) 残留进程核对 + 无自动重启确认。
+  residual_lines=$(effects_residuals)
+  if [ -n "$residual_lines" ]; then
+    effects_abort failed-drain-residual "managed processes still alive after stop; no switch performed"
+  fi
+  if ! effects_no_auto_restart; then
+    EFFECT_LEAVE_RUNNING="yes"
+    effects_abort failed-drain-auto-restart "host came back after stop (auto-restarted pid=${AUTO_RESTART_PID:-unknown}); no switch performed; left running and requires operator takeover"
+  fi
+
+  # 10) 原子切换 + 启动 + 全量健康 + paused 回读。
+  if ! set_pointer "$releases/$target/lib"; then
+    effects_abort failed-drain-pointer "pointer switch failed during stop-based deploy"
+  fi
+  EFFECT_SWITCHED="yes"
+  if ! start_instance; then
+    effects_abort failed-drain-start "target failed to reach full health after stop-based switch"
+  fi
+  p=$(paused_now) || p=""
+  if [ "$p" != "true" ]; then
+    flag=$(paused_flag)
+    record deploy deploy failed-not-paused drainMode effects target "$target" previous "$previous" \
+      pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready \
+      precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
+      processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
+      managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
+      migration "${MIGRATION_BACKUP:-none}" keptPaused "$flag" error "host did not report paused=true after stop-based deploy; manual takeover required"
+    fail_keep_paused "host is not paused after stop-based deploy; manual takeover required"
+  fi
+  record deploy deploy ok drainMode effects target "$target" previous "$previous" \
+    pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready \
+    precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
+    processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
+    managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
+    stopCommand "${stop_command:-none}" recoverHealth all-required-ready \
+    migration "${MIGRATION_BACKUP:-none}" keptPaused yes
+  echo "deploy complete (stop-based drain); host remains paused; effect final check total=0 journal=wal"
+  exit 0
+}
+
 # ---- main ----
 mkdir -p "$releases" "$instance/logs"
 
@@ -304,7 +695,12 @@ fi
 state=$(read_state) || fail_keep_paused "host state is unreadable: $host"
 paused=$(printf '%s' "$state" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);process.stdout.write(String(j.paused))})')
 [ "$paused" = "true" ] || fail_keep_paused "host is not paused; pause and drain before deploying (P8)"
-drain_ok "$state" || fail_keep_paused "drain check failed; refusing to upgrade"
+if [ "$drain_mode" = "effects" ]; then
+  # §4.5：排空证据来自 effect 表（停机后最终 copy 查询才是权威证据），不再要求 API load 的 5 个未核字段。
+  :
+else
+  drain_ok "$state" || fail_keep_paused "drain check failed; refusing to upgrade"
+fi
 count=$(open_tickets) || fail_keep_paused "cannot read open tickets; refusing to upgrade"
 [ "$count" = "0" ] || fail_keep_paused "there are $count open Tickets; finish them before upgrading (no bypass)"
 
@@ -377,6 +773,10 @@ if [ "$rollback" = "yes" ]; then
   flag=$(paused_flag)
   record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "${FAIL_STATE:-unverified}" restoreFailureKind "${FAIL_KIND:-unknown}" keptPaused "$flag" error "rollback target and automatic recovery both failed"
   fail_after_switch "rollback failed twice"
+fi
+
+if [ "$drain_mode" = "effects" ]; then
+  deploy_effects
 fi
 
 # 构建或复用不可变 release。

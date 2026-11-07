@@ -7,6 +7,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 
 const repoRoot = resolve(new URL('../..', import.meta.url).pathname)
 const script = join(repoRoot, 'scripts/host/deploy-hephi.sh')
@@ -186,10 +187,47 @@ async function initWorld(options = {}) {
   base = `http://127.0.0.1:${server.address().port}`
 }
 
+function killPid(pid) {
+  try { if (Number.isInteger(pid) && pid > 0) process.kill(pid, 'SIGKILL') } catch { /* already gone */ }
+}
+function readPid(file) {
+  try { return Number(readFileSync(file, 'utf8').trim()) } catch { return 0 }
+}
 async function closeWorld() {
+  // 清理本世界启动的真实假宿主/子进程/effect writer，避免 sleep 进程泄漏。
+  for (const file of [join(instance ?? '', 'host.pid'), join(instance ?? '', 'child.pid'), join(root ?? '', 'late-writer.pid'), join(root ?? '', 'auto-restart.pid')]) killPid(readPid(file))
   if (server) { await new Promise((resolveClose) => server.close(resolveClose)); server = null }
   if (root) { rmSync(root, { recursive: true, force: true }) }
   deployEnv = {}
+}
+
+// ---- F-02：§4.5 停机式排空夹具（真实 WAL effects 库 + 真实进程模拟停机）----
+function effectsDbPath() { return join(instance, 'state', 'orchestrator.sqlite') }
+function createEffectsDatabase(rows = 0) {
+  mkdirSync(join(instance, 'state'), { recursive: true })
+  const db = new DatabaseSync(effectsDbPath())
+  db.exec('PRAGMA journal_mode=WAL')
+  db.exec('PRAGMA wal_autocheckpoint=0')
+  db.exec('CREATE TABLE IF NOT EXISTS effect(kind TEXT)')
+  for (let index = 0; index < rows; index += 1) db.exec("INSERT INTO effect VALUES ('started')")
+  return db
+}
+function hostPidValue() { return readPid(join(instance, 'host.pid')) }
+function pidAlive(pid) { if (!Number.isInteger(pid) || pid <= 0) return false; try { process.kill(pid, 0); return true } catch { return false } }
+function writeHook(name, body) {
+  const file = join(root, name)
+  writeFileSync(file, `#!/bin/sh\n${body}\n`)
+  run('chmod', ['+x', file])
+  return file
+}
+// 假宿主由测试用 `nohup ... &` 异步拉起，按 POSIX 约定后台命令继承 SIGINT=ignore，
+// 因此测试通过 --stop-command 发送 SIGTERM 来模拟宿主的 stop 脚本（真实 SIGINT 由 H0 在真宿主验证）。
+function defaultStopHook() {
+  return writeHook('stop-term.sh', [`pid=$(cat "${join(instance, 'host.pid')}")`, 'kill -TERM "$pid" 2>/dev/null || true', 'exit 0'].join('\n'))
+}
+function effectsDeployArgs(extra = []) {
+  const stop = extra.includes('--stop-command') ? [] : ['--stop-command', defaultStopHook()]
+  return ['--drain', 'effects', '--target', B, '--previous', A, '--effects-db', effectsDbPath(), '--stop-timeout', '2', ...stop, ...extra]
 }
 
 async function deploy(extra, timeout = 120_000) {
@@ -635,9 +673,222 @@ async function runRemediationSuite() {
   }
 }
 
+
+// F-02：§4.5 停机式排空（--drain effects）假宿主回归。
+// 真实进程模拟 host.pid 停机；effects DB 用 node:sqlite 构造真实 WAL 库；
+// check-effects-db.mjs 是真实调用（不是 mock）。真实 SIGINT/drain 行为属宿主验证范围（见报告）。
+async function runF02Suite() {
+  // F-02-A：全部通过 → 停机式排空成功切换。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 A setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const oldPid = hostPidValue()
+    const startsBefore = starts()
+    const r = await deploy(effectsDeployArgs())
+    const rec = readRecords('deploy').find((x) => x.result === 'ok' && x.drainMode === 'effects')
+    check('F-02 A stop-based deploy exits 0', r.code === 0, `code=${r.code} ${r.out}`)
+    check('F-02 A pointer switched to target B', pointer() === join(releaseDir(B), 'lib'), pointer())
+    check('F-02 A target release B was built before stop', existsSync(join(releaseDir(B), 'lib', 'index.mjs')))
+    const newPid = hostPidValue()
+    check('F-02 A host restarted with a new live pid', newPid !== oldPid && pidAlive(newPid), `old=${oldPid} new=${newPid}`)
+    check('F-02 A host was started again after stop', starts() > startsBefore, `starts ${startsBefore} -> ${starts()}`)
+    check('F-02 A record keeps running precheck evidence', Boolean(rec) && /"ok":true/.test(rec.precheckJson) && /"total":0/.test(rec.precheckJson), rec && rec.precheckJson)
+    check('F-02 A record keeps post-stop copy evidence', Boolean(rec) && /"ok":true/.test(rec.finalCheckJson) && /"journalMode":"wal"/.test(rec.finalCheckJson) && /"total":0/.test(rec.finalCheckJson), rec && rec.finalCheckJson)
+    check('F-02 A record keeps managed process table', Boolean(rec) && rec.hostPid === String(oldPid) && rec.processFile !== 'none' && existsSync(rec.processFile) && readFileSync(rec.processFile, 'utf8').includes(String(oldPid)), JSON.stringify(rec))
+    check('F-02 A record marks drain mode, health and paused readback', Boolean(rec) && rec.drainMode === 'effects' && rec.health === 'all-required-ready' && rec.paused === true && rec.keptPaused === 'yes', JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-B：worker 数 0 但 effect 表有待执行行 → 停机前预检查拒绝，宿主不动。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 B setup deploys A', false, setup.out); return }
+    createEffectsDatabase(2).close()
+    const oldPid = hostPidValue()
+    const before = pointer()
+    const r = await deploy(effectsDeployArgs())
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-precheck')
+    check('F-02 B pending effects reject before stop', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 B pointer unchanged and host not stopped', pointer() === before && pidAlive(oldPid), `pointer=${pointer()} oldPidAlive=${pidAlive(oldPid)}`)
+    check('F-02 B record keeps precheck evidence with total=2', Boolean(rec) && /"total":2/.test(rec.precheckJson), JSON.stringify(rec))
+    check('F-02 B record keeps the process table on a precheck abort', Boolean(rec) && rec.processFile !== 'none' && existsSync(rec.processFile), JSON.stringify(rec))
+    check('F-02 B no target release was built', !existsSync(releaseDir(B)))
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-C：预检查为 0，但停机前（stop hook）新增 effect 且停在未 checkpoint 的 WAL 中
+  // → 停机后 copy 模式最终查询必须读到该行并拒绝切换。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 C setup deploys A', false, setup.out); return }
+    // keeper 连接让已提交的 WAL 不被 checkpoint 掉；插入用同步子进程，避免后台进程继承 deploy 管道导致 harness 等待。
+    const keeper = createEffectsDatabase(0)
+    const insertScript = join(root, 'late-insert.cjs')
+    writeFileSync(insertScript, [
+      "const { DatabaseSync } = require('node:sqlite')",
+      'const db = new DatabaseSync(process.argv[2])',
+      "db.exec('PRAGMA wal_autocheckpoint=0')",
+      'db.exec("INSERT INTO effect VALUES (\'late-effect\')")',
+      'db.close()',
+    ].join('\n'))
+    const hook = writeHook('late-writer.sh', [
+      `node "${insertScript}" "${effectsDbPath()}"`,
+      `kill -TERM "$(cat "${join(instance, 'host.pid')}")"`,
+      'exit 0',
+    ].join('\n'))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-final')
+    const walPath = `${effectsDbPath()}-wal`
+    check('F-02 C late effects stayed in the uncheckpointed WAL', existsSync(walPath) && statSync(walPath).size > 0, `walExists=${existsSync(walPath)} size=${existsSync(walPath) ? statSync(walPath).size : 0}`)
+    check('F-02 C late effect in WAL rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 C pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+    check('F-02 C record keeps final copy evidence with total=1', Boolean(rec) && /"ok":true/.test(rec.finalCheckJson) && /"total":1/.test(rec.finalCheckJson), rec && rec.finalCheckJson)
+    check('F-02 C record keeps zero precheck evidence', Boolean(rec) && /"total":0/.test(rec.precheckJson), rec && rec.precheckJson)
+    check('F-02 C original release was restarted to full health', Boolean(rec) && rec.recoverHealth === 'all-required-ready' && pidAlive(hostPidValue()), JSON.stringify(rec))
+    keeper.close()
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-D：停机后最终查询失败/无一致快照（db 损坏）→ 拒绝切换并重启原版本。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 D setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const hook = writeHook('corrupt-db.sh', [
+      `printf 'this is not a sqlite database\\n' > "${effectsDbPath()}"`,
+      `rm -f "${effectsDbPath()}-wal" "${effectsDbPath()}-shm"`,
+      `kill -TERM "$(cat "${join(instance, 'host.pid')}")"`,
+      'exit 0',
+    ].join('\n'))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-final')
+    check('F-02 D corrupt final snapshot rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 D pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+    check('F-02 D record keeps failed final JSON', Boolean(rec) && /"ok":false/.test(rec.finalCheckJson) && /"error"/.test(rec.finalCheckJson), rec && rec.finalCheckJson)
+    check('F-02 D original release was restarted to full health', Boolean(rec) && rec.recoverHealth === 'all-required-ready' && pidAlive(hostPidValue()), JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-E：停机后仍有受管进程残留（宿主启动的子进程）→ 拒绝切换并重启原版本。
+  await initWorld()
+  try {
+    writeStart([
+      `echo started >> "${instance}/start.log"`,
+      `if [ ! -f "${instance}/child-spawned" ]; then`,
+      `  : > "${instance}/child-spawned"`,
+      '  sleep 300 &',
+      `  echo $! > "${instance}/child.pid"`,
+      'fi',
+      `: > "${instance}/started.marker"`,
+      'exec sleep 3600',
+    ].join('\n'))
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 E setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const childPid = readPid(join(instance, 'child.pid'))
+    const r = await deploy(effectsDeployArgs())
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-residual')
+    check('F-02 E leftover managed process rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 E pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+    check('F-02 E record names the residual pid with its lstart', Boolean(rec) && rec.residualProcesses.includes(String(childPid)) && rec.residualProcesses.includes('|'), JSON.stringify(rec.residualProcesses))
+    check('F-02 E residual process is still alive and was recorded', pidAlive(childPid), `childPid=${childPid}`)
+    check('F-02 E original release was restarted to full health', Boolean(rec) && rec.recoverHealth === 'all-required-ready' && pidAlive(hostPidValue()), JSON.stringify(rec))
+  } finally {
+    killPid(readPid(join(instance, 'child.pid')))
+    await closeWorld()
+  }
+
+  // F-02-F：停机后宿主自动回来（host.pid 出现新存活 pid）→ 只记录并中止，不杀新进程、不再启动第二份实例。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 F setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const hook = writeHook('auto-restart.sh', [
+      `kill -TERM "$(cat "${join(instance, 'host.pid')}")" 2>/dev/null || true`,
+      'sleep 0.5',
+      'sleep 3600 >/dev/null 2>&1 &',
+      `echo $! > "${join(instance, 'host.pid')}"`,
+      `echo $! > "${join(root, 'auto-restart.pid')}"`,
+      'exit 0',
+    ].join('\n'))
+    const startsBefore = starts()
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-auto-restart')
+    const autoPid = readPid(join(root, 'auto-restart.pid'))
+    check('F-02 F auto restart rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 F pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+    check('F-02 F record keeps autoRestartedPid and the left-running action', Boolean(rec) && Number(rec.autoRestartedPid) === autoPid && rec.autoRestartAction === 'left-running', JSON.stringify(rec))
+    check('F-02 F auto-restarted host is left running without a second start', pidAlive(autoPid) && hostPidValue() === autoPid && starts() === startsBefore, `autoPid=${autoPid} alive=${pidAlive(autoPid)} hostPid=${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
+  } finally {
+    killPid(readPid(join(root, 'auto-restart.pid')))
+    await closeWorld()
+  }
+
+  // F-02-G：stop 命令失败/宿主未停 → 拒绝切换，宿主保持原状。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 G setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const oldPid = hostPidValue()
+    const hook = writeHook('stop-fail.sh', ['echo "injected stop failure" >&2', 'exit 7'].join('\n'))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-stop')
+    check('F-02 G stop failure rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('F-02 G pointer unchanged and original host still running', pointer() === join(releaseDir(A), 'lib') && pidAlive(oldPid), `pointer=${pointer()} alive=${pidAlive(oldPid)}`)
+    check('F-02 G record keeps the stop command exit code', Boolean(rec) && rec.stopExit === '7', JSON.stringify(rec))
+    check('F-02 G record keeps no final evidence (aborted before final query)', Boolean(rec) && rec.finalCheckJson === '', JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-H：新模式下 dry-run 只做 pause 前置 + effect 预检查 + 进程清单，不停机不切换不构建。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('F-02 H setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const oldPid = hostPidValue()
+    const startsBefore = starts()
+    const r = await deploy(effectsDeployArgs(['--dry-run']))
+    check('F-02 H dry-run exits 0', r.code === 0 && /dry-run/.test(r.out), `code=${r.code} ${r.out}`)
+    check('F-02 H dry-run does not stop or restart the host', hostPidValue() === oldPid && pidAlive(oldPid) && starts() === startsBefore, `pid ${oldPid} -> ${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
+    check('F-02 H dry-run does not build or switch', !existsSync(releaseDir(B)) && pointer() === join(releaseDir(A), 'lib'), `pointer=${pointer()}`)
+    const managedFiles = readdirSync(join(instance, 'logs')).filter((name) => name.startsWith('managed-') && name.endsWith('.txt'))
+    check('F-02 H dry-run records the managed process table', managedFiles.length > 0, JSON.stringify(managedFiles))
+    const customProcessFile = join(root, 'custom-managed.txt')
+    const custom = await deploy(effectsDeployArgs(['--dry-run', '--process-file', customProcessFile]))
+    check('F-02 H --process-file writes the managed table to the requested path', custom.code === 0 && existsSync(customProcessFile) && readFileSync(customProcessFile, 'utf8').includes(String(oldPid)), `code=${custom.code} ${custom.out}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // F-02-I：参数互斥与未知 mode 仍 exit 2。
+  await initWorld()
+  try {
+    const badMode = await deploy(['--drain', 'nope', '--target', A])
+    check('F-02 I unknown --drain mode exits 2', badMode.code === 2 && /unknown --drain mode/.test(badMode.out), badMode.out)
+    const conflict = await deploy(['--drain', 'effects', '--rollback', '--target', A])
+    check('F-02 I --drain effects with --rollback exits 2', conflict.code === 2 && /cannot be combined/.test(conflict.out), conflict.out)
+  } finally {
+    await closeWorld()
+  }
+}
+
 await runMainSuite()
 await runNegativeSuite()
 await runRemediationSuite()
+await runF02Suite()
 
 for (const line of results) console.log(line)
 if (failures > 0) {

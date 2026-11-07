@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { sessionBindingPolicy, verificationOf, type ActivationContract } from './activation.js'
 import type { ReadyVerifier } from './ready-gate.js'
 import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
-import { clean, defaultPullRequest, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo } from './repository.js'
+import { allowedPath, clean, defaultPullRequest, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo } from './repository.js'
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
 import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, type CheckRunRecord } from './check-store.js'
@@ -11,6 +11,7 @@ import { checkCommand, contained, sameSource, type NativeJobView, type NativeJob
 import { checkDiscipline } from './discipline.js'
 import { pluginCommit } from '../version.js'
 import { logDecision } from './decision-log.js'
+import { readPlan } from './plan-store.js'
 
 /**
  * The host's Session snapshot, in the shape stage recovery already reads
@@ -325,6 +326,8 @@ async function frozenCheckProblem(contract: ActivationContract, record: CheckRun
   return undefined
 }
 
+const samplePlanFiles = (items: string[]) => items.slice(0, 10).join(', ') + (items.length > 10 ? ` (+${items.length - 10} more)` : '')
+
 export function createEvidenceVerifier(options: {
   stateDir: string
   pullRequest?: (repo: string, n: number) => Promise<PullRequestInfo>
@@ -429,6 +432,16 @@ export function createEvidenceVerifier(options: {
         if (pr.state !== 'open' || pr.baseRef !== contract.baseRef || pr.headSha !== before.headCommit) throw new Error('PR/base/HEAD mismatch')
       }
       if (!await clean(workspace) || !sameSource(before, await gitFingerprint(workspace, contract.baseSha))) throw new Error('source changed during ready')
+      // C4.2 (degraded form): only the FINAL diff is compared with the plan declared for
+      // this exact contract hash. No plan (or a plan for another contract) keeps the
+      // legacy behavior. This build does not intercept write/edit calls.
+      const plan = await readPlan(options.stateDir, contract.ticketId, contract.contractHash)
+      if (plan !== undefined) {
+        const outsidePlan = before.changedFiles.filter(file => !allowedPath(file, plan.files))
+        if (outsidePlan.length > 0) {
+          throw new Error(`plan.outside-plan: changed files outside the declared plan: ${samplePlanFiles(outsidePlan)}`)
+        }
+      }
       return { ok: true }
     } catch (e) { return { ok: false, reason: e instanceof Error ? e.message : String(e) } }
   }
@@ -465,5 +478,7 @@ function readyRule(reason: string): string {
   if (reason.includes('PR/base/HEAD mismatch')) return 'ready.pr-mismatch'
   if (reason.includes('missing, failed or stale evidence')) return 'ready.evidence-missing'
   if (reason.includes('contract was prepared by another plugin build')) return 'ready.plugin-build'
+  // C4.2: a change outside the declared plan is its own denial class (owner can see why).
+  if (reason.includes('plan.outside-plan')) return 'plan.outside-plan'
   return 'ready.other'
 }

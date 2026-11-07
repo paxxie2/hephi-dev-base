@@ -7,8 +7,9 @@ import { parseVerificationConfig } from './contracts/checks.js'
 import { taskCardSchema } from './contracts/task.js'
 import { prepareActivation, defaultStateDir } from './control/activation.js'
 import {
-  OPERATOR_RESOLUTIONS_ENV, RESOLUTION_BASES, appendResolution, operatorResolutionsAllowed, readRun,
-  type ResolutionBasis,
+  OPERATOR_RESOLUTIONS_ENV, RESOLUTION_BASES, RESOLUTION_KINDS, appendResolution, operatorResolutionsAllowed,
+  readRun, readRuns,
+  type ResolutionBasis, type ResolutionKind,
 } from './control/check-store.js'
 
 export type CliIo = { out(message: string): void; err(message: string): void }
@@ -19,6 +20,11 @@ type ResolutionStatus = (typeof RESOLUTION_STATUSES)[number]
 
 export const USAGE = `usage: hephi prepare
        hephi resolve --ticket <id> --run <runId>
+                     --basis <host-terminal|operator-risk-accepted>
+                     --status <running|terminated|unavailable>
+                     (--host-query <raw query output> | --host-query-file <path>)
+                     --operator <name> [--accept-risk] [--state-dir <dir>]
+       hephi resolve --kind retry-reset --ticket <id> --check <checkId>
                      --basis <host-terminal|operator-risk-accepted>
                      --status <running|terminated|unavailable>
                      (--host-query <raw query output> | --host-query-file <path>)
@@ -35,9 +41,14 @@ hephi lint-task validates a task bundle offline (no network/git): task card (hep
 ticketId, allowedPaths and the project checks referenced by every acceptance item. It only reads
 the given file; warnings (too many acceptance items, too-wide allowedPaths) do not fail the lint.
 
-hephi resolve records an A3 operator resolution for one unresolved (running/unknown)
-check execution. It only restores the right to run the check again; the resolved
-execution stays non-passing evidence, and its run.json/output.log are never edited.
+hephi resolve records an A3 operator resolution. With the default --kind run-unblock it
+applies to one unresolved (running/unknown) execution; it only restores the right to run
+the check again, the resolved execution stays non-passing evidence, and its
+run.json/output.log are never edited.
+
+--kind retry-reset (C4.5) resets the derived retry counter for exactly one check
+(ticket + contract + check id) after the operator has reviewed the repeated failures.
+Other checks keep their counters; the switch/trust boundary is the same as run-unblock.
 
 The command is disabled by default. The temporary switch is the host/operator
 environment variable ${OPERATOR_RESOLUTIONS_ENV}=1; it must become the host config
@@ -45,6 +56,8 @@ field allowOperatorResolutions (cordis.patch.yml, read in apply(ctx, config)) so
 Worker cannot enable or invoke it from its own environment (A3 trust boundary, G1).
 
 --status running      host still reports the execution: refuse to resolve.
+--kind <kind>         run-unblock (default) or retry-reset (C4.5).
+--check <checkId>     retry-reset only: the single check whose counter is reset.
 --status terminated   host confirmed the execution ended (result lost): basis host-terminal.
 --status unavailable  host query unavailable: requires --accept-risk and
                       --basis operator-risk-accepted.
@@ -58,7 +71,8 @@ function safeId(value: string, what: string): string {
 }
 
 function parseResolveArgs(args: string[]): {
-  ticketId: string; runId: string; basis: ResolutionBasis; status: ResolutionStatus
+  kind: ResolutionKind; ticketId: string; runId?: string; checkId?: string
+  basis: ResolutionBasis; status: ResolutionStatus
   hostQuery?: string; hostQueryFile?: string; operator: string; acceptRisk: boolean; stateDir?: string
 } {
   const values = new Map<string, string>()
@@ -74,12 +88,21 @@ function parseResolveArgs(args: string[]): {
     index += 1
     values.set(arg, value)
   }
-  const allowed = new Set(['--ticket', '--run', '--basis', '--status', '--host-query', '--host-query-file', '--operator', '--state-dir'])
+  const allowed = new Set(['--kind', '--ticket', '--run', '--check', '--basis', '--status', '--host-query', '--host-query-file', '--operator', '--state-dir'])
   for (const key of values.keys()) if (!allowed.has(key)) throw new UsageError(`unknown argument: ${key}`)
-  const ticket = values.get('--ticket'), run = values.get('--run'), basis = values.get('--basis')
+  const ticket = values.get('--ticket'), run = values.get('--run'), checkId = values.get('--check'), basis = values.get('--basis')
   const status = values.get('--status'), operator = values.get('--operator')
+  const rawKind = values.get('--kind') ?? 'run-unblock'
+  if (!(RESOLUTION_KINDS as readonly string[]).includes(rawKind)) throw new UsageError(`--kind must be one of: ${RESOLUTION_KINDS.join(', ')}`)
+  const kind = rawKind as ResolutionKind
   if (ticket === undefined) throw new UsageError('--ticket is required')
-  if (run === undefined) throw new UsageError('--run is required')
+  if (kind === 'run-unblock') {
+    if (run === undefined) throw new UsageError('--run is required')
+    if (checkId !== undefined) throw new UsageError('--check is only accepted with --kind retry-reset')
+  } else {
+    if (checkId === undefined) throw new UsageError('--check is required with --kind retry-reset')
+    if (run !== undefined) throw new UsageError('--run is not accepted with --kind retry-reset')
+  }
   if (basis === undefined) throw new UsageError('--basis is required')
   if (status === undefined) throw new UsageError('--status is required')
   if (operator === undefined) throw new UsageError('--operator is required')
@@ -95,7 +118,10 @@ function parseResolveArgs(args: string[]): {
   const parsedBasis = basis as ResolutionBasis
   if (acceptRisk && parsedBasis !== 'operator-risk-accepted') throw new UsageError('--accept-risk is only accepted with --basis operator-risk-accepted')
   return {
-    ticketId: safeId(ticket, '--ticket'), runId: safeId(run, '--run'), basis: parsedBasis,
+    kind, ticketId: safeId(ticket, '--ticket'),
+    ...(run === undefined ? {} : { runId: safeId(run, '--run') }),
+    ...(checkId === undefined ? {} : { checkId: safeId(checkId, '--check') }),
+    basis: parsedBasis,
     status: status as ResolutionStatus, hostQuery, hostQueryFile, operator: name, acceptRisk,
     stateDir: values.get('--state-dir'),
   }
@@ -135,13 +161,33 @@ async function resolveCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo)
   if (!hostQuery.trim()) { io.err('the host query evidence must not be empty'); return 2 }
   const stateDir = defaultStateDir(options.stateDir)
   try {
-    const record = await readRun(stateDir, options.ticketId, options.runId)
+    if (options.kind === 'retry-reset') {
+      // C4.5: the counter key is ticket + contractHash + checkId. Derive the contract
+      // from the latest record for that check (the reset must target a real counter).
+      const runs = (await readRuns(stateDir, options.ticketId)).filter(record => record.checkId === options.checkId)
+      const latest = runs.at(-1)
+      if (!latest) {
+        io.err(`no check records for ${options.checkId}; nothing to reset`)
+        return 1
+      }
+      const result = await appendResolution(stateDir, {
+        kind: 'retry-reset', ticketId: options.ticketId, contractHash: latest.contractHash,
+        checkId: options.checkId!, basis: options.basis, hostQuery, operator: options.operator,
+      })
+      if (result.appended) {
+        io.out(`HEPHI retry reset recorded: ticket=${options.ticketId} check=${options.checkId} contract=${latest.contractHash} basis=${options.basis} operator=${options.operator}`)
+      } else {
+        io.out(`HEPHI retry reset already recorded: ticket=${options.ticketId} check=${options.checkId} (idempotent, no new record)`)
+      }
+      return 0
+    }
+    const record = await readRun(stateDir, options.ticketId, options.runId!)
     if (record.status !== 'running' && record.status !== 'unknown') {
       io.err(`check run ${options.runId} is already settled (status=${record.status}); operator resolution only applies to running/unknown executions`)
       return 1
     }
     const result = await appendResolution(stateDir, {
-      ticketId: options.ticketId, contractHash: record.contractHash, runId: options.runId,
+      ticketId: options.ticketId, contractHash: record.contractHash, runId: options.runId!,
       basis: options.basis, hostQuery, operator: options.operator,
     })
     if (result.appended) {

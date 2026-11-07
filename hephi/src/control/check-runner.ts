@@ -7,7 +7,8 @@ import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
 import { clean, hasCommit, normalizeRepository, remoteRepository } from './repository.js'
 import { inScope } from './discipline.js'
 import { resolveWorkspace } from './workspace.js'
-import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
+import { checkRunDir, operatorResolutionsAllowed, readRetryResets, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
+import { logDecision } from './decision-log.js'
 import { pluginCommit } from '../version.js'
 
 export type CheckTools = { execute(input: ToolExecutionInput): Promise<ToolExecutionResult> }
@@ -49,6 +50,35 @@ function jobExitCode(detail: string | undefined): number | undefined {
   if (!match) return undefined
   const value = Number(match[1])
   return Number.isSafeInteger(value) ? value : undefined
+}
+
+/** C4.5 default: actual-run failures allowed per check/contract before refusing to start. */
+export const DEFAULT_RETRY_LIMIT = 3
+
+const RETRY_LIMIT_GUIDANCE = 'report blocked in the fixed format: (1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what. An operator retry-reset (A3) is required before this check can run again.'
+
+/** A blocked record that actually ran; start-up refusals (`check not started:`) are not failures. */
+function ranAndFailed(record: CheckRunRecord): boolean {
+  return record.status === 'blocked' && !(record.reason ?? '').startsWith('check not started:')
+}
+
+/**
+ * C4.5: derived retry counter = actual-run failures for one check under one contract
+ * since the last `passed` or the latest operator retry-reset. `blocked` counts when the
+ * check really ran; `running`/`unknown` do not count (they block elsewhere); a pass or a
+ * retry-reset clears the counter; a different contractHash is filtered out (= starts at 0).
+ * Timestamps: records use `startedAt`, retry-resets use `at`; both are ISO UTC strings.
+ */
+export function retryFailureCount(records: CheckRunRecord[], checkId: string, contractHash: string, resetAt: string[] = []): number {
+  const latestReset = resetAt.reduce((latest, at) => (at > latest ? at : latest), '')
+  let failures = 0
+  for (const record of records) {
+    if (record.checkId !== checkId || record.contractHash !== contractHash) continue
+    if (latestReset && record.startedAt <= latestReset) continue
+    if (record.status === 'passed') { failures = 0; continue }
+    if (ranAndFailed(record)) failures += 1
+  }
+  return failures
 }
 
 async function readJobOutput(jobs: NativeJobs, jobId: string, sessionId: string): Promise<string> {
@@ -93,10 +123,14 @@ export async function runCheck(options: {
   tools: CheckTools; jobs?: NativeJobs; sessionCwd?: string; internal?: (id?: string) => void;
   /** A3: read operator resolutions. Defaults to the temporary host env switch; Lead wires the host config field here. */
   allowOperatorResolutions?: boolean;
+  /** C4.5: maximum actual-run failures per check/contract before refusing to start (default 3). */
+  retryLimit?: number;
 }): Promise<CheckRunRecord> {
   const { contract, stateDir, outer } = options
   const check = verificationOf(contract).checks.find(c => c.id === options.checkId)
   if (!check) throw new Error('unknown checkId or missing frozen verification contract')
+  const retryLimit = options.retryLimit ?? DEFAULT_RETRY_LIMIT
+  if (!Number.isInteger(retryLimit) || retryLimit < 1) throw new Error(`retryLimit must be a positive integer, got ${String(options.retryLimit)}`)
   const old = await readRuns(stateDir, contract.ticketId)
   // A3: only an operator resolution for this exact ticket + contract may clear a
   // leftover running/unknown execution; disabled feature ignores the log entirely.
@@ -104,6 +138,30 @@ export async function runCheck(options: {
   const allowResolutions = options.allowOperatorResolutions ?? operatorResolutionsAllowed()
   const resolved = allowResolutions ? await resolvedRunIds(stateDir, contract.ticketId, contract.contractHash) : new Set<string>()
   if (old.some(r => (r.status === 'running' || r.status === 'unknown') && !resolved.has(r.runId))) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
+  // C4.5: refuse to start once the derived failure count reaches the limit. Only the
+  // operator retry-reset channel (same A3 switch/trust boundary) can clear the counter;
+  // the refusal is logged as rule `check.retry-limit` (new rule number; decisions-format.md
+  // registration is pending Lead because that file is outside this change's scope).
+  const retryResets = allowResolutions ? await readRetryResets(stateDir, contract.ticketId, contract.contractHash) : []
+  // A retry-reset only clears the counter of its own check (single check granularity).
+  const retryFailures = retryFailureCount(old, check.id, contract.contractHash,
+    retryResets.filter(record => record.checkId === check.id).map(record => record.at))
+  if (retryFailures >= retryLimit) {
+    const reason = `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract); ${RETRY_LIMIT_GUIDANCE}`
+    await logDecision(stateDir, {
+      ticketId: contract.ticketId,
+      sessionId: String(outer.agent?.id ?? '') || undefined,
+      callId: String(outer.callId),
+      tool: 'hephi_check',
+      mode: 'enforce',
+      effectiveDecision: 'deny',
+      wouldDecision: 'deny',
+      rule: 'check.retry-limit',
+      reason,
+      contractHash: contract.contractHash,
+    })
+    throw new Error(reason)
+  }
   const workspace = await resolveWorkspace(contract.workspace, options.sessionCwd)
   if (normalizeRepository(await remoteRepository(workspace)) !== normalizeRepository(contract.repository)
     || !await hasCommit(workspace, contract.baseSha) || !await clean(workspace)) throw new Error('repository/base/clean check failed')

@@ -9,16 +9,28 @@ import { z } from 'zod'
  * preservation is the project check's responsibility, not inferred here.
  */
 const ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
-const relative = z.string().min(1).refine(v => !v.startsWith('/') && !v.split(/[\\/]+/).includes('..') && !v.includes('\0'), 'must be a relative path inside the repository')
+const relative = z.string().min(1).refine(
+  v => !v.startsWith('/') && !/^[A-Za-z]:[\\/]/.test(v) && !v.split(/[\\/]+/).includes('..') && !v.includes('\0'),
+  'must be a relative path inside the repository',
+)
 
 /** C1 authorization operations. modify does not imply delete/migrate, and vice versa. */
 export const ASSET_OPS = ['modify', 'delete', 'migrate'] as const
 export type AssetOp = (typeof ASSET_OPS)[number]
 
-/** C1: an authorization names one exact workspace-relative file (no globs) and one operation. */
+/** A C1 authorization names exact files only: no globs, no directory paths, no escaping. */
+const exactFile = (name: string) =>
+  relative.refine(v => !/[*?\[\]{}]/.test(v) && !v.endsWith('/'), `${name} must be one exact file, not a glob or directory`)
+
+/**
+ * C1: an authorization names one exact workspace-relative file (no globs) and one operation.
+ * A `migrate` authorization must also name the exact `replacement` file; `modify`/`delete`
+ * must not carry one (a migration is a deletion plus a declared new file, not a relabel).
+ */
 const authorizationSchema = z.object({
-  path: relative.refine(v => !/[*?\[\]{}]/.test(v) && !v.endsWith('/'), 'authorization path must be one exact file, not a glob or directory'),
+  path: exactFile('authorization path'),
   op: z.enum(ASSET_OPS),
+  replacement: exactFile('replacement').optional(),
 }).strict()
 
 const acceptanceSchema = z.object({
@@ -66,6 +78,15 @@ export const taskCardSchema = z.object({
       const key = `${item.id}\0${authorization.path}\0${authorization.op}`
       if (seenAuthorizations.has(key)) ctx.addIssue({ code: 'custom', message: `duplicate authorization in ${item.id}: ${authorization.path} ${authorization.op}` })
       seenAuthorizations.add(key)
+      if (authorization.op === 'migrate') {
+        if (authorization.replacement === undefined) {
+          ctx.addIssue({ code: 'custom', message: `acceptance ${item.id}: migrate authorization for ${authorization.path} requires replacement` })
+        } else if (authorization.replacement === authorization.path) {
+          ctx.addIssue({ code: 'custom', message: `acceptance ${item.id}: replacement must differ from the original path ${authorization.path}` })
+        }
+      } else if (authorization.replacement !== undefined) {
+        ctx.addIssue({ code: 'custom', message: `acceptance ${item.id}: replacement is only valid with a migrate authorization (${authorization.path} ${authorization.op})` })
+      }
     }
   }
 })

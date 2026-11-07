@@ -80,13 +80,51 @@ export function authorizedAcceptance(contract: ActivationContract, file: string,
   return undefined
 }
 
-/** A protected asset deletion is allowed by `delete`, or by `migrate` when a replacement file exists. */
-function deletedAcceptance(contract: ActivationContract, file: string, changes: ChangeSummary): string | undefined {
+type DeletionAuthorization = { acceptance: string; kind: 'delete' } | { acceptance: string; kind: 'migrate'; replacement: string }
+
+/**
+ * A protected asset deletion is allowed by `delete`, or by `migrate` only when the
+ * authorization's declared `replacement` is the exact file added by this change.
+ */
+function migrationAuthorization(contract: ActivationContract, file: string, changes: ChangeSummary): DeletionAuthorization | undefined {
+  if (!allowedPath(file, contract.allowedPaths)) return undefined
+  for (const item of contract.task?.acceptance ?? []) {
+    if (!allowedPath(file, item.paths)) continue
+    for (const authorization of item.authorizes ?? []) {
+      if (authorization.path !== file || authorization.op !== 'migrate') continue
+      const replacement = authorization.replacement
+      if (replacement === undefined || replacement === file) continue
+      if (!allowedPath(replacement, contract.allowedPaths) || !allowedPath(replacement, item.paths)) continue
+      // The replacement must be the exact file this diff adds and must still exist at the end.
+      if (!changes.added.includes(replacement) || changes.deleted.includes(replacement)) continue
+      return { acceptance: item.id, kind: 'migrate', replacement }
+    }
+  }
+  return undefined
+}
+
+function deletionAuthorization(contract: ActivationContract, file: string, changes: ChangeSummary): DeletionAuthorization | undefined {
   const deleted = authorizedAcceptance(contract, file, 'delete')
-  if (deleted) return deleted
-  const migrated = authorizedAcceptance(contract, file, 'migrate')
-  if (!migrated) return undefined
-  return changes.added.length > 0 ? migrated : undefined
+  if (deleted) return { acceptance: deleted, kind: 'delete' }
+  return migrationAuthorization(contract, file, changes)
+}
+
+/** Why a declared migrate authorization is not effective; undefined when none is declared. */
+function migrationProblem(contract: ActivationContract, file: string, changes: ChangeSummary): string | undefined {
+  for (const item of contract.task?.acceptance ?? []) {
+    for (const authorization of item.authorizes ?? []) {
+      if (authorization.path !== file || authorization.op !== 'migrate') continue
+      const replacement = authorization.replacement
+      if (replacement === undefined) return 'no replacement is declared'
+      if (replacement === file) return 'replacement equals the original path'
+      if (!allowedPath(replacement, contract.allowedPaths)) return `replacement ${replacement} is outside contract allowedPaths`
+      if (!allowedPath(replacement, item.paths)) return `replacement ${replacement} is outside the acceptance item paths`
+      if (!changes.added.includes(replacement)) return `replacement ${replacement} was not added in this change`
+      if (changes.deleted.includes(replacement)) return `replacement ${replacement} was added and then deleted in this change`
+      return undefined
+    }
+  }
+  return undefined
 }
 
 /** C1 protected-asset problems only (used by the ready-time shell-bypass recheck). */
@@ -104,8 +142,9 @@ export function assetProblems(contract: ActivationContract, changes: ChangeSumma
   }
   for (const file of changes.deleted) {
     if (!allowedPath(file, protectedFiles)) continue
-    if (!deletedAcceptance(contract, file, changes)) {
-      problems.push(`protected acceptance asset deleted without authorization from its acceptance item: ${file}`)
+    if (!deletionAuthorization(contract, file, changes)) {
+      const migrate = migrationProblem(contract, file, changes)
+      problems.push(`protected acceptance asset deleted without authorization from its acceptance item: ${file}${migrate === undefined ? '' : ` (migrate not established: ${migrate})`}`)
     }
   }
   return problems
@@ -131,8 +170,14 @@ export function assetRecords(contract: ActivationContract, changes: ChangeSummar
   }
   for (const file of changes.deleted) {
     if (!allowedPath(file, protectedFiles)) continue
-    const acceptance = deletedAcceptance(contract, file, changes)
-    if (acceptance) records.push({ rule: 'asset.authorized', path: file, op: 'delete', acceptance, detail: `${file} deleted under authorization ${acceptance}` })
+    const authorization = deletionAuthorization(contract, file, changes)
+    if (!authorization) continue
+    records.push({
+      rule: 'asset.authorized', path: file, op: 'delete', acceptance: authorization.acceptance,
+      detail: authorization.kind === 'migrate'
+        ? `${file} deleted under migrate authorization ${authorization.acceptance} with replacement ${authorization.replacement}`
+        : `${file} deleted under authorization ${authorization.acceptance}`,
+    })
   }
   return records
 }
@@ -150,6 +195,14 @@ export function authorizationProblem(contract: { allowedPaths: string[]; task?: 
       }
       if (!allowedPath(authorization.path, item.paths)) {
         return `acceptance ${item.id} authorizes ${authorization.path}, which is outside its own paths`
+      }
+      const replacement = authorization.replacement
+      if (replacement === undefined) continue
+      if (!allowedPath(replacement, contract.allowedPaths)) {
+        return `acceptance ${item.id} replacement ${replacement}, which is outside contract allowedPaths`
+      }
+      if (!allowedPath(replacement, item.paths)) {
+        return `acceptance ${item.id} replacement ${replacement}, which is outside its own paths`
       }
     }
   }

@@ -60,7 +60,12 @@ async function repo(): Promise<{ dir: string; baseSha: string }> {
 
 const fence = (value: unknown) => ['```hephi-task', JSON.stringify(value, null, 2), '```'].join('\n')
 
-function card(over: { version?: 1 | 2; protectedAssets?: string[]; authorizes?: Array<{ path: string; op: 'modify' | 'delete' | 'migrate' }>; paths?: string[] } = {}) {
+function card(over: {
+  version?: 1 | 2
+  protectedAssets?: string[]
+  authorizes?: Array<{ path: string; op: 'modify' | 'delete' | 'migrate'; replacement?: string }>
+  paths?: string[]
+} = {}) {
   const version = over.version ?? 2
   return {
     version,
@@ -359,15 +364,20 @@ describe('C1 authorization matching (unit level)', () => {
     expect(authorizedAcceptance(moved, KEY, 'modify')).toBeUndefined()
   })
 
-  it('C1-15: a migrate authorization covers deletion only when a replacement file is added', async () => {
+  it('C1-15: a migrate authorization covers deletion only when its replacement file is added', async () => {
     const r = await repo()
     const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
     cleanup.push(stateDir)
-    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({ protectedAssets: ['tests/acceptance/**'], authorizes: [{ path: KEY, op: 'migrate' }] }))))
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: 'tests/acceptance/new.test.js' }],
+    }))))
     const contract = await loadActivation(activationPath(stateDir, TICKET))
     const deletedOnly = { files: [KEY], added: [] as string[], deleted: [KEY], changedLines: 0 }
-    // migrate 授权不能当成普通 delete：没有替代文件时仍拒绝。
+    // migrate 授权不能当成普通 delete：没有新增替代文件时仍拒绝。
     expect(assetProblems(contract, deletedOnly).join('; ')).toContain('deleted without authorization')
+    const unrelated = { files: [KEY, 'tests/acceptance/other.test.js'], added: ['tests/acceptance/other.test.js'], deleted: [KEY], changedLines: 0 }
+    expect(assetProblems(contract, unrelated).join('; ')).toContain('deleted without authorization')
     const withReplacement = { files: [KEY, 'tests/acceptance/new.test.js'], added: ['tests/acceptance/new.test.js'], deleted: [KEY], changedLines: 0 }
     expect(assetProblems(contract, withReplacement)).toEqual([])
   })
@@ -388,5 +398,132 @@ describe('C1 authorization matching (unit level)', () => {
     await writeFile(join(r.dir, KEY), 'assert.equal(1, 1) // project protected\n')
     await commit(r.dir, 'edit project-protected asset')
     expect(disciplineProblems(contract, await summarizeChanges(r.dir, r.baseSha)).join('; ')).toContain('protected acceptance asset')
+  })
+})
+
+describe('C1 migrate tightening (m3)', () => {
+  const REPLACEMENT = 'tests/acceptance/migrated.test.js'
+
+  it('C1-MIG-01: a migrate authorization with the exact added replacement is allowed and audited', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: REPLACEMENT }],
+    }))))
+    await rm(join(r.dir, KEY))
+    await writeFile(join(r.dir, REPLACEMENT), 'assert.equal(1, 1)\n')
+    await commit(r.dir, 'migrate acceptance key')
+    const contract = await loadActivation(activationPath(stateDir, TICKET))
+    expect(disciplineProblems(contract, await summarizeChanges(r.dir, r.baseSha))).toEqual([])
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      expect(await fake.callbacks().preExecute!(readyCall(fake.agent), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
+      const authorized = (await decisions(stateDir)).filter(entry => entry.rule === 'asset.authorized')
+      expect(authorized).toHaveLength(1)
+      expect(String(authorized[0].reason)).toContain(REPLACEMENT)
+      // 可声称：migrate 只在原文件删除、声明 replacement 为本次新增且仍在时放行并审计。
+    } finally { mounted.dispose() }
+  })
+
+  it('C1-MIG-02: prepare rejects a migrate authorization without replacement, or whose replacement is the original path', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(stateDir)
+    await expect(prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate' }],
+    }))))).rejects.toThrow(/migrate authorization for .* requires replacement/)
+    expect(() => parseIssueTask(fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: KEY }],
+    })))).toThrow(/replacement must differ from the original path/)
+  })
+
+  it('C1-MIG-03: a declared replacement that was not added denies the delete and records asset.unauthorized-delete', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: REPLACEMENT }],
+    }))))
+    await rm(join(r.dir, KEY))
+    await commit(r.dir, 'delete without the declared replacement')
+    const contract = await loadActivation(activationPath(stateDir, TICKET))
+    const problems = disciplineProblems(contract, await summarizeChanges(r.dir, r.baseSha)).join('; ')
+    expect(problems).toContain('deleted without authorization')
+    expect(problems).toContain('migrate not established')
+    expect(problems).toContain(`replacement ${REPLACEMENT} was not added in this change`)
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      const result = await fake.callbacks().preExecute!(readyCall(fake.agent), async () => ({ kind: 'allow' as const }))
+      expect(result).toMatchObject({ kind: 'deny', reason: expect.stringContaining('migrate not established') })
+      expect(await rules(stateDir)).toContain('asset.unauthorized-delete')
+    } finally { mounted.dispose() }
+  })
+
+  it('C1-MIG-04: an unrelated new file does not satisfy the migrate replacement', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: REPLACEMENT }],
+    }))))
+    await rm(join(r.dir, KEY))
+    await writeFile(join(r.dir, 'tests/acceptance/unrelated.test.js'), 'assert.equal(9, 9)\n')
+    await commit(r.dir, 'unrelated new test is not a migration')
+    const contract = await loadActivation(activationPath(stateDir, TICKET))
+    const problems = assetProblems(contract, await summarizeChanges(r.dir, r.baseSha)).join('; ')
+    expect(problems).toContain('deleted without authorization')
+    expect(problems).toContain(`replacement ${REPLACEMENT} was not added in this change`)
+  })
+
+  it('C1-MIG-05: a migrate authorization does not cover a modification of the original file', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: REPLACEMENT }],
+    }))))
+    await writeFile(join(r.dir, KEY), 'assert.equal(1, 1) // kept and edited\n')
+    await writeFile(join(r.dir, REPLACEMENT), 'assert.equal(1, 1)\n')
+    await commit(r.dir, 'original kept, replacement added')
+    const contract = await loadActivation(activationPath(stateDir, TICKET))
+    const problems = assetProblems(contract, await summarizeChanges(r.dir, r.baseSha)).join('; ')
+    expect(problems).toContain('modified without authorization')
+    expect(problems).not.toContain('deleted without authorization')
+  })
+
+  it('C1-MIG-06: a replacement outside allowedPaths or outside the acceptance item paths is rejected at prepare', async () => {
+    const r = await repo()
+    const outsideContract = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(outsideContract)
+    await expect(prepareActivation(env(outsideContract, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: 'docs/notes.md' }],
+    }))))).rejects.toThrow(/replacement docs\/notes.md, which is outside contract allowedPaths/)
+    const outsideItem = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+    cleanup.push(outsideItem)
+    await expect(prepareActivation(env(outsideItem, r.dir, r.baseSha, fence(card({
+      protectedAssets: ['tests/acceptance/**'],
+      paths: ['tests/**'],
+      authorizes: [{ path: KEY, op: 'migrate', replacement: 'src/notes.js' }],
+    }))))).rejects.toThrow(/replacement src\/notes.js, which is outside its own paths/)
+  })
+
+  it('C1-MIG-07: modify/delete authorizations must not carry a replacement', async () => {
+    const r = await repo()
+    for (const op of ['modify', 'delete'] as const) {
+      const stateDir = await mkdtemp(join(tmpdir(), 'hephi-c1-state-'))
+      cleanup.push(stateDir)
+      await expect(prepareActivation(env(stateDir, r.dir, r.baseSha, fence(card({
+        protectedAssets: ['tests/acceptance/**'],
+        authorizes: [{ path: KEY, op, replacement: REPLACEMENT }],
+      }))))).rejects.toThrow(/replacement is only valid with a migrate authorization/)
+    }
   })
 })

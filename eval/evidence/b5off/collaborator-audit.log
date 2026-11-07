@@ -1,0 +1,14 @@
+=== invite collaborator (read/pull)
+HTTP/2.0 422 Unprocessable Entity
+{"message":"Validation Failed","errors":"Cannot assign monsterhunterw2 permission of read","documentation_url":"https://docs.github.com/rest/reference/repos#add-a-repository-collaborator","status":"422"}gh: Cannot assign monsterhunterw2 permission of read (Validation Failed)
+--- exit codes / time
+invite_exit=0 at 2026-11-07T23:15:11Z
+=== reviewer invitations list
+list_exit=0 at 2026-11-07T23:15:13Z
+[]
+HTTP/2.0 422 Unprocessable Entity
+{"message":"Validation Failed","errors":"Cannot assign monsterhunterw2 permission of read","documentation_url":"https://docs.github.com/rest/reference/repos#add-a-repository-collaborator","status":"422"}gh: Cannot assign monsterhunterw2 permission of read (Validation Failed)
+invite_json_exit=1 at 2026-11-07T23:15:18Z
+HTTP/2.0 404 Not Found
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest/collaborators/collaborators#check-if-a-user-is-a-repository-collaborator","status":"404"}gh: Not Found (HTTP 404)
+[][{"login":"paxxie2","id":20533911,"node_id":"MDQ6VXNlcjIwNTMzOTEx","avatar_url":"https://avatars.githubusercontent.com/u/20533911?v=4","gravatar_id":"","url":"https://api.github.com/users/paxxie2","html_url":"https://github.com/paxxie2","followers_url":"https://api.github.com/users/paxxie2/followers","following_url":"https://api.github.com/users/paxxie2/following{/other_user}","gists_url":"https://api.github.com/users/paxxie2/gists{/gist_id}","starred_url":"https://api.github.com/users/paxxie2/starred{/owner}{/repo}","subscriptions_url":"https://api.github.com/users/paxxie2/subscriptions","organizations_url":"https://api.github.com/users/paxxie2/orgs","repos_url":"https://api.github.com/users/paxxie2/repos","events_url":"https://api.github.com/users/paxxie2/events{/privacy}","received_even

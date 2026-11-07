@@ -1,0 +1,11 @@
+{
+ "native_issue_2_body_sha256_stored": "47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772",
+ "native_issue_2_body_bytes_stored": 1336,
+ "native_issue_2_body_sha256_canonical": "3fc1305d40220aba2ab86cc82047ed3ebbd271fa8cb6254b27dc6e1fa1c7b078",
+ "native_issue_2_body_bytes_canonical": 1337,
+ "off_body_sha256": "a54c17e945e6543ea40170c8bbc766c6dfba1571216f896db0d292fce356ed15",
+ "off_body_bytes": 666,
+ "off_body_is_prefix_of_native": true,
+ "difference_suffix_bytes": 670,
+ "difference_suffix": "\n```hephi-task\n{\n  \"version\": 1,\n  \"goal\": \"为 previous_window 增加倒序窗口（start > end）显式 ValueError；保留合法窗口、跨月、闰年与跨年行为。\",\n  \"outOfScope\": [\n    \"不得修改 backend/app/domain/money.py 之外的文件\",\n    \"不得改变其他函数的行为、公开签名或依赖\",\n    \"不得合并 PR，失败如实报告 blocked\"\n  ],\n  \"acceptance\": [\n    {\n      \"id\": \"AC1\",\n      \"text\": \"previous_window(start > end) 抛出 ValueError；合法窗口/跨月/闰年/跨年行为保持不变；项目已有测试通过。\",\n      \"check\": \"project-regression\",\n      \"paths\": [\"backend/app/domain/money.py\"]\n    }\n  ]\n}\n```\n"
+}

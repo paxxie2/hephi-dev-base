@@ -1,0 +1,14 @@
+=== stop off instance
+b5off stopped (pid 55739)
+stop_exit=0 at 2026-11-07T23:35:32Z
+port3093_listen: 0
+off_pid_alive: NO
+hostB_pid74123_alive: YES
+hostB_port3083: 2
+=== delete temp credentials (0600 file) and instance dir after evidence copy
+credentials_deleted=YES
+=== collaborator final check
+HTTP/2.0 404 Not Found
+[]
+{"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/repos#get-a-repository","status":"404"}gh: Not Found (HTTP 404)
+instance dir removed: YES at 2026-11-07T23:35:45Z

@@ -1,0 +1,7 @@
+# off Issue body (canonical = '@paxxie2 ' + eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md):
+a54c17e945e6543ea40170c8bbc766c6dfba1571216f896db0d292fce356ed15  off-issue-body.md  bytes=666
+# same body as stored by GitHub (no normalization observed): sha256 a54c17e945e6543ea40170c8bbc766c6dfba1571216f896db0d292fce356ed15  bytes=666
+# issue.md alone:
+f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497  eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md  bytes=657
+# native issue #2 body: stored sha256 47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772 bytes=1336; canonical (stored + final newline) sha256 3fc1305d40220aba2ab86cc82047ed3ebbd271fa8cb6254b27dc6e1fa1c7b078 bytes=1337
+# off body is an exact prefix of native body; remaining suffix = hephi-task contract block (670 bytes)

@@ -1,0 +1,17 @@
+# off instance no-hephi evidence 2026-11-07T23:26:29Z
+state/hephi exists: NO
+activation.json count: 0
+checks dirs: 0
+decisions.jsonl count: 0
+profile bundles: ["@deepseek-ai/dsh-base","@deepseek-ai/dsh-web-app","dsh-superagent"]
+HEPHI_ env count: 0
+host.log hephi mentions: 0
+state tree:
+  /tmp/hephi-off-b5/state
+  /tmp/hephi-off-b5/state/worker-gitconfig
+  /tmp/hephi-off-b5/state/worker-bin
+  /tmp/hephi-off-b5/state/worker-bin/gh
+  /tmp/hephi-off-b5/state/worker-bin/lark-cli
+  /tmp/hephi-off-b5/state/orchestrator.sqlite
+  /tmp/hephi-off-b5/state/orchestrator.sqlite-shm
+  /tmp/hephi-off-b5/state/orchestrator.sqlite-wal

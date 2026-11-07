@@ -1,0 +1,35 @@
+{
+ "watched": [
+  "paxxie2/dubbo",
+  "paxxie2/topic-bench",
+  "paxxie2/site-pnl-diagnosis",
+  "paxxie2/super-agent-hephi-review",
+  "paxxie2/b5-native-site-pnl",
+  "paxxie2/b5-native-history-page-size",
+  "paxxie2/b5-native-health-service-field",
+  "paxxie2/b5-native-money-window-helpers",
+  "paxxie2/b5-native-backend-input-validation"
+ ],
+ "off_issue_thread_hits": [],
+ "hostb_total": 8,
+ "new_unrelated_native_tickets": [
+  {
+   "id": "38969e158ecb25c7437e42343cf66ccb",
+   "title": "[native][B5-native][trial-r1] health-service-field",
+   "threads": [
+    "https://github.com/paxxie2/b5-native-site-pnl/issues/12",
+    "https://github.com/paxxie2/b5-native-site-pnl/pull/13"
+   ],
+   "createdAt": "2026-11-07T23:31:42.880Z"
+  },
+  {
+   "id": "9b718adfbc065f2a1c858b7011596ee4",
+   "title": "[native][B5-native][trial-r1] history-page-size",
+   "threads": [
+    "https://github.com/paxxie2/b5-native-site-pnl/issues/10",
+    "https://github.com/paxxie2/b5-native-site-pnl/pull/11"
+   ],
+   "createdAt": "2026-11-07T23:24:16.157Z"
+  }
+ ]
+}

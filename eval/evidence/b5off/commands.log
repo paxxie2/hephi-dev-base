@@ -1,0 +1,26 @@
+# B5 off-group run command audit (timestamps UTC; only real observed results)
+# NOTE: no credential/token value is recorded here.
+
+2026-11-07T23:16:16Z  PUT /orchestrator/api/settings/source:github (off instance 3093, repository=paxxie2/b5-off-site-pnl)
+                       HTTP 200 {"saved":true,"revision":1,"restarting":true}                     # source-save.log
+2026-11-07T23:16:29Z  GET  /orchestrator/api/state (off)   HTTP 200; setup.problem=null; agent=paxxie2
+2026-11-07T23:16:40Z  GET  http://127.0.0.1:3083/orchestrator/api/tickets (host B baseline)
+                       HTTP 200; total=6                                                       # hostb-tickets-baseline.json
+2026-11-07T23:16:41Z  gh issue create --repo paxxie2/b5-off-site-pnl ...                    exit 0
+                       https://github.com/paxxie2/b5-off-site-pnl/issues/7                     # off-issue-create.out
+2026-11-07T23:17:28Z  GET  /orchestrator/api/tickets (off) HTTP 200; total=1 ticket a1cd12aacb7fa21db019a85f68051a37
+2026-11-07T23:17:35Z  ticket a1cd... stage=working, session worker-a1cd...
+2026-11-07T23:19:24Z  gh pr list --repo paxxie2/b5-off-site-pnl  -> PR #8 OPEN
+2026-11-07T23:19:45Z  ticket a1cd... stage=person, report=ready, summary "Ready for review: PR #8 ..."
+2026-11-07T23:26:48Z  gh issue create ... -> issue #9  (run1-retry)                            exit 0
+2026-11-07T23:29:34Z  gh issue create ... -> issue #11 (run2)                                 exit 0
+2026-11-07T23:31:20Z  gh issue create ... -> issue #13 (run3)                                 exit 0
+2026-11-07T23:34Z  off tickets -> 4 tickets, all stage=person/report=ready; PRs #8/#10/#12/#14 OPEN
+2026-11-07T23:35:54Z  read-only native check: b5-native-site-pnl issues #2/#4/#6/#7 OPEN (label hephi/delivery);
+                       PRs #3 draft, #5/#8/#9 non-draft OPEN (all only backend/app/domain/money.py)  # native-reference.json
+2026-11-07T23:35:30Z  /tmp/hephi-off-b5/stop-off.sh                                         exit 0 (pid 55739 stopped)
+2026-11-07T23:35:32Z  port 3093 LISTEN count=0; off pid alive=NO; host B pid 74123 alive=YES; port 3083 still listening
+2026-11-07T23:35:33Z  rm /tmp/hephi-off-b5/.credentials.yaml -> deleted
+2026-11-07T23:35:45Z  rm -rf /tmp/hephi-off-b5 (temp instance dir) -> removed
+2026-11-07T23:35Z  GET repos/paxxie2/b5-native-site-pnl/collaborators/monsterhunterw2 -> HTTP 404 (no collaborator)
+                       GET repos/paxxie2/b5-native-site-pnl/invitations -> [] (no pending invitation)

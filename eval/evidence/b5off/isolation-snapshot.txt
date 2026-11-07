@@ -1,0 +1,57 @@
+# off instance isolation evidence 2026-11-07T23:11:03Z
+## process
+  PID  PPID STARTED                      COMMAND
+55739     1 Sun Nov  8 07:07:27 2026     /Users/zm/.nvm/versions/node/v26.1.0/bin/node /Users/zm/dsh-instances/runtime/node_modules/@deepseek-ai/dsh/lib/bin.js --profile b5off --no-open
+
+## listening
+COMMAND   PID USER   FD   TYPE             DEVICE SIZE/OFF NODE NAME
+node    55739   zm   14u  IPv4 0x3c2b17a52beb7774      0t0  TCP 127.0.0.1:3093 (LISTEN)
+
+## profile package.json
+{
+  "name": "dsh-profile-b5off",
+  "private": true,
+  "dependencies": {
+    "dsh-superagent": "link:/Users/zm/dsh-instances/experiment/superagent"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "dsh-superagent"
+      ]
+    }
+  }
+}
+
+## profile cordis.patch.yml
+- id: webserver
+  config:
+    host: 127.0.0.1
+    port: 3093
+- id: agent-default-model
+  config:
+    provider: deepseek-account
+    model: deepseek-flash
+- id: dsh-superagent
+  config:
+    stateDir: /tmp/hephi-off-b5/state
+- id: ui-settings-general
+  name: "@deepseek-ai/dsh-client-ui-settings-general"
+  config:
+    welcomeNoticeVersion: 2026-09-28.1
+
+## profile bundles (no hephi)
+["@deepseek-ai/dsh-base","@deepseek-ai/dsh-web-app","dsh-superagent"]
+
+## hephi artifacts in DSH_HOME (expect none)
+       1
+
+## HEPHI env of off process (expect none)
+       0
+
+## credentials file mode + record keys
+-rw------- /tmp/hephi-off-b5/.credentials.yaml
+records: ['deepseek-account-platform/device', 'deepseek-account-platform/default', 'client-connection/browser-session']
+refs: []

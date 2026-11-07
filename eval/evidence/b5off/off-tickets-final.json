@@ -1,0 +1,222 @@
+{
+ "items": [
+  {
+   "id": "10b8b5256d303017ded3187ea1c0ae11",
+   "title": "为 previous_window 增加倒序窗口显式 ValueError（run3）",
+   "state": "open",
+   "stage": "working",
+   "actions": {
+    "retry": false,
+    "stop": true
+   },
+   "strength": "explicit",
+   "assignments": 1,
+   "inputs": 0,
+   "undelivered": 0,
+   "sessionId": "worker-10b8b5256d303017ded3187ea1c0ae11",
+   "directory": "/tmp/hephi-off-b5/work/reject-reverse-window-4-10b8b5256d30",
+   "summary": "Opened PR #14 https://github.com/paxxie2/b5-off-site-pnl/pull/14 from agent/reject-reverse-window-4-10b8b5256d30 (head 78c4418) for issue #13. Change: previous_window raises ValueError on reversed windows; only backend/app/domain/money.py touched. Verification so far: stdlib acceptance mirror fails 3/3 on baseline 1e166fb with target AssertionError and passes 3/3 on committed head; 49 relevant repo tests passed. Full suite has pre-existing missing backend/app/data collection errors. Continuing with self-review and PR checks.",
+   "createdAt": "2026-11-07T23:32:27.387Z",
+   "updatedAt": "2026-11-07T23:34:18.554Z",
+   "threads": [
+    {
+     "key": "github:13",
+     "source": "github",
+     "title": "#13 [off][B5-off] previous-window-order run3",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/13",
+     "facts": {
+      "number": {
+       "value": "#13"
+      }
+     }
+    },
+    {
+     "key": "github:14",
+     "source": "github",
+     "title": "github:14",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/14",
+     "facts": {}
+    }
+   ]
+  },
+  {
+   "id": "86d714f089dabc6e909a878cec40eb45",
+   "title": "为 previous_window 增加倒序窗口显式 ValueError（run2）",
+   "state": "open",
+   "stage": "person",
+   "action": "review",
+   "actions": {
+    "retry": false,
+    "stop": true
+   },
+   "strength": "explicit",
+   "assignments": 1,
+   "inputs": 0,
+   "undelivered": 0,
+   "sessionId": "worker-86d714f089dabc6e909a878cec40eb45",
+   "directory": "/tmp/hephi-off-b5/work/reject-reverse-window-3-86d714f089da",
+   "summary": "Done: PR #12 (https://github.com/paxxie2/b5-off-site-pnl/pull/12) adds the explicit reversed-window ValueError in backend/app/domain/money.py. A person must merge (no auto-merge configured).\n\n## Change\n`previous_window(start, end)` raises `ValueError` when the parsed `start > end`, with a message naming both bounds; the docstring documents the contract. `date_range`, all other functions, signatures and dependencies are untouched. Diff: 7 insertions, 1 deletion, only `backend/app/domain/money.py` (allowed scope).\n\n## Verification actually run\n- Stdlib-only acceptance mirror, run from outside the repository (`/tmp/pw-mirror`): 7 legal windows (single-day, same-month, cross-month, non-leap Feb, leap Feb 2028, cross-year, leap-day boundary) with expectations independently recomputed via `datetime` arithmetic, plus 4 reversed windows (day/month/year/leap-day boundaries). Legal assertions pass on both revisions. Baseline commit `1e166fb` fails 3/3 runs with `AssertionError: DID NOT RAISE ValueError for reversed window ...` (target assertion failure, not import/dependency failure). Patched head passes 3/3 runs.\n- `uv run --offline pytest backend/tests/test_money.py backend/tests/test_pnl.py backend/tests/test_rules.py backend/tests/test_scenarios.py -q`: 49 passed.\n- Self-review: diff limited to money.py; commit author paxxie2; working tree clean; PR mergeable; no CI checks configured.\n- Pre-existing limitation (unrelated, outside allowed scope): full `backend/tests` cannot collect `test_db.py` / `test_seed.py` and DB-backed fixtures because `backend/app/data` is absent at baseline (`data/` gitignored) → `ModuleNotFoundError: No module named 'app.data'`.\n\n## Risks / notes\n- No human review requested or received; repository has no review rules/CI. Human must merge.\n- Duplicate: open PRs #3, #6, #8, #10 (issues #2/#5/#7/#9) propose the identical change from prior independent runs; the fix is not yet on `main`. Only one should merge.\n- No reviewer credit needed (no human reviews on this PR). No auto-merge enabled, per rules.",
+   "createdAt": "2026-11-07T23:29:53.312Z",
+   "updatedAt": "2026-11-07T23:31:35.865Z",
+   "threads": [
+    {
+     "key": "github:11",
+     "source": "github",
+     "title": "#11 [off][B5-off] previous-window-order run2",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/11",
+     "facts": {
+      "number": {
+       "value": "#11"
+      }
+     }
+    },
+    {
+     "key": "github:12",
+     "source": "github",
+     "title": "#12 fix(domain): reject reversed previous_window with ValueError",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/12",
+     "facts": {
+      "ci": {
+       "label": "CI",
+       "value": {
+        "zh": "通过",
+        "en": "passed"
+       }
+      },
+      "number": {
+       "value": "#12"
+      }
+     }
+    }
+   ],
+   "reply": {
+    "source": "github",
+    "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/11",
+    "label": {
+     "zh": "GitHub #11",
+     "en": "GitHub #11"
+    }
+   }
+  },
+  {
+   "id": "f0707370fc2fd9f7788eb6ddcd4adc0b",
+   "title": "为 previous_window 增加倒序窗口显式 ValueError（run1-retry）",
+   "state": "open",
+   "stage": "person",
+   "action": "review",
+   "actions": {
+    "retry": false,
+    "stop": true
+   },
+   "strength": "explicit",
+   "assignments": 1,
+   "inputs": 0,
+   "undelivered": 0,
+   "sessionId": "worker-f0707370fc2fd9f7788eb6ddcd4adc0b",
+   "directory": "/tmp/hephi-off-b5/work/reject-reverse-window-2-f0707370fc2f",
+   "summary": "PR #10 (https://github.com/paxxie2/b5-off-site-pnl/pull/10) is ready for human review/merge. Branch agent/reject-reverse-window-2-f0707370fc2f, base main, head e301bae.\n\nWhat changed: backend/app/domain/money.py only (7 insertions, 1 deletion). previous_window now raises ValueError when start_date > end_date, with a docstring documenting the contract. Legal windows, including single-day, same-month, cross-month, leap-year, non-leap February, cross-year and leap-day boundary cases, are unchanged; date_range and all other functions/signatures/dependencies untouched.\n\nVerification actually run:\n- Stdlib-only acceptance mirror outside the repo (8 legal windows, 5 reversed windows at day/month/year/leap-day boundaries): baseline 1e166fb fails 3/3 runs with \"DID NOT RAISE ValueError\" (target assertion failure, not import/dependency error); patched head passes 3/3 runs; legal-window assertions pass on both revisions.\n- Repo module imported directly and checked 3/3 runs; explicit ValueError confirmed for reversed inputs and date_range reversed behavior still returns [].\n- uv run --offline pytest backend/tests/test_money.py test_pnl.py test_rules.py test_scenarios.py: 49 passed.\n- git diff --check clean; PR contains exactly one file.\n\nPre-existing limitation (unrelated, outside allowed scope): full backend/tests cannot collect test_db.py/test_seed.py and DB-backed API fixtures because backend/app/data is absent from the baseline (data/ is gitignored); they fail with ModuleNotFoundError: No module named 'app.data' on baseline too.\n\nNo CI checks are configured on this repo (statusCheckRollup empty), PR is MERGEABLE/CLEAN, no reviews requested by any repo rule. Auto-merge not enabled (no merge CLI named); a person must merge. Note: open PRs #3, #6 and #8 propose the identical change from earlier independent runs, so only one should be merged. No human reviewers, so no co-author trailers were added/required. Temp verification mirror lives under /tmp/reverse-window-check (outside the repo); repo working tree clean.",
+   "createdAt": "2026-11-07T23:27:35.795Z",
+   "updatedAt": "2026-11-07T23:29:53.283Z",
+   "threads": [
+    {
+     "key": "github:9",
+     "source": "github",
+     "title": "#9 [off][B5-off] previous-window-order run1-retry",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/9",
+     "facts": {
+      "number": {
+       "value": "#9"
+      }
+     }
+    },
+    {
+     "key": "github:10",
+     "source": "github",
+     "title": "#10 fix(domain): reject reversed previous_window with ValueError",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/10",
+     "facts": {
+      "ci": {
+       "label": "CI",
+       "value": {
+        "zh": "通过",
+        "en": "passed"
+       }
+      },
+      "number": {
+       "value": "#10"
+      }
+     }
+    }
+   ],
+   "reply": {
+    "source": "github",
+    "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/9",
+    "label": {
+     "zh": "GitHub #9",
+     "en": "GitHub #9"
+    }
+   }
+  },
+  {
+   "id": "a1cd12aacb7fa21db019a85f68051a37",
+   "title": "为 previous_window 增加倒序窗口显式 ValueError",
+   "state": "open",
+   "stage": "person",
+   "action": "review",
+   "actions": {
+    "retry": false,
+    "stop": true
+   },
+   "strength": "explicit",
+   "assignments": 1,
+   "inputs": 0,
+   "undelivered": 0,
+   "sessionId": "worker-a1cd12aacb7fa21db019a85f68051a37",
+   "directory": "/tmp/hephi-off-b5/work/reject-reverse-window-a1cd12aacb7f",
+   "summary": "Ready for review: PR #8 https://github.com/paxxie2/b5-off-site-pnl/pull/8 (branch agent/reject-reverse-window-a1cd12aacb7f, head 87b12ae, base main, mergeable).\n\nChange: `previous_window(start, end)` in `backend/app/domain/money.py` now raises an explicit `ValueError` when `start > end` (reversed window), before deriving any window. Legal windows are unchanged; no public signature, dependency or other-function change. Diff is only money.py: 7 insertions, 1 deletion.\n\nVerification actually run:\n- Stdlib-only mirror of the hidden acceptance suite, run from /tmp/b5-off-verify/hidden_mirror.py against a detached worktree of the fixed real baseline 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f: 3/3 runs failed with `AssertionError: DID NOT RAISE ValueError for reversed window`, i.e. the target assertion, not import/dependency failure. Same mirror on the patched head: 3/3 passes (11 legal windows: single-day, same-month, cross-month, leap-year, non-leap February, cross-year; 5 reversed windows at day/month/year/leap-day boundaries).\n- `uv run --offline python -m pytest backend/tests/test_money.py test_pnl.py test_rules.py test_scenarios.py`: 49 passed.\n- Full `backend/tests` suite still cannot collect test_db.py/test_seed.py and the DB-backed API fixtures because `backend/app/data` is absent from the baseline (`data/` is gitignored). Confirmed pre-existing at 1e166fb; unrelated to this change and outside the allowed scope.\n\nProcess/limitations:\n- No .github/workflows in the repo, so there is no CI to wait for; `gh pr checks 8` reports none. No review requests were required by repository rules.\n- No merge CLI is configured for this deployment, so a person must merge PR #8. Auto-merge was not enabled.\n- Review rounds from automated reviewers: 0; no human/bot reviews yet. Reviewers credited on the branch: none.\n- Duplicate note: open PRs #3 (issue #2) and #6 (issue #5) already propose the identical change from earlier independent runs; the fix is not on main yet. Only one of #3/#6/#8 needs merging. This run did not modify those branches or PRs.\n- Scope respected: only `backend/app/domain/money.py` changed; no other product files, config, Skill or stage policy touched. Ticket branch pushed; PR body starts with the automated-agent disclosure line.",
+   "createdAt": "2026-11-07T23:17:28.808Z",
+   "updatedAt": "2026-11-07T23:19:44.317Z",
+   "threads": [
+    {
+     "key": "github:7",
+     "source": "github",
+     "title": "#7 [off][B5-off] previous-window-order run1",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/7",
+     "facts": {
+      "number": {
+       "value": "#7"
+      }
+     }
+    },
+    {
+     "key": "github:8",
+     "source": "github",
+     "title": "#8 fix(domain): reject reversed previous_window with ValueError",
+     "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/8",
+     "facts": {
+      "ci": {
+       "label": "CI",
+       "value": {
+        "zh": "通过",
+        "en": "passed"
+       }
+      },
+      "number": {
+       "value": "#8"
+      }
+     }
+    }
+   ],
+   "reply": {
+    "source": "github",
+    "url": "https://github.com/paxxie2/b5-off-site-pnl/issues/7",
+    "label": {
+     "zh": "GitHub #7",
+     "en": "GitHub #7"
+    }
+   }
+  }
+ ],
+ "total": 4,
+ "next_offset": null
+}

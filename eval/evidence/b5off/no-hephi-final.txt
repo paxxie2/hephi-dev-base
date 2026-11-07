@@ -1,0 +1,10 @@
+# off instance no-hephi evidence (final) 2026-11-07T23:35:24Z
+state/hephi exists: NO
+activation.json count: 0
+checks dirs: 0
+decisions.jsonl count: 0
+profile bundles: ["@deepseek-ai/dsh-base","@deepseek-ai/dsh-web-app","dsh-superagent"]
+HEPHI_ env count: 0
+host.log lines: 4
+host.log hephi mentions: 0
+hephi-related files under state dir (excluding none):

@@ -1,0 +1,11 @@
+known_prs=8,6,3
+initial off ticket total=1
+created run1-retry -> https://github.com/paxxie2/b5-off-site-pnl/issues/9 at 2026-11-07T23:26:49Z
+  ticket=a1cd12aacb7fa21db019a85f68051a37
+  pr=10
+created run2 -> https://github.com/paxxie2/b5-off-site-pnl/issues/11 at 2026-11-07T23:29:34Z
+  ticket=a1cd12aacb7fa21db019a85f68051a37
+  pr=12
+created run3 -> https://github.com/paxxie2/b5-off-site-pnl/issues/13 at 2026-11-07T23:31:20Z
+  ticket=a1cd12aacb7fa21db019a85f68051a37
+  pr=14

@@ -1,0 +1,76 @@
+{
+ "note": "read-only GitHub verification of native issues/PRs at 2026-11-07T23:35:54Z; no native object was modified",
+ "issues": [
+  {
+   "number": 2,
+   "title": "[native][B5-native] previous-window-order run1",
+   "labels": [
+    "hephi/delivery"
+   ],
+   "state": "OPEN"
+  },
+  {
+   "number": 4,
+   "title": "[native][B5-native] previous-window-order run1-retry",
+   "labels": [
+    "hephi/delivery"
+   ],
+   "state": "OPEN"
+  },
+  {
+   "number": 6,
+   "title": "[native][B5-native] previous-window-order run2",
+   "labels": [
+    "hephi/delivery"
+   ],
+   "state": "OPEN"
+  },
+  {
+   "number": 7,
+   "title": "[native][B5-native] previous-window-order run3",
+   "labels": [
+    "hephi/delivery"
+   ],
+   "state": "OPEN"
+  }
+ ],
+ "pulls": [
+  {
+   "number": 3,
+   "state": "OPEN",
+   "draft": true,
+   "head": "534480062a0282b773f0fb65e580524bc085fc5b",
+   "files": [
+    "backend/app/domain/money.py"
+   ]
+  },
+  {
+   "number": 5,
+   "state": "OPEN",
+   "draft": false,
+   "head": "b152f8e2c4e52906cfc730bd6c9979d7b69cd073",
+   "files": [
+    "backend/app/domain/money.py"
+   ]
+  },
+  {
+   "number": 8,
+   "state": "OPEN",
+   "draft": false,
+   "head": "c28e6ee68e3f7032f055ade98a42f5e78f25f002",
+   "files": [
+    "backend/app/domain/money.py"
+   ]
+  },
+  {
+   "number": 9,
+   "state": "OPEN",
+   "draft": false,
+   "head": "a85034ce67fea77cbc739a92d3eac90d88ffdb66",
+   "files": [
+    "backend/app/domain/money.py"
+   ]
+  }
+ ],
+ "screen": "paxxie2/b5-native-site-pnl"
+}

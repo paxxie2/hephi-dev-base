@@ -1,0 +1,62 @@
+[
+ {
+  "pr": 8,
+  "issue": 7,
+  "state": "OPEN",
+  "headRefName": "agent/reject-reverse-window-a1cd12aacb7f",
+  "headRefOid": "87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a",
+  "branchHead": "87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a",
+  "headMatches": true,
+  "base": "main",
+  "files": [
+   "backend/app/domain/money.py"
+  ],
+  "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/8",
+  "author": "paxxie2"
+ },
+ {
+  "pr": 10,
+  "issue": 9,
+  "state": "OPEN",
+  "headRefName": "agent/reject-reverse-window-2-f0707370fc2f",
+  "headRefOid": "e301bae9c53f30d11e05cad924184d7369f09b2a",
+  "branchHead": "e301bae9c53f30d11e05cad924184d7369f09b2a",
+  "headMatches": true,
+  "base": "main",
+  "files": [
+   "backend/app/domain/money.py"
+  ],
+  "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/10",
+  "author": "paxxie2"
+ },
+ {
+  "pr": 12,
+  "issue": 11,
+  "state": "OPEN",
+  "headRefName": "agent/reject-reverse-window-3-86d714f089da",
+  "headRefOid": "9c9c664ced361a0436d5281c0abc867c816f3358",
+  "branchHead": "9c9c664ced361a0436d5281c0abc867c816f3358",
+  "headMatches": true,
+  "base": "main",
+  "files": [
+   "backend/app/domain/money.py"
+  ],
+  "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/12",
+  "author": "paxxie2"
+ },
+ {
+  "pr": 14,
+  "issue": 13,
+  "state": "OPEN",
+  "headRefName": "agent/reject-reverse-window-4-10b8b5256d30",
+  "headRefOid": "78c44180bf946c08cc2445c29aabe16ff335f94a",
+  "branchHead": "78c44180bf946c08cc2445c29aabe16ff335f94a",
+  "headMatches": true,
+  "base": "main",
+  "files": [
+   "backend/app/domain/money.py"
+  ],
+  "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/14",
+  "author": "paxxie2"
+ }
+]

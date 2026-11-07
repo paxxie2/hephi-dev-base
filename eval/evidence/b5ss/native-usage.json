@@ -1,0 +1,112 @@
+{
+  "note": "off 组 4 个 run 的实例 DSH_HOME（/tmp/hephi-off-b5）已被清理，仓库证据不含 usage/token；按任务要求写 unknown/null，不补 0。",
+  "native": [
+    {
+      "arm": "native",
+      "run": "run1",
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "available": true,
+      "source": "host worker session log (--Users-zm-dsh-instances-experiment-work-previous-window-order-0824a46875ff--/worker-0824a46875fffff5193152a320073ea6/session.v4.jsonl.zstd)",
+      "steps": 41,
+      "usage": {
+        "inputTokens": 50508,
+        "outputTokens": 26518,
+        "cacheReadTokens": 1807616,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1884642,
+        "nonCacheInputOutput": 77026
+      },
+      "notes": "DSH session 日志按模型调用逐步记录；totalTokens 为各步 input+output+cacheRead+cacheWrite 之和，包含缓存读取，不必然等于供应商计费口径。"
+    },
+    {
+      "arm": "native",
+      "run": "run1-retry",
+      "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+      "available": true,
+      "source": "host worker session log (--Users-zm-dsh-instances-experiment-work-previous-window-order-2801319d520b--/worker-2801319d520b9bd81c3c3a3f6d821167/session.v4.jsonl.zstd)",
+      "steps": 23,
+      "usage": {
+        "inputTokens": 27058,
+        "outputTokens": 14034,
+        "cacheReadTokens": 738432,
+        "cacheWriteTokens": 0,
+        "totalTokens": 779524,
+        "nonCacheInputOutput": 41092
+      },
+      "notes": "DSH session 日志按模型调用逐步记录；totalTokens 为各步 input+output+cacheRead+cacheWrite 之和，包含缓存读取，不必然等于供应商计费口径。"
+    },
+    {
+      "arm": "native",
+      "run": "run2",
+      "ticketId": "078370bcf6d73a168f2256e693aa36c4",
+      "available": true,
+      "source": "host worker session log (--Users-zm-dsh-instances-experiment-work-previous-window-run2-078370bcf6d7--/worker-078370bcf6d73a168f2256e693aa36c4/session.v4.jsonl.zstd)",
+      "steps": 22,
+      "usage": {
+        "inputTokens": 25752,
+        "outputTokens": 7813,
+        "cacheReadTokens": 633472,
+        "cacheWriteTokens": 0,
+        "totalTokens": 667037,
+        "nonCacheInputOutput": 33565
+      },
+      "notes": "DSH session 日志按模型调用逐步记录；totalTokens 为各步 input+output+cacheRead+cacheWrite 之和，包含缓存读取，不必然等于供应商计费口径。"
+    },
+    {
+      "arm": "native",
+      "run": "run3",
+      "ticketId": "ba9cbe09e06842e47993cfd147988aee",
+      "available": true,
+      "source": "host worker session log (--Users-zm-dsh-instances-experiment-work-previous-window-run3-ba9cbe09e068--/worker-ba9cbe09e06842e47993cfd147988aee/session.v4.jsonl.zstd)",
+      "steps": 30,
+      "usage": {
+        "inputTokens": 28401,
+        "outputTokens": 11110,
+        "cacheReadTokens": 976768,
+        "cacheWriteTokens": 0,
+        "totalTokens": 1016279,
+        "nonCacheInputOutput": 39511
+      },
+      "notes": "DSH session 日志按模型调用逐步记录；totalTokens 为各步 input+output+cacheRead+cacheWrite 之和，包含缓存读取，不必然等于供应商计费口径。"
+    }
+  ],
+  "off": [
+    {
+      "arm": "off",
+      "sourceFile": "eval/evidence/b5off/ticket-a1cd12aacb7fa21db019a85f68051a37.json",
+      "available": false,
+      "usage": null,
+      "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+    },
+    {
+      "arm": "off",
+      "sourceFile": "eval/evidence/b5off/ticket-f0707370fc2fd9f7788eb6ddcd4adc0b.json",
+      "available": false,
+      "usage": null,
+      "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+    },
+    {
+      "arm": "off",
+      "sourceFile": "eval/evidence/b5off/ticket-86d714f089dabc6e909a878cec40eb45.json",
+      "available": false,
+      "usage": null,
+      "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+    },
+    {
+      "arm": "off",
+      "sourceFile": "eval/evidence/b5off/ticket-10b8b5256d303017ded3187ea1c0ae11.json",
+      "available": false,
+      "usage": null,
+      "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+    }
+  ],
+  "nativeAggregate": {
+    "runsAvailable": 4,
+    "totalTokensSum": 4347482,
+    "nonCacheInputOutputSum": 191194,
+    "totalTokensMedian": 897901.5,
+    "totalTokensP90": 1624133.1,
+    "nonCacheInputOutputMedian": 40301.5,
+    "nonCacheInputOutputP90": 66245.8
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "file": "eval/PREREG.md",
+  "checks": {
+    "amount": false,
+    "currency": false,
+    "perRunCap": false,
+    "totalCap": false,
+    "stopRule": true,
+    "owner": true
+  },
+  "missing": [
+    "缺少预算金额",
+    "缺少币种说明",
+    "缺少单次运行上限",
+    "缺少总预算上限"
+  ],
+  "ok": false
+}

@@ -1,0 +1,118 @@
+[
+  {
+    "id": "0824a46875fffff5193152a320073ea6",
+    "run": "run1",
+    "value": {
+      "arm": "native",
+      "run": "run1",
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "title": "[native][B5-native] previous-window-order run1",
+      "state": "blocked",
+      "directory": "/Users/zm/dsh-instances/experiment/work/previous-window-order-0824a46875ff",
+      "sessionId": "worker-0824a46875fffff5193152a320073ea6",
+      "timestamps": {
+        "createdAt": "2026-11-07T22:35:12.796Z",
+        "startedAt": "2026-11-07T22:35:21.323Z",
+        "reportAt": "2026-11-07T22:39:13.074Z",
+        "idleAt": "2026-11-07T22:39:15.963Z",
+        "turnEndedAt": null,
+        "endedAt": "2026-11-07T22:55:28.513Z"
+      },
+      "raw": {
+        "created": 1794090912796,
+        "started": 1794090921323,
+        "reportAt": 1794091153074,
+        "idleAt": 1794091155963,
+        "turnEndedAt": null,
+        "endedAt": 1794092128513
+      }
+    }
+  },
+  {
+    "id": "2801319d520b9bd81c3c3a3f6d821167",
+    "run": "run1-retry",
+    "value": {
+      "arm": "native",
+      "run": "run1-retry",
+      "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+      "title": "[native][B5-native] previous-window-order run1-retry",
+      "state": "ready",
+      "directory": "/Users/zm/dsh-instances/experiment/work/previous-window-order-2801319d520b",
+      "sessionId": "worker-2801319d520b9bd81c3c3a3f6d821167",
+      "timestamps": {
+        "createdAt": "2026-11-07T22:44:10.003Z",
+        "startedAt": "2026-11-07T22:44:16.849Z",
+        "reportAt": "2026-11-07T22:46:17.670Z",
+        "idleAt": "2026-11-07T22:46:19.209Z",
+        "turnEndedAt": null,
+        "endedAt": "2026-11-07T22:55:28.527Z"
+      },
+      "raw": {
+        "created": 1794091450003,
+        "started": 1794091456849,
+        "reportAt": 1794091577670,
+        "idleAt": 1794091579209,
+        "turnEndedAt": null,
+        "endedAt": 1794092128527
+      }
+    }
+  },
+  {
+    "id": "078370bcf6d73a168f2256e693aa36c4",
+    "run": "run2",
+    "value": {
+      "arm": "native",
+      "run": "run2",
+      "ticketId": "078370bcf6d73a168f2256e693aa36c4",
+      "title": "[native][B5-native] previous-window-order run2",
+      "state": "ready",
+      "directory": "/Users/zm/dsh-instances/experiment/work/previous-window-run2-078370bcf6d7",
+      "sessionId": "worker-078370bcf6d73a168f2256e693aa36c4",
+      "timestamps": {
+        "createdAt": "2026-11-07T22:50:48.785Z",
+        "startedAt": "2026-11-07T22:50:55.559Z",
+        "reportAt": "2026-11-07T22:52:15.101Z",
+        "idleAt": "2026-11-07T22:52:16.214Z",
+        "turnEndedAt": null,
+        "endedAt": "2026-11-07T22:55:28.538Z"
+      },
+      "raw": {
+        "created": 1794091848785,
+        "started": 1794091855559,
+        "reportAt": 1794091935101,
+        "idleAt": 1794091936214,
+        "turnEndedAt": null,
+        "endedAt": 1794092128538
+      }
+    }
+  },
+  {
+    "id": "ba9cbe09e06842e47993cfd147988aee",
+    "run": "run3",
+    "value": {
+      "arm": "native",
+      "run": "run3",
+      "ticketId": "ba9cbe09e06842e47993cfd147988aee",
+      "title": "[native][B5-native] previous-window-order run3",
+      "state": "ready",
+      "directory": "/Users/zm/dsh-instances/experiment/work/previous-window-run3-ba9cbe09e068",
+      "sessionId": "worker-ba9cbe09e06842e47993cfd147988aee",
+      "timestamps": {
+        "createdAt": "2026-11-07T22:50:48.789Z",
+        "startedAt": "2026-11-07T22:52:24.644Z",
+        "reportAt": "2026-11-07T22:54:13.676Z",
+        "idleAt": "2026-11-07T22:54:15.504Z",
+        "turnEndedAt": null,
+        "endedAt": "2026-11-07T22:55:28.549Z"
+      },
+      "raw": {
+        "created": 1794091848789,
+        "started": 1794091944644,
+        "reportAt": 1794092053676,
+        "idleAt": 1794092055504,
+        "turnEndedAt": null,
+        "endedAt": 1794092128549
+      }
+    }
+  }
+]

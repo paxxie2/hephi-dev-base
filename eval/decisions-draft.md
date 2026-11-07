@@ -37,6 +37,7 @@
 - 推荐及依据：先列出全部七项候选并用开发集试跑估计，不在无数据时签定数值。
 - 批准人：实验负责人（用户）；该数值需试跑后另行批准，当前无本项数值批准记录（见 `eval/approvals/2026-11-08-owner-approval.md` §4）。
 - 批准后需同步：eval/PREREG.md §5/§9；分析命令配置。
+- 草案引用（2026-11-08，未批准）：`eval/B5-sample-size-draft.md` §5 + `eval/evidence/b5ss/`（由 8 次既有试跑的真实记录汇总）。native usage 可得（4/4 run，含 cacheRead 口径与不含 cache 口径两种数值）；**off usage = unknown/null**（off 实例已清理）；**金额 unknown**（无价目/额度，未折算）。时长资源仅为顺序执行估算（假设每组并发 1，并发上限未验证）。**本项 status 仍为 `pending-trial`，不填成本上限数值。**
 
 ## D-4 整体和分层样本量
 
@@ -47,6 +48,7 @@
 - 推荐及依据：推荐试跑后按现有 §6 方法给出计算输入和输出，再审批 N；不填凭空数字。
 - 批准人：实验负责人（用户）；该数值需试跑后另行批准，当前无本项数值批准记录（见 `eval/approvals/2026-11-08-owner-approval.md` §4）。
 - 批准后需同步：eval/PREREG.md §6/§9；正式任务清单和分析命令。
+- 草案引用（2026-11-08，未批准）：`eval/B5-sample-size-draft.md` §4 + `eval/evidence/b5ss/sample-grid.json`。8 次试跑只有 4 个配对、1 个 discordant 对，**不足以估效应**；按假设情景（改善 5/10/15/20pp × power 0.8/0.9 × α 0.05/0.10 × discordant 0.2/0.3 × margin −3/−5/−10pp）的 paired Wald 非劣效网格，所需配对数范围 **16–313**，主情景（d=10pp、power 0.8、α=0.05、q=0.2、margin −5pp）为 67 对。该网格是规划辅助、不是 PREREG §6 的 McNemar/bootstrap 正式计算。**本项 status 仍为 `pending-trial`，不填 N、不锁 PREREG。**
 
 ## D-5 环境不可用停止阈值
 

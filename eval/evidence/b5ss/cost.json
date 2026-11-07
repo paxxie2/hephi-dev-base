@@ -1,0 +1,181 @@
+{
+  "note": "只汇总真实可读数据；不编造价格、额度或并发上限。金额一律 unknown。",
+  "money": {
+    "available": false,
+    "value": "unknown",
+    "reason": "仓库/证据中没有真实价目、模型单价或预算额度（eval/PREREG.md §5 为占位、eval/check-budget.mjs 缺金额/币种/上限）；因此不做金额折算。"
+  },
+  "duration": {
+    "observed8Runs": {
+      "nativeWorkerSumSeconds": 541.1460000000001,
+      "offWorkerSumSeconds": 491.716,
+      "totalWorkerSumSeconds": 1032.862,
+      "nativeEndToEndSumSeconds": 659.1479999999999,
+      "offEndToEndSumSeconds": 516.135
+    },
+    "perPairSeconds": {
+      "medianNativePlusOff": 245.33,
+      "p90NativePlusOff": 332.27,
+      "readyNativeMedianPlusOffMedian": 239.44,
+      "definitions": "per-pair = native workerSeconds + off workerSeconds（假设两臂先后/各 1 并发执行，一对耗时相加）"
+    },
+    "formalRoundSequentialHostMinutes": {
+      "assumptions": "按每对 native+off 顺序执行、每组并发 1 估算主机分钟；并发上限未验证，实际可除以并发数，但不是已验证承诺。",
+      "rows": [
+        {
+          "pairs": 21,
+          "medianMinutes": 85.87,
+          "p90Minutes": 116.3,
+          "readyMedianMinutes": 83.8
+        },
+        {
+          "pairs": 27,
+          "medianMinutes": 110.4,
+          "p90Minutes": 149.52,
+          "readyMedianMinutes": 107.75
+        },
+        {
+          "pairs": 35,
+          "medianMinutes": 143.11,
+          "p90Minutes": 193.83,
+          "readyMedianMinutes": 139.67
+        },
+        {
+          "pairs": 47,
+          "medianMinutes": 192.18,
+          "p90Minutes": 260.28,
+          "readyMedianMinutes": 187.56
+        },
+        {
+          "pairs": 67,
+          "medianMinutes": 273.95,
+          "p90Minutes": 371.04,
+          "readyMedianMinutes": 267.37
+        },
+        {
+          "pairs": 89,
+          "medianMinutes": 363.91,
+          "p90Minutes": 492.87,
+          "readyMedianMinutes": 355.16
+        },
+        {
+          "pairs": 156,
+          "medianMinutes": 637.86,
+          "p90Minutes": 863.91,
+          "readyMedianMinutes": 622.53
+        },
+        {
+          "pairs": 208,
+          "medianMinutes": 850.48,
+          "p90Minutes": 1151.88,
+          "readyMedianMinutes": 830.04
+        }
+      ]
+    },
+    "concurrency": "unknown（宿主/off 并发限制未验证）"
+  },
+  "tokens": {
+    "native": {
+      "runs": [
+        {
+          "run": "run1",
+          "ticketId": "0824a46875fffff5193152a320073ea6",
+          "steps": 41,
+          "usage": {
+            "inputTokens": 50508,
+            "outputTokens": 26518,
+            "cacheReadTokens": 1807616,
+            "cacheWriteTokens": 0,
+            "totalTokens": 1884642,
+            "nonCacheInputOutput": 77026
+          }
+        },
+        {
+          "run": "run1-retry",
+          "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+          "steps": 23,
+          "usage": {
+            "inputTokens": 27058,
+            "outputTokens": 14034,
+            "cacheReadTokens": 738432,
+            "cacheWriteTokens": 0,
+            "totalTokens": 779524,
+            "nonCacheInputOutput": 41092
+          }
+        },
+        {
+          "run": "run2",
+          "ticketId": "078370bcf6d73a168f2256e693aa36c4",
+          "steps": 22,
+          "usage": {
+            "inputTokens": 25752,
+            "outputTokens": 7813,
+            "cacheReadTokens": 633472,
+            "cacheWriteTokens": 0,
+            "totalTokens": 667037,
+            "nonCacheInputOutput": 33565
+          }
+        },
+        {
+          "run": "run3",
+          "ticketId": "ba9cbe09e06842e47993cfd147988aee",
+          "steps": 30,
+          "usage": {
+            "inputTokens": 28401,
+            "outputTokens": 11110,
+            "cacheReadTokens": 976768,
+            "cacheWriteTokens": 0,
+            "totalTokens": 1016279,
+            "nonCacheInputOutput": 39511
+          }
+        }
+      ],
+      "aggregate": {
+        "runsAvailable": 4,
+        "totalTokensSum": 4347482,
+        "totalTokensMedian": 897901.5,
+        "totalTokensP90": 1624133.1,
+        "nonCacheInputOutputSum": 191194,
+        "nonCacheInputOutputMedian": 40301.5,
+        "nonCacheInputOutputP90": 66245.8
+      }
+    },
+    "off": {
+      "available": false,
+      "rows": [
+        {
+          "arm": "off",
+          "sourceFile": "eval/evidence/b5off/ticket-a1cd12aacb7fa21db019a85f68051a37.json",
+          "available": false,
+          "usage": null,
+          "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+        },
+        {
+          "arm": "off",
+          "sourceFile": "eval/evidence/b5off/ticket-f0707370fc2fd9f7788eb6ddcd4adc0b.json",
+          "available": false,
+          "usage": null,
+          "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+        },
+        {
+          "arm": "off",
+          "sourceFile": "eval/evidence/b5off/ticket-86d714f089dabc6e909a878cec40eb45.json",
+          "available": false,
+          "usage": null,
+          "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+        },
+        {
+          "arm": "off",
+          "sourceFile": "eval/evidence/b5off/ticket-10b8b5256d303017ded3187ea1c0ae11.json",
+          "available": false,
+          "usage": null,
+          "reason": "off 实例 session/usage 未保留（实例已清理，off-host.log 无 usage）"
+        }
+      ],
+      "value": "unknown",
+      "reason": "off 实例 DSH_HOME（/tmp/hephi-off-b5）已按设计清理，仓库证据无 usage/token；null 不补 0。"
+    },
+    "price": "unknown（无价目数据，不编造）",
+    "caveat": "native 的 totalTokens 来自 DSH worker session 日志，按模型调用逐步累加且包含 cacheReadTokens；PREREG §5 的 token 字段未定义口径、且上限是占位未批准，故不能据此判定成本是否超限。"
+  }
+}

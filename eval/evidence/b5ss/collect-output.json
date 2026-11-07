@@ -1,0 +1,677 @@
+{
+  "runs": [
+    {
+      "arm": "native",
+      "run": "run1",
+      "state": "blocked",
+      "durations": {
+        "queueSeconds": 8.527,
+        "workerSeconds": 231.751,
+        "endToEndSeconds": 240.278,
+        "turnToIdleSeconds": 234.64,
+        "openToEndedSeconds": 1215.717,
+        "postReportIdleSeconds": 2.889
+      }
+    },
+    {
+      "arm": "native",
+      "run": "run1-retry",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 6.846,
+        "workerSeconds": 120.821,
+        "endToEndSeconds": 127.667,
+        "turnToIdleSeconds": 122.36,
+        "openToEndedSeconds": 678.524,
+        "postReportIdleSeconds": 1.539
+      }
+    },
+    {
+      "arm": "native",
+      "run": "run2",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 6.774,
+        "workerSeconds": 79.542,
+        "endToEndSeconds": 86.316,
+        "turnToIdleSeconds": 80.655,
+        "openToEndedSeconds": 279.753,
+        "postReportIdleSeconds": 1.113
+      }
+    },
+    {
+      "arm": "native",
+      "run": "run3",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 95.855,
+        "workerSeconds": 109.032,
+        "endToEndSeconds": 204.887,
+        "turnToIdleSeconds": 110.86,
+        "openToEndedSeconds": 279.76,
+        "postReportIdleSeconds": 1.828
+      }
+    },
+    {
+      "arm": "off",
+      "run": "run1",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 6.444,
+        "workerSeconds": 129.065,
+        "endToEndSeconds": 135.509,
+        "turnToIdleSeconds": 129.065,
+        "openToEndedSeconds": null,
+        "postReportIdleSeconds": 2.057
+      }
+    },
+    {
+      "arm": "off",
+      "run": "run1-retry",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 5.747,
+        "workerSeconds": 131.74,
+        "endToEndSeconds": 137.487,
+        "turnToIdleSeconds": 131.74,
+        "openToEndedSeconds": null,
+        "postReportIdleSeconds": 2.771
+      }
+    },
+    {
+      "arm": "off",
+      "run": "run2",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 6.327,
+        "workerSeconds": 96.226,
+        "endToEndSeconds": 102.553,
+        "turnToIdleSeconds": 96.226,
+        "openToEndedSeconds": null,
+        "postReportIdleSeconds": 2.631
+      }
+    },
+    {
+      "arm": "off",
+      "run": "run3",
+      "state": "ready",
+      "durations": {
+        "queueSeconds": 5.901,
+        "workerSeconds": 134.685,
+        "endToEndSeconds": 140.586,
+        "turnToIdleSeconds": 134.685,
+        "openToEndedSeconds": null,
+        "postReportIdleSeconds": 1.779
+      }
+    }
+  ],
+  "summary": {
+    "note": "n=4/组：median/p90 只是描述性统计，p90 用 R type-7 线性插值，4 个样本不能可靠估计 P90。nativeReady=仅 native 的 3 个 ready 运行（run1 blocked 单列，避免把 blocked 耗时混入有效运行估计）。",
+    "native": {
+      "arm": "native",
+      "n": 4,
+      "states": [
+        {
+          "run": "run1",
+          "state": "blocked"
+        },
+        {
+          "run": "run1-retry",
+          "state": "ready"
+        },
+        {
+          "run": "run2",
+          "state": "ready"
+        },
+        {
+          "run": "run3",
+          "state": "ready"
+        }
+      ],
+      "workerSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 231.751
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 120.821
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 79.542
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 109.032
+          }
+        ],
+        "median": 114.927,
+        "p90": 198.472,
+        "nulls": []
+      },
+      "endToEndSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 240.278
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 127.667
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 86.316
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 204.887
+          }
+        ],
+        "median": 166.277,
+        "p90": 229.661,
+        "nulls": []
+      },
+      "queueSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 8.527
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 6.846
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 6.774
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 95.855
+          }
+        ],
+        "median": 7.687,
+        "p90": 69.657,
+        "nulls": []
+      },
+      "turnToIdleSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 234.64
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 122.36
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 80.655
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 110.86
+          }
+        ],
+        "median": 116.61,
+        "p90": 200.956,
+        "nulls": []
+      },
+      "openToEndedSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 1215.717
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 678.524
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 279.753
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 279.76
+          }
+        ],
+        "median": 479.142,
+        "p90": 1054.559,
+        "nulls": []
+      },
+      "postReportIdleSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "blocked",
+            "value": 2.889
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 1.539
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 1.113
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 1.828
+          }
+        ],
+        "median": 1.684,
+        "p90": 2.571,
+        "nulls": []
+      }
+    },
+    "nativeReady": {
+      "arm": "native-ready",
+      "n": 3,
+      "states": [
+        {
+          "run": "run1-retry",
+          "state": "ready"
+        },
+        {
+          "run": "run2",
+          "state": "ready"
+        },
+        {
+          "run": "run3",
+          "state": "ready"
+        }
+      ],
+      "workerSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 120.821
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 79.542
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 109.032
+          }
+        ],
+        "median": 109.032,
+        "p90": 118.463,
+        "nulls": []
+      },
+      "endToEndSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 127.667
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 86.316
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 204.887
+          }
+        ],
+        "median": 127.667,
+        "p90": 189.443,
+        "nulls": []
+      },
+      "queueSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 6.846
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 6.774
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 95.855
+          }
+        ],
+        "median": 6.846,
+        "p90": 78.053,
+        "nulls": []
+      },
+      "turnToIdleSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 122.36
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 80.655
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 110.86
+          }
+        ],
+        "median": 110.86,
+        "p90": 120.06,
+        "nulls": []
+      },
+      "openToEndedSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 678.524
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 279.753
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 279.76
+          }
+        ],
+        "median": 279.76,
+        "p90": 598.771,
+        "nulls": []
+      },
+      "postReportIdleSeconds": {
+        "values": [
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 1.539
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 1.113
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 1.828
+          }
+        ],
+        "median": 1.539,
+        "p90": 1.77,
+        "nulls": []
+      }
+    },
+    "off": {
+      "arm": "off",
+      "n": 4,
+      "states": [
+        {
+          "run": "run1",
+          "state": "ready"
+        },
+        {
+          "run": "run1-retry",
+          "state": "ready"
+        },
+        {
+          "run": "run2",
+          "state": "ready"
+        },
+        {
+          "run": "run3",
+          "state": "ready"
+        }
+      ],
+      "workerSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": 129.065
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 131.74
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 96.226
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 134.685
+          }
+        ],
+        "median": 130.403,
+        "p90": 133.802,
+        "nulls": []
+      },
+      "endToEndSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": 135.509
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 137.487
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 102.553
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 140.586
+          }
+        ],
+        "median": 136.498,
+        "p90": 139.656,
+        "nulls": []
+      },
+      "queueSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": 6.444
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 5.747
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 6.327
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 5.901
+          }
+        ],
+        "median": 6.114,
+        "p90": 6.409,
+        "nulls": []
+      },
+      "turnToIdleSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": 129.065
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 131.74
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 96.226
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 134.685
+          }
+        ],
+        "median": 130.403,
+        "p90": 133.802,
+        "nulls": []
+      },
+      "openToEndedSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": null
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": null
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": null
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": null
+          }
+        ],
+        "median": null,
+        "p90": null,
+        "nulls": [
+          "run1",
+          "run1-retry",
+          "run2",
+          "run3"
+        ]
+      },
+      "postReportIdleSeconds": {
+        "values": [
+          {
+            "run": "run1",
+            "state": "ready",
+            "value": 2.057
+          },
+          {
+            "run": "run1-retry",
+            "state": "ready",
+            "value": 2.771
+          },
+          {
+            "run": "run2",
+            "state": "ready",
+            "value": 2.631
+          },
+          {
+            "run": "run3",
+            "state": "ready",
+            "value": 1.779
+          }
+        ],
+        "median": 2.344,
+        "p90": 2.729,
+        "nulls": []
+      }
+    },
+    "all": {
+      "n": 8,
+      "workerSeconds": {
+        "median": 124.943,
+        "p90": 163.805,
+        "nulls": []
+      },
+      "endToEndSeconds": {
+        "median": 136.498,
+        "p90": 215.504,
+        "nulls": []
+      }
+    }
+  },
+  "usageAggregate": {
+    "runsAvailable": 4,
+    "totalTokensSum": 4347482,
+    "nonCacheInputOutputSum": 191194,
+    "totalTokensMedian": 897901.5,
+    "totalTokensP90": 1624133.1,
+    "nonCacheInputOutputMedian": 40301.5,
+    "nonCacheInputOutputP90": 66245.8
+  },
+  "sample": {
+    "attempts": 99,
+    "valid": 91,
+    "invalid": 8,
+    "range": {
+      "allValid": {
+        "min": 16,
+        "max": 313
+      },
+      "atPrimaryAssumption": {
+        "d=0.05,power=0.8": 156,
+        "d=0.05,power=0.9": 208,
+        "d=0.1,power=0.8": 67,
+        "d=0.1,power=0.9": 89,
+        "d=0.15,power=0.8": 35,
+        "d=0.15,power=0.9": 47,
+        "d=0.2,power=0.8": 21,
+        "d=0.2,power=0.9": 27
+      }
+    }
+  }
+}

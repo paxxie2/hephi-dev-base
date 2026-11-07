@@ -1,0 +1,20 @@
+PASS fixed independent normal reference
+PASS unequal paired rates
+PASS looser margin reduces sample
+PASS greater power increases sample
+PASS two-sided alpha convention
+PASS pilot size does not lock or floor formal N
+PASS missing field
+PASS string type
+PASS invalid pairs
+PASS discordance below difference
+PASS discordance above joint bound
+PASS zero variance
+PASS alternative below margin
+PASS positive margin
+PASS invalid alpha
+PASS invalid power
+PASS boolean type
+PASS missing CLI arguments exit 2
+PASS malformed JSON exits 2
+PASS 19 self-tests (synthetic numeric/CLI checks only; no real experiment or E2E validation)

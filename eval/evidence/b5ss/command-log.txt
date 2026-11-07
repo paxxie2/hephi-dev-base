@@ -1,0 +1,50 @@
+# B5 样本量/成本草案：命令与退出码（task-13，2026-11-08 Asia/Shanghai）
+
+- 仓库：/tmp/b5ss（全新克隆 https://github.com/paxxie2/super-agent-hephi-review.git）
+- 分支：agent/b5-samplesize；基线 main=4e6ce080beaa4db827d2603f2b672842c42e4e99
+- 环境：node v26.1.0；sqlite3 3.54.0；zstd（CLI）
+- 只读输入：
+  - 宿主 B orchestrator sqlite: /Users/zm/dsh-instances/experiment/state/orchestrator.sqlite（用 sqlite3 -readonly -json 查询 4 个 native ticket）
+  - 宿主 B worker session 日志: /Users/zm/dsh-instances/experiment/dsh-home/sessions/*/worker-*/session.v4.jsonl.zstd（zstd -dc 只读解压）
+  - 仓库内 off 证据: eval/evidence/b5off/ticket-*.json（4 个真实 off ticket）
+- 本轮未执行：任何 run、模型调用、宿主写操作、PREREG 锁定。
+
+```
+$ node eval/evidence/b5ss/collect-b5ss.mjs
+→ 生成 timings.json / native-usage.json / cost.json / sample-grid.json / native-tickets-raw.json
+→ 二次重跑校验：4 个 JSON 的 sha256 组合前后一致（确定性，无随机/时间字段）
+[exit=0]            stdout: collect-output.json；stderr: collect-stderr.txt（0 字节）
+
+$ node eval/prereg-sample.mjs --self-test
+→ PASS 19 self-tests (synthetic numeric/CLI checks only; no real experiment or E2E validation)
+[exit=0]            输出: self-test.log
+
+$ node eval/prereg-lock.mjs --check
+→ [prereg-lock] FAIL: 存在未决项，拒绝锁定（不写文件）
+[exit=1]  （预期失败，非“通过”；未生成 eval/PREREG.lock）  输出: prereg-lock-check.txt
+
+$ node eval/check-budget.mjs
+→ ok=false；missing = [缺少预算金额, 缺少币种说明, 缺少单次运行上限, 缺少总预算上限]
+[exit=1]  （如实失败：PREREG §5 仍为占位、D-3 尚无数值）  输出: check-budget.txt
+
+$ git diff --check
+[exit=0]
+
+$ git diff --cached --name-only | grep -vc '^eval/'
+→ 0（改动仅 eval/**）
+
+$ cd eval/evidence/b5ss && shasum -a 256 -c SHA256SUMS
+→ 全部 OK（含 ../../B5-sample-size-draft.md）
+```
+
+## 证据文件 sha256（最终值见 SHA256SUMS）
+
+- eval/B5-sample-size-draft.md: e975d966f184a16976ef4d511b959380d89f93889f3f480e0e650cd6b3098966
+
+## 未验证 / unknown（不补 0、不编造）
+
+- off token/usage：unknown/null（off 实例 DSH_HOME=/tmp/hephi-off-b5 已按设计清理，仓库证据无 usage）。
+- 金额/额度：unknown（无真实价目，未折算任何金额）。
+- 并发上限：unknown（资源估算假设每组并发 1）。
+- 效应/样本量：8 次试跑只有 4 对、1 个 discordant 对，不足以估计；样本量网格输入是假设情景。
+- D-3/D-4 仍为 pending-trial；PREREG 未锁定；未跑正式实验。

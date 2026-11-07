@@ -1,0 +1,2473 @@
+{
+  "method": "eval/prereg-sample.mjs --pilot <json>（paired Bernoulli Wald 近似 / 非劣效 margin）",
+  "pilotPairs": 4,
+  "gridDefinition": {
+    "labelCore": "offRate × improvement(d) × discordantRate × alpha × power，margin=-0.05",
+    "offRates": [
+      0.6,
+      0.7,
+      0.8
+    ],
+    "improvements": [
+      0.05,
+      0.1,
+      0.15,
+      0.2
+    ],
+    "discords": [
+      0.2,
+      0.3
+    ],
+    "alphas": [
+      0.05,
+      0.1
+    ],
+    "powers": [
+      0.8,
+      0.9
+    ],
+    "margin": -0.05,
+    "labelMarginSensitivity": "offRate=0.7, d=0.10, q=0.20, alpha=0.05, power=0.8, margin ∈ {-0.03,-0.05,-0.10}",
+    "note": "输入是假设情景，不是从 8 次试跑估计的效应；pairs=4 只是回显真实配对数，不参与 N 计算。"
+  },
+  "attempts": 99,
+  "valid": 91,
+  "invalid": 8,
+  "requiredPairsRange": {
+    "allValid": {
+      "min": 16,
+      "max": 313
+    },
+    "atPrimaryAssumption": {
+      "d=0.05,power=0.8": 156,
+      "d=0.05,power=0.9": 208,
+      "d=0.1,power=0.8": 67,
+      "d=0.1,power=0.9": 89,
+      "d=0.15,power=0.8": 35,
+      "d=0.15,power=0.9": 47,
+      "d=0.2,power=0.8": 21,
+      "d=0.2,power=0.9": 27
+    }
+  },
+  "rows": [
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 156,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 208,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 123,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 170,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 234,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 313,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 184,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.65,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 255,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 67,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 89,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 53,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 73,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 102,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 136,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 80,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.7,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 111,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 35,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 47,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 28,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 39,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 55,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 73,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 43,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 60,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 21,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 27,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 16,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 22,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 33,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 44,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 26,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.6,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 36,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 156,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 208,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 123,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 170,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 234,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 313,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 184,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.75,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 255,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 67,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 89,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 53,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 73,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 102,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 136,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 80,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 111,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 35,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 47,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 28,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 39,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 55,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 73,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 43,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 60,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 21,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 27,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 16,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 22,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 33,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 44,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 26,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 36,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 156,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 208,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 123,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 170,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 234,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 313,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 184,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.85,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.05,
+      "exitCode": 0,
+      "requiredPairs": 255,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 67,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 89,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 53,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 73,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 102,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 136,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 80,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.9,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 111,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 35,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 47,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 28,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 0,
+      "requiredPairs": 39,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 0.95,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.15,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 21,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 27,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 16,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.2,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 0,
+      "requiredPairs": 22,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.3,
+        "alpha": 0.05,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "core",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.8,
+        "successRateNative": 1,
+        "discordantRate": 0.3,
+        "alpha": 0.1,
+        "power": 0.9,
+        "margin": -0.05
+      },
+      "improvement": 0.2,
+      "exitCode": 2,
+      "requiredPairs": null,
+      "method": null,
+      "notes": null,
+      "invalidReason": "prereg-sample: discordantRate incompatible with paired marginal success rates"
+    },
+    {
+      "label": "margin-sensitivity",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.03
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 89,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "margin-sensitivity",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.05
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 67,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    },
+    {
+      "label": "margin-sensitivity",
+      "input": {
+        "pairs": 4,
+        "successRateOff": 0.7,
+        "successRateNative": 0.8,
+        "discordantRate": 0.2,
+        "alpha": 0.05,
+        "power": 0.8,
+        "margin": -0.1
+      },
+      "improvement": 0.1,
+      "exitCode": 0,
+      "requiredPairs": 38,
+      "method": "paired-wald-normal-approximation",
+      "notes": [
+        "d=successRateNative-successRateOff; q=discordantRate; variance=q-d*d; N=ceil((z(1-alpha/2)+z(power))^2*variance/(d-margin)^2).",
+        "alpha is two-sided: alpha=0.05 uses the lower endpoint of a 95% confidence interval (one-sided tail 0.025). margin is a negative noninferiority threshold.",
+        "pairs is the pilot pair count only, echoed without adding it to or imposing a floor on the planned formal sample size. Pilot observations are not formal experiment results.",
+        "Plug-in asymptotic Wald planning approximation, not exact McNemar or score-test power. Ignores pilot estimation uncertainty; sparse discordance can make the approximation unreliable or anticonservative.",
+        "Estimates only a single guardrail binary endpoint for independent paired tasks. This is not the PREREG section 6 primary-metric McNemar/bootstrap sample-size calculation, nor the approved sample size for the whole round, individual strata, or joint metrics. Does not establish bootstrap power or real end-to-end acceptance.",
+        "All inputs and sample size remain pending approval; no preregistration value is locked or written. Nam (1997), https://pubmed.ncbi.nlm.nih.gov/9423257/, documents limitations of paired Wald methods."
+      ],
+      "invalidReason": null
+    }
+  ]
+}

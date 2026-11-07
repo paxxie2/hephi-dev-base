@@ -1,16 +1,16 @@
 # S4 验收记录（A 线，2026-11-07）
 
-> 状态：**partial（F1 已由 PR38 修复；F2–F5 仍开 issue #35；E5/E9 blocked；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
+> 状态：**partial（F1 由 PR38、F2–F5 由 PR40 修复并合并；E5/E9 blocked；E1-off partial；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
 > 未执行/未验证项显式列出。**不是最终验收通过证明；人类负责人签收前不得记 A5/D5 为通过。**
 >
-> 更新（2026-11-08）：分支已 rebase 到 main **`62ea0b9`**（PR37 五项 + PR38 F1 + PR33 B 线准备 + PR39 E1-on 记录，均 fast-forward 合并）。本轮仅更新对象/状态与 S1 标注，
+> 更新（2026-11-08）：分支已 rebase 到 main **`0c0b7ac`**（PR37 五项 + PR38 F1 + PR33 B 线准备 + PR39 E1-on 记录 + PR40 F2–F5，均 fast-forward 合并）。本轮仅更新对象/状态与 S1 标注，
 > **未对新 main 重跑 S1/A2/A5**；S4 仍为 partial。
 
 ## 1. 对象
 
 | 项 | 值 |
 | --- | --- |
-| main（代码） | **`62ea0b950f293ef568188156d8a02eb60723127d`**（PR37 五项 `…→b1a70bd`、PR38 F1 `→d9d70b1`、PR33 B 线准备 `→5176df5`、PR39 E1-on 记录 `→62ea0b9`，均 fast-forward 合并） |
+| main（代码） | **`0c0b7ac069c5c424c95915e2948695f652caafa3`**（PR37 `→b1a70bd`、PR38 F1 `→d9d70b1`、PR33 `→5176df5`、PR39 `→62ea0b9`、PR40 F2–F5 `→0c0b7ac`，均 fast-forward 合并） |
 | 历史验收时点 | 证据采集于旧 main `9fa8598f2beabe179b28733e484275c3775279d3`（PR30 merge `2c603c6` + PR31 docs）；本次 rebase 未重跑验收 |
 | 实载构建 | `e490fe34dfd13117db2516d9b9c7cb0459c1d219`（activation markers pid 95240；旧 main 与其实载 tree 差异仅 2 个 docs；**尚未部署 d9d70b1**） |
 | 部署记录 | `deploy-20261107T141210Z-57984.json`，sha256 `804ba302d373da5b2613d3a6a986180149715b8c35d9d76844e4c3df060d7454` |
@@ -71,7 +71,7 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 ## 8. 结论
 
 A 线本轮完成了：旧 main S1 PASS、PR30 独立复核（request changes）、A2 定案、E4/E10 真实验收、E1-on 正式场景验收、E1-off 对照（partial）。
-**S4 仍为 partial**：F1 已修复（PR38），但 F2–F5 仍开（PR #40 待合并）、E1-off partial、E5/E9 blocked，
+**S4 仍为 partial**：F1/F2–F5 均已修复并合并（PR38/PR40），但 E1-off partial、E5/E9 blocked，
 且新 main 的 S1 未重跑。不得将本记录当作 A5/D5 通过或 S4 验收通过。
 
 ## 9. 更新（E10 完成后）

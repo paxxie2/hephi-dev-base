@@ -1,0 +1,8 @@
+diff --git a/src/calc.mjs b/src/calc.mjs
+--- a/src/calc.mjs
++++ b/src/calc.mjs
+@@ -2,3 +2,3 @@
+ export function add(a, b) {
+-  return a - b
++  return a + b
+ }

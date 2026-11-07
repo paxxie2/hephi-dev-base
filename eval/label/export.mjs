@@ -1,0 +1,471 @@
+#!/usr/bin/env node
+// ROADMAP-95 工作线 B / B4：盲评材料导出骨架。
+//
+// 职责：把一批运行整理成盲评材料，并**在导出前扫描/拒绝组别痕迹**。
+// 只隐藏“组别”和能看出组别的痕迹（分支名、提交信息、赫菲输出），不删除理解语义需要的内容。
+//
+// 用法：
+//   node eval/label/export.mjs --manifest <runs.json> --out <材料目录> --mapping <私有映射.json>
+//                              [--seed 20261107] [--scan-only] [--json]
+//
+// 输入 manifest（见 eval/RUNBOOK.md §7）：
+//   {
+//     "batch": "pilot-01",
+//     "seed": 20261107,
+//     "tasks": { "<taskId>": { "taskDir": "eval/tasks/<repo>/<taskId>" } },
+//     "runs": [
+//       { "runId": "pilot-01-t01-off", "taskId": "t01", "arm": "off", "repetition": 1,
+//         "repo": "/abs/path", "base": "<40hex>", "head": "<40hex|ref>",
+//         "requirement": "可选：覆盖任务卡路径" }
+//     ]
+//   }
+//
+// 输出材料目录结构：
+//   <out>/manifest.json          # 盲评清单（无组别/taskId/runId）
+//   <out>/labels.template.json   # 标注模板（字段为 null，供两名盲评者填写）
+//   <out>/cases/<blindId>/diff.patch
+//   <out>/cases/<blindId>/requirement.md
+//   <out>/cases/<blindId>/allowed-scope.md
+//   <out>/cases/<blindId>/case.json
+//
+// 私有映射（盲评结束后才可打开）：<mapping> 记录 blindId → runId/arm/taskId。
+// **映射文件不允许放在材料目录内**，否则脚本直接拒绝。
+//
+// 退出码：0=导出成功；1=发现组别痕迹/材料无效；2=用法或环境缺失。
+import { execFileSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import {
+  existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync,
+} from 'node:fs'
+import { tmpdir } from 'node:os'
+import { dirname, join, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..')
+const ARMS = new Set(['off', 'native', 'staged'])
+const DEFAULT_SEED = 20261107
+
+// 硬痕迹：命中即拒绝导出（fail-closed）。只匹配能直接暴露组别/赫菲的标记，
+// 不把普通英文词汇（如 "turn off"）误判为组别痕迹。
+const HARD_TRACE_PATTERNS = [
+  { id: 'hephi', re: /hephi/i },
+  { id: 'hephi-zh', re: /赫菲/ },
+  { id: 'native-group', re: /native\s*(?:arm|group|组)/i },
+  { id: 'off-group', re: /\boff\s*(?:arm|group|组)/i },
+  { id: 'staged-group', re: /staged\s*(?:arm|group|组)/i },
+  { id: 'shadow-group', re: /shadow\s*(?:arm|group|组)/i },
+  { id: 'arm-equals', re: /\barm\s*[=:]\s*(?:off|native|staged|shadow)\b/i },
+  { id: 'plugin-commit', re: /pluginCommit|loadedShaReadback/i },
+  { id: 'roadmap', re: /ROADMAP[-_ ]?95/i },
+  { id: 'branch-ref', re: /\b(?:agent|docs|codex|fix|feat)\/[a-z0-9][a-z0-9._-]*/i },
+  { id: 'pull-ref', re: /\bpull\/\d+\b|#\d{2,4}\b(?=[^\n]*(?:merge|pr\b))/i },
+  { id: 'run-id-arm', re: /\b[a-z0-9][a-z0-9._-]*[-_](?:off|native|staged)[-_][a-z0-9._-]+\b/i },
+  { id: 'decision-log', re: /decisions\.jsonl/i },
+]
+
+// 软痕迹：只在 requirement/allowed-scope 正文里提示（不阻断），由材料作者人工判断。
+const SOFT_TRACE_PATTERNS = [
+  { id: 'word-off', re: /(?<![\w-])off(?![\w-])/i },
+  { id: 'word-native', re: /(?<![\w-])native(?![\w-])/i },
+  { id: 'word-staged', re: /(?<![\w-])staged(?![\w-])/i },
+  { id: 'word-shadow', re: /(?<![\w-])shadow(?![\w-])/i },
+]
+
+const USAGE = `用法：
+  node eval/label/export.mjs --manifest <runs.json> --out <材料目录> --mapping <私有映射.json> [--seed 20261107] [--scan-only] [--json]
+退出码：0=成功；1=发现组别痕迹/材料无效；2=用法或环境缺失。`
+
+function usage(message) {
+  console.error(`[label-export] ${message}\n\n${USAGE}`)
+  process.exit(2)
+}
+
+function hasFlag(name) {
+  return process.argv.includes(`--${name}`)
+}
+
+function arg(name, fallback) {
+  const i = process.argv.indexOf(`--${name}`)
+  if (i === -1) return fallback
+  const next = process.argv[i + 1]
+  return next === undefined || next.startsWith('--') ? fallback : next
+}
+
+function sha256(text) {
+  return createHash('sha256').update(text).digest('hex')
+}
+
+function readJson(file) {
+  return JSON.parse(readFileSync(file, 'utf8'))
+}
+
+function ensureOutside(target, dir) {
+  const t = resolve(target)
+  const d = resolve(dir)
+  return t !== d && !t.startsWith(`${d}${sep}`)
+}
+
+function mulberry32(seed) {
+  let a = seed >>> 0
+  return () => {
+    a |= 0
+    a = (a + 0x6d2b79f5) | 0
+    let t = Math.imul(a ^ (a >>> 15), 1 | a)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function shuffled(items, seed) {
+  const rng = mulberry32(seed)
+  const copy = [...items]
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(rng() * (i + 1))
+    const tmp = copy[i]
+    copy[i] = copy[j]
+    copy[j] = tmp
+  }
+  return copy
+}
+
+function git(cwd, args) {
+  return execFileSync('git', args, { cwd, encoding: 'utf8', maxBuffer: 128 * 1024 * 1024 })
+}
+
+function scanTraces(label, text, patterns) {
+  const hits = []
+  const lines = text.split('\n')
+  for (const pattern of patterns) {
+    for (let i = 0; i < lines.length; i += 1) {
+      if (pattern.re.test(lines[i])) {
+        hits.push({ layer: label, pattern: pattern.id, line: i + 1, excerpt: lines[i].trim().slice(0, 200) })
+        break // 同一 pattern 每个材料只报一次，避免刷屏
+      }
+    }
+  }
+  return hits
+}
+
+function loadManifest(manifestPath) {
+  if (!existsSync(manifestPath)) usage(`manifest 不存在：${manifestPath}`)
+  let manifest
+  try {
+    manifest = readJson(manifestPath)
+  } catch (error) {
+    usage(`manifest 不是合法 JSON：${error.message}`)
+  }
+  if (typeof manifest.batch !== 'string' || !/^[a-z0-9][a-z0-9._-]{1,63}$/.test(manifest.batch)) {
+    usage('manifest.batch 必须匹配 ^[a-z0-9][a-z0-9._-]{1,63}$')
+  }
+  if (!Array.isArray(manifest.runs) || manifest.runs.length === 0) usage('manifest.runs 必须是非空数组')
+  const tasks = manifest.tasks && typeof manifest.tasks === 'object' ? manifest.tasks : {}
+  const seen = new Set()
+  for (const run of manifest.runs) {
+    const missing = ['runId', 'taskId', 'arm', 'repo', 'base', 'head'].filter((field) => !run[field])
+    if (missing.length > 0) usage(`run ${run.runId ?? '?'} 缺少字段：${missing.join(', ')}`)
+    if (!ARMS.has(run.arm)) usage(`run ${run.runId} 的 arm 必须是 ${[...ARMS].join('/')}`)
+    if (seen.has(run.runId)) usage(`runId 重复：${run.runId}`)
+    seen.add(run.runId)
+    if (!tasks[run.taskId] || !tasks[run.taskId].taskDir) usage(`tasks.${run.taskId}.taskDir 缺失`)
+  }
+  return { manifest, tasks }
+}
+
+function collectCase(run, task, seed) {
+  const taskDir = resolve(REPO_ROOT, task.taskDir)
+  if (!existsSync(taskDir)) {
+    return { error: `taskDir 不存在：${taskDir}` }
+  }
+  const requirementPath = run.requirement
+    ? resolve(REPO_ROOT, run.requirement)
+    : resolve(taskDir, 'issue.md')
+  const allowedScopePath = resolve(taskDir, 'review.md')
+  if (!existsSync(requirementPath)) return { error: `requirement 不存在：${requirementPath}` }
+  if (!existsSync(allowedScopePath)) return { error: `allowed-scope 不存在：${allowedScopePath}` }
+
+  let diffText
+  let changedFiles
+  let binaryFiles
+  try {
+    const range = [`${run.base}..${run.head}`]
+    diffText = git(run.repo, ['diff', '--no-renames', '--no-color', '--no-ext-diff', '--unified=3', ...range])
+    changedFiles = git(run.repo, ['diff', '--name-only', '--no-renames', ...range]).split('\n').filter(Boolean)
+    binaryFiles = git(run.repo, ['diff', '--numstat', '--no-renames', ...range])
+      .split('\n')
+      .filter((row) => row.includes('\t-\t'))
+      .map((row) => row.split('\t').pop())
+      .filter(Boolean)
+  } catch (error) {
+    return { error: `git diff 失败（${run.runId}）：${error.message.split('\n')[0]}` }
+  }
+  const requirement = readFileSync(requirementPath, 'utf8')
+  const allowedScope = readFileSync(allowedScopePath, 'utf8')
+
+  const hardFindings = [
+    ...scanTraces('requirement', requirement, HARD_TRACE_PATTERNS),
+    ...scanTraces('allowed-scope', allowedScope, HARD_TRACE_PATTERNS),
+    ...scanTraces('diff', diffText, HARD_TRACE_PATTERNS),
+  ]
+  const weakFindings = [
+    ...scanTraces('requirement', requirement, SOFT_TRACE_PATTERNS),
+    ...scanTraces('allowed-scope', allowedScope, SOFT_TRACE_PATTERNS),
+  ]
+  return {
+    diffText,
+    requirement,
+    allowedScope,
+    changedFiles,
+    binaryFiles,
+    hardFindings,
+    weakFindings,
+    requirementSha256: sha256(requirement),
+    allowedScopeSha256: sha256(allowedScope),
+    patchSha256: sha256(diffText),
+  }
+}
+
+function runExport(options) {
+  const { manifest, tasks } = loadManifest(options.manifest)
+  const out = resolve(options.out)
+  const mappingPath = resolve(options.mapping)
+  if (existsSync(out) && readdirSync(out).length > 0) {
+    return { exitCode: 2, error: `材料目录已存在且非空，拒绝覆盖：${out}` }
+  }
+  if (!ensureOutside(mappingPath, out)) {
+    return { exitCode: 2, error: '私有映射文件不允许放在材料目录内（会泄漏组别），请换路径' }
+  }
+  if (existsSync(mappingPath)) {
+    return { exitCode: 2, error: `私有映射文件已存在，拒绝覆盖：${mappingPath}` }
+  }
+
+  const seed = Number(options.seed ?? manifest.seed ?? DEFAULT_SEED)
+  const order = shuffled(manifest.runs.map((run) => run.runId), seed)
+  const runById = new Map(manifest.runs.map((run) => [run.runId, run]))
+
+  const cases = []
+  const scan = { hard: [], weak: [] }
+  for (let i = 0; i < order.length; i += 1) {
+    const run = runById.get(order[i])
+    const blindId = `case-${String(i + 1).padStart(3, '0')}`
+    const collected = collectCase(run, tasks[run.taskId], seed)
+    if (collected.error) return { exitCode: 1, error: collected.error, scan }
+    scan.hard.push(...collected.hardFindings.map((hit) => ({ blindId, ...hit })))
+    scan.weak.push(...collected.weakFindings.map((hit) => ({ blindId, ...hit })))
+    cases.push({ blindId, run, collected })
+  }
+
+  if (scan.hard.length > 0) {
+    return { exitCode: 1, error: '导出材料中发现组别/赫菲硬痕迹，已拒绝导出。请先清理材料或修正任务卡/运行仓库内容。', scan }
+  }
+  if (options.scanOnly) {
+    return { exitCode: 0, scan, cases: cases.length, wrote: false }
+  }
+
+  mkdirSync(join(out, 'cases'), { recursive: true })
+  const manifestCases = []
+  const templateCases = {}
+  const mapping = {}
+  for (const item of cases) {
+    const caseDir = join(out, 'cases', item.blindId)
+    mkdirSync(caseDir, { recursive: true })
+    writeFileSync(join(caseDir, 'diff.patch'), item.collected.diffText, 'utf8')
+    writeFileSync(join(caseDir, 'requirement.md'), item.collected.requirement, 'utf8')
+    writeFileSync(join(caseDir, 'allowed-scope.md'), item.collected.allowedScope, 'utf8')
+    const caseMeta = {
+      blindId: item.blindId,
+      changedFiles: item.collected.changedFiles,
+      binaryFiles: item.collected.binaryFiles,
+      patchSha256: item.collected.patchSha256,
+      requirementSha256: item.collected.requirementSha256,
+      allowedScopeSha256: item.collected.allowedScopeSha256,
+      instructions: '按 eval/label/RUBRIC.md 以整次运行为单位标注；不得推测分组。',
+    }
+    writeFileSync(join(caseDir, 'case.json'), `${JSON.stringify(caseMeta, null, 2)}\n`, 'utf8')
+    manifestCases.push({
+      blindId: item.blindId,
+      diffSha256: item.collected.patchSha256,
+      requirementSha256: item.collected.requirementSha256,
+      allowedScopeSha256: item.collected.allowedScopeSha256,
+      changedFiles: item.collected.changedFiles.length,
+    })
+    templateCases[item.blindId] = {
+      objectiveChanged: null,
+      requiredFunctionImplemented: null,
+      implementationDefect: { verdict: null, notes: null },
+      unrelatedChanges: { has: null, notes: null, positions: [] },
+      testWeakening: { has: null, notes: null, positions: [] },
+    }
+    mapping[item.blindId] = {
+      runId: item.run.runId,
+      taskId: item.run.taskId,
+      arm: item.run.arm,
+      repetition: item.run.repetition ?? 1,
+      repo: item.run.repo,
+      base: item.run.base,
+      head: item.run.head,
+    }
+  }
+
+  const exportManifest = {
+    schemaVersion: 1,
+    batch: manifest.batch,
+    seed,
+    caseCount: manifestCases.length,
+    cases: manifestCases,
+    scan: {
+      hardFindings: 0,
+      weakWarnings: scan.weak.map((hit) => ({ blindId: hit.blindId, layer: hit.layer, pattern: hit.pattern, line: hit.line })),
+    },
+    rubric: 'eval/label/RUBRIC.md',
+    note: '本清单不含组别、taskId、runId；盲评结束后用私有映射还原。',
+  }
+  writeFileSync(join(out, 'manifest.json'), `${JSON.stringify(exportManifest, null, 2)}\n`, 'utf8')
+  writeFileSync(join(out, 'labels.template.json'), `${JSON.stringify({ batch: manifest.batch, labeler: null, cases: templateCases }, null, 2)}\n`, 'utf8')
+
+  mkdirSync(dirname(mappingPath), { recursive: true })
+  writeFileSync(mappingPath, `${JSON.stringify({
+    schemaVersion: 1,
+    batch: manifest.batch,
+    seed,
+    note: '私有映射：只在盲评结束后打开；不得与材料一起分发。',
+    mapping,
+  }, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 })
+
+  return { exitCode: 0, out, mapping: mappingPath, cases: manifestCases.length, scan, wrote: true }
+}
+
+// ---- 自测 -----------------------------------------------------------------
+
+function runCliSafe(args) {
+  try {
+    const stdout = execFileSync(process.execPath, [fileURLToPath(import.meta.url), ...args], {
+      encoding: 'utf8',
+      stdio: 'pipe',
+    })
+    return { status: 0, stdout: stdout ?? '', stderr: '' }
+  } catch (error) {
+    return { status: error.status ?? 1, stdout: error.stdout ?? '', stderr: error.stderr ?? '' }
+  }
+}
+
+function selfTest(asJson) {
+  const steps = []
+  const record = (name, ok, detail) => steps.push({ name, ok, detail })
+  const root = mkdtempSync(join(tmpdir(), 'hephi-label-self-'))
+  const script = fileURLToPath(import.meta.url)
+  try {
+    // 合成 git 仓库：base 有 bug，head 修复。
+    const repo = join(root, 'repo')
+    mkdirSync(join(repo, 'src'), { recursive: true })
+    writeFileSync(join(repo, 'src', 'calc.mjs'), 'export const add = (a, b) => a - b\n', 'utf8')
+    const taskDir = join(root, 'task')
+    mkdirSync(taskDir, { recursive: true })
+    writeFileSync(join(taskDir, 'issue.md'), '# 任务占位\n\n## 任务\n修复 add。\n\n## 验收\nadd(2,3)=5。\n\n## 合法范围\n只改 src/**。\n', 'utf8')
+    writeFileSync(join(taskDir, 'review.md'), '# 合法范围评审\n\n合法范围：src/**。这是合成自测材料。\n', 'utf8')
+    const gitEnv = {
+      ...process.env,
+      GIT_AUTHOR_NAME: 'B4 Self Test', GIT_AUTHOR_EMAIL: 'b4@example.invalid',
+      GIT_COMMITTER_NAME: 'B4 Self Test', GIT_COMMITTER_EMAIL: 'b4@example.invalid',
+    }
+    const gitIn = (args) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', env: gitEnv })
+    gitIn(['init', '--quiet'])
+    gitIn(['add', '-A'])
+    gitIn(['commit', '--quiet', '-m', 'base'])
+    const base = gitIn(['rev-parse', 'HEAD']).trim()
+    writeFileSync(join(repo, 'src', 'calc.mjs'), 'export const add = (a, b) => a + b\n', 'utf8')
+    gitIn(['add', '-A'])
+    gitIn(['commit', '--quiet', '-m', 'fix'])
+    const head = gitIn(['rev-parse', 'HEAD']).trim()
+
+    const manifest = join(root, 'manifest.json')
+    writeFileSync(manifest, JSON.stringify({
+      batch: 'selftest-b4',
+      seed: 7,
+      tasks: { t1: { taskDir: taskDir } },
+      runs: [{ runId: 'selftest-t1-off', taskId: 't1', arm: 'off', repo, base, head }],
+    }), 'utf8')
+
+    const cleanOut = join(root, 'out-clean')
+    const cleanMapping = join(root, 'private', 'mapping.json')
+    const clean = runCliSafe(['--manifest', manifest, '--out', cleanOut, '--mapping', cleanMapping])
+    record('导出干净材料', clean.status === 0, `exit=${clean.status} ${clean.stderr.slice(0, 300)}`)
+    const manifestOut = existsSync(join(cleanOut, 'manifest.json'))
+    record('材料目录生成 manifest/template/case', manifestOut && existsSync(join(cleanOut, 'labels.template.json')) && existsSync(join(cleanOut, 'cases', 'case-001', 'diff.patch')), 'layout')
+    const exportManifest = manifestOut ? JSON.parse(readFileSync(join(cleanOut, 'manifest.json'), 'utf8')) : null
+    const leakedKeys = exportManifest
+      ? [
+          ...Object.keys(exportManifest).filter((key) => ['arm', 'taskId', 'runId', 'runs'].includes(key)),
+          ...(exportManifest.cases ?? []).flatMap((item) => Object.keys(item).filter((key) => ['arm', 'taskId', 'runId'].includes(key))),
+        ]
+      : ['manifest 缺失']
+    record('导出清单不含组别/taskId/runId 键', leakedKeys.length === 0, JSON.stringify(leakedKeys))
+    record('私有映射与材料目录分离', existsSync(cleanMapping) && ensureOutside(cleanMapping, cleanOut), cleanMapping)
+
+    const insideMapping = runCliSafe(['--manifest', manifest, '--out', join(root, 'out-inside'), '--mapping', join(root, 'out-inside', 'mapping.json')])
+    record('负例：映射放进材料目录 → 拒绝（exit 2）', insideMapping.status === 2, `exit=${insideMapping.status}`)
+
+    // 痕迹材料：diff 内容包含 hephi 标记。
+    const tracedRepo = join(root, 'repo-traced')
+    mkdirSync(join(tracedRepo, 'src'), { recursive: true })
+    writeFileSync(join(tracedRepo, 'src', 'calc.mjs'), 'export const add = (a, b) => a - b\n', 'utf8')
+    const gitTraced = (args) => execFileSync('git', args, { cwd: tracedRepo, encoding: 'utf8', env: gitEnv })
+    gitTraced(['init', '--quiet'])
+    gitTraced(['add', '-A'])
+    gitTraced(['commit', '--quiet', '-m', 'base'])
+    const tracedBase = gitTraced(['rev-parse', 'HEAD']).trim()
+    writeFileSync(join(tracedRepo, 'src', 'calc.mjs'), 'export const add = (a, b) => a + b\n// hephi output: ready\n', 'utf8')
+    gitTraced(['add', '-A'])
+    gitTraced(['commit', '--quiet', '-m', 'fix'])
+    const tracedHead = gitTraced(['rev-parse', 'HEAD']).trim()
+    const tracedManifest = join(root, 'manifest-traced.json')
+    writeFileSync(tracedManifest, JSON.stringify({
+      batch: 'selftest-b4-trace',
+      seed: 7,
+      tasks: { t1: { taskDir } },
+      runs: [{ runId: 'selftest-t1-native', taskId: 't1', arm: 'native', repo: tracedRepo, base: tracedBase, head: tracedHead }],
+    }), 'utf8')
+    const traced = runCliSafe(['--manifest', tracedManifest, '--out', join(root, 'out-traced'), '--mapping', join(root, 'private', 'mapping-traced.json')])
+    record('负例：材料含 hephi 痕迹 → 拒绝导出（exit 1）', traced.status === 1, `exit=${traced.status} ${traced.stderr.slice(0, 200)}`)
+
+    const ok = steps.every((step) => step.ok)
+    if (asJson) console.log(JSON.stringify({ selfTest: ok, steps }, null, 2))
+    else {
+      for (const step of steps) console.log(`${step.ok ? 'PASS' : 'FAIL'} ${step.name} :: ${step.detail}`)
+      console.log(ok ? 'SELF-TEST: PASS' : 'SELF-TEST: FAIL')
+    }
+    process.exit(ok ? 0 : 1)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}
+
+function main() {
+  const asJson = hasFlag('json')
+  if (hasFlag('self-test')) selfTest(asJson)
+  const manifest = arg('manifest')
+  const out = arg('out')
+  const mapping = arg('mapping')
+  if (!manifest || !out || !mapping) usage('需要 --manifest、--out、--mapping')
+  const report = runExport({ manifest, out, mapping, seed: arg('seed'), scanOnly: hasFlag('scan-only') })
+  if (asJson) console.log(JSON.stringify(report, null, 2))
+  else {
+    if (report.error) console.error(`[label-export] ${report.error}`)
+    if (report.scan) {
+      for (const hit of report.scan.hard) console.error(`HARD ${hit.blindId} ${hit.layer}:${hit.line} [${hit.pattern}] ${hit.excerpt}`)
+      for (const hit of report.scan.weak) console.warn(`WEAK ${hit.blindId} ${hit.layer}:${hit.line} [${hit.pattern}] ${hit.excerpt}`)
+    }
+    if (report.wrote) {
+      console.log(`[label-export] batch=${arg('manifest')} cases=${report.cases}`)
+      console.log(`[label-export] out=${report.out}`)
+      console.log(`[label-export] mapping=${report.mapping}（私有，不得随材料分发）`)
+      console.log('RESULT: PASS')
+    } else if (report.exitCode === 0) {
+      console.log('RESULT: PASS (scan-only)')
+    } else {
+      console.log('RESULT: FAIL')
+    }
+  }
+  process.exit(report.exitCode)
+}
+
+main()

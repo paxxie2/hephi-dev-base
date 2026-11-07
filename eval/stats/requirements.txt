@@ -1,0 +1,14 @@
+# ROADMAP-95 工作线 B / B6：统计依赖（固定版本）。
+#
+# 本轮骨架在 Python 3.14.2 上实测：
+#   numpy==2.3.4 / scipy==1.16.2 / statsmodels==0.14.5
+# 安装（隔离环境，不污染系统 Python；本仓库不新增 npm 依赖）：
+#   python3 -m venv .venv
+#   .venv/bin/pip install -r eval/stats/requirements.txt
+#   .venv/bin/python eval/stats/report.py --self-test
+#
+# 正式实验前，PREREG 需锁定本文件内容（版本变化必须重新预注册）。
+
+numpy==2.3.4
+scipy==1.16.2
+statsmodels==0.14.5

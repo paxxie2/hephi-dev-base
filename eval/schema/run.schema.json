@@ -1,0 +1,695 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hephi.local/roadmap95/run.schema.json",
+  "title": "ROADMAP-95 B3 运行记录",
+  "description": "每次对照实验运行的完整记录。字段覆盖 ROADMAP-95 §4 B3 的全部记录项，加上模型/参数/宿主版本/插件 SHA/耗时/token/决策日志引用/环境可用。盲评字段在标注前写 null（即「未标注」），不得用缺字段代替。",
+  "$comment": "本仓库不新增 npm 依赖，因此不附带 JSON Schema 校验器；可用任意标准 draft 2020-12 校验器（如 ajv-cli）离线校验。字段口径见 eval/RUNBOOK.md §6 与 eval/PREREG.md。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runId",
+    "batch",
+    "taskId",
+    "repo",
+    "base",
+    "head",
+    "arm",
+    "executionMode",
+    "repetition",
+    "seed",
+    "startedAt",
+    "endedAt",
+    "wallClockSeconds",
+    "timeout",
+    "model",
+    "host",
+    "plugin",
+    "taskCard",
+    "tokens",
+    "decisionLog",
+    "objectiveChanged",
+    "requiredFunctionImplemented",
+    "implementationDefect",
+    "validationEnvironment",
+    "delivery",
+    "outOfScopeChanges",
+    "unrelatedChanges",
+    "testWeakening",
+    "humanIntervention"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "runId": {
+      "$ref": "#/$defs/shortId"
+    },
+    "batch": {
+      "$ref": "#/$defs/shortId"
+    },
+    "taskId": {
+      "$ref": "#/$defs/shortId"
+    },
+    "category": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "defect-fix",
+        "new-feature",
+        "behavior-preserving-refactor",
+        "cross-module",
+        "staged-suitable",
+        "unknown",
+        null
+      ],
+      "description": "任务类别（与 task.json.category 一致；缺省 unknown）。用于 B6 分层报告。"
+    },
+    "repo": {
+      "type": "string",
+      "minLength": 1,
+      "description": "仓库标识（与 task.json.repo 一致）"
+    },
+    "base": {
+      "$ref": "#/$defs/sha40"
+    },
+    "head": {
+      "$ref": "#/$defs/sha40",
+      "description": "运行结束时 checkout 的完整 HEAD SHA；不得写分支名或短 SHA"
+    },
+    "arm": {
+      "type": "string",
+      "enum": [
+        "off",
+        "native",
+        "staged"
+      ],
+      "description": "分析分组：off=不挂载赫菲；native=挂载赫菲 enforce；staged=单独实验，只用于 staged-suitable 任务"
+    },
+    "executionMode": {
+      "type": "string",
+      "enum": [
+        "normal",
+        "shadow"
+      ],
+      "description": "执行机制（不是分析分组）：shadow 仅指 P4 影子模式——Worker 不受影响、但按同一规则记录违规。只有 off 组允许 shadow。"
+    },
+    "repetition": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "1=首次运行；2+=正式实验 20% 重复运行"
+    },
+    "seed": {
+      "type": "integer",
+      "description": "运行计划生成种子；同一批次的全部运行必须记录同一 seed"
+    },
+    "startedAt": {
+      "$ref": "#/$defs/isoDateTime"
+    },
+    "endedAt": {
+      "$ref": "#/$defs/isoDateTime"
+    },
+    "wallClockSeconds": {
+      "type": "number",
+      "minimum": 0
+    },
+    "timeout": {
+      "type": "boolean"
+    },
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provider",
+        "parameters",
+        "parametersSource"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "实际使用的模型标识（记录实际值，不是计划值）"
+        },
+        "provider": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "required": [
+            "temperature"
+          ],
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "const": "uncontrolled",
+                "description": "宿主不支持读取/设置该参数时如实写 uncontrolled，不得假装固定"
+              }
+            ]
+          },
+          "properties": {
+            "temperature": {
+              "oneOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "const": "uncontrolled"
+                }
+              ],
+              "description": "宿主不支持的参数（如温度）写 uncontrolled"
+            }
+          }
+        },
+        "parametersSource": {
+          "type": "string",
+          "enum": [
+            "host-config",
+            "run-config",
+            "unavailable"
+          ],
+          "description": "参数的来源；unavailable 时参数值必须为 uncontrolled"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "versionSource",
+        "instance"
+      ],
+      "properties": {
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "versionSource": {
+          "type": "string",
+          "enum": [
+            "approved",
+            "experimental",
+            "unavailable"
+          ],
+          "description": "approved=经负责人确认的固定语义；experimental=仅有实验性标识；unavailable=读不到"
+        },
+        "instance": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "宿主实例标识/URL"
+        }
+      }
+    },
+    "plugin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateSha",
+        "baselineSha",
+        "loadedSha",
+        "loadedShaReadback"
+      ],
+      "properties": {
+        "candidateSha": {
+          "$ref": "#/$defs/nullableSha40"
+        },
+        "baselineSha": {
+          "$ref": "#/$defs/nullableSha40"
+        },
+        "loadedSha": {
+          "$ref": "#/$defs/nullableSha40",
+          "description": "实载插件 commit；没有回读入口时为 null"
+        },
+        "loadedShaReadback": {
+          "type": "string",
+          "enum": [
+            "verified",
+            "unverified",
+            "unavailable"
+          ],
+          "description": "磁盘哈希不等于实载 commit；只有宿主提供真实回读入口且已核对才可写 verified"
+        }
+      }
+    },
+    "taskCard": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sha256",
+        "deliveryMechanism",
+        "verifiedEqual"
+      ],
+      "description": "B5 off/native 两组任务卡同文的机械证据；见 eval/RUNBOOK.md §4",
+      "properties": {
+        "sha256": {
+          "$ref": "#/$defs/sha256"
+        },
+        "deliveryMechanism": {
+          "type": "string",
+          "enum": [
+            "issue-body",
+            "trigger-text",
+            "task-file"
+          ],
+          "description": "native 通常为 issue-body；off 为 trigger-text（固定 Trigger 文本注入同一任务卡）或 task-file"
+        },
+        "verifiedEqual": {
+          "type": "boolean",
+          "description": "Worker 实际收到的任务卡文本与另一组是否逐字节一致（sha256 相同）；不一致的运行不得进入效果分析"
+        },
+        "sourcePath": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "output",
+        "total"
+      ],
+      "properties": {
+        "input": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "output": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "total": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "cacheRead": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "decisionLog": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "description": "该运行关联的决策日志引用；没有时写 null",
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "$ref": "#/$defs/nullableSha256"
+        },
+        "entries": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "objectiveChanged": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "unchanged",
+        "partially-changed",
+        "changed-to-other",
+        null
+      ],
+      "description": "B3.1 目标是否被改变（盲评）；null=未标注"
+    },
+    "requiredFunctionImplemented": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "complete",
+        "partial",
+        "not-implemented",
+        null
+      ],
+      "description": "B3.2 必需功能是否实现（盲评+隐藏测试）；null=未标注"
+    },
+    "implementationDefect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verdict",
+        "notes"
+      ],
+      "properties": {
+        "verdict": {
+          "type": "string",
+          "enum": [
+            "none",
+            "has-defect",
+            "unlabeled"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "validationEnvironment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "reason"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "available",
+            "unavailable"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "unavailable 时必须说明原因"
+        }
+      }
+    },
+    "delivery": {
+      "type": "string",
+      "enum": [
+        "ready-pr-created",
+        "blocked",
+        "timeout",
+        "failed"
+      ],
+      "description": "B3.5 是否交付（运行记录）"
+    },
+    "outOfScopeChanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "has",
+        "files"
+      ],
+      "description": "B3.6 越界改动（机械：按 task.json.allowedFiles）",
+      "properties": {
+        "has": {
+          "type": "boolean"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "unrelatedChanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "has",
+        "notes"
+      ],
+      "description": "B3.7 无关改动（盲评）；has=null 表示未标注",
+      "properties": {
+        "has": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "testWeakening": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "has",
+        "notes"
+      ],
+      "description": "B3.8 测试削弱（盲评+机械）",
+      "properties": {
+        "has": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "humanIntervention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "count",
+        "reasons"
+      ],
+      "description": "B3.9 人工介入次数与原因（运行记录+决策日志）",
+      "properties": {
+        "count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "faults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "不可接受故障（B6，触发 V1–V3）；缺省视为 false 但报告会提示未记录",
+      "properties": {
+        "unexpectedDeliveryReleased": {
+          "type": "boolean",
+          "description": "已确认的错误交付被放行"
+        },
+        "unsafeRecovery": {
+          "type": "boolean",
+          "description": "不安全的恢复"
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "label": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "B4 盲评一致性信息；未完成盲评时可省略",
+      "properties": {
+        "batchId": {
+          "$ref": "#/$defs/shortId"
+        },
+        "labelers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "kappa": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -1,
+          "maximum": 1
+        }
+      }
+    },
+    "notes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "executionMode": {
+            "const": "shadow"
+          }
+        },
+        "required": [
+          "executionMode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "arm": {
+            "const": "off"
+          }
+        },
+        "description": "shadow 是执行机制，不是分组；只有 off 组允许以 shadow 机制运行"
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "validationEnvironment": {
+            "properties": {
+              "status": {
+                "const": "unavailable"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          }
+        },
+        "required": [
+          "validationEnvironment"
+        ]
+      },
+      "then": {
+        "properties": {
+          "validationEnvironment": {
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "plugin": {
+            "properties": {
+              "loadedShaReadback": {
+                "const": "verified"
+              }
+            },
+            "required": [
+              "loadedShaReadback"
+            ]
+          }
+        },
+        "required": [
+          "plugin"
+        ]
+      },
+      "then": {
+        "properties": {
+          "plugin": {
+            "properties": {
+              "loadedSha": {
+                "$ref": "#/$defs/sha40"
+              }
+            }
+          }
+        },
+        "description": "verified 必须有真实回读的 SHA"
+      }
+    }
+  ],
+  "$defs": {
+    "shortId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{1,63}$"
+    },
+    "sha40": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "nullableSha40": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "nullableSha256": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "isoDateTime": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

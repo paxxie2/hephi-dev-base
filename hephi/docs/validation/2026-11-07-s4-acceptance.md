@@ -33,12 +33,12 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 | --- | --- | --- |
 | E2/E3/E6/E7 | **pass**（外部模型执行；Lead 已核对 decisions） | `e2e/2026-11-07-E2/E3/E6/E7.md`：scope.outside-task deny、ready.other deny、ready.evidence-missing deny、ready.pr-mismatch deny；PR #53 |
 | E8 | pass（预期准备拒绝） | Issue #52 / ticket `c9ea328e…` failed |
-| E1-off | **PASS（对照，provenance 有缺口）** | `e2e/2026-11-07-E1-off.md`：Issue #54、PR #55、无 HEPHI state |
+| E1-off | **PARTIAL（对照；前置/provenance 无法核验）** | `e2e/2026-11-07-E1-off.md`：Issue #54、PR #55、无 HEPHI state |
 | E4 | **PASS（两阶段）** | `e2e/2026-11-07-E4.md`：Issue #56/57、ticket c231654e/13af322b、run.json blocked→passed、PR #58 |
 | E10 | **pass** | `e2e/2026-11-07-E10.md`：Issue #60、ticket 1612ffac、run passed、PR #61（2 文件） |
-| E1-on | **pass（流程级，SMOKE_ONLY 限制）** | `e2e/2026-11-07-E1-on.md`：Issue #49、ticket ad3d5016、run 6f202520 passed、PR #50 |
+| E1-on | **PARTIAL（SMOKE_ONLY 流程证据；正式场景未做）** | `e2e/2026-11-07-E1-on.md`：Issue #49、ticket ad3d5016、run 6f202520 passed、PR #50 |
 | E5/E9 | **blocked** | 前置未满足（H0 停机已做、H3 真实宿主探针 manual） |
-| E-PR1 | **pass（流程级，SMOKE_ONLY 限制）** | `e2e/2026-11-07-E-PR1.md`：PR #50 首次创建、ready.pass、HEAD 一致 |
+| E-PR1 | **PARTIAL（SMOKE_ONLY 流程证据）** | `e2e/2026-11-07-E-PR1.md`：PR #50 首次创建、ready.pass、HEAD 一致 |
 
 ## 6. P8 / D1 / D2 / P2 / P5 现状
 
@@ -63,6 +63,6 @@ A 线本轮完成了：main S1 PASS、PR30 独立复核（request changes）、A
 
 ## 9. 更新（E10 完成后）
 
-- A5 非 blocked 场景均已有真实记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1。
-- E5/E9 保持 blocked（前置未满足）；E1-on/E-PR1 使用 SMOKE_ONLY 任务作流程证据、E1-off provenance 有缺口、E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——这些限制使 A5 **尚不能判定为“人工复核通过”**，需负责人签收。
+- A5 非 blocked 场景均已有记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1；其中 **E4/E10/E2/E3/E6/E7/E8 为 pass**，**E1-off/E1-on/E-PR1 为 partial**（前置或任务类型限制）。
+- E5/E9 保持 blocked；E1-on/E-PR1 为 SMOKE_ONLY 流程证据、E1-off 前置/provenance 无法核验、E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——因此 A5 **未达到“全部应执行场景 pass + 人工复核通过”**，需补正式场景与负责人签收。
 - PR30 复审 F1（activation legacy 降级绕过）**未修复**，S3 真实部署门禁仍需该修复或明确书面降级。

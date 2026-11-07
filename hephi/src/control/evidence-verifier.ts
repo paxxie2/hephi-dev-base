@@ -1,12 +1,12 @@
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { verificationOf, type ActivationContract } from './activation.js'
+import { sessionBindingPolicy, verificationOf, type ActivationContract } from './activation.js'
 import type { ReadyVerifier } from './ready-gate.js'
 import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
 import { clean, defaultPullRequest, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo } from './repository.js'
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
-import { checkRunDir, readRuns, type CheckRunRecord } from './check-store.js'
+import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, type CheckRunRecord } from './check-store.js'
 import { checkCommand, contained, sameSource } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
 import { pluginCommit } from '../version.js'
@@ -82,11 +82,24 @@ export function createEvidenceVerifier(options: {
   stateDir: string
   pullRequest?: (repo: string, n: number) => Promise<PullRequestInfo>
   readSession?: SessionReader
+  /**
+   * Host configuration only (cordis.patch.yml / environment). The effective requirement is
+   * this OR the contract's frozen `evidence.requireSessionBinding`: host config can tighten
+   * the contract but never relax it (A1-K5). Contracts written before version 3 have no
+   * frozen value, so for them this is the only source.
+   */
   requireSessionBinding?: boolean
+  /**
+   * A3: operator resolutions for unfinished (`running`/`unknown`) runs. Disabled unless the
+   * host operator enables it (A3 trust boundary); a resolution only restores the right to
+   * re-run the check — it never turns the old execution into passing evidence.
+   */
+  allowOperatorResolutions?: boolean
 }): ReadyVerifier {
   if (options.requireSessionBinding && !options.readSession) throw new Error('Session binding requires a Session reader')
   const verify = async (contract: ActivationContract, execution: Parameters<ReadyVerifier>[1]): ReturnType<ReadyVerifier> => {
     try {
+      const binding = sessionBindingPolicy(contract, options.requireSessionBinding === true)
       const verification = verificationOf(contract)
       await requireKnowledgeQuery(contract, options.stateDir)
       const workspace = await resolveWorkspace(contract.workspace, execution.agent?.session.header.cwd)
@@ -99,7 +112,13 @@ export function createEvidenceVerifier(options: {
         throw new Error(`contract was prepared by another plugin build (${contract.plugin.commit}); rerun prepare with ${pluginCommit()}`)
       }
       const records = await readRuns(options.stateDir, contract.ticketId)
-      if (records.some(r => r.status === 'unknown' || r.status === 'running')) throw new Error('unfinished/unsupported check execution; operator resolution required')
+      const allowResolutions = options.allowOperatorResolutions ?? operatorResolutionsAllowed()
+      const resolved = allowResolutions
+        ? await resolvedRunIds(options.stateDir, contract.ticketId, contract.contractHash)
+        : new Set<string>()
+      if (records.some(r => (r.status === 'unknown' || r.status === 'running') && !resolved.has(r.runId))) {
+        throw new Error('unfinished/unsupported check execution; operator resolution required')
+      }
       // Required checks plus every check an acceptance item names, each verified once.
       const needed = new Set(verification.checks.filter(c => c.required).map(c => c.id))
       for (const item of contract.task?.acceptance ?? []) needed.add(item.check)
@@ -115,12 +134,28 @@ export function createEvidenceVerifier(options: {
         if (r.pluginCommit !== pluginCommit()) throw new Error(`check evidence was produced by another plugin build (${r.pluginCommit}); rerun checks with ${pluginCommit()}`)
         used.push(r)
       }
-      if (options.requireSessionBinding) {
-        const sessionId = execution.agent?.session.header.id
-        if (sessionId === undefined || sessionId === null || sessionId === '') throw new Error('ready report has no Worker Session; evidence cannot be bound')
-        const snapshot = await options.readSession!(String(sessionId))
+      // A1-K4: the evidence must name this Worker Session, not merely a non-empty id.
+      // This runs regardless of the binding switch (the defect was that the binding-off
+      // path had no such constraint); a ready report without a Session id fails closed
+      // because ownership cannot be proven. Which host id ends up in check records is
+      // still pending the H4 host probe.
+      const reportSessionId = execution.agent?.session.header.id
+      const sessionId = reportSessionId === undefined || reportSessionId === null || reportSessionId === ''
+        ? undefined
+        : String(reportSessionId)
+      if (sessionId === undefined) throw new Error('ready report has no Worker Session; evidence cannot be bound')
+      for (const r of used) {
+        if (r.sessionId !== sessionId) {
+          throw new Error(`evidence is not bound to a native execution: ${r.checkId}: check record belongs to Session "${r.sessionId}" but the current Worker Session is "${sessionId}"`)
+        }
+      }
+      if (binding.effective) {
+        if (!options.readSession) throw new Error('Session binding requires a Session reader')
+        // The Session snapshot carries the native call/result evidence; reading it after
+        // the ownership check keeps a missing sessionQuery from masking a foreign record.
+        const snapshot = await options.readSession(sessionId)
         for (const r of used) {
-          const problem = sessionBindingProblem(snapshot, String(sessionId), contract, r)
+          const problem = sessionBindingProblem(snapshot, sessionId, contract, r)
           if (problem) throw new Error(`evidence is not bound to a native execution: ${problem}`)
         }
       }
@@ -139,6 +174,8 @@ export function createEvidenceVerifier(options: {
     const result = await verify(contract, execution)
     const rule = result.ok ? 'ready.pass' : readyRule(result.reason)
     const sessionId = execution.agent?.session.header.id
+    // A1-K5b: every ready decision records the policy actually in force (contract + host + effective).
+    const binding = sessionBindingPolicy(contract, options.requireSessionBinding === true)
     await logDecision(options.stateDir, {
       ticketId: contract.ticketId,
       sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
@@ -150,6 +187,7 @@ export function createEvidenceVerifier(options: {
       rule,
       reason: result.ok ? undefined : result.reason,
       contractHash: contract.contractHash,
+      binding,
     })
     return result
   }

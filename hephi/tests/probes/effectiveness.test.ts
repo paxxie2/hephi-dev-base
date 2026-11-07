@@ -6,7 +6,7 @@ import { checkRunDir, saveRun } from '../../src/control/check-store.js'
 import { createEvidenceVerifier } from '../../src/control/evidence-verifier.js'
 import { gitFingerprint, sha256 } from '../../src/verification/fingerprint.js'
 import { pluginCommit } from '../../src/version.js'
-import { check, commitAll, PRICE, project, readyCall, verifier, type Project } from './harness.js'
+import { check, commitAll, PRICE, project, readyCall, SESSION, verifier, type Project } from './harness.js'
 
 // Delivery-discipline scenarios for Issue #7 "total() must add".
 async function deliver(p: Project) {
@@ -87,7 +87,7 @@ describe('evidence integrity', () => {
     await writeFile(join(checkRunDir(p.stateDir, p.contract.ticketId, 'forged'), 'output.log'), 'ok')
     await saveRun(p.stateDir, {
       version: 3, pluginCommit: pluginCommit(), runId: 'forged', sequence: 100, ticketId: p.contract.ticketId, contractHash: p.contract.contractHash, checkId: 'price',
-      sessionId: 'x', callId: 'x', innerCallId: 'fake-call', argv: ['node', '-e', PRICE], cwd: await realpath(p.dir), startedAt: 'x', finishedAt: 'x',
+      sessionId: SESSION, callId: 'x', innerCallId: 'fake-call', argv: ['node', '-e', PRICE], cwd: await realpath(p.dir), startedAt: 'x', finishedAt: 'x',
       status: 'passed', exitCode: 0, before: fp, after: fp, outputHash: sha256('ok'),
     })
     expect(await verifier(p)(p.contract, readyCall(p.dir))).toMatchObject({ ok: false, reason: expect.stringContaining('expected one native call fake-call') })

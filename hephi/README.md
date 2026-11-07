@@ -61,8 +61,17 @@
 - 改动文件必须同时落在 `HEPHI_ALLOWED_PATHS` 和某个验收项的 `paths` 内。直接 `write`/`edit` 的路径按实际检出目录解析（相对路径以 Session cwd 为基准，符号链接解析到真实位置），越界当场拒绝；shell 写入和读不到路径的调用由检查和 ready 时的最终 diff 兜底。
 - ready 拒绝删除已有测试（`protect`，默认覆盖常见测试路径）。`budget`（`maxFiles`、`maxChangedLines`）只在 Issue 作者写明时生效。这些都是机械限制，不能识别允许路径内的语义漂移。
 - 检查目录不存在等确定未启动的失败记为 `blocked`（原因以 `check not started:` 开头），修正后可重试，历史保留；可能仍在运行的执行记为 `unknown`，保持关闭，需人工处理。
-- `HEPHI_REQUIRE_SESSION_BINDING=1` 时，ready 要求每条证据在当前 Worker Session（不含继承事件）中有且仅有一个同 callId 的 `bash` 调用，命令和目录与记录一致，且有一个非错误的结果；结果带退出码时必须与记录一致。默认关闭：内部检查调用在真实宿主 Session 中的事件结构尚未核实。
+- Session 绑定（A1-K5）：prepare 把 `evidence.requireSessionBinding` 冻结进合同并纳入合同哈希；合同格式升为 `version: 3`，`version: 1/2` 的旧合同仍可读、其绑定语义由宿主配置决定。运行时生效值 = 合同值 **OR** 宿主配置（`config.requireSessionBinding` 或 `HEPHI_REQUIRE_SESSION_BINDING=1`），宿主配置只能收紧、不能放松。prepare 的默认值仍为关闭：内部检查调用在真实宿主 Session 中的事件结构尚未核实（A2）。
+- 绑定时每条证据必须在当前 Worker Session（不含继承事件）中有且仅有一个同 callId 的 `bash` 调用，命令和目录与记录一致，且有一个非错误的结果；结果带退出码时必须与记录一致。无论绑定开关，ready 都要求记录的 `sessionId` 等于当前 Worker Session id，缺少 Worker Session id 一律拒绝（A1-K4；宿主侧 id 是否与记录写入值一致仍待 H4 探针确认）。每次 ready 判定都会在决策日志追加 `binding: {contract, host, effective}`（A1-K5b），用于事后核对实际生效的策略。
 - 检查命令不接受 `parser`、`reportPaths`、`targetTests`、`expect` 字段；任务卡不接受 `hephi-test` 块；已有此类配置必须明确修订后创建新任务，不能静默忽略。
+
+## 已知限制
+
+以下是当前版本已确认、尚未用机制消除的限制。README 与验收记录都不得把它们当作已解决：
+
+1. **检查期间改动又改回无法发现。** 检查前后文件指纹相同只能证明两个时点一致，不能证明检查期间没有被改过再改回。检查期间 Worker 的修改类工具会被拦下，但检查命令本身或后台进程仍可能改文件；本版本不新增机制。
+2. **输出只与记录自身哈希一致（A1-OUT 完成前）。** ready 核对 `output.log` 与检查记录里的 `outputHash`，没有把输出内容与原生 Session 的 `tool/result` 逐字绑定；前台结果可能被截断，后台需要读 Job 输出。因此“输出哈希一致”只说明日志文件没有被改动。
+3. **绑定关闭时手写记录可以通过。** 默认（绑定关闭）时，ready 只要求记录的 `argv`、`cwd` 与合同冻结的检查一致；状态目录可写的前提下，手写一条这两项都正确的记录不需要真实执行就能通过。只有打开绑定（合同字段或宿主配置）才会要求当前 Worker Session 中对应的原生调用。
 
 ## 开发和验收
 

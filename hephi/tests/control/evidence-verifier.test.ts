@@ -7,10 +7,10 @@ import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ActivationContract } from '../../src/control/activation.js'
 import type { VerificationCheck } from '../../src/contracts/checks.js'
-import { runCheck } from '../../src/control/check-runner.js'
+import { checkCommand, runCheck } from '../../src/control/check-runner.js'
 import { sha256 } from '../../src/verification/fingerprint.js'
-import { createEvidenceVerifier } from '../../src/control/evidence-verifier.js'
-import { checkRunDir, readRuns } from '../../src/control/check-store.js'
+import { createEvidenceVerifier, type SessionSnapshot } from '../../src/control/evidence-verifier.js'
+import { appendResolution, checkRunDir, readRuns, type CheckRunRecord } from '../../src/control/check-store.js'
 import { allowedPath } from '../../src/control/repository.js'
 import { pluginCommit } from '../../src/version.js'
 
@@ -57,13 +57,34 @@ function outer(checkId: string): ToolExecution {
   }
 }
 
-function ready(workspace: string, prNumber?: number): ToolExecution {
+function ready(workspace: string, prNumber?: number, sessionId: string = 'worker-session'): ToolExecution {
   return {
     callId: 'ready-call' as never, rootCallId: 'ready-call' as never, name: 'orchestrator_report',
     arguments: { state: 'ready', ...(prNumber === undefined ? {} : { pr_number: prNumber }) },
     signal: new AbortController().signal, token: Symbol('ready') as never,
-    agent: { session: { header: { cwd: workspace } } } as never,
+    // A real DSH ready report always carries the Worker Session header; A1-K4 requires it.
+    agent: { session: { header: { cwd: workspace, id: sessionId } } } as never,
   }
+}
+
+/**
+ * A Session snapshot containing exactly the native bash calls/results that the check
+ * records claim (the host bash tool is a fixture in this suite). This is the shape
+ * sessionBindingProblem looks for; it is not a real DSH Session recording.
+ */
+function boundSnapshot(sessionId: string, records: CheckRunRecord[], baseSha: string): SessionSnapshot {
+  const events: SessionSnapshot['events'] = []
+  for (const record of records) {
+    const command = checkCommand(baseSha, record.argv[0]!, record.argv.slice(1))
+    events.push({ seq: events.length, type: 'tool/call', data: { name: 'bash', callId: record.innerCallId, arguments: JSON.stringify({ command, workdir: record.cwd }) } })
+    events.push({ seq: events.length, type: 'tool/result', data: { message: { toolCallId: record.innerCallId, isError: false, content: [] } } })
+  }
+  return { session: { id: sessionId }, inheritedEventCount: 0, events }
+}
+
+/** Contracts are validated by activation.ts, not by the verifier; this sets the fields the verifier reads. */
+function bindingContract(contract: ActivationContract, requireSessionBinding: boolean): ActivationContract {
+  return { ...contract, version: 3, evidence: { requireSessionBinding } }
 }
 
 function nativeTools(exitCode = 0) {
@@ -178,6 +199,31 @@ describe('synchronous evidence MVP (fixture integration)', () => {
     expect((await x.verify()).ok).toBe(false)
   })
 
+  it('A3: an enabled operator resolution unblocks re-runs but never turns the old unknown run into passing evidence', async () => {
+    const x = await setup()
+    const tools = { execute: async () => ({ isError: false, content: [], value: { kind: 'background', jobId: 'job-1' } }) }
+    expect((await x.execute('build', tools as never)).status).toBe('unknown')
+    const unknown = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
+    const blocked = await createEvidenceVerifier({ stateDir: x.stateDir })(x.c, ready(x.r.dir))
+    expect(blocked.ok).toBe(false)
+    if (!blocked.ok) expect(blocked.reason).toContain('operator resolution')
+    const appended = await appendResolution(x.stateDir, {
+      ticketId: x.c.ticketId, contractHash: x.c.contractHash, runId: unknown.runId,
+      basis: 'host-terminal', hostQuery: 'ps: pid gone', operator: 'operator@example.invalid',
+    })
+    expect(appended.appended).toBe(true)
+    // The resolution only restores the right to re-run: the unfinished record is still not evidence.
+    const stillNotEvidence = await createEvidenceVerifier({ stateDir: x.stateDir, allowOperatorResolutions: true })(x.c, ready(x.r.dir))
+    expect(stillNotEvidence.ok).toBe(false)
+    if (!stillNotEvidence.ok) expect(stillNotEvidence.reason).toContain('missing, failed or stale evidence')
+    const rerun = (checkId: string) => runCheck({
+      stateDir: x.stateDir, contract: x.c, checkId, outer: outer(checkId), tools: nativeTools(), allowOperatorResolutions: true,
+    })
+    expect((await rerun('build')).status).toBe('passed')
+    expect((await rerun('unit')).status).toBe('passed')
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir, allowOperatorResolutions: true })(x.c, ready(x.r.dir))).toEqual({ ok: true })
+  })
+
   it('rejects evidence whose recorded argv differs from the frozen check', async () => {
     const x = await setup(); await x.execute('build'); await x.execute('unit')
     const record = (await readRuns(x.stateDir, x.c.ticketId)).at(-1)!
@@ -221,6 +267,79 @@ describe('synchronous evidence MVP (fixture integration)', () => {
     await expect(readRuns(x.stateDir, x.c.ticketId)).rejects.toThrow('unsupported or corrupt check evidence')
   })
 
+
+  it('U-K5-04: a contract requirement is enforced even when the host configuration is off', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const contract = bindingContract(x.c, true)
+    // Without a Session reader the frozen requirement cannot be satisfied.
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir })(contract, ready(x.r.dir, undefined, 'worker-session')))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('requires a Session reader') })
+    // With a reader but no native call in the Session it is still refused.
+    const records = await readRuns(x.stateDir, contract.ticketId)
+    const empty: SessionSnapshot = { session: { id: 'worker-session' }, inheritedEventCount: 0, events: [] }
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => empty })(contract, ready(x.r.dir, undefined, 'worker-session')))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('expected one native call') })
+    // Legal: the native calls exist and the Session ids agree.
+    const verify = createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => boundSnapshot('worker-session', records, contract.baseSha) })
+    expect(await verify(contract, ready(x.r.dir, undefined, 'worker-session'))).toEqual({ ok: true })
+  })
+
+  it('U-K5-05: the host configuration can tighten a contract that leaves binding off, never relax it', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const records = await readRuns(x.stateDir, x.c.ticketId)
+    const empty: SessionSnapshot = { session: { id: 'worker-session' }, inheritedEventCount: 0, events: [] }
+    const relaxed = bindingContract(x.c, false)
+    // host on + no native call -> refused (host tightened the contract)
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => empty, requireSessionBinding: true })(relaxed, ready(x.r.dir, undefined, 'worker-session')))
+      .toMatchObject({ ok: false })
+    // host on + native calls -> allowed
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => boundSnapshot('worker-session', records, relaxed.baseSha), requireSessionBinding: true })(relaxed, ready(x.r.dir, undefined, 'worker-session')))
+      .toEqual({ ok: true })
+    // contract on + host off is still refused (host cannot relax the contract)
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => empty })(bindingContract(x.c, true), ready(x.r.dir, undefined, 'worker-session')))
+      .toMatchObject({ ok: false })
+  })
+
+  it('U-K4-01: a check record written by another Worker Session is rejected with binding on or off', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const records = await readRuns(x.stateDir, x.c.ticketId)
+    // Binding off (default): no Session reader is involved, the record's own sessionId is enough.
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir })(x.c, ready(x.r.dir, undefined, 'other-session')))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('check record belongs to Session') })
+    // Binding on: the snapshot claims to be the ready Session, so only the record's
+    // sessionId can expose that the evidence came from another Worker Session.
+    const verify = createEvidenceVerifier({ stateDir: x.stateDir, readSession: async id => boundSnapshot(id, records, x.c.baseSha), requireSessionBinding: true })
+    expect(await verify(x.c, ready(x.r.dir, undefined, 'other-session')))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('check record belongs to Session') })
+    // A ready report without a Worker Session id cannot prove ownership: fail closed.
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir })(x.c, ready(x.r.dir, undefined, '')))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('no Worker Session') })
+  })
+
+  it('U-K4-02: evidence recorded by the same Worker Session passes with binding on or off', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const records = await readRuns(x.stateDir, x.c.ticketId)
+    // Binding off: the matching record sessionId is the only requirement.
+    expect(await createEvidenceVerifier({ stateDir: x.stateDir })(x.c, ready(x.r.dir))).toEqual({ ok: true })
+    // Binding on: the native call/result must also be present in that Session.
+    const verify = createEvidenceVerifier({ stateDir: x.stateDir, readSession: async id => boundSnapshot(id, records, x.c.baseSha), requireSessionBinding: true })
+    expect(await verify(x.c, ready(x.r.dir, undefined, 'worker-session'))).toEqual({ ok: true })
+  })
+
+  it('U-K5-06: ready decisions record the real binding policy in the decision log', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const file = join(x.stateDir, 'hephi', x.c.ticketId, 'decisions.jsonl')
+    const last = async () => JSON.parse((await readFile(file, 'utf8')).trim().split('\n').at(-1)!)
+    // v1/v2 contract (no frozen value) with host off: contract=null, effective=false.
+    expect((await x.verify()).ok).toBe(true)
+    expect(await last()).toMatchObject({ version: 1, binding: { contract: null, host: false, effective: false } })
+    // v3 contract requiring binding while host is off: effective=true, logged as such.
+    expect((await createEvidenceVerifier({ stateDir: x.stateDir })(bindingContract(x.c, true), ready(x.r.dir, undefined, 'worker-session'))).ok).toBe(false)
+    expect(await last()).toMatchObject({ version: 1, binding: { contract: true, host: false, effective: true }, effectiveDecision: 'deny' })
+    // v3 contract leaving binding off while host is on: effective=true.
+    expect((await createEvidenceVerifier({ stateDir: x.stateDir, readSession: async () => ({ session: { id: 'worker-session' }, inheritedEventCount: 0, events: [] }), requireSessionBinding: true })(bindingContract(x.c, false), ready(x.r.dir, undefined, 'worker-session'))).ok).toBe(false)
+    expect(await last()).toMatchObject({ binding: { contract: false, host: true, effective: true } })
+  })
 
   it('records ready decisions in the per-ticket decision log', async () => {
     const x = await setup(); await x.execute('build'); await x.execute('unit')

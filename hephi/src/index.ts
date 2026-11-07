@@ -12,18 +12,24 @@ export const inject = ['agents', 'tools', 'systemPrompt']
 
 /**
  * Cordis bundle entry. The control plane only observes existing Worker Agents.
- * Session binding is opt-in (HEPHI_REQUIRE_SESSION_BINDING=1) until the host's
- * event structure for inner check calls has been confirmed.
+ * Session binding is decided by the contract (A1-K5: `evidence.requireSessionBinding`,
+ * frozen at prepare) with this host configuration able to tighten it only. Host config
+ * still defaults to off until the host's event structure for inner check calls is confirmed.
  */
-export function apply(ctx: Context, config: { stateDir?: string; requireSessionBinding?: boolean } = {}): void {
+export function apply(ctx: Context, config: { stateDir?: string; requireSessionBinding?: boolean; allowOperatorResolutions?: boolean } = {}): void {
   const stateDir = defaultStateDir(config.stateDir)
-  const requireSessionBinding = config.requireSessionBinding ?? process.env.HEPHI_REQUIRE_SESSION_BINDING === '1'
+  // Host-side requirement. It is combined with the contract value inside the verifier
+  // (effective = contract OR host); it can never relax a contract that requires binding.
+  const hostRequireSessionBinding = config.requireSessionBinding ?? process.env.HEPHI_REQUIRE_SESSION_BINDING === '1'
+  // A3 host switch. The environment variable is only a temporary bootstrap; the real trust
+  // boundary (operator-only configuration, not inherited by Worker shells) is pending G1.
+  const allowOperatorResolutions = config.allowOperatorResolutions ?? process.env.HEPHI_ALLOW_OPERATOR_RESOLUTIONS === '1'
   const readSession = async (sessionId: string): Promise<SessionSnapshot> => {
     const query = ctx.get('sessionQuery') as { readSession(id: string): Promise<SessionSnapshot> } | undefined
     if (!query) throw new Error('host sessionQuery service is unavailable; evidence cannot be bound to native executions')
     return query.readSession(sessionId)
   }
-  const verify = createEvidenceVerifier({ stateDir, readSession, requireSessionBinding })
+  const verify = createEvidenceVerifier({ stateDir, readSession, requireSessionBinding: hostRequireSessionBinding, allowOperatorResolutions })
   const dispose = installWorkerMount(ctx, { stateDir, verify })
   ctx.effect(() => dispose, `${pluginName}: worker ready gate`)
 }

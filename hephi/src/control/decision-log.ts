@@ -5,6 +5,13 @@ import { pluginCommit } from '../version.js'
 /** Append-only decision log for one Ticket. Writes never change a decision. */
 export const DECISION_LOG_VERSION = 1
 
+/**
+ * Effective Session-binding policy for one ready decision (A1-K5b).
+ * `contract: null` records that the contract format predates the field (v1/v2);
+ * `effective` is what the verifier actually enforced.
+ */
+export type DecisionBinding = { contract: boolean | null; host: boolean; effective: boolean }
+
 export type DecisionLogInput = {
   ticketId: string
   sessionId?: string
@@ -16,6 +23,8 @@ export type DecisionLogInput = {
   rule: string
   reason?: string
   contractHash?: string
+  /** Additive optional field; DECISION_LOG_VERSION stays 1 because old readers ignore unknown keys. */
+  binding?: DecisionBinding
 }
 
 export type DecisionLogResult = { ok: true; seq: number } | { ok: false; logError: string }

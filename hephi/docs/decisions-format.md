@@ -21,6 +21,7 @@
 | `reason` | 拒绝原因或记录说明（可空） |
 | `contractHash` | 判定时使用的合同哈希 |
 | `pluginCommit` | 产生判定的插件构建 commit |
+| `binding` | 可选（A1-K5b）。该次 ready 判定实际生效的 Session 绑定策略：`{ contract, host, effective }`；`contract: null` 表示合同版本（v1/v2）没有冻结该值。仅新增可选字段，`version` 保持 `1`，旧读者忽略即可。 |
 
 ## 规则编号
 

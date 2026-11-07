@@ -12,8 +12,14 @@ export type ExecutionMode = 'native' | 'staged'
 /** shadow only observes: decisions are recorded but never enforced. */
 export type EnforcementMode = 'enforce' | 'shadow'
 
+/**
+ * Session-binding policy frozen into the contract (format version 3+).
+ * Contracts written before A1-K5 (v1/v2) never carry it; for those the host configuration decides.
+ */
+export type EvidencePolicy = { requireSessionBinding: boolean }
+
 /** The format this plugin writes. Older formats are read-only compatible; unknown versions are rejected. */
-export const ACTIVATION_VERSION = 2
+export const ACTIVATION_VERSION = 3
 
 /** Contract formats written before canonical hashing. Their stored hash uses the raw JSON key order. */
 export const LEGACY_ACTIVATION_VERSION = 1
@@ -40,6 +46,8 @@ export type ActivationContract = {
   plugin?: { version: string; commit: string }
   /** Issue-scoped task card. Absent only in contracts written before task cards. */
   task?: TaskCard
+  /** Session-binding policy. Absent in contracts written before A1-K5 (v1/v2); host configuration then decides. */
+  evidence?: EvidencePolicy
   contractHash: string
 }
 
@@ -131,6 +139,32 @@ export function executionModeOf(contract: ActivationContract): ExecutionMode {
   return contractExecutionMode(contract.executionMode)
 }
 
+/**
+ * The Session-binding policy frozen into the contract. Only format version 3+ carries it;
+ * for v1/v2 (and unversioned) contracts undefined means "host configuration decides".
+ */
+export function evidenceOf(contract: ActivationContract): EvidencePolicy | undefined {
+  if (contract.version !== ACTIVATION_VERSION) return undefined
+  return contract.evidence
+}
+
+/**
+ * The effective Session-binding requirement for one decision.
+ * `effective = contract OR host`: host configuration can tighten the contract but never relax it,
+ * and it is the only source for contracts written before version 3. `contract: null` records
+ * that the contract format predates the field instead of pretending it said false.
+ */
+export type SessionBindingPolicy = { contract: boolean | null; host: boolean; effective: boolean }
+export function sessionBindingPolicy(contract: ActivationContract, hostRequireSessionBinding: boolean): SessionBindingPolicy {
+  const contractValue = evidenceOf(contract)?.requireSessionBinding
+  const host = hostRequireSessionBinding === true
+  return {
+    contract: contractValue === undefined ? null : contractValue,
+    host,
+    effective: host || contractValue === true,
+  }
+}
+
 /** Validate the one supported check contract. No legacy fallback. */
 export function verificationOf(contract: ActivationContract): VerificationConfig {
   return parseVerificationConfig(contract.verification)
@@ -191,7 +225,7 @@ function canonicalize(value: unknown): unknown {
   return value
 }
 
-/** Canonical payload for the current format (version 2): sorted keys, arrays in order, no whitespace. */
+/** Canonical payload for the current formats (version 2 and 3): sorted keys, arrays in order, no whitespace. */
 export function canonicalPayload(contract: ContractHashInput): string {
   return JSON.stringify(canonicalize(contract))
 }
@@ -201,7 +235,7 @@ export function legacyPayload(contract: ContractHashInput): string {
   return JSON.stringify(contract)
 }
 
-/** Current contract hash (version 2, canonical serialization). */
+/** Current contract hash (version 2/3, canonical serialization). */
 export function contractHash(contract: ContractHashInput): string {
   return `sha256:${createHash('sha256').update(canonicalPayload(contract)).digest('hex')}`
 }
@@ -269,6 +303,10 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
 
   // Reject an invalid mode before writing an intent or a partial contract.
   const enforcement = parseEnforcement(env.HEPHI_ENFORCEMENT)
+  // A1-K5: the binding requirement is frozen into the contract, not read at ready time.
+  // Default stays false until A2 confirms the host's inner-call event shape; a host
+  // configuration may only tighten it later (see sessionBindingPolicy).
+  const requireSessionBinding = boolean(env.HEPHI_REQUIRE_SESSION_BINDING, false)
   const executionMode = env.HEPHI_ISSUE_TITLE !== undefined
     ? parseIssueExecutionMode(env.HEPHI_ISSUE_TITLE, env.HEPHI_EXECUTION_MODE)
     : parseExecutionMode(env.HEPHI_EXECUTION_MODE)
@@ -298,6 +336,7 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     enforcement,
     plugin: { version: pluginVersion, commit: pluginCommit() },
     verification,
+    evidence: { requireSessionBinding },
     ...(task ? { task } : {}),
   }
   const contract: ActivationContract = { ...base, contractHash: contractHash(base) }
@@ -325,8 +364,38 @@ function isContract(value: unknown): value is Omit<ActivationContract, 'executio
 
 const ACTIVATION_FIELDS = new Set([
   'version', 'enabled', 'ticketId', 'repository', 'issueNumber', 'workspace', 'baseRef', 'baseSha',
-  'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'task', 'contractHash',
+  'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'evidence', 'task', 'contractHash',
 ])
+
+/** Formats that use the canonical (sorted-key) hash: version 2 and version 3 share the same algorithm. */
+function usesCanonicalHash(version: unknown): boolean {
+  return version === 2 || version === ACTIVATION_VERSION
+}
+
+const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSION, 2, ACTIVATION_VERSION])
+
+/**
+ * The evidence policy is part of version 3 only. Version 1/2 writers never emit it, so an
+ * old-version contract carrying it was hand-edited: reject instead of silently interpreting
+ * a binding switch that the writer of that format could not have frozen.
+ */
+function contractEvidenceProblem(contractRecord: Record<string, unknown>): string | undefined {
+  const version = contractRecord.version
+  const evidence = contractRecord.evidence
+  if (version === ACTIVATION_VERSION) {
+    if (evidence === undefined) return 'version 3 requires evidence.requireSessionBinding'
+  } else if (evidence !== undefined) {
+    return `unsupported HEPHI activation field for this version: evidence (version ${String(version)})`
+  }
+  if (evidence === undefined) return undefined
+  if (!evidence || typeof evidence !== 'object' || Array.isArray(evidence)) return 'invalid evidence policy (expected an object)'
+  const keys = Object.keys(evidence as Record<string, unknown>)
+  if (keys.length !== 1 || keys[0] !== 'requireSessionBinding'
+    || typeof (evidence as { requireSessionBinding?: unknown }).requireSessionBinding !== 'boolean') {
+    return 'invalid evidence policy (expected only requireSessionBinding: boolean)'
+  }
+  return undefined
+}
 
 /** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
 function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: string): void {
@@ -336,11 +405,11 @@ function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: stri
 }
 
 /**
- * Current format is 2. Version 1 and contracts without a version stay readable.
+ * Current format is 3. Version 1 and version 2 contracts stay readable.
  * Anything else is rejected with an explicit migration instruction.
  */
 function supportedVersion(value: unknown, filePath: string): void {
-  if (value === undefined || value === LEGACY_ACTIVATION_VERSION || value === ACTIVATION_VERSION) return
+  if (value === undefined || SUPPORTED_ACTIVATION_VERSIONS.has(value)) return
   throw new Error(`unsupported HEPHI activation version: ${String(value)}; re-prepare a new contract with the current plugin instead of editing the stored hash (${filePath})`)
 }
 
@@ -353,11 +422,11 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   const parsed: unknown = JSON.parse(text)
   if (!isContract(parsed)) throw new Error(`invalid HEPHI activation contract: ${filePath}`)
   const { contractHash: storedHash, ...base } = parsed
-  // Version selects the hash algorithm. Version 2 uses canonical serialization;
-  // version 1 and unversioned contracts keep the historical raw key-order hash.
+  // Version selects the hash algorithm. Version 2 and version 3 use the same canonical
+  // serialization; version 1 and unversioned contracts keep the historical raw key-order hash.
   // Unknown versions are checked with the historical algorithm first so a forged
   // hash still reports as a hash mismatch rather than a supported-but-wrong version.
-  const expectedHash = base.version === ACTIVATION_VERSION ? contractHash(base) : legacyContractHash(base)
+  const expectedHash = usesCanonicalHash(base.version) ? contractHash(base) : legacyContractHash(base)
   if (storedHash !== expectedHash) throw new Error(`HEPHI activation contract hash mismatch: ${filePath}`)
   supportedVersion(base.version, filePath)
   rejectUnsupportedFields(parsed as Record<string, unknown>, filePath)
@@ -366,6 +435,8 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   // shape and later reads/hashes match.
   contractExecutionMode(base.executionMode)
   contractEnforcement(base.enforcement)
+  const evidenceProblem = contractEvidenceProblem(parsed as Record<string, unknown>)
+  if (evidenceProblem) throw new Error(`invalid HEPHI activation contract: ${evidenceProblem} (${filePath})`)
   if (base.plugin !== undefined) {
     const plugin = base.plugin as { version?: unknown; commit?: unknown }
     if (typeof plugin?.version !== 'string' || typeof plugin?.commit !== 'string') throw new Error(`invalid HEPHI activation plugin metadata: ${filePath}`)

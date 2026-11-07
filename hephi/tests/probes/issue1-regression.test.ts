@@ -8,7 +8,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import { describe, expect, it } from 'vitest'
 import { prepareActivation } from '../../src/control/activation.js'
-import { readRuns } from '../../src/control/check-store.js'
+import { readRuns, saveRun } from '../../src/control/check-store.js'
 import { disciplineProblems, summarizeChanges } from '../../src/control/discipline.js'
 import { mountWorkerGate } from '../../src/control/worker-mount.js'
 import { apply } from '../../src/index.js'
@@ -111,10 +111,17 @@ describe('Session binding (criterion 3)', () => {
 
   it('the plugin entry passes the binding requirement through to ready', async () => {
     const p = await delivered()
+    // The Worker Session id has to be worker-<ticketId> for the mount to bind the contract.
+    // A1-K4 compares the check records' sessionId with this id, so align the fixture records
+    // (the shared `outer()` helper writes SESSION) without touching the assertions.
+    const workerSessionId = `worker-${p.contract.ticketId}`
+    for (const record of await readRuns(p.stateDir, p.contract.ticketId)) {
+      await saveRun(p.stateDir, { ...record, sessionId: workerSessionId })
+    }
     const readyFor = async (config: { requireSessionBinding: boolean }) => {
       let preExecute: ((e: ToolExecution, next: () => Promise<unknown>) => Promise<any>) | undefined
       const agent = {
-        session: { header: { id: `worker-${p.contract.ticketId}`, agentPreset: 'dsh-superagent-worker', cwd: p.dir } },
+        session: { header: { id: workerSessionId, agentPreset: 'dsh-superagent-worker', cwd: p.dir } },
         ctx: {
           on: (name: string, fn: typeof preExecute) => { if (name === 'tools/pre-execute') preExecute = fn; return () => true },
           tools: { register: () => () => true, guard: () => () => true },

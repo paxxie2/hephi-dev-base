@@ -45,6 +45,19 @@ describe('decision log', () => {
     expect(new Set(parsed.map(item => item.callId)).size).toBe(25)
   })
 
+  it('U-K5-06b: stores the effective binding policy as an additive v1 field', async () => {
+    const dir = await stateDir()
+    const binding = { contract: true, host: false, effective: true as const }
+    expect(await appendDecision(dir, entry({ tool: 'orchestrator_report', binding }))).toEqual({ ok: true, seq: 1 })
+    expect(await appendDecision(dir, entry({ tool: 'orchestrator_report', binding: { contract: null, host: true, effective: true } }))).toEqual({ ok: true, seq: 2 })
+    const parsed = await lines(dir)
+    expect(parsed[0]).toMatchObject({ version: 1, binding: { contract: true, host: false, effective: true } })
+    expect(parsed[1]).toMatchObject({ version: 1, binding: { contract: null, host: true, effective: true } })
+    // The field is optional: entries without a binding decision keep the old shape.
+    expect(parsed[0]).not.toHaveProperty('binding.unknown')
+    expect(Object.keys(parsed[1])).toContain('binding')
+  })
+
   it('reports a write failure without throwing and does not invent a record', async () => {
     const dir = await stateDir()
     const logDir = join(dir, 'hephi', 'ticket-1')

@@ -286,3 +286,50 @@ node eval/b5-plan.mjs --self-test
   exit 2；`staged` 只用于 Q3 的 `native,staged` 单独实验，禁止与 `off` 混合。
 - **本计划只是运行输入，不代表任何运行已完成**；seed、重复比例与样本量最终仍由 PREREG 锁定
   （`eval/PREREG.md` §9/§12，D-4 待负责人）；`plan.json` 随批次存档（§10）。
+
+## 14. B3 运行记录工具 `eval/record-run.mjs`（2026-11-08 追加）
+
+> 本节为**追加引用**，不修改 §1–§13 的既有约束与数值。工具只做“校验候选记录 + 原样落盘”，
+> 不产生运行、不访问宿主、不代表任何真实实验结论；B3 运行记录字段口径见 §6 与
+> `eval/schema/run.schema.json`。
+
+### 14.1 用法
+
+```sh
+# 校验候选记录并写出（输出已存在时拒绝覆盖）
+node eval/record-run.mjs --input <candidate.json> --out <record.json>
+# 工具自测（B3-01..B3-05）
+node eval/record-run.mjs --self-test
+```
+
+- 参数：`--input` 候选运行记录 JSON；`--out` 输出记录路径；`--self-test` 自测；`--help` 打印用法。
+- 校验：按 `eval/schema/run.schema.json` 做最小严格校验，覆盖该 schema 实际使用的关键字：
+  `required`、`type`、`enum`、`const`、`minimum`/`maximum`、`minLength`、`pattern`（40-hex/64-hex/
+  shortId）、`format: date-time`、嵌套 `properties`/`required`/`additionalProperties`、
+  `oneOf`、`allOf` 与 `if`/`then` 条件约束（shadow 只允许 off、`validationEnvironment.unavailable`
+  必填 reason、`loadedShaReadback=verified` 必须有 40-hex `loadedSha`）。schema 若新增工具未覆盖的
+  关键字，工具以 exit 2 失败，不会静默放宽。
+- 语义：输入字段值原样写入（仅统一 JSON 序列化：2 空格缩进 + 末尾换行）；**不补默认值、不伪造
+  token、不把 null 改写成 0**；不可得的 token 保持 `null`。
+- 退出码：`0`=合法且已写入；`1`=数据不合法（stderr 逐条列出字段路径，且不写输出）；
+  `2`=参数/IO/schema 错误（含输出已存在、父目录缺失、输入不可读/不是 JSON 文件）。
+- 覆盖保护：输出已存在时**拒绝覆盖**（exit 2，既有文件不变）；写入使用同目录临时文件 +
+  `rename` 原子替换，失败清理临时文件、不留半成品。
+
+### 14.2 自测口径（本版实际执行，非真实实验）
+
+```sh
+node eval/record-run.mjs --self-test   # 26 条断言；全部在 mkdtemp 临时目录执行，不写仓库
+```
+
+- B3-01：完整合法记录 exit 0、输出与输入逐字段一致、无 tmp 残留；
+- B3-02：逐项删除 30 个 required 字段，以及非法枚举/非 40-hex/负值/嵌套必填/条件约束/未知字段
+  /非法 JSON 等 → exit 1 且指出字段路径、不产生输出；
+- B3-03：nullable 字段原样保留（token 读不到保持 `null`，不补 0），省略的可选字段不被写回；
+- B3-04：输出已存在拒绝覆盖；父目录缺失/父路径是文件/只读目录等 IO 错误 exit 2 且不留半成品；
+- B3-05：由 `eval/tasks/hephi/b5-task-key-whitelist/`（`task.json`/`issue.md`）与
+  `eval/evidence/checklist3/check-task-selftest.log` 的**真实 SHA/时间派生的夹具**，验证
+  `taskCard.sha256`/`decisionLog.sha256`/`base` 等可回溯字段可复算。
+
+> **未验证项（必须保留）**：B3-05 只是**派生夹具，不是正式实验记录**；本仓库目前**没有甲（A 侧）
+> 交付的真实 run**，因此本工具及其自测不能证明任何正式实验记录或对照实验结论。与 §12 口径一致。

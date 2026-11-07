@@ -1,0 +1,21 @@
+diff --git a/src/a.mjs b/src/a.mjs
+--- a/src/a.mjs
++++ b/src/a.mjs
+@@ -2,0 +3,2 @@
++line 3
++line 4
+diff --git a/src/b.mjs b/src/b.mjs
+--- a/src/b.mjs
++++ b/src/b.mjs
+@@ -1,0 +2,1 @@
++line 2
+diff --git a/src/c.mjs b/src/c.mjs
+--- a/src/c.mjs
++++ b/src/c.mjs
+@@ -4,0 +5,1 @@
++line 5
+diff --git a/README.md b/README.md
+--- a/README.md
++++ b/README.md
+@@ -0,0 +1,1 @@
++docs only

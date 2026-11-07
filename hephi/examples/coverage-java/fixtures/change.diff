@@ -1,0 +1,11 @@
+diff --git a/src/main/java/com/example/Calc.java b/src/main/java/com/example/Calc.java
+--- a/src/main/java/com/example/Calc.java
++++ b/src/main/java/com/example/Calc.java
+@@ -2,0 +3,2 @@
++int a = 1;
++int b = 2;
+diff --git a/src/main/java/com/example/Other.java b/src/main/java/com/example/Other.java
+--- a/src/main/java/com/example/Other.java
++++ b/src/main/java/com/example/Other.java
+@@ -0,0 +1,1 @@
++class Other {}

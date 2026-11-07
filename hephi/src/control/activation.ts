@@ -79,13 +79,22 @@ function offlineCommandProblem(line: string): string | undefined {
   if (/\bnpm\s+(install|i|add)\b/.test(line) && !/\bnpm\s+ci\b/.test(line) && !/--offline|--prefer-offline|--cache\b/.test(line)) {
     return 'npm install without --offline/--prefer-offline/--cache'
   }
+  if (/\bnpm\s+exec\b/.test(line)) return 'npm exec can download packages from the network'
   if (/\bpnpm\s+(install|i|add)\b/.test(line) && !/--frozen-lockfile|--offline/.test(line)) {
     return 'pnpm install without --frozen-lockfile or --offline'
   }
+  if (/\bpnpm\s+dlx\b/.test(line)) return 'pnpm dlx downloads packages from the network'
+  if (/\b(?:npx)\b/.test(line)) return 'npx can download packages from the network'
   if (/\bmvn(w)?\b/.test(line) && !/-o\b|--offline/.test(line)) return 'mvn without -o/--offline'
   if (/\bgradle(w)?\b/.test(line) && !/--offline/.test(line)) return 'gradle without --offline'
   if (/\byarn\s+install\b/.test(line) && !/--offline|--frozen-lockfile/.test(line)) return 'yarn install without an offline/frozen flag'
+  if (/\byarn\s+add\b/.test(line) && !/--offline|--frozen-lockfile/.test(line)) return 'yarn add without an offline/frozen flag'
+  if (/\byarn\s+dlx\b/.test(line)) return 'yarn dlx downloads packages from the network'
+  if (/\bbun\s+(add|install)\b/.test(line)) return 'bun add/install can download packages from the network'
   if (/\bpip3?\s+install\b/.test(line) && !/--no-index|--find-links/.test(line)) return 'pip install without --no-index/--find-links'
+  if (/\bpip3?\s+download\b/.test(line)) return 'pip download fetches packages from the network'
+  if (/\bgo\s+get\b/.test(line)) return 'go get fetches modules from the network'
+  if (/\bcorepack\s+prepare\b/.test(line)) return 'corepack prepare downloads package managers from the network'
   return undefined
 }
 

@@ -220,14 +220,16 @@ function writeHook(name, body) {
   run('chmod', ['+x', file])
   return file
 }
-// 假宿主由测试用 `nohup ... &` 异步拉起，按 POSIX 约定后台命令继承 SIGINT=ignore，
-// 因此测试通过 --stop-command 发送 SIGTERM 来模拟宿主的 stop 脚本（真实 SIGINT 由 H0 在真宿主验证）。
+// 假宿主由测试用 `nohup ... &` 异步拉起。--drain effects 现在强制要求 --stop-command
+// （默认 SIGINT 路径已删除），所有场景都通过 stop hook 发送 SIGTERM 模拟宿主 stop 脚本；
+// 真实停机方式由 H0 用 dsh-superagent stop CLI 验证，不是 SIGINT。
 function defaultStopHook() {
   return writeHook('stop-term.sh', [`pid=$(cat "${join(instance, 'host.pid')}")`, 'kill -TERM "$pid" 2>/dev/null || true', 'exit 0'].join('\n'))
 }
-function effectsDeployArgs(extra = []) {
+function effectsDeployArgs(extra = [], options = {}) {
   const stop = extra.includes('--stop-command') ? [] : ['--stop-command', defaultStopHook()]
-  return ['--drain', 'effects', '--target', B, '--previous', A, '--effects-db', effectsDbPath(), '--stop-timeout', '2', ...stop, ...extra]
+  const wait = options.waitSeconds === undefined ? [] : ['--auto-restart-wait', String(options.waitSeconds)]
+  return ['--drain', 'effects', '--target', B, '--previous', A, '--effects-db', effectsDbPath(), '--stop-timeout', '2', ...stop, ...wait, ...extra]
 }
 
 async function deploy(extra, timeout = 120_000) {
@@ -676,7 +678,7 @@ async function runRemediationSuite() {
 
 // F-02：§4.5 停机式排空（--drain effects）假宿主回归。
 // 真实进程模拟 host.pid 停机；effects DB 用 node:sqlite 构造真实 WAL 库；
-// check-effects-db.mjs 是真实调用（不是 mock）。真实 SIGINT/drain 行为属宿主验证范围（见报告）。
+// check-effects-db.mjs 是真实调用（不是 mock）。真实停机由宿主 stop 脚本完成（SIGINT 默认路径已删除）。
 async function runF02Suite() {
   // F-02-A：全部通过 → 停机式排空成功切换。
   await initWorld()
@@ -697,7 +699,7 @@ async function runF02Suite() {
     check('F-02 A record keeps running precheck evidence', Boolean(rec) && /"ok":true/.test(rec.precheckJson) && /"total":0/.test(rec.precheckJson), rec && rec.precheckJson)
     check('F-02 A record keeps post-stop copy evidence', Boolean(rec) && /"ok":true/.test(rec.finalCheckJson) && /"journalMode":"wal"/.test(rec.finalCheckJson) && /"total":0/.test(rec.finalCheckJson), rec && rec.finalCheckJson)
     check('F-02 A record keeps managed process table', Boolean(rec) && rec.hostPid === String(oldPid) && rec.processFile !== 'none' && existsSync(rec.processFile) && readFileSync(rec.processFile, 'utf8').includes(String(oldPid)), JSON.stringify(rec))
-    check('F-02 A record marks drain mode, health and paused readback', Boolean(rec) && rec.drainMode === 'effects' && rec.health === 'all-required-ready' && rec.paused === true && rec.keptPaused === 'yes', JSON.stringify(rec))
+    check('F-02 A record marks drain mode, health, paused readback and default auto-restart wait=10', Boolean(rec) && rec.drainMode === 'effects' && rec.health === 'all-required-ready' && rec.paused === true && rec.keptPaused === 'yes' && rec.autoRestartWait === '10', JSON.stringify(rec))
   } finally {
     await closeWorld()
   }
@@ -710,7 +712,7 @@ async function runF02Suite() {
     createEffectsDatabase(2).close()
     const oldPid = hostPidValue()
     const before = pointer()
-    const r = await deploy(effectsDeployArgs())
+    const r = await deploy(effectsDeployArgs([], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-precheck')
     check('F-02 B pending effects reject before stop', r.code !== 0, `code=${r.code} ${r.out}`)
     check('F-02 B pointer unchanged and host not stopped', pointer() === before && pidAlive(oldPid), `pointer=${pointer()} oldPidAlive=${pidAlive(oldPid)}`)
@@ -742,7 +744,7 @@ async function runF02Suite() {
       `kill -TERM "$(cat "${join(instance, 'host.pid')}")"`,
       'exit 0',
     ].join('\n'))
-    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-final')
     const walPath = `${effectsDbPath()}-wal`
     check('F-02 C late effects stayed in the uncheckpointed WAL', existsSync(walPath) && statSync(walPath).size > 0, `walExists=${existsSync(walPath)} size=${existsSync(walPath) ? statSync(walPath).size : 0}`)
@@ -768,7 +770,7 @@ async function runF02Suite() {
       `kill -TERM "$(cat "${join(instance, 'host.pid')}")"`,
       'exit 0',
     ].join('\n'))
-    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-final')
     check('F-02 D corrupt final snapshot rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
     check('F-02 D pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
@@ -795,7 +797,7 @@ async function runF02Suite() {
     if (setup.code !== 0) { check('F-02 E setup deploys A', false, setup.out); return }
     createEffectsDatabase(0).close()
     const childPid = readPid(join(instance, 'child.pid'))
-    const r = await deploy(effectsDeployArgs())
+    const r = await deploy(effectsDeployArgs([], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-residual')
     check('F-02 E leftover managed process rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
     check('F-02 E pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
@@ -822,12 +824,12 @@ async function runF02Suite() {
       'exit 0',
     ].join('\n'))
     const startsBefore = starts()
-    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-auto-restart')
     const autoPid = readPid(join(root, 'auto-restart.pid'))
     check('F-02 F auto restart rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
     check('F-02 F pointer stays on the original release A', pointer() === join(releaseDir(A), 'lib'), pointer())
-    check('F-02 F record keeps autoRestartedPid and the left-running action', Boolean(rec) && Number(rec.autoRestartedPid) === autoPid && rec.autoRestartAction === 'left-running', JSON.stringify(rec))
+    check('F-02 F record keeps autoRestartedPid, the left-running action and the 1s auto-restart wait', Boolean(rec) && Number(rec.autoRestartedPid) === autoPid && rec.autoRestartAction === 'left-running' && rec.autoRestartWait === '1', JSON.stringify(rec))
     check('F-02 F auto-restarted host is left running without a second start', pidAlive(autoPid) && hostPidValue() === autoPid && starts() === startsBefore, `autoPid=${autoPid} alive=${pidAlive(autoPid)} hostPid=${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
   } finally {
     killPid(readPid(join(root, 'auto-restart.pid')))
@@ -842,7 +844,7 @@ async function runF02Suite() {
     createEffectsDatabase(0).close()
     const oldPid = hostPidValue()
     const hook = writeHook('stop-fail.sh', ['echo "injected stop failure" >&2', 'exit 7'].join('\n'))
-    const r = await deploy(effectsDeployArgs(['--stop-command', hook]))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook], { waitSeconds: 1 }))
     const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-stop')
     check('F-02 G stop failure rejects the switch', r.code !== 0, `code=${r.code} ${r.out}`)
     check('F-02 G pointer unchanged and original host still running', pointer() === join(releaseDir(A), 'lib') && pidAlive(oldPid), `pointer=${pointer()} alive=${pidAlive(oldPid)}`)
@@ -860,14 +862,14 @@ async function runF02Suite() {
     createEffectsDatabase(0).close()
     const oldPid = hostPidValue()
     const startsBefore = starts()
-    const r = await deploy(effectsDeployArgs(['--dry-run']))
+    const r = await deploy(effectsDeployArgs(['--dry-run'], { waitSeconds: 1 }))
     check('F-02 H dry-run exits 0', r.code === 0 && /dry-run/.test(r.out), `code=${r.code} ${r.out}`)
     check('F-02 H dry-run does not stop or restart the host', hostPidValue() === oldPid && pidAlive(oldPid) && starts() === startsBefore, `pid ${oldPid} -> ${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
     check('F-02 H dry-run does not build or switch', !existsSync(releaseDir(B)) && pointer() === join(releaseDir(A), 'lib'), `pointer=${pointer()}`)
     const managedFiles = readdirSync(join(instance, 'logs')).filter((name) => name.startsWith('managed-') && name.endsWith('.txt'))
     check('F-02 H dry-run records the managed process table', managedFiles.length > 0, JSON.stringify(managedFiles))
     const customProcessFile = join(root, 'custom-managed.txt')
-    const custom = await deploy(effectsDeployArgs(['--dry-run', '--process-file', customProcessFile]))
+    const custom = await deploy(effectsDeployArgs(['--dry-run', '--process-file', customProcessFile], { waitSeconds: 1 }))
     check('F-02 H --process-file writes the managed table to the requested path', custom.code === 0 && existsSync(customProcessFile) && readFileSync(customProcessFile, 'utf8').includes(String(oldPid)), `code=${custom.code} ${custom.out}`)
   } finally {
     await closeWorld()
@@ -880,6 +882,8 @@ async function runF02Suite() {
     check('F-02 I unknown --drain mode exits 2', badMode.code === 2 && /unknown --drain mode/.test(badMode.out), badMode.out)
     const conflict = await deploy(['--drain', 'effects', '--rollback', '--target', A])
     check('F-02 I --drain effects with --rollback exits 2', conflict.code === 2 && /cannot be combined/.test(conflict.out), conflict.out)
+    const noStop = await deploy(['--drain', 'effects', '--target', A, '--effects-db', effectsDbPath()])
+    check('F-02 I --drain effects without --stop-command exits 2', noStop.code === 2 && /requires --stop-command/.test(noStop.out), noStop.out)
   } finally {
     await closeWorld()
   }

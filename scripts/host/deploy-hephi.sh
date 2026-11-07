@@ -17,8 +17,8 @@
 # 用法：deploy-hephi.sh --instance <dir> --host <url> --host-version <单行值>
 #        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
 #        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <秒>]
-#        [--drain effects] [--effects-db <path>] [--stop-command <command>]
-#        [--stop-timeout <秒>] [--process-file <path>]
+#        [--drain effects] [--effects-db <path>] --stop-command <command>
+#        [--stop-timeout <秒>] [--auto-restart-wait <秒>] [--process-file <path>]
 set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 effects_tool="$script_dir/check-effects-db.mjs"
@@ -28,8 +28,8 @@ usage() {
 usage: deploy-hephi.sh --instance <dir> --host <url> --host-version <single-line value>
        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <seconds>]
-       [--drain effects] [--effects-db <path>] [--stop-command <command>]
-       [--stop-timeout <seconds>] [--process-file <path>]
+       [--drain effects] [--effects-db <path>] --stop-command <command>
+       [--stop-timeout <seconds>] [--auto-restart-wait <seconds>] [--process-file <path>]
 USAGE
   exit 2
 }
@@ -37,7 +37,7 @@ USAGE
 instance=""; host=""; host_version=""; target=""; previous=""; rollback="no"; dry_run="no"
 target_set="no"; previous_set="no"
 releases=""; repo=""; hephi=""; timeout=120
-drain_mode=""; effects_db=""; stop_command=""; stop_timeout=""; process_file=""
+drain_mode=""; effects_db=""; stop_command=""; stop_timeout=""; auto_restart_wait=""; process_file=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --instance) [ $# -ge 2 ] || usage; instance="$2"; shift 2 ;;
@@ -55,6 +55,7 @@ while [ $# -gt 0 ]; do
     --effects-db) [ $# -ge 2 ] || usage; effects_db="$2"; shift 2 ;;
     --stop-command) [ $# -ge 2 ] || usage; stop_command="$2"; shift 2 ;;
     --stop-timeout) [ $# -ge 2 ] || usage; stop_timeout="$2"; shift 2 ;;
+    --auto-restart-wait) [ $# -ge 2 ] || usage; auto_restart_wait="$2"; shift 2 ;;
     --process-file) [ $# -ge 2 ] || usage; process_file="$2"; shift 2 ;;
     -h|--help) usage ;;
     *) echo "unknown argument: $1" >&2; usage ;;
@@ -85,6 +86,15 @@ if [ "$drain_mode" = "effects" ]; then
   [ -n "$stop_timeout" ] || stop_timeout="$timeout"
   case "$stop_timeout" in ''|*[!0-9]*) echo "--stop-timeout must be a positive integer" >&2; exit 2 ;; esac
   [ "$stop_timeout" -gt 0 ] || { echo "--stop-timeout must be a positive integer" >&2; exit 2; }
+  # 停机必须由宿主自己的 stop 脚本完成：默认 SIGINT 路径未经真实宿主验证，已删除（fail-closed）。
+  [ -n "$stop_command" ] || {
+    echo "--drain effects requires --stop-command <command> (for example the host's dsh-superagent stop invocation); the unverified default SIGINT path was removed" >&2
+    exit 2
+  }
+  # 自动重启检测窗口：默认 10s（≥H0 观测的 5s），可用 --auto-restart-wait 缩短（测试）或调整。
+  [ -n "$auto_restart_wait" ] || auto_restart_wait=10
+  case "$auto_restart_wait" in ''|*[!0-9]*) echo "--auto-restart-wait must be a positive integer" >&2; exit 2 ;; esac
+  [ "$auto_restart_wait" -gt 0 ] || { echo "--auto-restart-wait must be a positive integer" >&2; exit 2; }
   [ -f "$effects_tool" ] || { echo "effects checker not found: $effects_tool" >&2; exit 2; }
 fi
 release_sha() { printf '%s' "$1" | sed -n 's#.*/\([0-9a-f]\{40\}\)/lib$#\1#p'; }
@@ -327,14 +337,15 @@ fail_after_switch() {
 #
 # 流程（H0/H7 实测结论）：pause API 已 paused=true → 运行中 ro 预检查 effect 表
 # （只作预检查，不是最终证据）→ 记录受管进程（host.pid + lstart + 后代）→ 构建
-# 目标 release（缩短停机窗口）→ 停止宿主（默认 SIGINT host.pid，或 --stop-command）
+# 目标 release（缩短停机窗口）→ 停止宿主（必须用 --stop-command 执行宿主自己的 stop 脚本）
 # → 停机后唯一权威证据：check-effects-db --mode copy（replay WAL、不动原库；
 # 禁止 immutable=1 与 sqlite3 -readonly 兜底）→ 残留进程按 pid+lstart 核对 →
-# 等 2s 确认无自动重启 → 原子切换指针 → start.sh 启动 → 10 项健康 + paused 回读
-# → 记录全部证据。
+# 等待 --auto-restart-wait 秒（默认 10s）确认无自动重启 → 原子切换指针 → start.sh 启动
+# → 10 项健康 + paused 回读 → 记录全部证据。
 #
-# 停止方式：默认 SIGINT 到 host.pid 在真实宿主上尚未验证；真实部署应显式给
+# 停止方式：--drain effects 必须显式给 --stop-command（例如
 #   --stop-command "python3 <instance>/superagent/scripts/dsh-superagent stop --profile experiment --url http://127.0.0.1:3083 --stop-timeout 30"
+# ）。默认 SIGINT 路径已删除：它从未在真实宿主验证，且假宿主套件无法覆盖。
 # 中止恢复：已停机则用 $instance/start.sh（H0 实测约 11s 到 10 项健康）；不使用管理器 start（依赖 dsh/tmux）。
 #
 # 任一中止路径：不切换 release。若已停机则按原版本重启并全量健康检查；非零退出，
@@ -491,22 +502,22 @@ kill_current_host() {
   return 0
 }
 
-# 停机：默认 SIGINT host.pid；--stop-command 通过 sh -c 执行并记录输出/退出码。
+# 停机：执行必填的 --stop-command（sh -c），记录输出/退出码。
 # EFFECT_STOPPED 表示旧 host pid 是否已消失（即使 stop 命令非零，也要据此决定是否重启原版本）。
 effects_stop() {
   EFFECT_OLD_PID=$(cat "$instance/host.pid" 2>/dev/null || true)
   [ -n "$EFFECT_OLD_PID" ] || { echo "missing host.pid before stop" >&2; EFFECT_STOPPED="no"; return 1; }
   EFFECT_STOP_EXIT=""; EFFECT_STOP_OUTPUT=""
-  if [ -n "$stop_command" ]; then
-    set +e
-    EFFECT_STOP_OUTPUT=$(sh -c "$stop_command" 2>&1)
-    EFFECT_STOP_EXIT=$?
-    set -e
-    printf '%s\n' "$EFFECT_STOP_OUTPUT" > "$instance/logs/managed-stop-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>/dev/null || true
-  else
-    kill -INT "$EFFECT_OLD_PID" 2>/dev/null || true
-    EFFECT_STOP_EXIT=0
+  if [ -z "$stop_command" ]; then
+    # 参数校验已拒绝；这里再 fail-closed 一次，防止被绕过。
+    echo "--drain effects requires --stop-command; refusing to stop the host" >&2
+    EFFECT_STOPPED="no"; return 1
   fi
+  set +e
+  EFFECT_STOP_OUTPUT=$(sh -c "$stop_command" 2>&1)
+  EFFECT_STOP_EXIT=$?
+  set -e
+  printf '%s\n' "$EFFECT_STOP_OUTPUT" > "$instance/logs/managed-stop-$(date -u +%Y%m%dT%H%M%SZ)-$$.log" 2>/dev/null || true
   waited=0
   while pid_running "$EFFECT_OLD_PID"; do
     if [ "$waited" -ge "$stop_timeout" ]; then
@@ -523,9 +534,10 @@ effects_stop() {
   return 0
 }
 
-# 停机后等 2s，确认宿主没有自动回来（host.pid 出现新的存活 pid）。
+# 停机后等待 --auto-restart-wait 秒（默认 10s），确认宿主没有自动回来（host.pid 出现新的存活 pid）。
 effects_no_auto_restart() {
-  sleep 2
+  echo "auto-restart check: waiting ${auto_restart_wait}s before switching" >&2
+  sleep "$auto_restart_wait"
   auto_pid=$(cat "$instance/host.pid" 2>/dev/null || true)
   if [ -n "$auto_pid" ] && [ "$auto_pid" != "$EFFECT_OLD_PID" ] && pid_running "$auto_pid"; then
     AUTO_RESTART_PID="$auto_pid"; return 1
@@ -572,7 +584,7 @@ effects_abort() {
     precheckJson "${EFFECT_PRECHECK_JSON:-}" finalCheckJson "${EFFECT_FINAL_JSON:-}" \
     processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
     managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
-    stopCommand "${stop_command:-none}" residualProcesses "${residual_lines:-none}" \
+    stopCommand "${stop_command:-none}" autoRestartWait "${auto_restart_wait}" residualProcesses "${residual_lines:-none}" \
     autoRestartedPid "${AUTO_RESTART_PID:-none}" autoRestartAction "$EFFECT_AUTO_RESTART_ACTION" recoverHealth "$EFFECT_RECOVER_HEALTH" \
     migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" \
     keptPaused "$flag" error "$errors"
@@ -666,7 +678,7 @@ deploy_effects() {
       precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
       processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
       managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
-      migration "${MIGRATION_BACKUP:-none}" keptPaused "$flag" error "host did not report paused=true after stop-based deploy; manual takeover required"
+      migration "${MIGRATION_BACKUP:-none}" autoRestartWait "${auto_restart_wait}" keptPaused "$flag" error "host did not report paused=true after stop-based deploy; manual takeover required"
     fail_keep_paused "host is not paused after stop-based deploy; manual takeover required"
   fi
   record deploy deploy ok drainMode effects target "$target" previous "$previous" \
@@ -674,7 +686,7 @@ deploy_effects() {
     precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
     processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
     managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
-    stopCommand "${stop_command:-none}" recoverHealth all-required-ready \
+    stopCommand "${stop_command:-none}" autoRestartWait "${auto_restart_wait}" recoverHealth all-required-ready \
     migration "${MIGRATION_BACKUP:-none}" keptPaused yes
   echo "deploy complete (stop-based drain); host remains paused; effect final check total=0 journal=wal"
   exit 0

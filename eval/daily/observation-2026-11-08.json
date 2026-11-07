@@ -1,0 +1,844 @@
+{
+  "schemaVersion": 1,
+  "generator": "eval/daily/observation (B8 development-period snapshot)",
+  "snapshotDate": "2026-11-08",
+  "snapshotAtUtc": "2026-11-07T22:47:26.460Z",
+  "snapshotAtLocal": "2026-11-08T06:47:26.460+08:00",
+  "windowKind": "development-snapshot",
+  "window": null,
+  "isPreregWindow": false,
+  "sources": {
+    "hostApi": {
+      "base": "http://127.0.0.1:3083",
+      "endpoints": [
+        {
+          "query": "state=open&limit=1000",
+          "httpStatus": 200,
+          "total": 7,
+          "items": 7
+        },
+        {
+          "query": "state=ended&limit=1000",
+          "httpStatus": 200,
+          "total": 28,
+          "items": 28
+        }
+      ]
+    },
+    "sqlite": {
+      "path": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite",
+      "readOnly": true,
+      "snapshotAt": "2026-11-07T22:47:00.171Z",
+      "ticketRows": 35,
+      "threadRows": 59
+    },
+    "githubPrQuery": {
+      "query": "gh api repos/<owner>/<repo>/pulls/<n> (read-only, one request per structured PR URL)",
+      "queried": 22,
+      "ok": 22,
+      "failed": 0,
+      "merged": 5
+    },
+    "ticketIds": {
+      "api": 35,
+      "sqlite": 35,
+      "idsEqual": true,
+      "apiOnly": [],
+      "sqliteOnly": []
+    },
+    "threadCounts": {
+      "api": 57,
+      "sqlite": 59
+    }
+  },
+  "counts": {
+    "total": 35,
+    "merged": 5,
+    "unmerged": 30,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 23,
+    "openNotBlocked": 7,
+    "withMergeEvidence": 5,
+    "prLinked": 22,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  },
+  "countsIdentity": {
+    "total": 35,
+    "sumMergedDroppedBlockedClosedUnmergedOpenNotBlocked": 35,
+    "holds": true,
+    "unmergedEqualsTotalMinusMerged": true,
+    "unmerged": 30
+  },
+  "statusBreakdown": {
+    "closed": 4,
+    "open": 7,
+    "stopped": 21,
+    "merged": 3
+  },
+  "mergedEvidence": {
+    "hostOutcomeMerged": 3,
+    "hostOutcomeMergedTicketIds": [
+      "f6c1954920dad4c1c76a89e48bca888d",
+      "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+      "b6166d59e023753eef4620c9b4af3143"
+    ],
+    "prMergedOnly": 2,
+    "prMergedOnlyTicketIds": [
+      "b7201bbf8a340c999955d38e73b4e396",
+      "992a6cb25459df80a5b89df6220724b7"
+    ],
+    "totalWithMergeEvidence": 5,
+    "mergedPullRequests": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/29",
+        "mergedAt": "2026-11-06T21:37:45Z",
+        "mergeCommit": "291b29e35830061f21892038a8f3bc4cb00e9481"
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/42",
+        "mergedAt": "2026-11-06T22:02:53Z",
+        "mergeCommit": "8d2ec5858ed3071eae598e5afb30b069807ce598"
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/30",
+        "mergedAt": "2026-11-07T14:45:19Z",
+        "mergeCommit": "2c603c6cba2c3622ed4aa8024f0b3f9106d7c27a"
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/37",
+        "mergedAt": "2026-11-07T17:06:09Z",
+        "mergeCommit": "b1a70bd327c384cb5ec8623b23ee20b78edef69c"
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/38",
+        "mergedAt": "2026-11-07T17:06:12Z",
+        "mergeCommit": "d9d70b1151a35b2823107568953a58b661c36a96"
+      }
+    ],
+    "pullRequestStats": {
+      "uniquePulls": 22,
+      "queried": 22,
+      "failed": 0,
+      "merged": 5,
+      "open": 14,
+      "closedUnmerged": 3
+    }
+  },
+  "blocked": {
+    "value": 0,
+    "available": false,
+    "explanation": "宿主 B 无 ticket 级 blocked 字段；counts.blocked=0 表示不可得，不是零阻塞结论。",
+    "supplementaryAssignmentReportBlocked": {
+      "tickets": 8,
+      "open": 3,
+      "ended": 5,
+      "ticketIds": [
+        "0824a46875fffff5193152a320073ea6",
+        "5e88de032365ca46fb9573c33138d6e2",
+        "ae85aac40937768ca9db90a06ec15d9a",
+        "b3a7d823bad0339e77dde1fb22f2060b",
+        "bd9384b534d842df60286d55384333ea",
+        "c231654e886b6dc10c95c81ea5628f46",
+        "c603d0ef2e16d10b29d382dee995a584",
+        "e0ad474f8174ee7155b6102f3645a617"
+      ],
+      "note": "assignment.report.state=blocked 是历史执行报告状态，不并入 counts.blocked。"
+    }
+  },
+  "dropped": {
+    "value": 0,
+    "explanation": "无 ended.outcome=dropped/abandoned；stopped/closed 计 closedUnmerged（待负责人确认 stopped 是否映射 dropped）。"
+  },
+  "openTickets": {
+    "count": 7,
+    "byStage": {
+      "person": 6,
+      "idle": 1
+    },
+    "tickets": [
+      {
+        "ticketId": "0824a46875fffff5193152a320073ea6",
+        "stage": "person",
+        "title": "[native][B5-native] previous-window-order run1"
+      },
+      {
+        "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+        "stage": "person",
+        "title": "[native][B5-native] previous-window-order run1-retry"
+      },
+      {
+        "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+        "stage": "person",
+        "title": "[native] 甲包：E4正常目录对照、真实49164字节输出与审批门禁验收"
+      },
+      {
+        "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+        "stage": "person",
+        "title": "[native] 甲包 E4：不存在检查目录的全新入口负向验收"
+      },
+      {
+        "ticketId": "ea564491ce4b22e4a622a7b786a691e6",
+        "stage": "person",
+        "title": "[native] 甲包：五文档整合与 scope/计划/PR/HEAD 联合边界验收"
+      },
+      {
+        "ticketId": "ef9b71e6318012f61d7828618b713c71",
+        "stage": "idle",
+        "title": "[native] 甲包：修复版全新入口长输出采集验收"
+      },
+      {
+        "ticketId": "f0256db745914847582a0b75d7fd38e4",
+        "stage": "person",
+        "title": "[native] 甲包 E8：缺任务卡必须拒绝的真实入口验收"
+      }
+    ]
+  },
+  "sourceRepositories": {
+    "paxxie2/b5-native-site-pnl": 2,
+    "paxxie2/site-pnl-diagnosis": 22,
+    "paxxie2/super-agent-hephi-review": 11
+  },
+  "tickets": [
+    {
+      "ticketId": "24983dd77e986b48866bb016a909d490",
+      "title": "健康检查 200/503 响应增加固定 service 字段",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-05T20:36:52.214Z",
+      "endedAt": "2026-11-07T12:52:48.811Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/25",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "b3a7d823bad0339e77dde1fb22f2060b",
+      "title": "[native] 健康检查 200/503 响应增加固定 service 字段",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-05T20:48:46.112Z",
+      "endedAt": "2026-11-07T12:52:48.829Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/26",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/27"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "f6c1954920dad4c1c76a89e48bca888d",
+      "title": "[native] 恢复指定 data 源码并为健康接口增加固定 service 字段",
+      "status": "merged",
+      "stage": "ended",
+      "createdAt": "2026-11-05T21:47:25.835Z",
+      "endedAt": "2026-11-06T21:37:45.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/28",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/29"
+      ],
+      "merged": true
+    },
+    {
+      "ticketId": "b61dfbe3525e29fedf3ecf071023f80e",
+      "title": "[native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-06T03:35:33.091Z",
+      "endedAt": "2026-11-06T03:36:02.985Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/30",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "c284b0df9b1bc44d353646e351dff7b1",
+      "title": "[native] smoke: 原生入口链路验证（仅记录，不合并）",
+      "status": "closed",
+      "stage": "ended",
+      "createdAt": "2026-11-06T20:00:11.676Z",
+      "endedAt": "2026-11-06T20:03:26.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/32",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/33"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "04b029dc406e343f08b0df8453b6d9ef",
+      "title": "[native] 竞态测试：暂停期间新 Issue（仅验证，不合并）",
+      "status": "closed",
+      "stage": "ended",
+      "createdAt": "2026-11-06T21:27:32.006Z",
+      "endedAt": "2026-11-06T21:32:26.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/35",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/37"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "c603d0ef2e16d10b29d382dee995a584",
+      "title": "[native] hephi smoke: README 追加标记（仅验证，不合并）",
+      "status": "closed",
+      "stage": "ended",
+      "createdAt": "2026-11-06T21:41:25.573Z",
+      "endedAt": "2026-11-06T21:50:50.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/38",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/39"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "b7201bbf8a340c999955d38e73b4e396",
+      "title": "[native] hephi smoke: README 追加标记（第二轮，仅验证，不合并）",
+      "status": "closed",
+      "stage": "ended",
+      "createdAt": "2026-11-06T21:49:09.094Z",
+      "endedAt": "2026-11-06T21:50:55.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/41",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/42"
+      ],
+      "merged": true
+    },
+    {
+      "ticketId": "b76b1fc974632ec6e62b664d38d004b4",
+      "title": "[native] SMOKE_ONLY efdd406 部署验收：README 单行标记，不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T13:00:46.146Z",
+      "endedAt": "2026-11-07T13:02:50.097Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/44",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "78851e476e1d191b144f88b134df0342",
+      "title": "[native] SMOKE_ONLY efdd406 重新验收：冻结锁文件安装，README 单行标记，不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T13:03:48.423Z",
+      "endedAt": "2026-11-07T13:06:14.882Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/45",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/46"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "992a6cb25459df80a5b89df6220724b7",
+      "title": "[native] 剩余前置统一实施：发布修复、兼容路径与宿主真实验证",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T13:18:29.541Z",
+      "endedAt": "2026-11-07T14:06:41.070Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/29",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/30"
+      ],
+      "merged": true
+    },
+    {
+      "ticketId": "3619d68fc5fd904a3cf98d6a07251326",
+      "title": "[smoke] e490fe3 新部署原生交付验收，不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:14:28.060Z",
+      "endedAt": "2026-11-07T14:16:30.964Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/47",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "b945d6ef581411b29715ee2feec8ed46",
+      "title": "[smoke] e490fe3 带赫菲标签的全新交付验收，不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:18:21.361Z",
+      "endedAt": "2026-11-07T14:20:02.562Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/48",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "ad3d50166613ff79434557484d1d7b5c",
+      "title": "[native] [smoke] e490fe3 新部署基础交付验收，不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:22:30.791Z",
+      "endedAt": "2026-11-07T17:54:52.981Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/49",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/50"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "90150d23e36caf1d94559cb6f80c74ed",
+      "title": "[native] 既有A5边界实验 E2 E3 E6 E7：最小验收，不重构不合并",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:33:22.480Z",
+      "endedAt": "2026-11-07T17:54:52.951Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/51",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/53"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "c9ea328ed09283cd8dec6ecaf4068f4e",
+      "title": "[native] A5 E8 负例：故意缺任务卡，预期准备拒绝",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:33:22.482Z",
+      "endedAt": "2026-11-07T17:54:52.966Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/52",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "cdaadaf75229ff91741f9778a970adcf",
+      "title": "[native] A5 E1-off 原生对照：不启用赫菲，同Issue49任务卡",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T14:39:57.608Z",
+      "endedAt": "2026-11-07T14:43:49.863Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/54",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "e0ad474f8174ee7155b6102f3645a617",
+      "title": "[native] 清单2：summary、离线扫描、migrate及单实例复核小批次",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T15:15:38.530Z",
+      "endedAt": "2026-11-07T15:57:56.226Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/32",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "c231654e886b6dc10c95c81ea5628f46",
+      "title": "[native] E4 检查目录配置错误：check not started → 修正后重试",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T15:27:39.873Z",
+      "endedAt": "2026-11-07T17:54:52.936Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/56",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "13af322b6b7ad6ede331f41e884ae076",
+      "title": "[native] E4 重试：检查配置修正后重跑 project-regression",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T15:30:17.887Z",
+      "endedAt": "2026-11-07T17:54:52.918Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/57",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/58"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "9461627f625a0cc94651bf410fd7495d",
+      "title": "行为保持重构：提取 money.py 的日期窗口辅助函数",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T15:35:34.124Z",
+      "endedAt": "2026-11-07T15:38:05.582Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/59",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "1612ffacf3e1cf45bd262df0f12de555",
+      "title": "[native] 行为保持重构：提取 money.py 的日期窗口辅助函数",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T15:38:29.022Z",
+      "endedAt": "2026-11-07T17:54:52.902Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/60",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/61"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+      "title": "[native] 清单2最终检查与PR交付：接续已完成代码，不新增功能",
+      "status": "merged",
+      "stage": "ended",
+      "createdAt": "2026-11-07T16:00:24.023Z",
+      "endedAt": "2026-11-07T17:06:09.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/36",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/37"
+      ],
+      "merged": true
+    },
+    {
+      "ticketId": "b6166d59e023753eef4620c9b4af3143",
+      "title": "[native] 清单2补项2.7 F1：修复activation legacy降级绕过（仅F1）",
+      "status": "merged",
+      "stage": "ended",
+      "createdAt": "2026-11-07T16:26:17.319Z",
+      "endedAt": "2026-11-07T17:06:12.000Z",
+      "endedBy": "executor",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/35",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/38"
+      ],
+      "merged": true
+    },
+    {
+      "ticketId": "e2419b285c10d943a46def08d3ef11da",
+      "title": "[native] E1-on 正式场景：清理 Settings.from_env 死分支（等价清理，不合并）",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T17:15:14.557Z",
+      "endedAt": "2026-11-07T17:54:52.875Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/62",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/63"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "23c3eab13e719f1218a366f3f4a9389d",
+      "title": "[native] S3 部署冒烟：bc21cac 基础链路验收（不合并）",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T18:22:47.906Z",
+      "endedAt": "2026-11-07T18:25:35.663Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/site-pnl-diagnosis",
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/65",
+      "prs": [
+        "https://github.com/paxxie2/site-pnl-diagnosis/pull/66"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "d31e4f61ad3f4867ce4331e61a368b4b",
+      "title": "[native] 工作包甲：集成五文档最小修订并完成原生回归交付",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T18:24:03.416Z",
+      "endedAt": "2026-11-07T19:15:34.985Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/46",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "bd9384b534d842df60286d55384333ea",
+      "title": "[native] 甲包最小修复：原生Job输出运行期采集，保持lossy拒绝",
+      "status": "stopped",
+      "stage": "ended",
+      "createdAt": "2026-11-07T18:48:38.622Z",
+      "endedAt": "2026-11-07T19:15:34.979Z",
+      "endedBy": "human",
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/49",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/56"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "ef9b71e6318012f61d7828618b713c71",
+      "title": "[native] 甲包：修复版全新入口长输出采集验收",
+      "status": "open",
+      "stage": "idle",
+      "createdAt": "2026-11-07T19:33:32.800Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/57",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/58"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+      "title": "[native] 甲包 E4：不存在检查目录的全新入口负向验收",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:28:33.728Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/59",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "f0256db745914847582a0b75d7fd38e4",
+      "title": "[native] 甲包 E8：缺任务卡必须拒绝的真实入口验收",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:31:47.754Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/60",
+      "prs": [],
+      "merged": false
+    },
+    {
+      "ticketId": "ea564491ce4b22e4a622a7b786a691e6",
+      "title": "[native] 甲包：五文档整合与 scope/计划/PR/HEAD 联合边界验收",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:31:47.757Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/61",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/66"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+      "title": "[native] 甲包：E4正常目录对照、真实49164字节输出与审批门禁验收",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:34:33.948Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/super-agent-hephi-review",
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/62",
+      "prs": [
+        "https://github.com/paxxie2/super-agent-hephi-review/pull/65"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "title": "[native][B5-native] previous-window-order run1",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:35:12.795Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/b5-native-site-pnl",
+      "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/2",
+      "prs": [
+        "https://github.com/paxxie2/b5-native-site-pnl/pull/3"
+      ],
+      "merged": false
+    },
+    {
+      "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+      "title": "[native][B5-native] previous-window-order run1-retry",
+      "status": "open",
+      "stage": "person",
+      "createdAt": "2026-11-07T22:44:10.001Z",
+      "endedAt": null,
+      "endedBy": null,
+      "sourceRepository": "paxxie2/b5-native-site-pnl",
+      "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/4",
+      "prs": [
+        "https://github.com/paxxie2/b5-native-site-pnl/pull/5"
+      ],
+      "merged": false
+    }
+  ],
+  "rework": {
+    "command": "node eval/daily/rework.mjs --repo /tmp/b8obs --since 2026-09-01 --window-days 30 --json",
+    "exitCode": 0,
+    "windowDays": 30,
+    "since": "2026-09-01",
+    "mergesReviewed": 21,
+    "candidates": [
+      {
+        "category": "pending-human",
+        "original": {
+          "refs": [
+            20
+          ],
+          "mergeCommit": "bc3386cd65fee16b1777294929389db5a710bb29",
+          "mergeAt": "2026-11-07T00:29:04.000Z",
+          "mergeSubject": "Merge pull request #20 from paxxie2/agent/hephi-r2-remediation"
+        },
+        "followUp": {
+          "commit": "c2865feaf27962bb686a7f934d59bb39a99dc0f2",
+          "committedAt": "2026-11-07T00:33:04.000Z",
+          "author": "DSH Agent",
+          "subject": "docs: record PR #20 merge into main (bc3386c)"
+        },
+        "referenceMatches": [
+          20
+        ],
+        "sharedFiles": [
+          "docs/implementation-index.md",
+          "docs/p8-deploy-record.md",
+          "docs/remediation-r1-validation.md",
+          "docs/remediation-r3-validation.md",
+          "docs/self-check-2026-11-07.md",
+          "docs/source-consistency.md"
+        ]
+      },
+      {
+        "category": "pending-human",
+        "original": {
+          "refs": [
+            7
+          ],
+          "mergeCommit": "3f276a533bceaa63f3e43ff8d0d1e75af9dac8c8",
+          "mergeAt": "2026-11-06T19:51:32.000Z",
+          "mergeSubject": "Merge pull request #7: HEPHI 前置阶段可实施项与 c547 等价修复"
+        },
+        "followUp": {
+          "commit": "2cb56249b0c8f5a41e90dcdf75a2902b84e5701f",
+          "committedAt": "2026-11-06T19:52:14.000Z",
+          "author": "DSH Agent",
+          "subject": "Record PR #7 merge and hephi-baseline-1 tag in consistency docs"
+        },
+        "referenceMatches": [
+          7
+        ],
+        "sharedFiles": [
+          "docs/g2-preflight.md",
+          "docs/source-consistency.md"
+        ]
+      }
+    ],
+    "summary": {
+      "mergesReviewed": 21,
+      "candidates": 2,
+      "pendingHuman": 2
+    },
+    "note": "候选是 pending-human，不是返工判定；窗口 30 天由任务指定，PREREG 是否锁定须负责人确认。"
+  },
+  "maintenance": {
+    "records": 0,
+    "hours": null,
+    "status": "unknown-no-real-record",
+    "note": "未发现 maintenance.jsonl；工时未知，不补 0、不估算。"
+  },
+  "appeals": {
+    "count": 0,
+    "realRecordsFound": false,
+    "searchedCommands": [
+      "find /Users/zm/dsh-instances/experiment /Users/zm/.dsh/state -maxdepth 6 -iname '*appeal*' -not -path '*/node_modules/*'",
+      "git ls-files | grep -iE 'appeal' | grep -v 'eval/daily/APPEALS.md'"
+    ],
+    "note": "0 条，无真实申诉数据；只有 APPEALS.md 流程文档，不是申诉样本。"
+  },
+  "p15Mapping": {
+    "p15Archive": "/Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2/tickets.json",
+    "p15InputSummary": {
+      "total": 61,
+      "uniqueIds": 61,
+      "byStatus": {
+        "open": 34,
+        "stopped": 21,
+        "merged": 2,
+        "completed": 4
+      }
+    },
+    "p15ReexportCounts": {
+      "total": 61,
+      "merged": 2,
+      "unmerged": 59,
+      "dropped": 0,
+      "blocked": 0,
+      "closedUnmerged": 25,
+      "openNotBlocked": 34,
+      "withMergeEvidence": 2,
+      "prLinked": 33,
+      "byStatus": {
+        "open": 34,
+        "stopped": 21,
+        "merged": 2,
+        "completed": 4
+      }
+    },
+    "p15Verify": {
+      "ok": true,
+      "failures": [],
+      "warnings": [],
+      "checks": 11
+    },
+    "mappingRule": "去重键 ticketId；export counts.total 应与 P15 summary.uniqueIds 同口径（VE-10 校验），本快照 summary.uniqueIds=35=counts.total。",
+    "notComparableReason": "P15 基线归档（2026-11-06T20:22Z）覆盖 3 个 DB 共 61 条；本快照只覆盖宿主 B experiment DB 的 35 条、且时间更晚。两者不能直接比较，P15 计数仅作历史基线口径参照。"
+  },
+  "unverified": [
+    "本文件是开发期快照（window=null），不是 PREREG 锁定的正式观察窗口；不得当作 B8 正式结论或 B 线实验证据。",
+    "blocked：宿主 B ticket 表/API 没有 ticket 级 blocked 字段，export counts.blocked=0 表示「不可得/未记录」，不是「零阻塞」结论；assignment report.state=blocked 仅作旁证，未并入 counts。",
+    "dropped：没有 ended.outcome=dropped/abandoned 记录，dropped=0；stopped(21)/closed(4) 按 MAINTENANCE §2.2 计入 closedUnmerged，是否把 stopped 视为放弃需负责人确认。",
+    "维护工时：未发现 maintenance.jsonl（0 条），工时为未知（null），不补 0 工时、不估算。",
+    "申诉：未发现 appeal-record.jsonl 或 hephi/appeal 真实记录，申诉数为 0 条（「无真实申诉数据」，不是「零申诉率」结论）。",
+    "影子模式（P4）数据不存在/未验证；本快照不含影子观察。",
+    "PR 关联仅来自结构化线程/channel URL；PR 状态是采集时刻的 GitHub 只读查询结果，后续可能变化。",
+    "宿主动态写入：快照是采集瞬间；apiThreads 与 sqliteThreads 数量可能因秒级写入差异不同（本快照 55 vs 57），ticketId 集合已核对一致（35=35）。",
+    "verify-export 只证明「给定源归档时导出计数可复算」，不证明源数据完整或 B8 达标；export.input 记录采集时路径，异地复核需重新 export 后再 verify（VE-04 要求同路径）。"
+  ],
+  "evidence": {
+    "dir": "eval/evidence/b8",
+    "commandsLog": "eval/evidence/b8/commands.log",
+    "sha256sums": "eval/evidence/b8/SHA256SUMS"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "note": "P15 baseline re-export with eval/daily/export.mjs + eval/daily/verify-export.mjs (read-only, historical 2026-11-06 archive); counts only, no per-ticket data.",
+  "reexportedAt": "2026-11-07T22:47:29.699Z",
+  "input": "/Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2/tickets.json",
+  "inputSummary": {
+    "total": 61,
+    "uniqueIds": 61,
+    "byStatus": {
+      "open": 34,
+      "stopped": 21,
+      "merged": 2,
+      "completed": 4
+    }
+  },
+  "counts": {
+    "total": 61,
+    "merged": 2,
+    "unmerged": 59,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 25,
+    "openNotBlocked": 34,
+    "withMergeEvidence": 2,
+    "prLinked": 33,
+    "byStatus": {
+      "open": 34,
+      "stopped": 21,
+      "merged": 2,
+      "completed": 4
+    }
+  },
+  "verify": {
+    "ok": true,
+    "failures": [],
+    "warnings": [],
+    "checks": 11
+  }
+}

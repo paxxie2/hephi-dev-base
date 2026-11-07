@@ -1,0 +1,147 @@
+{
+  "collectedAt": "2026-11-07T22:47:26.460Z",
+  "totalTickets": 35,
+  "openTickets": 7,
+  "endedTickets": 28,
+  "byStatus": {
+    "closed": 4,
+    "open": 7,
+    "stopped": 21,
+    "merged": 3
+  },
+  "byOutcome": {
+    "closed": 4,
+    "open": 7,
+    "stopped": 21,
+    "merged": 3
+  },
+  "openByStage": {
+    "person": 6,
+    "idle": 1
+  },
+  "outcomeMergedIds": [
+    "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+    "b6166d59e023753eef4620c9b4af3143",
+    "f6c1954920dad4c1c76a89e48bca888d"
+  ],
+  "prMergedOnlyIds": [
+    "992a6cb25459df80a5b89df6220724b7",
+    "b7201bbf8a340c999955d38e73b4e396"
+  ],
+  "mergedTicketIds": [
+    "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+    "992a6cb25459df80a5b89df6220724b7",
+    "b6166d59e023753eef4620c9b4af3143",
+    "b7201bbf8a340c999955d38e73b4e396",
+    "f6c1954920dad4c1c76a89e48bca888d"
+  ],
+  "prStats": {
+    "uniquePulls": 22,
+    "queried": 22,
+    "failed": 0,
+    "merged": 5,
+    "open": 14,
+    "closedUnmerged": 3
+  },
+  "prLinkedTickets": 22,
+  "blockedReportTickets": [
+    {
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "title": "[native][B5-native] previous-window-order run1",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+      "title": "[native] 甲包：E4正常目录对照、真实49164字节输出与审批门禁验收",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+      "title": "[native] 甲包 E4：不存在检查目录的全新入口负向验收",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "b3a7d823bad0339e77dde1fb22f2060b",
+      "title": "[native] 健康检查 200/503 响应增加固定 service 字段",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "bd9384b534d842df60286d55384333ea",
+      "title": "[native] 甲包最小修复：原生Job输出运行期采集，保持lossy拒绝",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "c231654e886b6dc10c95c81ea5628f46",
+      "title": "[native] E4 检查目录配置错误：check not started → 修正后重试",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "c603d0ef2e16d10b29d382dee995a584",
+      "title": "[native] hephi smoke: README 追加标记（仅验证，不合并）",
+      "reportStates": [
+        "blocked"
+      ]
+    },
+    {
+      "ticketId": "e0ad474f8174ee7155b6102f3645a617",
+      "title": "[native] 清单2：summary、离线扫描、migrate及单实例复核小批次",
+      "reportStates": [
+        "blocked"
+      ]
+    }
+  ],
+  "sourceRepositories": {
+    "paxxie2/b5-native-site-pnl": 2,
+    "paxxie2/site-pnl-diagnosis": 22,
+    "paxxie2/super-agent-hephi-review": 11
+  },
+  "noEndedTickets": [
+    {
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "title": "[native][B5-native] previous-window-order run1",
+      "stage": "person"
+    },
+    {
+      "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+      "title": "[native][B5-native] previous-window-order run1-retry",
+      "stage": "person"
+    },
+    {
+      "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+      "title": "[native] 甲包：E4正常目录对照、真实49164字节输出与审批门禁验收",
+      "stage": "person"
+    },
+    {
+      "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+      "title": "[native] 甲包 E4：不存在检查目录的全新入口负向验收",
+      "stage": "person"
+    },
+    {
+      "ticketId": "ea564491ce4b22e4a622a7b786a691e6",
+      "title": "[native] 甲包：五文档整合与 scope/计划/PR/HEAD 联合边界验收",
+      "stage": "person"
+    },
+    {
+      "ticketId": "ef9b71e6318012f61d7828618b713c71",
+      "title": "[native] 甲包：修复版全新入口长输出采集验收",
+      "stage": "idle"
+    },
+    {
+      "ticketId": "f0256db745914847582a0b75d7fd38e4",
+      "title": "[native] 甲包 E8：缺任务卡必须拒绝的真实入口验收",
+      "stage": "person"
+    }
+  ]
+}

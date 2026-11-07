@@ -1,0 +1,729 @@
+{
+  "generator": "eval/daily/export.mjs",
+  "schemaVersion": 1,
+  "exportedAt": "2026-11-07T22:47:26.536Z",
+  "input": "/tmp/b8obs/eval/evidence/b8/archive/tickets.json",
+  "inputSummary": {
+    "total": 35,
+    "uniqueIds": 35,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  },
+  "dedupKey": "ticketId",
+  "skippedInvalid": 0,
+  "counts": {
+    "total": 35,
+    "merged": 5,
+    "unmerged": 30,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 23,
+    "openNotBlocked": 7,
+    "withMergeEvidence": 5,
+    "prLinked": 22,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  },
+  "tickets": [
+    {
+      "ticketId": "04b029dc406e343f08b0df8453b6d9ef",
+      "state": "closed",
+      "stage": "ended",
+      "status": "closed",
+      "createdAt": "2026-11-06T21:27:32.006Z",
+      "endedAt": "2026-11-06T21:32:26.000Z",
+      "updatedAt": "2026-11-06T21:33:42.228Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/37",
+          "number": 37,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/35",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "0824a46875fffff5193152a320073ea6",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:35:12.795Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:39:13.074Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/b5-native-site-pnl/pull/3",
+          "number": 3,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/2",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "13af322b6b7ad6ede331f41e884ae076",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T15:30:17.887Z",
+      "endedAt": "2026-11-07T17:54:52.918Z",
+      "updatedAt": "2026-11-07T17:54:52.918Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/58",
+          "number": 58,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/57",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "1612ffacf3e1cf45bd262df0f12de555",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T15:38:29.022Z",
+      "endedAt": "2026-11-07T17:54:52.902Z",
+      "updatedAt": "2026-11-07T17:54:52.902Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/61",
+          "number": 61,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/60",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "23c3eab13e719f1218a366f3f4a9389d",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T18:22:47.906Z",
+      "endedAt": "2026-11-07T18:25:35.663Z",
+      "updatedAt": "2026-11-07T18:25:35.663Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/66",
+          "number": 66,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/65",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "24983dd77e986b48866bb016a909d490",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-05T20:36:52.214Z",
+      "endedAt": "2026-11-07T12:52:48.811Z",
+      "updatedAt": "2026-11-07T12:52:48.811Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/25",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:44:10.001Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:46:17.670Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/b5-native-site-pnl/pull/5",
+          "number": 5,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/4",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "3619d68fc5fd904a3cf98d6a07251326",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:14:28.060Z",
+      "endedAt": "2026-11-07T14:16:30.964Z",
+      "updatedAt": "2026-11-07T14:16:30.964Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/47",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:34:33.948Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:44:34.014Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/65",
+          "number": 65,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/62",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "78851e476e1d191b144f88b134df0342",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T13:03:48.423Z",
+      "endedAt": "2026-11-07T13:06:14.882Z",
+      "updatedAt": "2026-11-07T13:06:14.882Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/46",
+          "number": 46,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/45",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+      "state": "merged",
+      "stage": "ended",
+      "status": "merged",
+      "createdAt": "2026-11-07T16:00:24.023Z",
+      "endedAt": "2026-11-07T17:06:09.000Z",
+      "updatedAt": "2026-11-07T17:07:03.187Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/37",
+          "number": 37,
+          "merged": true
+        }
+      ],
+      "merged": true,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/36",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "90150d23e36caf1d94559cb6f80c74ed",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:33:22.480Z",
+      "endedAt": "2026-11-07T17:54:52.951Z",
+      "updatedAt": "2026-11-07T17:54:52.951Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/53",
+          "number": 53,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/51",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "9461627f625a0cc94651bf410fd7495d",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T15:35:34.124Z",
+      "endedAt": "2026-11-07T15:38:05.582Z",
+      "updatedAt": "2026-11-07T15:38:05.583Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/59",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "992a6cb25459df80a5b89df6220724b7",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T13:18:29.541Z",
+      "endedAt": "2026-11-07T14:06:41.070Z",
+      "updatedAt": "2026-11-07T14:06:41.070Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/30",
+          "number": 30,
+          "merged": true
+        }
+      ],
+      "merged": true,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/29",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "ad3d50166613ff79434557484d1d7b5c",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:22:30.791Z",
+      "endedAt": "2026-11-07T17:54:52.981Z",
+      "updatedAt": "2026-11-07T17:54:52.981Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/50",
+          "number": 50,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/49",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:28:33.728Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:29:43.295Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/59",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b3a7d823bad0339e77dde1fb22f2060b",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-05T20:48:46.112Z",
+      "endedAt": "2026-11-07T12:52:48.829Z",
+      "updatedAt": "2026-11-07T12:52:48.829Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/27",
+          "number": 27,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/26",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b6166d59e023753eef4620c9b4af3143",
+      "state": "merged",
+      "stage": "ended",
+      "status": "merged",
+      "createdAt": "2026-11-07T16:26:17.319Z",
+      "endedAt": "2026-11-07T17:06:12.000Z",
+      "updatedAt": "2026-11-07T17:07:01.838Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/38",
+          "number": 38,
+          "merged": true
+        }
+      ],
+      "merged": true,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/35",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b61dfbe3525e29fedf3ecf071023f80e",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-06T03:35:33.091Z",
+      "endedAt": "2026-11-06T03:36:02.985Z",
+      "updatedAt": "2026-11-06T03:36:02.985Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/30",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b7201bbf8a340c999955d38e73b4e396",
+      "state": "closed",
+      "stage": "ended",
+      "status": "closed",
+      "createdAt": "2026-11-06T21:49:09.094Z",
+      "endedAt": "2026-11-06T21:50:55.000Z",
+      "updatedAt": "2026-11-06T21:52:22.324Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/42",
+          "number": 42,
+          "merged": true
+        }
+      ],
+      "merged": true,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/41",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b76b1fc974632ec6e62b664d38d004b4",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T13:00:46.146Z",
+      "endedAt": "2026-11-07T13:02:50.097Z",
+      "updatedAt": "2026-11-07T13:02:50.097Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/44",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "b945d6ef581411b29715ee2feec8ed46",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:18:21.361Z",
+      "endedAt": "2026-11-07T14:20:02.562Z",
+      "updatedAt": "2026-11-07T14:20:02.562Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/48",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "bd9384b534d842df60286d55384333ea",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T18:48:38.622Z",
+      "endedAt": "2026-11-07T19:15:34.979Z",
+      "updatedAt": "2026-11-07T19:15:34.979Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/56",
+          "number": 56,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/49",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "c231654e886b6dc10c95c81ea5628f46",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T15:27:39.873Z",
+      "endedAt": "2026-11-07T17:54:52.936Z",
+      "updatedAt": "2026-11-07T17:54:52.937Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/56",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "c284b0df9b1bc44d353646e351dff7b1",
+      "state": "closed",
+      "stage": "ended",
+      "status": "closed",
+      "createdAt": "2026-11-06T20:00:11.676Z",
+      "endedAt": "2026-11-06T20:03:26.000Z",
+      "updatedAt": "2026-11-06T20:04:13.692Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/33",
+          "number": 33,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/32",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "c603d0ef2e16d10b29d382dee995a584",
+      "state": "closed",
+      "stage": "ended",
+      "status": "closed",
+      "createdAt": "2026-11-06T21:41:25.573Z",
+      "endedAt": "2026-11-06T21:50:50.000Z",
+      "updatedAt": "2026-11-06T21:52:23.416Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/39",
+          "number": 39,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/38",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "c9ea328ed09283cd8dec6ecaf4068f4e",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:33:22.482Z",
+      "endedAt": "2026-11-07T17:54:52.966Z",
+      "updatedAt": "2026-11-07T17:54:52.966Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/52",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "cdaadaf75229ff91741f9778a970adcf",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T14:39:57.608Z",
+      "endedAt": "2026-11-07T14:43:49.863Z",
+      "updatedAt": "2026-11-07T14:43:49.863Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/54",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "d31e4f61ad3f4867ce4331e61a368b4b",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T18:24:03.416Z",
+      "endedAt": "2026-11-07T19:15:34.985Z",
+      "updatedAt": "2026-11-07T19:15:34.985Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/46",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "e0ad474f8174ee7155b6102f3645a617",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T15:15:38.530Z",
+      "endedAt": "2026-11-07T15:57:56.226Z",
+      "updatedAt": "2026-11-07T15:57:56.226Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/32",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "e2419b285c10d943a46def08d3ef11da",
+      "state": "stopped",
+      "stage": "ended",
+      "status": "stopped",
+      "createdAt": "2026-11-07T17:15:14.557Z",
+      "endedAt": "2026-11-07T17:54:52.875Z",
+      "updatedAt": "2026-11-07T17:54:52.876Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/63",
+          "number": 63,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/62",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "ea564491ce4b22e4a622a7b786a691e6",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:31:47.757Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:45:46.228Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/66",
+          "number": 66,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/61",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "ef9b71e6318012f61d7828618b713c71",
+      "state": "open",
+      "stage": "idle",
+      "status": "open",
+      "createdAt": "2026-11-07T19:33:32.800Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T19:45:43.432Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/super-agent-hephi-review/pull/58",
+          "number": 58,
+          "merged": false
+        }
+      ],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/57",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "f0256db745914847582a0b75d7fd38e4",
+      "state": "open",
+      "stage": "person",
+      "status": "open",
+      "createdAt": "2026-11-07T22:31:47.754Z",
+      "endedAt": null,
+      "updatedAt": "2026-11-07T22:31:53.774Z",
+      "prs": [],
+      "merged": false,
+      "dropped": false,
+      "blocked": false,
+      "closed": false,
+      "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/60",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    },
+    {
+      "ticketId": "f6c1954920dad4c1c76a89e48bca888d",
+      "state": "merged",
+      "stage": "ended",
+      "status": "merged",
+      "createdAt": "2026-11-05T21:47:25.835Z",
+      "endedAt": "2026-11-06T21:37:45.000Z",
+      "updatedAt": "2026-11-06T21:38:19.277Z",
+      "prs": [
+        {
+          "ref": "https://github.com/paxxie2/site-pnl-diagnosis/pull/29",
+          "number": 29,
+          "merged": true
+        }
+      ],
+      "merged": true,
+      "dropped": false,
+      "blocked": false,
+      "closed": true,
+      "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/28",
+      "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+    }
+  ]
+}

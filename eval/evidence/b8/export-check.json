@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "generator": "eval/daily/verify-export.mjs",
+  "checkedAt": "2026-11-07T22:47:26.601Z",
+  "exportFile": "/tmp/b8obs/eval/evidence/b8/daily-export.json",
+  "source": "/tmp/b8obs/eval/evidence/b8/archive/tickets.json",
+  "sourceArg": "/tmp/b8obs/eval/evidence/b8/archive",
+  "ok": true,
+  "dedupeKey": "ticketId",
+  "exportCounts": {
+    "total": 35,
+    "merged": 5,
+    "unmerged": 30,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 23,
+    "openNotBlocked": 7,
+    "withMergeEvidence": 5,
+    "prLinked": 22,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  },
+  "recomputedCounts": {
+    "total": 35,
+    "merged": 5,
+    "unmerged": 30,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 23,
+    "openNotBlocked": 7,
+    "withMergeEvidence": 5,
+    "prLinked": 22,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  },
+  "ticketCount": 35,
+  "checks": [
+    {
+      "id": "VE-01",
+      "description": "export.generator is eval/daily/export.mjs",
+      "ok": true,
+      "detail": "eval/daily/export.mjs"
+    },
+    {
+      "id": "VE-02",
+      "description": "export.schemaVersion is 1",
+      "ok": true,
+      "detail": "1"
+    },
+    {
+      "id": "VE-03",
+      "description": "dedupe key is ticketId",
+      "ok": true,
+      "detail": "ticketId"
+    },
+    {
+      "id": "VE-04",
+      "description": "export.input matches --source",
+      "ok": true,
+      "detail": "export.input=/tmp/b8obs/eval/evidence/b8/archive/tickets.json source=/tmp/b8obs/eval/evidence/b8/archive/tickets.json"
+    },
+    {
+      "id": "VE-05",
+      "description": "counts fields exist and are non-negative integers",
+      "ok": true,
+      "detail": "{\"missingKeys\":[],\"nonInteger\":[]}"
+    },
+    {
+      "id": "VE-06",
+      "description": "total/merged/unmerged/dropped/blocked and split counts match source",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "VE-07",
+      "description": "mutually exclusive count identity holds",
+      "ok": true,
+      "detail": "{\"total\":35,\"merged\":5,\"unmerged\":30,\"dropped\":0,\"blocked\":0,\"closedUnmerged\":23,\"openNotBlocked\":7,\"withMergeEvidence\":5,\"prLinked\":22,\"byStatus\":{\"closed\":4,\"open\":7,\"stopped\":21,\"merged\":3}}"
+    },
+    {
+      "id": "VE-08",
+      "description": "tickets array present, unique, and matches source ticketId set",
+      "ok": true,
+      "detail": "{\"exportTickets\":35,\"total\":35,\"unique\":35,\"exportIds\":35}"
+    },
+    {
+      "id": "VE-09",
+      "description": "per-ticket merged/dropped/blocked/closed match source",
+      "ok": true,
+      "detail": null
+    },
+    {
+      "id": "VE-10",
+      "description": "source summary uniqueIds equals counts.total",
+      "ok": true,
+      "detail": "uniqueIds=35 total=35"
+    },
+    {
+      "id": "VE-11",
+      "description": "skippedInvalid matches source recalculation",
+      "ok": true,
+      "detail": "export=0 recomputed=0"
+    }
+  ],
+  "failures": [],
+  "warnings": []
+}

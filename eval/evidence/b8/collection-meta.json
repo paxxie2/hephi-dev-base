@@ -1,0 +1,234 @@
+{
+  "collectedAt": "2026-11-07T22:47:26.460Z",
+  "hostApi": {
+    "base": "http://127.0.0.1:3083",
+    "endpoints": [
+      {
+        "query": "state=open&limit=1000",
+        "httpStatus": 200,
+        "total": 7,
+        "items": 7
+      },
+      {
+        "query": "state=ended&limit=1000",
+        "httpStatus": 200,
+        "total": 28,
+        "items": 28
+      }
+    ]
+  },
+  "sqlite": {
+    "path": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite",
+    "readOnly": true,
+    "snapshotAt": "2026-11-07T22:47:00.171Z",
+    "ticketRows": 35,
+    "threadRows": 59
+  },
+  "crossCheck": {
+    "apiTickets": 35,
+    "sqliteTickets": 35,
+    "idsEqual": true,
+    "apiOnly": [],
+    "sqliteOnly": [],
+    "apiThreads": 57,
+    "sqliteThreads": 59
+  },
+  "github": {
+    "query": "gh api repos/<owner>/<repo>/pulls/<n> (read-only, one request per structured PR URL)",
+    "pulls": [
+      {
+        "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/3",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/5",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/27",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/29",
+        "ok": true,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-06T21:37:45Z",
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/33",
+        "ok": true,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/37",
+        "ok": true,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/39",
+        "ok": true,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/42",
+        "ok": true,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-06T22:02:53Z",
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/46",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/50",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/53",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/58",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/61",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/63",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/66",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/30",
+        "ok": true,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T14:45:19Z",
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/37",
+        "ok": true,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T17:06:09Z",
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/38",
+        "ok": true,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T17:06:12Z",
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/56",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/58",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/65",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      },
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/66",
+        "ok": true,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "error": null
+      }
+    ],
+    "merged": 5,
+    "failed": 0
+  },
+  "rawArtifactSha256": {
+    "api-ended.json": "5a5e2374177e9a3b0d2bae0611f6532a057a2a27cca6df41ddf893f157464241",
+    "api-open.json": "57014458b12d37e4f3949512bea869667e0d4584876c9b10ee1aedda422ef89f",
+    "prs.json": "9d077d8bad10a2baef10e4406a593cd3f6e08526bd1c9942e7efecfb3072181f",
+    "pulls.json": "af4bdeb9a3315a82c8ea7b5962cb5afe007bed50f5d280ae5468d1d7b7b09d4b",
+    "sqlite-snapshot.json": "9e4458a6905a1cb3ee10b6ad962ae0e8cd17445660c2461d41c52df864f3ef7f"
+  },
+  "dataGaps": [
+    "blocked：宿主 B ticket 表/API 无 ticket 级 blocked 字段（assignment report.state=blocked 仅作旁证，不并入 counts.blocked）。",
+    "dropped：无 ended.outcome=dropped/abandoned 记录，按口径 dropped=0；stopped/closed 计 closedUnmerged（未人工确认放弃）。",
+    "维护工时：无 maintenance.jsonl 记录（0 条），工时为未知，不填 0 工时。",
+    "申诉：未发现 appeal-record.jsonl / hephi/appeal 真实记录。",
+    "影子模式数据：无（P4 未启用/未验证）。",
+    "观察窗口：未由负责人定义，本快照 window=null，不是 PREREG 正式窗口。"
+  ]
+}

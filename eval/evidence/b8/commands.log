@@ -1,0 +1,167 @@
+[2026-11-07T22:46:59Z] DATA SOURCE: host B orchestrator API http://127.0.0.1:3083 (read-only; header x-orchestrator-request: 1)
+[2026-11-07T22:46:59Z] CMD (api-open): curl -sS -m 30 -H 'x-orchestrator-request: 1' -o <tmp>/api-open.json -w '%{http_code}' 'http://127.0.0.1:3083/orchestrator/api/tickets?state=open&limit=1000'
+[2026-11-07T22:46:59Z] EXIT (api-open): 0  HTTP=200
+[2026-11-07T22:47:00Z] CMD (api-ended): curl -sS -m 30 -H 'x-orchestrator-request: 1' -o <tmp>/api-ended.json -w '%{http_code}' 'http://127.0.0.1:3083/orchestrator/api/tickets?state=ended&limit=1000'
+[2026-11-07T22:47:00Z] EXIT (api-ended): 0  HTTP=200
+[2026-11-07T22:47:00Z] DATA SOURCE: host B orchestrator sqlite (read-only DatabaseSync snapshot)
+[2026-11-07T22:47:00Z] CMD (sqlite-snapshot): node /tmp/b8-snapshot-sqlite.mjs /tmp/b8-collect/sqlite-snapshot.json
+{"snapshotAt":"2026-11-07T22:47:00.171Z","source":"/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite","readOnly":true,"tickets":35,"threads":59}
+[2026-11-07T22:47:00Z] EXIT (sqlite-snapshot): 0
+[2026-11-07T22:47:00Z] CMD (pulls-list): node /tmp/b8-build-pulls.mjs /tmp/b8-collect
+{"pulls":22}
+[2026-11-07T22:47:00Z] EXIT (pulls-list): 0
+[2026-11-07T22:47:00Z] CMD (prs-query): GH_TOKEN=<from git credential fill> B8_PULLS=<pulls.json> B8_PRS_OUT=<tmp>/prs.json node /tmp/b8-prs.mjs   # gh api repos/<owner>/<repo>/pulls/<n>, read-only
+[2026-11-07T22:47:26Z] EXIT (prs-query): 0  queried=22
+[2026-11-07T22:47:26Z] CMD (build-archive): node /tmp/b8-build-archive.mjs /tmp/b8-collect /tmp/b8obs/eval/evidence/b8
+{
+ "tickets": 35,
+ "byStatus": {
+  "closed": 4,
+  "open": 7,
+  "stopped": 21,
+  "merged": 3
+ },
+ "byOutcome": {
+  "closed": 4,
+  "open": 7,
+  "stopped": 21,
+  "merged": 3
+ },
+ "crossCheck": {
+  "apiTickets": 35,
+  "sqliteTickets": 35,
+  "idsEqual": true,
+  "apiOnly": [],
+  "sqliteOnly": [],
+  "apiThreads": 57,
+  "sqliteThreads": 59
+ },
+ "prStats": {
+  "uniquePulls": 22,
+  "queried": 22,
+  "failed": 0,
+  "merged": 5,
+  "open": 14,
+  "closedUnmerged": 3
+ },
+ "derivedStatsFile": "/tmp/b8obs/eval/evidence/b8/derived-stats.json"
+}
+[2026-11-07T22:47:26Z] EXIT (build-archive): 0
+[2026-11-07T22:47:26Z] CMD (export): node eval/daily/export.mjs --input /tmp/b8obs/eval/evidence/b8/archive --out /tmp/b8obs/eval/evidence/b8/daily-export.json
+{
+  "out": "/tmp/b8obs/eval/evidence/b8/daily-export.json",
+  "dedupKey": "ticketId",
+  "counts": {
+    "total": 35,
+    "merged": 5,
+    "unmerged": 30,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 23,
+    "openNotBlocked": 7,
+    "withMergeEvidence": 5,
+    "prLinked": 22,
+    "byStatus": {
+      "closed": 4,
+      "open": 7,
+      "stopped": 21,
+      "merged": 3
+    }
+  }
+}
+[2026-11-07T22:47:26Z] EXIT (export): 0
+[2026-11-07T22:47:26Z] CMD (verify-export): node eval/daily/verify-export.mjs --export /tmp/b8obs/eval/evidence/b8/daily-export.json --source /tmp/b8obs/eval/evidence/b8/archive --out /tmp/b8obs/eval/evidence/b8/export-check.json
+[verify-export] PASS VE-01 export.generator is eval/daily/export.mjs
+[verify-export] PASS VE-02 export.schemaVersion is 1
+[verify-export] PASS VE-03 dedupe key is ticketId
+[verify-export] PASS VE-04 export.input matches --source
+[verify-export] PASS VE-05 counts fields exist and are non-negative integers
+[verify-export] PASS VE-06 total/merged/unmerged/dropped/blocked and split counts match source
+[verify-export] PASS VE-07 mutually exclusive count identity holds
+[verify-export] PASS VE-08 tickets array present, unique, and matches source ticketId set
+[verify-export] PASS VE-09 per-ticket merged/dropped/blocked/closed match source
+[verify-export] PASS VE-10 source summary uniqueIds equals counts.total
+[verify-export] PASS VE-11 skippedInvalid matches source recalculation
+[verify-export] export=/tmp/b8obs/eval/evidence/b8/daily-export.json source=/tmp/b8obs/eval/evidence/b8/archive/tickets.json
+[verify-export] counts: {"total":35,"merged":5,"unmerged":30,"dropped":0,"blocked":0,"closedUnmerged":23,"openNotBlocked":7,"withMergeEvidence":5,"prLinked":22,"byStatus":{"closed":4,"open":7,"stopped":21,"merged":3}}
+[verify-export] recomputed: {"total":35,"merged":5,"unmerged":30,"dropped":0,"blocked":0,"closedUnmerged":23,"openNotBlocked":7,"withMergeEvidence":5,"prLinked":22,"byStatus":{"closed":4,"open":7,"stopped":21,"merged":3}}
+[verify-export] RESULT: OK (cross-check passed)
+[verify-export] WROTE /tmp/b8obs/eval/evidence/b8/export-check.json
+[2026-11-07T22:47:26Z] EXIT (verify-export): 0
+[2026-11-07T22:47:26Z] CMD (rework): node eval/daily/rework.mjs --repo /tmp/b8obs --since 2026-09-01 --window-days 30 --json > eval/evidence/b8/rework.json
+[2026-11-07T22:47:28Z] EXIT (rework): 0
+[2026-11-07T22:47:28Z] CMD (p15-export): node eval/daily/export.mjs --input /Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2 --out /tmp/b8-collect/p15-reexport/daily-export.json
+{
+  "out": "/tmp/b8-collect/p15-reexport/daily-export.json",
+  "dedupKey": "ticketId",
+  "counts": {
+    "total": 61,
+    "merged": 2,
+    "unmerged": 59,
+    "dropped": 0,
+    "blocked": 0,
+    "closedUnmerged": 25,
+    "openNotBlocked": 34,
+    "withMergeEvidence": 2,
+    "prLinked": 33,
+    "byStatus": {
+      "open": 34,
+      "stopped": 21,
+      "merged": 2,
+      "completed": 4
+    }
+  }
+}
+[2026-11-07T22:47:28Z] EXIT (p15-export): 0
+[2026-11-07T22:47:28Z] CMD (p15-verify): node eval/daily/verify-export.mjs --export /tmp/b8-collect/p15-reexport/daily-export.json --source /Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2 --out /tmp/b8-collect/p15-reexport/export-check.json
+[verify-export] PASS VE-01 export.generator is eval/daily/export.mjs
+[verify-export] PASS VE-02 export.schemaVersion is 1
+[verify-export] PASS VE-03 dedupe key is ticketId
+[verify-export] PASS VE-04 export.input matches --source
+[verify-export] PASS VE-05 counts fields exist and are non-negative integers
+[verify-export] PASS VE-06 total/merged/unmerged/dropped/blocked and split counts match source
+[verify-export] PASS VE-07 mutually exclusive count identity holds
+[verify-export] PASS VE-08 tickets array present, unique, and matches source ticketId set
+[verify-export] PASS VE-09 per-ticket merged/dropped/blocked/closed match source
+[verify-export] PASS VE-10 source summary uniqueIds equals counts.total
+[verify-export] PASS VE-11 skippedInvalid matches source recalculation
+[verify-export] export=/tmp/b8-collect/p15-reexport/daily-export.json source=/Users/zm/dsh-instances/experiment/evidence/p15-baseline-20261107-r2/tickets.json
+[verify-export] counts: {"total":61,"merged":2,"unmerged":59,"dropped":0,"blocked":0,"closedUnmerged":25,"openNotBlocked":34,"withMergeEvidence":2,"prLinked":33,"byStatus":{"open":34,"stopped":21,"merged":2,"completed":4}}
+[verify-export] recomputed: {"total":61,"merged":2,"unmerged":59,"dropped":0,"blocked":0,"closedUnmerged":25,"openNotBlocked":34,"withMergeEvidence":2,"prLinked":33,"byStatus":{"open":34,"stopped":21,"merged":2,"completed":4}}
+[verify-export] RESULT: OK (cross-check passed)
+[verify-export] WROTE /tmp/b8-collect/p15-reexport/export-check.json
+[2026-11-07T22:47:28Z] EXIT (p15-verify): 0
+[2026-11-07T22:47:28Z] CHECK (appeals): search host and repo for real appeal records (appeal-record*.jsonl / *appeal*), read-only
+[2026-11-07T22:47:28Z] EXIT (appeals-find): 0  hits=14
+[2026-11-07T22:47:28Z] EXIT (appeals-git-ls-files): 1  hits=0
+[2026-11-07T22:47:28Z] CHECK (maintenance): search host and repo for maintenance.jsonl, read-only
+[2026-11-07T22:47:29Z] EXIT (maintenance-find): 0  hits=0
+[2026-11-07T22:47:29Z] CMD (p15-counts): node -e <extract counts only> <tmp>/p15-reexport/*.json -> eval/evidence/b8/p15-baseline-reexport-counts.json
+[2026-11-07T22:47:29Z] EXIT (p15-counts): 0
+{
+ "exportCounts": {
+  "total": 35,
+  "merged": 5,
+  "unmerged": 30,
+  "dropped": 0,
+  "blocked": 0,
+  "closedUnmerged": 23,
+  "openNotBlocked": 7,
+  "withMergeEvidence": 5,
+  "prLinked": 22,
+  "byStatus": {
+   "closed": 4,
+   "open": 7,
+   "stopped": 21,
+   "merged": 3
+  }
+ },
+ "verifyOk": true,
+ "verifyFailures": [],
+ "rework": {
+  "mergesReviewed": 21,
+  "candidates": 2,
+  "pendingHuman": 2
+ }
+}
+[2026-11-07T22:47:29Z] DONE (collection pipeline; RAW=/tmp/b8-collect EVID=/tmp/b8obs/eval/evidence/b8)

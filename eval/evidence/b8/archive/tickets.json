@@ -1,0 +1,1482 @@
+[
+  {
+    "id": "04b029dc406e343f08b0df8453b6d9ef",
+    "ticketId": "04b029dc406e343f08b0df8453b6d9ef",
+    "title": "[native] 竞态测试：暂停期间新 Issue（仅验证，不合并）",
+    "createdAt": "2026-11-06T21:27:32.006Z",
+    "updatedAt": "2026-11-06T21:33:42.228Z",
+    "ended": {
+      "at": "2026-11-06T21:32:26.000Z",
+      "by": "executor",
+      "outcome": "closed"
+    },
+    "status": "closed",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/37",
+        "number": 37,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/35",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "0824a46875fffff5193152a320073ea6",
+    "ticketId": "0824a46875fffff5193152a320073ea6",
+    "title": "[native][B5-native] previous-window-order run1",
+    "createdAt": "2026-11-07T22:35:12.795Z",
+    "updatedAt": "2026-11-07T22:39:13.074Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": true,
+      "stop": true
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/3",
+        "number": 3,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/b5-native-site-pnl",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/2",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "13af322b6b7ad6ede331f41e884ae076",
+    "ticketId": "13af322b6b7ad6ede331f41e884ae076",
+    "title": "[native] E4 重试：检查配置修正后重跑 project-regression",
+    "createdAt": "2026-11-07T15:30:17.887Z",
+    "updatedAt": "2026-11-07T17:54:52.918Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.918Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/58",
+        "number": 58,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/57",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "1612ffacf3e1cf45bd262df0f12de555",
+    "ticketId": "1612ffacf3e1cf45bd262df0f12de555",
+    "title": "[native] 行为保持重构：提取 money.py 的日期窗口辅助函数",
+    "createdAt": "2026-11-07T15:38:29.022Z",
+    "updatedAt": "2026-11-07T17:54:52.902Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.902Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/61",
+        "number": 61,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/60",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "23c3eab13e719f1218a366f3f4a9389d",
+    "ticketId": "23c3eab13e719f1218a366f3f4a9389d",
+    "title": "[native] S3 部署冒烟：bc21cac 基础链路验收（不合并）",
+    "createdAt": "2026-11-07T18:22:47.906Z",
+    "updatedAt": "2026-11-07T18:25:35.663Z",
+    "ended": {
+      "at": "2026-11-07T18:25:35.663Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/66",
+        "number": 66,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/65",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "24983dd77e986b48866bb016a909d490",
+    "ticketId": "24983dd77e986b48866bb016a909d490",
+    "title": "健康检查 200/503 响应增加固定 service 字段",
+    "createdAt": "2026-11-05T20:36:52.214Z",
+    "updatedAt": "2026-11-07T12:52:48.811Z",
+    "ended": {
+      "at": "2026-11-07T12:52:48.811Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/25",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "2801319d520b9bd81c3c3a3f6d821167",
+    "ticketId": "2801319d520b9bd81c3c3a3f6d821167",
+    "title": "[native][B5-native] previous-window-order run1-retry",
+    "createdAt": "2026-11-07T22:44:10.001Z",
+    "updatedAt": "2026-11-07T22:46:17.670Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": false,
+      "stop": true
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/5",
+        "number": 5,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/b5-native-site-pnl",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/b5-native-site-pnl/issues/4",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "3619d68fc5fd904a3cf98d6a07251326",
+    "ticketId": "3619d68fc5fd904a3cf98d6a07251326",
+    "title": "[smoke] e490fe3 新部署原生交付验收，不合并",
+    "createdAt": "2026-11-07T14:14:28.060Z",
+    "updatedAt": "2026-11-07T14:16:30.964Z",
+    "ended": {
+      "at": "2026-11-07T14:16:30.964Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/47",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "5e88de032365ca46fb9573c33138d6e2",
+    "ticketId": "5e88de032365ca46fb9573c33138d6e2",
+    "title": "[native] 甲包：E4正常目录对照、真实49164字节输出与审批门禁验收",
+    "createdAt": "2026-11-07T22:34:33.948Z",
+    "updatedAt": "2026-11-07T22:44:34.014Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": true,
+      "stop": true
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/65",
+        "number": 65,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/62",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "78851e476e1d191b144f88b134df0342",
+    "ticketId": "78851e476e1d191b144f88b134df0342",
+    "title": "[native] SMOKE_ONLY efdd406 重新验收：冻结锁文件安装，README 单行标记，不合并",
+    "createdAt": "2026-11-07T13:03:48.423Z",
+    "updatedAt": "2026-11-07T13:06:14.882Z",
+    "ended": {
+      "at": "2026-11-07T13:06:14.882Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/46",
+        "number": 46,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/45",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+    "ticketId": "8622e1ed4db2fb8e8ab1bf84ffd94ad6",
+    "title": "[native] 清单2最终检查与PR交付：接续已完成代码，不新增功能",
+    "createdAt": "2026-11-07T16:00:24.023Z",
+    "updatedAt": "2026-11-07T17:07:03.187Z",
+    "ended": {
+      "at": "2026-11-07T17:06:09.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "status": "merged",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/37",
+        "number": 37,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T17:06:09Z",
+        "mergeCommit": "b1a70bd327c384cb5ec8623b23ee20b78edef69c",
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": true,
+    "mergedEvidence": {
+      "hostOutcomeMerged": true,
+      "prMerged": true
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/36",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "90150d23e36caf1d94559cb6f80c74ed",
+    "ticketId": "90150d23e36caf1d94559cb6f80c74ed",
+    "title": "[native] 既有A5边界实验 E2 E3 E6 E7：最小验收，不重构不合并",
+    "createdAt": "2026-11-07T14:33:22.480Z",
+    "updatedAt": "2026-11-07T17:54:52.951Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.951Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/53",
+        "number": 53,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/51",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "9461627f625a0cc94651bf410fd7495d",
+    "ticketId": "9461627f625a0cc94651bf410fd7495d",
+    "title": "行为保持重构：提取 money.py 的日期窗口辅助函数",
+    "createdAt": "2026-11-07T15:35:34.124Z",
+    "updatedAt": "2026-11-07T15:38:05.583Z",
+    "ended": {
+      "at": "2026-11-07T15:38:05.582Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 2,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/59",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "992a6cb25459df80a5b89df6220724b7",
+    "ticketId": "992a6cb25459df80a5b89df6220724b7",
+    "title": "[native] 剩余前置统一实施：发布修复、兼容路径与宿主真实验证",
+    "createdAt": "2026-11-07T13:18:29.541Z",
+    "updatedAt": "2026-11-07T14:06:41.070Z",
+    "ended": {
+      "at": "2026-11-07T14:06:41.070Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed",
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 2,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/30",
+        "number": 30,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T14:45:19Z",
+        "mergeCommit": "2c603c6cba2c3622ed4aa8024f0b3f9106d7c27a",
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": true,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": true
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/29",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ad3d50166613ff79434557484d1d7b5c",
+    "ticketId": "ad3d50166613ff79434557484d1d7b5c",
+    "title": "[native] [smoke] e490fe3 新部署基础交付验收，不合并",
+    "createdAt": "2026-11-07T14:22:30.791Z",
+    "updatedAt": "2026-11-07T17:54:52.981Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.981Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/50",
+        "number": 50,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/49",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ae85aac40937768ca9db90a06ec15d9a",
+    "ticketId": "ae85aac40937768ca9db90a06ec15d9a",
+    "title": "[native] 甲包 E4：不存在检查目录的全新入口负向验收",
+    "createdAt": "2026-11-07T22:28:33.728Z",
+    "updatedAt": "2026-11-07T22:29:43.295Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": true,
+      "stop": true
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/59",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b3a7d823bad0339e77dde1fb22f2060b",
+    "ticketId": "b3a7d823bad0339e77dde1fb22f2060b",
+    "title": "[native] 健康检查 200/503 响应增加固定 service 字段",
+    "createdAt": "2026-11-05T20:48:46.112Z",
+    "updatedAt": "2026-11-07T12:52:48.829Z",
+    "ended": {
+      "at": "2026-11-07T12:52:48.829Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/27",
+        "number": 27,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/26",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b6166d59e023753eef4620c9b4af3143",
+    "ticketId": "b6166d59e023753eef4620c9b4af3143",
+    "title": "[native] 清单2补项2.7 F1：修复activation legacy降级绕过（仅F1）",
+    "createdAt": "2026-11-07T16:26:17.319Z",
+    "updatedAt": "2026-11-07T17:07:01.838Z",
+    "ended": {
+      "at": "2026-11-07T17:06:12.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "status": "merged",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/38",
+        "number": 38,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-07T17:06:12Z",
+        "mergeCommit": "d9d70b1151a35b2823107568953a58b661c36a96",
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": true,
+    "mergedEvidence": {
+      "hostOutcomeMerged": true,
+      "prMerged": true
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/35",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b61dfbe3525e29fedf3ecf071023f80e",
+    "ticketId": "b61dfbe3525e29fedf3ecf071023f80e",
+    "title": "[native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+    "createdAt": "2026-11-06T03:35:33.091Z",
+    "updatedAt": "2026-11-06T03:36:02.985Z",
+    "ended": {
+      "at": "2026-11-06T03:36:02.985Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/30",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b7201bbf8a340c999955d38e73b4e396",
+    "ticketId": "b7201bbf8a340c999955d38e73b4e396",
+    "title": "[native] hephi smoke: README 追加标记（第二轮，仅验证，不合并）",
+    "createdAt": "2026-11-06T21:49:09.094Z",
+    "updatedAt": "2026-11-06T21:52:22.324Z",
+    "ended": {
+      "at": "2026-11-06T21:50:55.000Z",
+      "by": "executor",
+      "outcome": "closed"
+    },
+    "status": "closed",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/42",
+        "number": 42,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-06T22:02:53Z",
+        "mergeCommit": "8d2ec5858ed3071eae598e5afb30b069807ce598",
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": true,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": true
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/41",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b76b1fc974632ec6e62b664d38d004b4",
+    "ticketId": "b76b1fc974632ec6e62b664d38d004b4",
+    "title": "[native] SMOKE_ONLY efdd406 部署验收：README 单行标记，不合并",
+    "createdAt": "2026-11-07T13:00:46.146Z",
+    "updatedAt": "2026-11-07T13:02:50.097Z",
+    "ended": {
+      "at": "2026-11-07T13:02:50.097Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/44",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b945d6ef581411b29715ee2feec8ed46",
+    "ticketId": "b945d6ef581411b29715ee2feec8ed46",
+    "title": "[smoke] e490fe3 带赫菲标签的全新交付验收，不合并",
+    "createdAt": "2026-11-07T14:18:21.361Z",
+    "updatedAt": "2026-11-07T14:20:02.562Z",
+    "ended": {
+      "at": "2026-11-07T14:20:02.562Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/48",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "bd9384b534d842df60286d55384333ea",
+    "ticketId": "bd9384b534d842df60286d55384333ea",
+    "title": "[native] 甲包最小修复：原生Job输出运行期采集，保持lossy拒绝",
+    "createdAt": "2026-11-07T18:48:38.622Z",
+    "updatedAt": "2026-11-07T19:15:34.979Z",
+    "ended": {
+      "at": "2026-11-07T19:15:34.979Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/56",
+        "number": 56,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/49",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "c231654e886b6dc10c95c81ea5628f46",
+    "ticketId": "c231654e886b6dc10c95c81ea5628f46",
+    "title": "[native] E4 检查目录配置错误：check not started → 修正后重试",
+    "createdAt": "2026-11-07T15:27:39.873Z",
+    "updatedAt": "2026-11-07T17:54:52.937Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.936Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/56",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "c284b0df9b1bc44d353646e351dff7b1",
+    "ticketId": "c284b0df9b1bc44d353646e351dff7b1",
+    "title": "[native] smoke: 原生入口链路验证（仅记录，不合并）",
+    "createdAt": "2026-11-06T20:00:11.676Z",
+    "updatedAt": "2026-11-06T20:04:13.692Z",
+    "ended": {
+      "at": "2026-11-06T20:03:26.000Z",
+      "by": "executor",
+      "outcome": "closed"
+    },
+    "status": "closed",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/33",
+        "number": 33,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/32",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "c603d0ef2e16d10b29d382dee995a584",
+    "ticketId": "c603d0ef2e16d10b29d382dee995a584",
+    "title": "[native] hephi smoke: README 追加标记（仅验证，不合并）",
+    "createdAt": "2026-11-06T21:41:25.573Z",
+    "updatedAt": "2026-11-06T21:52:23.416Z",
+    "ended": {
+      "at": "2026-11-06T21:50:50.000Z",
+      "by": "executor",
+      "outcome": "closed"
+    },
+    "status": "closed",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/39",
+        "number": 39,
+        "state": "closed",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/38",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "c9ea328ed09283cd8dec6ecaf4068f4e",
+    "ticketId": "c9ea328ed09283cd8dec6ecaf4068f4e",
+    "title": "[native] A5 E8 负例：故意缺任务卡，预期准备拒绝",
+    "createdAt": "2026-11-07T14:33:22.482Z",
+    "updatedAt": "2026-11-07T17:54:52.966Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.966Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/52",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "cdaadaf75229ff91741f9778a970adcf",
+    "ticketId": "cdaadaf75229ff91741f9778a970adcf",
+    "title": "[native] A5 E1-off 原生对照：不启用赫菲，同Issue49任务卡",
+    "createdAt": "2026-11-07T14:39:57.608Z",
+    "updatedAt": "2026-11-07T14:43:49.863Z",
+    "ended": {
+      "at": "2026-11-07T14:43:49.863Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/54",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "d31e4f61ad3f4867ce4331e61a368b4b",
+    "ticketId": "d31e4f61ad3f4867ce4331e61a368b4b",
+    "title": "[native] 工作包甲：集成五文档最小修订并完成原生回归交付",
+    "createdAt": "2026-11-07T18:24:03.416Z",
+    "updatedAt": "2026-11-07T19:15:34.985Z",
+    "ended": {
+      "at": "2026-11-07T19:15:34.985Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/46",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "e0ad474f8174ee7155b6102f3645a617",
+    "ticketId": "e0ad474f8174ee7155b6102f3645a617",
+    "title": "[native] 清单2：summary、离线扫描、migrate及单实例复核小批次",
+    "createdAt": "2026-11-07T15:15:38.530Z",
+    "updatedAt": "2026-11-07T15:57:56.226Z",
+    "ended": {
+      "at": "2026-11-07T15:57:56.226Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "blocked"
+    ],
+    "assignmentBlockedReport": true,
+    "assignmentCount": 2,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/32",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "e2419b285c10d943a46def08d3ef11da",
+    "ticketId": "e2419b285c10d943a46def08d3ef11da",
+    "title": "[native] E1-on 正式场景：清理 Settings.from_env 死分支（等价清理，不合并）",
+    "createdAt": "2026-11-07T17:15:14.557Z",
+    "updatedAt": "2026-11-07T17:54:52.876Z",
+    "ended": {
+      "at": "2026-11-07T17:54:52.875Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/63",
+        "number": 63,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/62",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ea564491ce4b22e4a622a7b786a691e6",
+    "ticketId": "ea564491ce4b22e4a622a7b786a691e6",
+    "title": "[native] 甲包：五文档整合与 scope/计划/PR/HEAD 联合边界验收",
+    "createdAt": "2026-11-07T22:31:47.757Z",
+    "updatedAt": "2026-11-07T22:45:46.228Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": false,
+      "stop": true
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/66",
+        "number": 66,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/61",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ef9b71e6318012f61d7828618b713c71",
+    "ticketId": "ef9b71e6318012f61d7828618b713c71",
+    "title": "[native] 甲包：修复版全新入口长输出采集验收",
+    "createdAt": "2026-11-07T19:33:32.800Z",
+    "updatedAt": "2026-11-07T19:45:43.432Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "idle",
+    "actions": {
+      "retry": false,
+      "stop": true
+    },
+    "reportStates": [
+      "waiting"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/super-agent-hephi-review/pull/58",
+        "number": 58,
+        "state": "open",
+        "merged": false,
+        "mergedAt": null,
+        "mergeCommit": null,
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/57",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "f0256db745914847582a0b75d7fd38e4",
+    "ticketId": "f0256db745914847582a0b75d7fd38e4",
+    "title": "[native] 甲包 E8：缺任务卡必须拒绝的真实入口验收",
+    "createdAt": "2026-11-07T22:31:47.754Z",
+    "updatedAt": "2026-11-07T22:31:53.774Z",
+    "ended": null,
+    "status": "open",
+    "hostState": "open",
+    "stage": "person",
+    "actions": {
+      "retry": true,
+      "stop": true
+    },
+    "reportStates": [
+      "failed"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [],
+    "merged": false,
+    "mergedEvidence": {
+      "hostOutcomeMerged": false,
+      "prMerged": false
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": false,
+    "sourceRepository": "paxxie2/super-agent-hephi-review",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/super-agent-hephi-review/issues/60",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "f6c1954920dad4c1c76a89e48bca888d",
+    "ticketId": "f6c1954920dad4c1c76a89e48bca888d",
+    "title": "[native] 恢复指定 data 源码并为健康接口增加固定 service 字段",
+    "createdAt": "2026-11-05T21:47:25.835Z",
+    "updatedAt": "2026-11-06T21:38:19.277Z",
+    "ended": {
+      "at": "2026-11-06T21:37:45.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "status": "merged",
+    "hostState": "ended",
+    "stage": "ended",
+    "actions": {
+      "retry": false,
+      "stop": false
+    },
+    "reportStates": [
+      "ready"
+    ],
+    "assignmentBlockedReport": false,
+    "assignmentCount": 1,
+    "prRefs": [
+      {
+        "url": "https://github.com/paxxie2/site-pnl-diagnosis/pull/29",
+        "number": 29,
+        "state": "closed",
+        "merged": true,
+        "mergedAt": "2026-11-06T21:37:45Z",
+        "mergeCommit": "291b29e35830061f21892038a8f3bc4cb00e9481",
+        "evidence": "github-api-read-only"
+      }
+    ],
+    "merged": true,
+    "mergedEvidence": {
+      "hostOutcomeMerged": true,
+      "prMerged": true
+    },
+    "dropped": false,
+    "blocked": false,
+    "closed": true,
+    "sourceRepository": "paxxie2/site-pnl-diagnosis",
+    "sourceIsPr": false,
+    "sourceIssue": "https://github.com/paxxie2/site-pnl-diagnosis/issues/28",
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  }
+]

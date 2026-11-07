@@ -1,0 +1,65 @@
+{
+  "repo": "/tmp/b8obs",
+  "since": "2026-09-01",
+  "windowDays": 30,
+  "mergesReviewed": 21,
+  "candidates": [
+    {
+      "category": "pending-human",
+      "original": {
+        "refs": [
+          20
+        ],
+        "mergeCommit": "bc3386cd65fee16b1777294929389db5a710bb29",
+        "mergeAt": "2026-11-07T00:29:04.000Z",
+        "mergeSubject": "Merge pull request #20 from paxxie2/agent/hephi-r2-remediation"
+      },
+      "followUp": {
+        "commit": "c2865feaf27962bb686a7f934d59bb39a99dc0f2",
+        "committedAt": "2026-11-07T00:33:04.000Z",
+        "author": "DSH Agent",
+        "subject": "docs: record PR #20 merge into main (bc3386c)"
+      },
+      "referenceMatches": [
+        20
+      ],
+      "sharedFiles": [
+        "docs/implementation-index.md",
+        "docs/p8-deploy-record.md",
+        "docs/remediation-r1-validation.md",
+        "docs/remediation-r3-validation.md",
+        "docs/self-check-2026-11-07.md",
+        "docs/source-consistency.md"
+      ]
+    },
+    {
+      "category": "pending-human",
+      "original": {
+        "refs": [
+          7
+        ],
+        "mergeCommit": "3f276a533bceaa63f3e43ff8d0d1e75af9dac8c8",
+        "mergeAt": "2026-11-06T19:51:32.000Z",
+        "mergeSubject": "Merge pull request #7: HEPHI 前置阶段可实施项与 c547 等价修复"
+      },
+      "followUp": {
+        "commit": "2cb56249b0c8f5a41e90dcdf75a2902b84e5701f",
+        "committedAt": "2026-11-06T19:52:14.000Z",
+        "author": "DSH Agent",
+        "subject": "Record PR #7 merge and hephi-baseline-1 tag in consistency docs"
+      },
+      "referenceMatches": [
+        7
+      ],
+      "sharedFiles": [
+        "docs/g2-preflight.md",
+        "docs/source-consistency.md"
+      ]
+    }
+  ],
+  "summary": {
+    "mergesReviewed": 21,
+    "candidates": 2,
+    "pendingHuman": 2
+  }
+}

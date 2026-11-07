@@ -1,0 +1,37 @@
+{
+  "generator": "hostB-collection (eval/evidence/b8)",
+  "collectedAt": "2026-11-07T22:47:26.460Z",
+  "window": null,
+  "sources": [
+    {
+      "kind": "hostB-orchestrator",
+      "api": "http://127.0.0.1:3083",
+      "stateDb": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite",
+      "readOnly": true,
+      "tickets": 35
+    }
+  ],
+  "total": 35,
+  "uniqueIds": 35,
+  "duplicates": 0,
+  "prLinked": 22,
+  "byStatus": {
+    "closed": 4,
+    "open": 7,
+    "stopped": 21,
+    "merged": 3
+  },
+  "byOutcome": {
+    "closed": 4,
+    "merged": 3,
+    "open": 7,
+    "stopped": 21
+  },
+  "notes": [
+    "从宿主 B orchestrator API（state=open / state=ended）与 orchestrator.sqlite 只读快照采集；两份数据源 ticketId 集合一致。",
+    "status 取 ended.outcome（无 ended 记为 open），与 P15 归档的 status 字段同口径；hostState 保留宿主原生 open/ended。",
+    "PR 关联仅来自结构化线程/channel URL（issues/pull），PR 状态由 GitHub 只读 API 查询；不从标题/摘要猜编号。",
+    "blocked 字段：宿主 B 无 ticket 级 blocked 标记，按 export.mjs 口径写 false（不可得，不猜）；assignment report.state=blocked 单独列出，不并入 counts.blocked。",
+    "开发期快照：window=null，不是 PREREG 锁定的正式观察窗口。"
+  ]
+}

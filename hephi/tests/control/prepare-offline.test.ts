@@ -96,12 +96,12 @@ describe('C4.6 prepare-time offline environment enforcement', () => {
   it('rejects networked install commands and lists every hit by check id and command', async () => {
     const cases: Array<{ command: string; args: string[]; expected: RegExp }> = [
       { command: 'npm', args: ['install'], expected: /npm install without --offline/ },
-      { command: 'pnpm', args: ['install'], expected: /pnpm install without --frozen-lockfile or --offline/ },
+      { command: 'pnpm', args: ['install'], expected: /pnpm install without --offline/ },
       { command: 'mvn', args: ['-pl', 'dubbo-common', 'test'], expected: /mvn without -o\/--offline/ },
       { command: 'mvnw', args: ['test'], expected: /mvn without -o\/--offline/ },
       { command: 'gradle', args: ['test'], expected: /gradle without --offline/ },
       { command: './gradlew', args: ['build'], expected: /gradle without --offline/ },
-      { command: 'yarn', args: ['install'], expected: /yarn install without an offline\/frozen flag/ },
+      { command: 'yarn', args: ['install'], expected: /yarn install without --offline/ },
       { command: 'pip', args: ['install', '-r', 'requirements.txt'], expected: /pip install without --no-index/ },
       { command: 'git', args: ['clone', 'https://github.com/example/repo'], expected: /git clone is a networked command/ },
       { command: 'curl', args: ['https://example.invalid/x'], expected: /curl\/wget are networked commands/ },

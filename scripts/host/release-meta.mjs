@@ -8,16 +8,23 @@
 //     incoming：创建 incoming/node_modules/<peer> -> <peer-root>/<peer> 的符号链接，
 //     校验每个 dependencies 都已随包，计算 node_modules 树哈希与 index/tools 入口哈希，
 //     最后写 incoming/meta.json。
-//   check --release <dir> --sha <sha>
+//   check --release <dir> --sha <sha> [--allow-legacy-rollback]
 //     校验不可变 release：meta 基本字段、入口哈希、依赖锁文件/树哈希、peer 链接。
-//     旧格式 meta（无 entries/dependencies/activation）按历史字段校验，保持可回滚。
-//   activation --release <dir>
-//     输出 required:<entry,...>、legacy 或 none，供部署脚本判定激活门禁。
+//     formatVersion:2 必须完整；历史 formatVersion:1 只在显式 --allow-legacy-rollback
+//     （回滚/恢复上下文）下接受：三段齐全的旧产物按完整字段校验并要求双入口激活，
+//     三段全无的纯 legacy 按历史 entrySha256 校验；部分残缺一律拒绝。
+//   activation --release <dir> [--allow-legacy-rollback]
+//     输出 required:<entry,...>、legacy、invalid 或 none，供部署脚本判定激活门禁。
+//     legacy（health-only）只在显式 --allow-legacy-rollback 的纯历史 v1 下输出；
+//     三段齐全的 v1 与 v2 一样输出 required；缺字段/未知版本/未授权旧格式一律 invalid。
 //   tree-hash --dir <dir>
 //     输出目录的确定性树哈希（文件内容 + 符号链接目标），不存在时输出 null。
 import { createHash } from 'node:crypto'
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
+
+const META_FORMAT_VERSION = 2
+const LEGACY_FORMAT_VERSION = 1
 
 function fail(message) {
   console.error(message)
@@ -30,7 +37,14 @@ function args(argv) {
     const key = argv[i]
     if (!key.startsWith('--')) fail(`unexpected argument: ${key}`)
     const value = argv[i + 1]
-    if (value === undefined || value.startsWith('--')) fail(`missing value for ${key}`)
+    // --allow-legacy-rollback 是唯一无值选项；其余选项仍要求显式值。
+    if (value === undefined || value.startsWith('--')) {
+      if (key === '--allow-legacy-rollback') {
+        out['allow-legacy-rollback'] = true
+        continue
+      }
+      fail(`missing value for ${key}`)
+    }
     out[key.slice(2)] = value
     i += 1
   }
@@ -154,7 +168,7 @@ function prepare(options) {
   }
   const nodeModulesSha256 = treeHash(join(incoming, 'node_modules'))
   const meta = {
-    formatVersion: 1,
+    formatVersion: META_FORMAT_VERSION,
     pluginCommit: sha,
     sourceTree: tree,
     entrySha256: entries.index,
@@ -177,12 +191,105 @@ function prepare(options) {
   process.stdout.write(JSON.stringify({ pluginCommit: sha, entries, nodeModulesSha256, resolved, peers }))
 }
 
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function isSha256(value) {
+  return typeof value === 'string' && /^[0-9a-f]{64}$/.test(value)
+}
+
+// v2 必须是完整新格式：任一段缺失/类型错误都返回问题列表，绝不被解释成 legacy。
+function v2Problems(meta) {
+  const problems = []
+  if (!isObject(meta.entries)) {
+    problems.push('missing entries')
+  } else {
+    for (const name of entryFiles()) {
+      if (!isSha256(meta.entries[name])) problems.push(`invalid entries.${name}`)
+    }
+    if (typeof meta.entrySha256 !== 'string' || meta.entrySha256 !== meta.entries.index) problems.push('entrySha256 does not match entries.index')
+  }
+  if (!isObject(meta.dependencies)) {
+    problems.push('missing dependencies')
+  } else {
+    if (!isSha256(meta.dependencies.lockfileSha256)) problems.push('invalid dependencies.lockfileSha256')
+    if (meta.dependencies.nodeModulesSha256 !== null && !isSha256(meta.dependencies.nodeModulesSha256)) problems.push('invalid dependencies.nodeModulesSha256')
+    if (!isObject(meta.dependencies.resolved)) problems.push('missing dependencies.resolved')
+    if (!isObject(meta.dependencies.peers)) problems.push('missing dependencies.peers')
+    if (!Array.isArray(meta.dependencies.peersReplaced)) problems.push('missing dependencies.peersReplaced')
+  }
+  if (!isObject(meta.activation) || meta.activation.markerVersion !== 1 || !Array.isArray(meta.activation.entries) || meta.activation.entries.length === 0) {
+    problems.push('missing activation metadata')
+  } else {
+    for (const name of entryFiles()) {
+      if (!meta.activation.entries.includes(name)) problems.push(`activation metadata does not cover the ${name} entry`)
+    }
+  }
+  return problems
+}
+
+// 历史 formatVersion:1 有两种合法形态（都只在显式回滚/恢复授权下允许）：
+// - complete：三段齐全（旧 prepare 的实际产物），仍按完整字段校验并要求双入口激活；
+// - pure：三段全无的纯历史 legacy，只按历史 entrySha256 校验；
+// 部分段残缺 = 降级/混合格式，一律拒绝。
+const LEGACY_SECTIONS = ['entries', 'dependencies', 'activation']
+function legacyShape(meta) {
+  const present = LEGACY_SECTIONS.filter((field) => meta[field] !== undefined)
+  if (present.length === 0) return 'pure'
+  if (present.length === LEGACY_SECTIONS.length) return 'complete'
+  return 'partial'
+}
+
+// 纯历史 legacy 只允许历史字段；出现任何新格式字段即视为混合格式。
+function pureLegacyProblems(meta) {
+  const problems = []
+  for (const field of LEGACY_SECTIONS) {
+    if (meta[field] !== undefined) problems.push(`unexpected ${field} in pure legacy meta`)
+  }
+  if (!isSha256(meta.entrySha256)) problems.push('invalid entrySha256')
+  return problems
+}
+
+function legacyEntryValid(meta, dir) {
+  const file = join(dir, 'lib', 'index.mjs')
+  return existsSync(file) && sha256File(file) === meta.entrySha256
+}
+
+// 完整 meta（v2 或三段齐全的历史 v1）的入口/依赖校验。
+function verifyCompleteMeta(meta, dir) {
+  for (const name of entryFiles()) {
+    const file = join(dir, 'lib', `${name}.mjs`)
+    if (!existsSync(file)) fail(`release entry missing: ${file}`)
+    if (sha256File(file) !== meta.entries[name]) fail(`entry hash mismatch: ${file}`)
+  }
+  const deps = meta.dependencies
+  const lockfile = join(dir, 'pnpm-lock.yaml')
+  if (!existsSync(lockfile)) fail(`release dependency record is missing pnpm-lock.yaml: ${lockfile}`)
+  if (sha256File(lockfile) !== deps.lockfileSha256) fail(`release lockfile hash mismatch: ${lockfile}`)
+  if (deps.nodeModulesSha256 !== null) {
+    const actual = treeHash(join(dir, 'node_modules'))
+    if (actual !== deps.nodeModulesSha256) fail(`release dependency tree hash mismatch: ${join(dir, 'node_modules')}`)
+  }
+  for (const [name, version] of Object.entries(deps.resolved)) {
+    const file = join(dir, 'node_modules', name, 'package.json')
+    if (!existsSync(file)) fail(`release is missing production dependency: ${name}`)
+    const actual = readJson(file).version ?? null
+    if (actual !== version) fail(`release production dependency version mismatch: ${name} ${String(actual)} vs ${String(version)}`)
+  }
+  for (const [name, target] of Object.entries(deps.peers)) {
+    if (target === 'optional-missing') continue
+    if (!existsSync(join(dir, 'node_modules', name))) fail(`release is missing the explicit peer link: ${name}`)
+    if (!existsSync(join(target, 'package.json'))) fail(`peer target is unavailable on this host: ${name} -> ${target}`)
+  }
+}
+
 function check(options) {
   const dir = resolve(options.release)
   const metaFile = join(dir, 'meta.json')
   if (!existsSync(metaFile)) fail(`release meta missing: ${metaFile}`)
   const meta = readJson(metaFile)
-  if (meta.formatVersion !== 1) fail(`unsupported release meta format: ${meta.formatVersion}`)
+  const allowLegacy = options['allow-legacy-rollback'] === true
   const expected = options.sha
   if (expected !== undefined && shaOf(expected, '--sha') !== meta.pluginCommit) {
     fail(`release meta pluginCommit does not match directory: ${meta.pluginCommit} vs ${expected}`)
@@ -190,54 +297,29 @@ function check(options) {
   if (typeof meta.hostVersion !== 'string' || meta.hostVersion.trim() === '') fail('release meta is missing hostVersion')
   if (!existsSync(join(dir, 'lib', 'index.mjs'))) fail(`release lib missing: ${join(dir, 'lib', 'index.mjs')}`)
 
-  // 入口哈希：新格式校验 entries（index+tools）；旧格式沿用 entrySha256。
-  if (meta.entries && typeof meta.entries === 'object') {
-    for (const name of entryFiles()) {
-      const want = meta.entries[name]
-      if (typeof want !== 'string' || !/^[0-9a-f]{64}$/.test(want)) fail(`release meta is missing entries.${name} hash`)
-      const file = join(dir, 'lib', `${name}.mjs`)
-      if (!existsSync(file)) fail(`release entry missing: ${file}`)
-      if (sha256File(file) !== want) fail(`entry hash mismatch: ${file}`)
+  if (meta.formatVersion === META_FORMAT_VERSION) {
+    const problems = v2Problems(meta)
+    if (problems.length > 0) fail(`release meta v2 is incomplete: ${problems.join('; ')}`)
+    verifyCompleteMeta(meta, dir)
+  } else if (meta.formatVersion === LEGACY_FORMAT_VERSION) {
+    // 历史 v1 兼容只在显式回滚/恢复上下文允许；正向部署绝不接受任何 v1。
+    if (!allowLegacy) fail('legacy release meta (formatVersion:1) is only accepted for explicit rollback/restore; pass --allow-legacy-rollback')
+    const shape = legacyShape(meta)
+    if (shape === 'partial') fail('legacy release meta is partially upgraded (only some of entries/dependencies/activation); refusing the mixed format')
+    if (shape === 'complete') {
+      // 旧 prepare 的实际产物：formatVersion:1 但三段齐全；按完整字段校验，activation 仍要求双入口。
+      const problems = v2Problems(meta)
+      if (problems.length > 0) fail(`legacy release meta v1 is incomplete: ${problems.join('; ')}`)
+      verifyCompleteMeta(meta, dir)
+    } else {
+      const problems = pureLegacyProblems(meta)
+      if (problems.length > 0) fail(`pure legacy release meta is invalid: ${problems.join('; ')}`)
+      if (!legacyEntryValid(meta, dir)) fail(`entry hash mismatch: ${dir}`)
     }
-    if (typeof meta.entrySha256 !== 'string' || meta.entrySha256 !== meta.entries.index) fail('release meta entrySha256 does not match entries.index')
   } else {
-    if (typeof meta.entrySha256 !== 'string' || !/^[0-9a-f]{64}$/.test(meta.entrySha256)) fail('invalid entrySha256 in release meta')
-    if (sha256File(join(dir, 'lib', 'index.mjs')) !== meta.entrySha256) fail(`entry hash mismatch: ${dir}`)
+    fail(`unsupported release meta format: ${String(meta.formatVersion)}`)
   }
-
-  // 依赖记录：只有新格式 meta 才有；旧格式按历史语义接受（回滚边界）。
-  if (meta.dependencies && typeof meta.dependencies === 'object') {
-    const deps = meta.dependencies
-    const lockfile = join(dir, 'pnpm-lock.yaml')
-    if (!existsSync(lockfile)) fail(`release dependency record is missing pnpm-lock.yaml: ${lockfile}`)
-    if (sha256File(lockfile) !== deps.lockfileSha256) fail(`release lockfile hash mismatch: ${lockfile}`)
-    if (deps.nodeModulesSha256 !== null && deps.nodeModulesSha256 !== undefined) {
-      const actual = treeHash(join(dir, 'node_modules'))
-      if (actual !== deps.nodeModulesSha256) fail(`release dependency tree hash mismatch: ${join(dir, 'node_modules')}`)
-    }
-    for (const [name, version] of Object.entries(deps.resolved ?? {})) {
-      const file = join(dir, 'node_modules', name, 'package.json')
-      if (!existsSync(file)) fail(`release is missing production dependency: ${name}`)
-      const actual = readJson(file).version ?? null
-      if (actual !== version) fail(`release production dependency version mismatch: ${name} ${String(actual)} vs ${String(version)}`)
-    }
-    for (const [name, target] of Object.entries(deps.peers ?? {})) {
-      if (target === 'optional-missing') continue
-      if (!existsSync(join(dir, 'node_modules', name))) fail(`release is missing the explicit peer link: ${name}`)
-      if (!existsSync(join(target, 'package.json'))) fail(`peer target is unavailable on this host: ${name} -> ${target}`)
-    }
-  }
-  // 新格式 release 必须带 activation 元数据：缺少时 fail-closed，禁止静默退回 health-only 门禁。
-  if (meta.entries || meta.dependencies) {
-    const activation = meta.activation
-    if (!activation || activation.markerVersion !== 1 || !Array.isArray(activation.entries) || activation.entries.length === 0) {
-      fail('new-format release is missing activation metadata; refusing to fall back to the health-only gate')
-    }
-    for (const name of entryFiles()) {
-      if (!activation.entries.includes(name)) fail(`release activation metadata does not cover the ${name} entry`)
-    }
-  }
-  process.stdout.write(JSON.stringify({ ok: true, pluginCommit: meta.pluginCommit, activation: meta.activation ?? null }))
+  process.stdout.write(JSON.stringify({ ok: true, pluginCommit: meta.pluginCommit, formatVersion: meta.formatVersion, activation: meta.activation ?? null }))
 }
 
 function activation(options) {
@@ -248,16 +330,45 @@ function activation(options) {
     return
   }
   const meta = readJson(metaFile)
-  if (meta.activation && meta.activation.markerVersion === 1 && Array.isArray(meta.activation.entries) && meta.activation.entries.length > 0) {
+  const allowLegacy = options['allow-legacy-rollback'] === true
+  if (meta.formatVersion === META_FORMAT_VERSION) {
+    // 与 check 保持一致：v2 缺任何必需段都不是 legacy，而是 invalid。
+    if (v2Problems(meta).length > 0) {
+      process.stdout.write('invalid')
+      return
+    }
     process.stdout.write(`required:${meta.activation.entries.join(',')}`)
     return
   }
-  // 新格式 release（有依赖/入口记录）缺 activation 视为 invalid，绝不静默降级。
-  if (meta.entries || meta.dependencies) {
-    process.stdout.write('invalid')
+  if (meta.formatVersion === LEGACY_FORMAT_VERSION) {
+    if (!allowLegacy) {
+      process.stdout.write('invalid')
+      return
+    }
+    const shape = legacyShape(meta)
+    if (shape === 'complete') {
+      // 三段齐全的历史 v1（旧 prepare 产物）与 v2 一样要求 required 双入口激活。
+      if (v2Problems(meta).length > 0) {
+        process.stdout.write('invalid')
+        return
+      }
+      process.stdout.write(`required:${meta.activation.entries.join(',')}`)
+      return
+    }
+    if (shape === 'partial') {
+      process.stdout.write('invalid')
+      return
+    }
+    // 纯历史 v1：历史哈希仍须与文件一致；损坏的 legacy 不允许 health-only。
+    if (pureLegacyProblems(meta).length > 0 || !legacyEntryValid(meta, dir)) {
+      process.stdout.write('invalid')
+      return
+    }
+    process.stdout.write('legacy')
     return
   }
-  process.stdout.write('legacy')
+  // 未知版本（含缺失/类型错误）：既不是可验证新格式，也不是获授权的历史 legacy。
+  process.stdout.write('invalid')
 }
 
 const [command, ...rest] = process.argv.slice(2)

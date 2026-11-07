@@ -154,19 +154,23 @@ R37 独立复核（审查 `8fd199d`）在 69 断言之外动态复现 3 个失�
   `[hephi-activation] entry=<index|tools> plugin=… commit=<sha> pid=<pid>`。
   部署记录启动前 `host.log` 偏移，健康 ready 后只认该偏移之后、新 host.pid、目标 SHA 的两条标识；
   缺失任一 → `activation-missing`，走既有恢复/回滚。
-- 回滚边界：旧格式 meta（无 `entries/dependencies/activation`）按历史字段校验，启动按 health-only，
-  记录 `activation=unverified-legacy`、`importProbe=skipped-legacy`；新格式 meta 缺少 activation
+- 回滚边界：meta 升级为 `formatVersion:2`，必须完整包含 `entries`、`dependencies`、`activation`；
+  历史 `formatVersion:1` **只在显式 `--allow-legacy-rollback` 的回滚/恢复目标上**接受：三段齐全的旧产物
+  仍按完整字段校验并要求 required 双入口激活，三段全无的纯 legacy 才按历史哈希校验、health-only
+  并记录 `activation=unverified-legacy`、`importProbe=skipped-legacy`；部分残缺的 v1 与所有正向 v1 目标
   **fail-closed**（拒绝，不静默退回 health-only）。
 - meta 新增 `entries{index,tools}`、`activation`、`dependencies{lockfileSha256,nodeModulesSha256,resolved,peers}`、
   `node{command,version}`；`release-meta.mjs check` 重新计算入口/依赖树哈希与 peer 目标可用性。
 
 ### 自测（假宿主，聚焦）
 
-`scripts/host/test-deploy-hephi.mjs` 扩展为 **174 断言全绿**（原 142 + T1 32），套件明确标注为假宿主；
-`hephi/tests/control/deploy-script.test.ts` 同步断言 174 并把超时提高到 900s。新增场景：
+`scripts/host/test-deploy-hephi.mjs` 扩展为 **262 断言全绿**（当前 188 基数 + F1 74），套件明确标注为假宿主；
+`hephi/tests/control/deploy-script.test.ts` 同步断言 262 并把超时提高到 900s。新增场景：
 
 - T1-A/T1-B：健康 10 项 ready 但缺任一激活标识 → 目标失败、恢复旧版本、记录 `targetFailureKind=activation-missing`；
-- T1-C：旧格式 release 回滚成功并记录 `unverified-legacy`；
+- T1-C：纯历史 v1 release 在显式 `--allow-legacy-rollback` 下回滚成功并记录 `unverified-legacy`；
+- F1：v2 三段缺失/未知版本/降级 v1/降级后篡改均拒绝正向部署且不触碰宿主/指针；legacy 仅显式回滚/恢复授权，
+  三段齐全的旧 v1 仍校验原字段并要求 required 双入口，部分残缺 v1 一律拒绝；
 - T1-D：release 导入时缺运行依赖 → 停机前拒绝，宿主/指针不变、无发布；
 - T1-E：package.json 声明未写入冻结 lockfile 的依赖 → 构建阶段拒绝；
 - T1-F：声明 peerDependencies 但无 `--peer-root` → 停机前拒绝；

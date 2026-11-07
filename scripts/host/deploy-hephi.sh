@@ -17,11 +17,15 @@
 #     发布前用 --node（宿主 Node）在目标 release 路径实际导入 index/tools，失败发生在停机前。
 # 13. 两个 bundle entry 注册后各写一行 [hephi-activation]（含 pluginCommit 与 process.pid）；
 #     部署只认本次启动日志偏移之后、新 host.pid、目标 SHA 的两条标识。
-# 14. 健康 10 项 ready 但缺少任一激活标识必须失败并走现有恢复/回滚；旧格式 release
-#     （meta 无 activation）按 health-only 处理并记为 unverified-legacy，保持回滚边界。
+# 14. 健康 10 项 ready 但缺少任一激活标识必须失败并走现有恢复/回滚；meta v2 必须完整
+#     （entries/dependencies/activation），正向部署绝不接受任何 v1；历史 v1 只在显式
+#     --allow-legacy-rollback 的回滚/恢复目标上接受：三段齐全的旧产物仍按完整字段校验
+#     并要求 required 双入口激活，三段全无的纯 legacy 才按 health-only 记录 unverified-legacy；
+#     部分残缺的 v1 一律拒绝。
 #
 # 用法：deploy-hephi.sh --instance <dir> --host <url> --host-version <单行值>
 #        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
+#        [--allow-legacy-rollback]
 #        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <秒>]
 #        [--drain effects] [--effects-db <path>] --stop-command <command>
 #        [--stop-timeout <秒>] [--auto-restart-wait <秒>] [--process-file <path>]
@@ -35,6 +39,7 @@ usage() {
   cat >&2 <<'USAGE'
 usage: deploy-hephi.sh --instance <dir> --host <url> --host-version <single-line value>
        [--target <40sha>] [--previous <40sha>] [--rollback] [--dry-run]
+       [--allow-legacy-rollback]
        [--releases <dir>] [--repo <dir>] [--hephi <dir>] [--timeout <seconds>]
        [--drain effects] [--effects-db <path>] --stop-command <command>
        [--stop-timeout <seconds>] [--auto-restart-wait <seconds>] [--process-file <path>]
@@ -45,6 +50,7 @@ USAGE
 
 instance=""; host=""; host_version=""; target=""; previous=""; rollback="no"; dry_run="no"
 target_set="no"; previous_set="no"
+allow_legacy_rollback="no"; LEGACY_ACTIVATION="no"
 releases=""; repo=""; hephi=""; timeout=120
 drain_mode=""; effects_db=""; stop_command=""; stop_timeout=""; auto_restart_wait=""; process_file=""
 node_cmd=""; peer_root=""; instance_pattern_input=""
@@ -57,6 +63,7 @@ while [ $# -gt 0 ]; do
     --previous) [ $# -ge 2 ] || usage; previous="$2"; previous_set="yes"; shift 2 ;;
     --rollback) rollback="yes"; shift ;;
     --dry-run) dry_run="yes"; shift ;;
+    --allow-legacy-rollback) allow_legacy_rollback="yes"; shift ;;
     --releases) [ $# -ge 2 ] || usage; releases="$2"; shift 2 ;;
     --repo) [ $# -ge 2 ] || usage; repo="$2"; shift 2 ;;
     --hephi) [ $# -ge 2 ] || usage; hephi="$2"; shift 2 ;;
@@ -171,35 +178,64 @@ open_tickets() {
     let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);const list=Array.isArray(j)?j:(j.tickets??j.items??[]);process.stdout.write(String(list.length))})'
 }
 
-release_validate() {
-  dir="$1"; expected="${2:-}"
-  [ -d "$dir/lib" ] || { echo "release lib missing: $dir/lib" >&2; return 1; }
-  [ -f "$dir/meta.json" ] || { echo "release meta missing: $dir/meta.json" >&2; return 1; }
-  if [ -z "$expected" ]; then
-    expected=$(basename "$dir")
-    is_sha "$expected" || { echo "release directory is not a full SHA: $expected" >&2; return 1; }
+# 显式 legacy 授权只作用于回滚/恢复目标；调用方从不把该标记用于正向 target。
+release_check_tool() {
+  rc_allow_legacy="$1"; shift
+  if [ "$rc_allow_legacy" = "yes" ]; then
+    node "$release_tool" check "$@" --allow-legacy-rollback
+  else
+    node "$release_tool" check "$@"
   fi
-  is_sha "$expected" || { echo "expected release SHA is invalid: $expected" >&2; return 1; }
-  node "$release_tool" check --release "$dir" --sha "$expected" >/dev/null 2>"$releases/.release-check-$$-$expected.err" || {
-    cat "$releases/.release-check-$$-$expected.err" >&2
-    rm -f "$releases/.release-check-$$-$expected.err"
+}
+
+release_validate() {
+  rv_dir="$1"; rv_expected="${2:-}"; rv_allow_legacy="${3:-no}"
+  [ -d "$rv_dir/lib" ] || { echo "release lib missing: $rv_dir/lib" >&2; return 1; }
+  [ -f "$rv_dir/meta.json" ] || { echo "release meta missing: $rv_dir/meta.json" >&2; return 1; }
+  if [ -z "$rv_expected" ]; then
+    rv_expected=$(basename "$rv_dir")
+    is_sha "$rv_expected" || { echo "release directory is not a full SHA: $rv_expected" >&2; return 1; }
+  fi
+  is_sha "$rv_expected" || { echo "expected release SHA is invalid: $rv_expected" >&2; return 1; }
+  rv_err="$releases/.release-check-$$-$rv_expected.err"
+  release_check_tool "$rv_allow_legacy" --release "$rv_dir" --sha "$rv_expected" >/dev/null 2>"$rv_err" || {
+    cat "$rv_err" >&2
+    rm -f "$rv_err"
     return 1
   }
-  rm -f "$releases/.release-check-$$-$expected.err"
+  rm -f "$rv_err"
 }
 
 # 目标 release 的导入探针：用宿主 Node 在 release 路径实际导入 index/tools，
 # 校验生产依赖与显式 peer 可解析、入口可加载、describePlugin().commit 等于目标 SHA。
-# 旧格式 release 没有运行依赖记录，跳过并如实标记（保持回滚边界）。
+# 只有“合法且显式授权”的历史 legacy 才允许跳过并如实标记；invalid/none/未知一律失败。
 release_import_probe() {
-  dir="$1"; sha="$2"
-  mode=$(node "$release_tool" activation --release "$dir" 2>/dev/null || printf 'none')
-  case "$mode" in
+  rip_dir="$1"; rip_sha="$2"; rip_allow_legacy="${3:-no}"
+  if [ "$rip_allow_legacy" = "yes" ]; then
+    rip_mode=$(node "$release_tool" activation --release "$rip_dir" --allow-legacy-rollback 2>/dev/null || printf 'none')
+  else
+    rip_mode=$(node "$release_tool" activation --release "$rip_dir" 2>/dev/null || printf 'none')
+  fi
+  case "$rip_mode" in
     required:*) : ;;
-    *) IMPORT_PROBE="skipped-legacy"; echo "import probe: skipped (release has no runtime dependency record): $dir" >&2; return 0 ;;
+    legacy)
+      if [ "$rip_allow_legacy" = "yes" ]; then
+        IMPORT_PROBE="skipped-legacy"
+        echo "import probe: skipped (explicitly authorized legacy release without a runtime dependency record): $rip_dir" >&2
+        return 0
+      fi
+      IMPORT_PROBE="failed: legacy release without explicit rollback/restore authorization"
+      echo "release import probe failed for $rip_sha: legacy release without explicit --allow-legacy-rollback" >&2
+      return 1
+      ;;
+    *)
+      IMPORT_PROBE="failed: activation metadata is $rip_mode"
+      echo "release import probe failed for $rip_sha: activation metadata is $rip_mode; invalid/none/unknown releases are never skipped" >&2
+      return 1
+      ;;
   esac
-  [ -f "$dir/package.json" ] || { IMPORT_PROBE="failed: missing package.json"; echo "release import probe failed: missing $dir/package.json" >&2; return 1; }
-  out=$( cd "$dir" && "$node_cmd" --input-type=module -e '
+  [ -f "$rip_dir/package.json" ] || { IMPORT_PROBE="failed: missing package.json"; echo "release import probe failed: missing $rip_dir/package.json" >&2; return 1; }
+  out=$( cd "$rip_dir" && "$node_cmd" --input-type=module -e '
 import { readFileSync } from "node:fs"
 const sha = process.argv[1]
 const pkg = JSON.parse(readFileSync("package.json", "utf8"))
@@ -223,19 +259,25 @@ if (typeof tools.apply !== "function") throw new Error("lib/tools.mjs does not e
 const describe = typeof index.describePlugin === "function" ? index.describePlugin() : null
 if (!describe || describe.commit !== sha) throw new Error("describePlugin().commit=" + (describe && describe.commit) + " does not match release " + sha)
 process.stdout.write(JSON.stringify({ ok: true, describe, deps: Object.keys(deps), peers: Object.keys(peers) }))
-' "$sha" 2>&1 ) || {
+' "$rip_sha" 2>&1 ) || {
     IMPORT_PROBE="failed: $out"
-    echo "release import probe failed for $sha: $out" >&2
+    echo "release import probe failed for $rip_sha: $out" >&2
     return 1
   }
   IMPORT_PROBE="$out"
   echo "import probe ok ($node_cmd $node_version): $out" >&2
 }
 
-# release 的激活门禁模式：required:<entry,...> / legacy / none。
+# release 的激活门禁模式：required:<entry,...> / legacy / invalid / none。
+# legacy 只在显式授权回滚/恢复（第二参数 yes）时才会出现；其余未知/缺字段一律 invalid。
 activation_mode_for() {
-  [ -n "$1" ] || { printf 'none'; return 0; }
-  node "$release_tool" activation --release "$releases/$1" 2>/dev/null || printf 'none'
+  am_sha="$1"; am_allow_legacy="${2:-no}"
+  [ -n "$am_sha" ] || { printf 'none'; return 0; }
+  if [ "$am_allow_legacy" = "yes" ]; then
+    node "$release_tool" activation --release "$releases/$am_sha" --allow-legacy-rollback 2>/dev/null || printf 'none'
+  else
+    node "$release_tool" activation --release "$releases/$am_sha" 2>/dev/null || printf 'none'
+  fi
 }
 
 host_log_size() {
@@ -294,21 +336,21 @@ activation_check() {
       ;;
     legacy)
       ACTIVATION_MODE="unverified-legacy"
-      ACTIVATION_EVIDENCE="release $sha has no activation metadata; the 10-service health gate is the only evidence"
-      echo "activation: legacy release $sha (health-only, no markers required)" >&2
+      ACTIVATION_EVIDENCE="release $sha has no activation metadata and was explicitly authorized for rollback/restore; the 10-service health gate is the only evidence"
+      echo "activation: explicitly authorized legacy release $sha (health-only, no markers required)" >&2
       return 0
       ;;
     invalid)
       ACTIVATION_MODE="invalid-metadata"
-      ACTIVATION_EVIDENCE="release $sha is new-format but has no valid activation metadata; refusing the health-only fallback"
-      echo "activation: release $sha is new-format but lacks activation metadata; refusing the health-only fallback" >&2
+      ACTIVATION_EVIDENCE="release $sha is not a complete v2 release and has no valid activation metadata; refusing the health-only fallback"
+      echo "activation: release $sha is not a complete v2 release; refusing the health-only fallback" >&2
       return 1
       ;;
     *)
       ACTIVATION_MODE="unverified"
-      ACTIVATION_EVIDENCE="no release metadata for $sha"
-      echo "activation: no release metadata for $sha (health-only)" >&2
-      return 0
+      ACTIVATION_EVIDENCE="no release metadata for $sha; refusing the health-only gate"
+      echo "activation: no release metadata for $sha; refusing the health-only gate" >&2
+      return 1
       ;;
   esac
 }
@@ -565,7 +607,7 @@ LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
 start_instance() {
   LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
   activation_sha=$(current_pointer_sha 2>/dev/null || true)
-  activation_mode=$(activation_mode_for "$activation_sha")
+  activation_mode=$(activation_mode_for "$activation_sha" "${LEGACY_ACTIVATION:-no}")
   activation_offset=$(host_log_size)
   nohup "$instance/start.sh" >> "$instance/logs/host.log" 2>&1 &
   echo $! > "$instance/host.pid"
@@ -907,6 +949,8 @@ effects_abort() {
     elif [ "$EFFECT_SWITCHED" = "yes" ]; then
       echo "FATAL: no validated previous release/snapshot to restore the pointer to" >&2
     fi
+    # 恢复目标是回滚/恢复上下文：legacy 授权与目标校验使用同一显式标记。
+    LEGACY_ACTIVATION="$allow_legacy_rollback"
     if recovery_start_instance; then
       EFFECT_RECOVER_HEALTH="all-required-ready"
       p=$(paused_now 2>/dev/null || true)
@@ -977,7 +1021,7 @@ deploy_effects() {
   # 5) previous 校验与回滚点（供中止/启动失败时恢复原版本）。
   [ -n "$previous" ] || previous="$current"
   if [ -n "$previous" ]; then
-    release_validate "$releases/$previous" || effects_abort failed-drain-previous "previous release is invalid: $previous"
+    release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" || effects_abort failed-drain-previous "previous release is invalid: $previous"
   fi
   previous_valid="no"; [ -n "$previous" ] && previous_valid="yes"
   snapshot_existing_lib
@@ -1023,6 +1067,8 @@ deploy_effects() {
     effects_abort failed-drain-pointer "pointer switch failed during stop-based deploy"
   fi
   EFFECT_SWITCHED="yes"
+  # 正向 target 的激活门禁不使用 legacy 授权；只有恢复目标才允许显式 legacy。
+  LEGACY_ACTIVATION="no"
   if ! start_instance; then
     effects_abort failed-drain-start "target failed to reach full health after stop-based switch"
   fi
@@ -1081,9 +1127,10 @@ pointer_before=$(pointer_after)
 current=$(current_pointer_sha 2>/dev/null || true)
 
 # current 是否通过校验必须单独保存：rollback 可以继续，但绝不允许把未通过校验的 current 当恢复目标。
+# current 在回滚流程里是恢复目标，因此 legacy 授权与回滚目标使用同一显式标记。
 current_valid="no"
 if [ -n "$current" ]; then
-  if release_validate "$releases/$current" >/dev/null 2>&1; then current_valid="yes"; fi
+  if release_validate "$releases/$current" "$current" "$allow_legacy_rollback" >/dev/null 2>&1; then current_valid="yes"; fi
 fi
 
 # 已载入的 release 视为不可变：重复发布同一 SHA 是空操作，直接拒绝且不碰 release/不重启。
@@ -1092,10 +1139,11 @@ if [ "$rollback" != "yes" ] && [ -n "$current" ] && [ "$target" = "$current" ]; 
 fi
 
 if [ "$rollback" = "yes" ]; then
-  release_validate "$releases/$target" || fail_keep_paused "rollback target release is invalid: $target"
-  release_import_probe "$releases/$target" "$target" || fail_keep_paused "rollback target release failed the host-Node import probe: $target"
+  # 回滚是显式 legacy 授权唯一生效的入口；正向 target 永远不带该标记。
+  release_validate "$releases/$target" "$target" "$allow_legacy_rollback" || fail_keep_paused "rollback target release is invalid: $target"
+  release_import_probe "$releases/$target" "$target" "$allow_legacy_rollback" || fail_keep_paused "rollback target release failed the host-Node import probe: $target"
   if [ "$previous_set" = "yes" ]; then
-    release_validate "$releases/$previous" || fail_keep_paused "rollback previous release is invalid: $previous"
+    release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" || fail_keep_paused "rollback previous release is invalid: $previous"
   fi
   snapshot_existing_lib
   if ! set_pointer "$releases/$target/lib"; then
@@ -1106,6 +1154,7 @@ if [ "$rollback" = "yes" ]; then
     fi
     fail_after_switch "rollback could not switch the loaded pointer"
   fi
+  LEGACY_ACTIVATION="$allow_legacy_rollback"
   if restart_instance; then
     p=$(paused_now) || p=""
     if [ "$p" != "true" ]; then
@@ -1149,7 +1198,7 @@ if [ "$drain_mode" = "effects" ]; then
   deploy_effects
 fi
 
-# 构建或复用不可变 release。
+# 构建或复用不可变 release。正向 target 绝不使用 legacy 授权。
 if [ -d "$releases/$target/lib" ]; then
   release_validate "$releases/$target" || fail_keep_paused "target release is invalid: $target"
   release_import_probe "$releases/$target" "$target" || fail_keep_paused "target release failed the host-Node import probe: $target"
@@ -1164,7 +1213,8 @@ if [ "$dry_run" = "yes" ]; then
 fi
 
 [ -n "$previous" ] || previous="$current"
-if [ -n "$previous" ]; then release_validate "$releases/$previous" || fail_keep_paused "previous release is invalid: $previous"; fi
+# previous/current 是恢复目标：legacy 需要同一显式授权，但绝不因此放行正向 target。
+if [ -n "$previous" ]; then release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" || fail_keep_paused "previous release is invalid: $previous"; fi
 previous_valid="no"
 if [ -n "$previous" ]; then previous_valid="yes"; fi
 
@@ -1180,6 +1230,8 @@ if ! set_pointer "$releases/$target/lib"; then
   fi
   fail_after_switch "could not switch the loaded pointer"
 fi
+# 正向 target 的启动门禁不接受 legacy；该标记只用于下面的恢复目标。
+LEGACY_ACTIVATION="no"
 if restart_instance; then
   p=$(paused_now) || p=""
   if [ "$p" != "true" ]; then
@@ -1196,7 +1248,7 @@ fi
 target_fail_state="${FAIL_STATE:-unverified}"; target_fail_kind="${FAIL_KIND:-unknown}"
 restore_target=""; restore_kind=""
 if [ "$previous_valid" = "yes" ]; then
-  if release_validate "$releases/$previous" >/dev/null 2>&1; then
+  if release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" >/dev/null 2>&1; then
     restore_target="$releases/$previous/lib"; restore_kind="previous"
   fi
 elif [ -n "$SNAP_ROOT" ] && [ -d "$SNAP_ROOT/lib" ]; then
@@ -1212,6 +1264,8 @@ if ! set_pointer "$restore_target"; then
   record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "target failed after switch and restoring previous pointer failed"
   fail_after_switch "target failed after switch and restoring the previous pointer failed"
 fi
+# 恢复目标是回滚/恢复上下文：legacy 授权与 target 校验使用同一显式标记。
+LEGACY_ACTIVATION="$allow_legacy_rollback"
 if recovery_restart_instance; then
   flag=$(paused_flag)
   record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version" error "target failed after switch; previous build restored"

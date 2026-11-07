@@ -347,7 +347,7 @@ async function runMainSuite() {
   }
   const metaA = JSON.parse(readFileSync(join(releaseDir(A), 'meta.json'), 'utf8'))
   check('R3-T01 release A lib exists', existsSync(join(releaseDir(A), 'lib', 'index.mjs')))
-  check('R3-T01 meta fields complete', metaA.formatVersion === 1 && metaA.pluginCommit === A && /^[0-9a-f]{64}$/.test(metaA.entrySha256) && metaA.hostVersion === 'host-1.0.0' && /^[0-9a-f]{40}$/.test(metaA.sourceTree) && typeof metaA.builtAt === 'string' && metaA.buildCommand.includes('pnpm check'), JSON.stringify(metaA))
+  check('R3-T01 meta fields complete', metaA.formatVersion === 2 && metaA.pluginCommit === A && /^[0-9a-f]{64}$/.test(metaA.entrySha256) && metaA.hostVersion === 'host-1.0.0' && /^[0-9a-f]{40}$/.test(metaA.sourceTree) && typeof metaA.builtAt === 'string' && metaA.buildCommand.includes('pnpm check'), JSON.stringify(metaA))
   check('R3-T01 pointer points to release A', pointer() === join(releaseDir(A), 'lib'), pointer())
   // T1：发布包自带同一冻结 lockfile 的生产依赖，且源码工作区 node_modules 不参与。
   const lockfileA = join(repo, 'hephi', 'pnpm-lock.yaml')
@@ -1149,7 +1149,7 @@ exec sleep 3600`)
     // 旧 release 不可能有激活标识：start 只写健康标识。
     writeStart(`echo attempt >> "${instance}/start.log"\n: > "${instance}/started.marker"\nexec sleep 3600`)
     rmSync(join(instance, 'started.marker'), { force: true })
-    const r = await deploy(['--rollback', '--target', legacySha])
+    const r = await deploy(['--rollback', '--target', legacySha, '--allow-legacy-rollback'])
     const rec = readRecords('rollback').find((x) => x.result === 'ok')
     check('T1-C legacy release rollback still succeeds', r.code === 0, `code=${r.code} ${r.out}`)
     check('T1-C pointer switches to the legacy release', pointer() === join(releaseDir(legacySha), 'lib'), pointer())
@@ -1281,12 +1281,271 @@ exec sleep 3600`)
   }
 }
 
-await runMainSuite()
-await runNegativeSuite()
-await runRemediationSuite()
-await runF02Suite()
-await runT1Suite()
-await runN1Suite()
+// ---- F1：release meta v2 完整性 + legacy 仅显式授权回滚/恢复 ----
+// 每个用例复制一个已发布的新格式 release，只改 meta/lib；这些负例必须在停机/切换指针之前被拒绝。
+function copyRelease(sourceSha, targetSha, mutate) {
+  const copy = run('cp', ['-R', releaseDir(sourceSha), releaseDir(targetSha)])
+  if (copy.code !== 0) throw new Error(`cannot copy the release fixture: ${copy.out}`)
+  const dir = releaseDir(targetSha)
+  const metaFile = join(dir, 'meta.json')
+  const meta = JSON.parse(readFileSync(metaFile, 'utf8'))
+  meta.pluginCommit = targetSha
+  mutate(meta, dir)
+  writeFileSync(metaFile, JSON.stringify(meta, null, 2))
+  return meta
+}
+
+function releaseToolRun(...args) {
+  return run(process.execPath, [join(repoRoot, 'scripts/host/release-meta.mjs'), ...args])
+}
+
+function inspectRelease(sha) {
+  const dir = releaseDir(sha)
+  return {
+    check: releaseToolRun('check', '--release', dir, '--sha', sha),
+    activation: releaseToolRun('activation', '--release', dir),
+    checkLegacy: releaseToolRun('check', '--release', dir, '--sha', sha, '--allow-legacy-rollback'),
+    activationLegacy: releaseToolRun('activation', '--release', dir, '--allow-legacy-rollback'),
+  }
+}
+
+function snapshotGateState() {
+  return { pointer: pointer(), pid: hostPidValue(), starts: starts() }
+}
+
+function gateUntouched(before) {
+  return pointer() === before.pointer && hostPidValue() === before.pid && pidAlive(before.pid) && starts() === before.starts
+}
+
+function downgradeToLegacy(meta) {
+  delete meta.entries
+  delete meta.dependencies
+  delete meta.activation
+  meta.formatVersion = 1
+}
+
+function tamperDowngraded(meta, dir) {
+  downgradeToLegacy(meta)
+  const file = join(dir, 'lib', 'index.mjs')
+  writeFileSync(file, `${readFileSync(file, 'utf8')}\nexport const f1Tampered = true\n`)
+  meta.entrySha256 = sha256(file)
+}
+
+async function expectForwardReject(name, sha) {
+  const before = snapshotGateState()
+  const r = await deploy(['--target', sha, '--previous', A])
+  check(`${name} is rejected before any host change`, r.code !== 0, `code=${r.code} ${r.out}`)
+  check(`${name} leaves the host, pointer and start count untouched`, gateUntouched(before), `pointer=${pointer()} pid=${hostPidValue()} starts ${before.starts} -> ${starts()}`)
+  return r
+}
+
+async function runF1Suite() {
+  // F1-A：prepare 输出完整 v2；check 与 activation 判定一致。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F1-A setup deploys A', setup.code === 0, setup.out)
+    const metaA2 = existsSync(join(releaseDir(A), 'meta.json')) ? JSON.parse(readFileSync(join(releaseDir(A), 'meta.json'), 'utf8')) : null
+    const completeV2 = Boolean(metaA2) && metaA2.formatVersion === 2 &&
+      Boolean(metaA2.entries) && /^[0-9a-f]{64}$/.test(String(metaA2.entries.index)) && /^[0-9a-f]{64}$/.test(String(metaA2.entries.tools)) &&
+      Boolean(metaA2.dependencies) && /^[0-9a-f]{64}$/.test(String(metaA2.dependencies.lockfileSha256)) && Boolean(metaA2.dependencies.resolved) &&
+      Boolean(metaA2.activation) && metaA2.activation.markerVersion === 1 && Array.isArray(metaA2.activation.entries) && metaA2.activation.entries.join(',') === 'index,tools'
+    check('F1-A prepare writes a complete formatVersion:2 meta', completeV2, JSON.stringify(metaA2))
+    const inspectA = inspectRelease(A)
+    check('F1-A complete v2 passes check', inspectA.check.code === 0, inspectA.check.out)
+    check('F1-A complete v2 activation requires both entries', inspectA.activation.code === 0 && inspectA.activation.out.trim() === 'required:index,tools', inspectA.activation.out)
+
+    const v2Fixtures = [
+      ['F1-B v2 without entries', '1', (meta) => { delete meta.entries }],
+      ['F1-C v2 without dependencies', '2', (meta) => { delete meta.dependencies }],
+      ['F1-D v2 without activation', '3', (meta) => { delete meta.activation }],
+      ['F1-E v2 without all three sections', '4', (meta) => { delete meta.entries; delete meta.dependencies; delete meta.activation }],
+    ]
+    for (const [name, char, mutate] of v2Fixtures) {
+      const sha = FULL(char)
+      copyRelease(A, sha, mutate)
+      const probe = inspectRelease(sha)
+      check(`${name} fails check`, probe.check.code !== 0 && /v2 is incomplete/.test(probe.check.out), probe.check.out)
+      check(`${name} activation is invalid, never legacy`, probe.activation.code === 0 && probe.activation.out.trim() === 'invalid', probe.activation.out)
+      check(`${name} stays rejected even with explicit legacy authorization`, probe.checkLegacy.code !== 0, probe.checkLegacy.out)
+      await expectForwardReject(name, sha)
+    }
+
+    // F1-F：未知 formatVersion。
+    const unknownSha = FULL('5')
+    copyRelease(A, unknownSha, (meta) => { meta.formatVersion = 3 })
+    const unknownProbe = inspectRelease(unknownSha)
+    check('F1-F unknown formatVersion fails check', unknownProbe.check.code !== 0 && /unsupported release meta format: 3/.test(unknownProbe.check.out), unknownProbe.check.out)
+    check('F1-F unknown formatVersion activation is invalid', unknownProbe.activation.code === 0 && unknownProbe.activation.out.trim() === 'invalid', unknownProbe.activation.out)
+    await expectForwardReject('F1-F unknown formatVersion', unknownSha)
+
+    // F1-G：降级为 v1（删除三段并改写 formatVersion）→ 正向拒绝。
+    const downgradeSha = FULL('6')
+    copyRelease(A, downgradeSha, downgradeToLegacy)
+    const downgradeProbe = inspectRelease(downgradeSha)
+    check('F1-G downgraded legacy fails check without explicit authorization', downgradeProbe.check.code !== 0 && /allow-legacy-rollback/.test(downgradeProbe.check.out), downgradeProbe.check.out)
+    check('F1-G downgraded legacy activation is invalid without explicit authorization', downgradeProbe.activation.code === 0 && downgradeProbe.activation.out.trim() === 'invalid', downgradeProbe.activation.out)
+    check('F1-G same meta is a valid historical v1 only under explicit authorization', downgradeProbe.checkLegacy.code === 0 && downgradeProbe.activationLegacy.out.trim() === 'legacy', `${downgradeProbe.checkLegacy.out} / ${downgradeProbe.activationLegacy.out}`)
+    const downgradeDeploy = await expectForwardReject('F1-G downgraded legacy forward deploy', downgradeSha)
+    check('F1-G downgraded legacy never reaches the import probe or health-only gate', !/import probe ok|skipped-legacy|activation: explicitly authorized legacy/.test(downgradeDeploy.out), downgradeDeploy.out)
+
+    // F1-H：降级后再篡改 lib 并重算 legacy 哈希 → 正向仍拒绝（哈希自洽不是授权）。
+    const tamperedSha = FULL('7')
+    copyRelease(A, tamperedSha, tamperDowngraded)
+    const tamperedFile = join(releaseDir(tamperedSha), 'lib', 'index.mjs')
+    const tamperedMeta = JSON.parse(readFileSync(join(releaseDir(tamperedSha), 'meta.json'), 'utf8'))
+    check('F1-H fixture really changed lib/index.mjs and kept the legacy hash self-consistent', readFileSync(tamperedFile, 'utf8').includes('f1Tampered') && tamperedMeta.entrySha256 === sha256(tamperedFile) && metaA2.entries.index !== sha256(tamperedFile), sha256(tamperedFile))
+    const tamperedDeploy = await expectForwardReject('F1-H tampered downgraded legacy forward deploy', tamperedSha)
+    check('F1-H tampered downgrade is refused by the format gate, not the legacy hash', /allow-legacy-rollback/.test(tamperedDeploy.out), tamperedDeploy.out)
+  } finally {
+    await closeWorld()
+  }
+
+  // F1-I：legacy 仅显式授权回滚/恢复；正向 legacy target 无法借 flag 通过。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F1-I setup deploys A', setup.code === 0, setup.out)
+    const legacySha = FULL('8')
+    legacyRelease(legacySha)
+    const legacyProbe = inspectRelease(legacySha)
+    check('F1-I historical v1 fails check without explicit authorization', legacyProbe.check.code !== 0 && /allow-legacy-rollback/.test(legacyProbe.check.out), legacyProbe.check.out)
+    check('F1-I historical v1 activation is invalid without explicit authorization', legacyProbe.activation.code === 0 && legacyProbe.activation.out.trim() === 'invalid', legacyProbe.activation.out)
+    check('F1-I historical v1 passes only with explicit authorization', legacyProbe.checkLegacy.code === 0 && legacyProbe.activationLegacy.out.trim() === 'legacy', `${legacyProbe.checkLegacy.out} / ${legacyProbe.activationLegacy.out}`)
+
+    const beforeNoFlag = snapshotGateState()
+    const noFlag = await deploy(['--rollback', '--target', legacySha])
+    check('F1-I legacy rollback without the flag is rejected', noFlag.code !== 0 && /allow-legacy-rollback/.test(noFlag.out), `code=${noFlag.code} ${noFlag.out}`)
+    check('F1-I rejected legacy rollback leaves the host and pointer untouched', gateUntouched(beforeNoFlag), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforeNoFlag.starts} -> ${starts()}`)
+
+    const beforeForward = snapshotGateState()
+    const forward = await deploy(['--target', legacySha, '--previous', A, '--allow-legacy-rollback'])
+    check('F1-I the flag cannot authorize a forward legacy target', forward.code !== 0 && /target release is invalid/.test(forward.out), `code=${forward.code} ${forward.out}`)
+    check('F1-I forward legacy target is refused before any host change', gateUntouched(beforeForward), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforeForward.starts} -> ${starts()}`)
+
+    const strippedSha = FULL('9')
+    copyRelease(A, strippedSha, (meta) => { delete meta.activation })
+    const beforeStripped = snapshotGateState()
+    const strippedRollback = await deploy(['--rollback', '--target', strippedSha, '--allow-legacy-rollback'])
+    check('F1-I incomplete v2 stays rejected even with the legacy flag', strippedRollback.code !== 0 && /v2 is incomplete/.test(strippedRollback.out), `code=${strippedRollback.code} ${strippedRollback.out}`)
+    check('F1-I rejected incomplete v2 rollback leaves the host and pointer untouched', gateUntouched(beforeStripped), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforeStripped.starts} -> ${starts()}`)
+
+    const ok = await deploy(['--rollback', '--target', legacySha, '--allow-legacy-rollback'])
+    const rec = readRecords('rollback').find((x) => x.result === 'ok')
+    check('F1-I explicitly authorized historical rollback succeeds', ok.code === 0, `code=${ok.code} ${ok.out}`)
+    check('F1-I pointer switches to the legacy release', pointer() === join(releaseDir(legacySha), 'lib'), pointer())
+    check('F1-I record marks unverified-legacy and skipped-legacy', Boolean(rec) && rec.activation === 'unverified-legacy' && rec.importProbe === 'skipped-legacy', JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // F1-J：previous/current 恢复目标使用同一显式授权；未授权时拒绝回滚。
+  await initWorld()
+  try {
+    const setupA = await deploy(['--target', A])
+    check('F1-J setup deploys A', setupA.code === 0, setupA.out)
+    const setupB = await deploy(['--target', B, '--previous', A])
+    check('F1-J setup deploys B', setupB.code === 0, setupB.out)
+    const legacySha = FULL('a')
+    legacyRelease(legacySha)
+    const beforeNoFlag = snapshotGateState()
+    const noFlag = await deploy(['--rollback', '--target', A, '--previous', legacySha])
+    check('F1-J legacy restore target without explicit authorization rejects the rollback', noFlag.code !== 0 && /previous release is invalid/.test(noFlag.out), `code=${noFlag.code} ${noFlag.out}`)
+    check('F1-J rejected rollback leaves B loaded and the host untouched', pointer() === join(releaseDir(B), 'lib') && gateUntouched(beforeNoFlag), `pointer=${pointer()} starts ${beforeNoFlag.starts} -> ${starts()}`)
+    const ok = await deploy(['--rollback', '--target', A, '--previous', legacySha, '--allow-legacy-rollback'])
+    check('F1-J the same explicit authorization admits a legacy restore target', ok.code === 0, `code=${ok.code} ${ok.out}`)
+    check('F1-J rollback target itself remains the complete v2 release A', pointer() === join(releaseDir(A), 'lib'), pointer())
+  } finally {
+    await closeWorld()
+  }
+  // F1-K：旧 prepare 实际产物 formatVersion:1 三段齐全 → 显式回滚仍按完整字段校验并要求
+  // required 双入口；三段部分残缺（降级/混合）即使有 flag 也拒绝。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F1-K setup deploys A', setup.code === 0, setup.out)
+    const completeV1Sha = FULL('b')
+    copyRelease(A, completeV1Sha, (meta, dir) => {
+      meta.formatVersion = 1
+      // 旧 prepare 的 v1 仍带 entries；让夹具的 lib 也自报夹具 commit，才能走真实导入探针。
+      const file = join(dir, 'lib', 'index.mjs')
+      writeFileSync(file, readFileSync(file, 'utf8').split(A).join(completeV1Sha))
+      meta.entries.index = sha256(file)
+      meta.entrySha256 = meta.entries.index
+    })
+    const completeProbe = inspectRelease(completeV1Sha)
+    check('F1-K complete v1 fails check for a forward release', completeProbe.check.code !== 0 && /allow-legacy-rollback/.test(completeProbe.check.out), completeProbe.check.out)
+    check('F1-K complete v1 activation is invalid without explicit authorization', completeProbe.activation.code === 0 && completeProbe.activation.out.trim() === 'invalid', completeProbe.activation.out)
+    check('F1-K complete v1 under explicit authorization still validates all original fields', completeProbe.checkLegacy.code === 0, completeProbe.checkLegacy.out)
+    check('F1-K complete v1 under explicit authorization requires both activation entries', completeProbe.activationLegacy.code === 0 && completeProbe.activationLegacy.out.trim() === 'required:index,tools', completeProbe.activationLegacy.out)
+
+    const beforeForward = snapshotGateState()
+    const forward = await deploy(['--target', completeV1Sha, '--previous', A, '--allow-legacy-rollback'])
+    check('F1-K the flag cannot authorize a forward complete-v1 target', forward.code !== 0 && /target release is invalid/.test(forward.out), `code=${forward.code} ${forward.out}`)
+    check('F1-K forward complete-v1 target is refused before any host change', gateUntouched(beforeForward), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforeForward.starts} -> ${starts()}`)
+
+    const partialSha = FULL('c')
+    copyRelease(A, partialSha, (meta) => { meta.formatVersion = 1; delete meta.activation })
+    const partialProbe = inspectRelease(partialSha)
+    check('F1-K partially upgraded v1 fails check even with explicit authorization', partialProbe.checkLegacy.code !== 0 && /partially upgraded/.test(partialProbe.checkLegacy.out), partialProbe.checkLegacy.out)
+    check('F1-K partially upgraded v1 activation is invalid even with explicit authorization', partialProbe.activationLegacy.code === 0 && partialProbe.activationLegacy.out.trim() === 'invalid', partialProbe.activationLegacy.out)
+
+    const beforePartial = snapshotGateState()
+    const partialRollback = await deploy(['--rollback', '--target', partialSha, '--allow-legacy-rollback'])
+    check('F1-K partially upgraded v1 rollback is refused', partialRollback.code !== 0 && /partially upgraded|release is invalid/.test(partialRollback.out), `code=${partialRollback.code} ${partialRollback.out}`)
+    check('F1-K refused partial-v1 rollback leaves the host and pointer untouched', gateUntouched(beforePartial), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforePartial.starts} -> ${starts()}`)
+
+    const beforeNoFlag = snapshotGateState()
+    const noFlag = await deploy(['--rollback', '--target', completeV1Sha])
+    check('F1-K complete v1 rollback without the flag is rejected', noFlag.code !== 0 && /allow-legacy-rollback/.test(noFlag.out), `code=${noFlag.code} ${noFlag.out}`)
+    check('F1-K rejected complete-v1 rollback leaves the host and pointer untouched', gateUntouched(beforeNoFlag), `pointer=${pointer()} pid=${hostPidValue()} starts ${beforeNoFlag.starts} -> ${starts()}`)
+
+    const ok = await deploy(['--rollback', '--target', completeV1Sha, '--allow-legacy-rollback'])
+    const rec = readRecords('rollback').find((x) => x.result === 'ok')
+    check('F1-K explicitly authorized complete-v1 rollback succeeds', ok.code === 0, `code=${ok.code} ${ok.out}`)
+    check('F1-K complete-v1 rollback still verifies both activation entries', Boolean(rec) && rec.activation === 'verified' && /"index"/.test(String(rec.activationEvidence)) && /"tools"/.test(String(rec.activationEvidence)), JSON.stringify(rec && rec.activationEvidence))
+    check('F1-K complete-v1 rollback does not skip the import probe as legacy', Boolean(rec) && rec.importProbe !== 'skipped-legacy' && /"ok":true/.test(String(rec.importProbe)), JSON.stringify(rec && rec.importProbe))
+    check('F1-K pointer switches to the complete-v1 release', pointer() === join(releaseDir(completeV1Sha), 'lib'), pointer())
+  } finally {
+    await closeWorld()
+  }
+}
+
+// 双向证据：同一批负例对旧 main（无修复）与修复分支各跑一次；旧代码必须因“未拒绝”而失败。
+async function runF1BidirectionalSuite() {
+  const cases = [
+    ['downgraded legacy', FULL('6'), downgradeToLegacy],
+    ['tampered downgraded legacy', FULL('7'), tamperDowngraded],
+  ]
+  for (const [name, sha, mutate] of cases) {
+    await initWorld()
+    try {
+      const setup = await deploy(['--target', A])
+      check(`F1-bidirectional ${name} setup deploys A`, setup.code === 0, setup.out)
+      copyRelease(A, sha, mutate)
+      const before = snapshotGateState()
+      const r = await deploy(['--target', sha, '--previous', A])
+      check(`F1-bidirectional ${name} forward deploy is rejected`, r.code !== 0, `code=${r.code} output=${r.out}`)
+      check(`F1-bidirectional ${name} leaves the host, pointer and start count untouched`, gateUntouched(before), `pointer=${pointer()} pid=${hostPidValue()} starts ${before.starts} -> ${starts()}`)
+    } finally {
+      await closeWorld()
+    }
+  }
+}
+
+const selectors = new Set(process.argv.slice(2))
+if (selectors.has('--f1-bidirectional-only')) {
+  await runF1BidirectionalSuite()
+} else if (selectors.has('--f1-only')) {
+  await runF1Suite()
+} else {
+  await runMainSuite()
+  await runNegativeSuite()
+  await runRemediationSuite()
+  await runF02Suite()
+  await runT1Suite()
+  await runN1Suite()
+}
 
 for (const line of results) console.log(line)
 if (failures > 0) {

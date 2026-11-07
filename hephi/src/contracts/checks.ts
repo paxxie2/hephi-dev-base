@@ -21,9 +21,22 @@ export type VerificationCheck = {
   timeoutMs: number
 }
 
+/**
+ * C4.6 optional offline/locked environment requirements for the frozen checks.
+ * Additive to verification format version 1; frozen inside the activation contract.
+ */
+export type EnvironmentRequirements = {
+  /** When true, prepare enforces an offline, lockfile-pinned check environment. */
+  offline?: boolean
+  /** Workspace-relative lockfile that must exist when offline=true. */
+  lockfile?: string
+}
+
 export type VerificationConfig = {
   version: 1
   checks: VerificationCheck[]
+  /** C4.6: optional offline/lockfile requirement (only enforced at prepare when offline=true). */
+  environment?: EnvironmentRequirements
   /**
    * C3: GitHub usernames allowed to approve the pull request at ready time. Frozen
    * into the contract from activation version 5; empty/absent means no approval is
@@ -63,11 +76,22 @@ const checkSchema = z.object({
   timeoutMs: z.number().int().min(1).max(3_600_000).default(600_000),
 }).strict()
 
+const environmentSchema = z.object({
+  offline: z.boolean().optional(),
+  lockfile: relativePath.optional(),
+}).strict().superRefine((environment, ctx) => {
+  // C4.6: an offline declaration without a pinned lockfile is not enforceable.
+  if (environment.offline === true && environment.lockfile === undefined) {
+    ctx.addIssue({ code: 'custom', message: 'environment.offline=true requires environment.lockfile' })
+  }
+})
+
 const verificationSchema = z.object({
   version: z.literal(1),
   checks: z.array(checkSchema).min(1),
   protectedAssets: z.array(relativePath).optional(),
   approvers: z.array(approverLogin).optional(),
+  environment: environmentSchema.optional(),
 }).strict().superRefine((config, ctx) => {
   const ids = new Set<string>()
   for (const check of config.checks) {

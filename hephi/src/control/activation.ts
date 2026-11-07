@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto'
-import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join } from 'node:path'
+import { dirname, join, resolve } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
 import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
 import { authorizationProblem } from './discipline.js'
@@ -64,6 +64,54 @@ type ContractHashInput = Omit<ActivationContract, 'contractHash' | 'executionMod
 export type ActivationResult =
   | { enabled: false; reason: 'not-requested' }
   | { enabled: true; filePath: string; contract: ActivationContract }
+
+
+// ---- C4.6 prepare-time offline environment enforcement ----------------------
+// The plugin side only enforces offline/locked check environments when the project
+// config declares `verification.environment.offline = true`; an undeclared or false
+// environment keeps the previous behavior (no interception). This runs at prepare
+// because the frozen check commands are what the Worker will execute later.
+
+/** Networked install/command patterns that cannot be pinned offline (mirrors eval/check-task.mjs). */
+function offlineCommandProblem(line: string): string | undefined {
+  if (/\bgit\s+clone\b/.test(line)) return 'git clone is a networked command'
+  if (/\b(curl|wget)\b/.test(line)) return 'curl/wget are networked commands'
+  if (/\bnpm\s+(install|i|add)\b/.test(line) && !/\bnpm\s+ci\b/.test(line) && !/--offline|--prefer-offline|--cache\b/.test(line)) {
+    return 'npm install without --offline/--prefer-offline/--cache'
+  }
+  if (/\bpnpm\s+(install|i|add)\b/.test(line) && !/--frozen-lockfile|--offline/.test(line)) {
+    return 'pnpm install without --frozen-lockfile or --offline'
+  }
+  if (/\bmvn(w)?\b/.test(line) && !/-o\b|--offline/.test(line)) return 'mvn without -o/--offline'
+  if (/\bgradle(w)?\b/.test(line) && !/--offline/.test(line)) return 'gradle without --offline'
+  if (/\byarn\s+install\b/.test(line) && !/--offline|--frozen-lockfile/.test(line)) return 'yarn install without an offline/frozen flag'
+  if (/\bpip3?\s+install\b/.test(line) && !/--no-index|--find-links/.test(line)) return 'pip install without --no-index/--find-links'
+  return undefined
+}
+
+/**
+ * Problems with a declared offline environment (empty when it is not declared/disabled).
+ * The lockfile is checked in the prepare workspace (the checkout at the base commit);
+ * its content/base consistency is checked by the task pipeline, not re-derived here.
+ */
+function offlineEnvironmentProblems(verification: VerificationConfig, workspace: string): string[] {
+  const environment = verification.environment
+  if (environment === undefined || environment.offline !== true) return []
+  const problems: string[] = []
+  if (environment.lockfile === undefined) {
+    problems.push('environment.offline=true requires environment.lockfile')
+  } else {
+    const root = resolve(workspace)
+    if (!existsSync(root)) problems.push(`workspace directory not found: ${workspace}`)
+    else if (!existsSync(join(root, environment.lockfile))) problems.push(`lockfile not found in the workspace: ${environment.lockfile}`)
+  }
+  for (const check of verification.checks) {
+    const line = [check.command, ...check.args].join(' ')
+    const problem = offlineCommandProblem(line)
+    if (problem) problems.push(`check "${check.id}" runs a non-offline command (${problem}): ${line}`)
+  }
+  return problems
+}
 
 const DEFAULT_STATE_DIR = join(homedir(), '.dsh-superagent')
 
@@ -345,6 +393,10 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     evidence: { requireSessionBinding },
     ...(task ? { task } : {}),
   }
+  // C4.6: fail before writing a contract when the declared offline environment is not met.
+  // Runs after the base required fields so missing-context errors keep their original order.
+  const offlineProblems = offlineEnvironmentProblems(verification, base.workspace)
+  if (offlineProblems.length > 0) throw new Error(`HEPHI offline environment is not satisfied: ${offlineProblems.join('; ')}`)
   // C1: an authorization never widens the contract scope or the authorizing item's paths.
   const authorizationIssue = authorizationProblem({ allowedPaths: base.allowedPaths, task })
   if (authorizationIssue) throw new Error(`invalid HEPHI task authorizations: ${authorizationIssue}`)

@@ -92,16 +92,24 @@
 >
 > **本次只关闭复核 R3-F1–F6 与 N1–N5 自动化**：R3.7 真实宿主（A→B→A、实载 commit 回读、真实故障注入、真实 drain 语义）仍未验证；**P8 仍为部分**；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）。
 
-### 真实宿主验收（仍未验证）
+### 真实宿主验收（2026-11-07 已尝试 → **blocked**，未通过）
+
+2026-11-07 09:18（Asia/Shanghai）对宿主 B（`http://127.0.0.1:3083`，pid `29031`）执行了 R3.7 的暂停→排空→部署尝试→恢复流程。**部署在排空门禁被 fail-closed 拒绝，未发生构建、指针切换或重启**，因此 A→B→A、故障注入回滚等项仍无法执行。
 
 | 项 | 状态 | 说明 |
 | --- | --- | --- |
-| A→B→A 真实切换 + 实载 commit 回读 | **未验证** | 宿主无版本查询入口；脚本成功记录已明确标 `loadedCommitReadback: unverified`，磁盘 sha256 不得替代实载 |
-| 受控健康故障注入与自动回滚 | **未验证** | 假宿主 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制 |
-| 暂停期受控 Issue smoke、恢复后完整健康/load | **未验证** | R3.7 第 6 项未执行 |
-| drain 真实 API 字段语义 | **未验证** | `startupReservations`/`effects`/`jobs`/`subagents`/`unknown` 仅在假宿主按字段存在性验证；真实 API 缺失即拒绝，不按 0 |
-| 真实 `hostVersion` 取值来源 | **未验证** | 本轮未做真实部署，仅验证必填/单行校验 |
-| 真实宿主上的普通 `lib/` 目录迁移 | **未验证** | 返修 N1/N1b 只用临时目录夹具；真实实例早已是 symlink 布局 |
+| R3.7 第 2 项：暂停 + 真实排空 | **部分（blocked）** | 暂停 1s 内生效（`paused=true`、load `0/0`、10 项 health ready）；但真实 `load` API 只有 `running/queued/maxWorkers`，其余 5 个排空字段不存在 → 脚本拒绝升级（见下行） |
+| R3.7 第 3–5 项：A→B→A、实载回读、故障注入 | **未执行（blocked）** | 被排空门禁阻断；未构建/未切换/未重启（副作用核对：host.pid 不变、releases 数 6、logs 数 8、`hephi/lib` 类型与树哈希不变） |
+| 真实部署尝试（dry-run，target `main@5b6fb6e`） | **exit 1（预期 fail-closed）** | 输出：`unverified drain field: startupReservations; …effects; jobs; subagents; unknown` → `drain check failed; refusing to upgrade`；证据 `external-review/evidence/r3.7-real-host/deploy-attempt.txt` |
+| 进行中 Ticket 门禁（下一道） | **存在 2 个 open Ticket** | `b3a7d823…`（person/answer）、`24983dd7…`（person/failed）；即使排空通过也会拒绝升级（无 `--allow-open-tickets` 绕过） |
+| drain 真实 API 字段语义 | **未验证** | 实测真实 API 不提供 `startupReservations/effects/jobs/subagents/unknown`；脚本按 `unverified` 拒绝，不按 0 |
+| 真实 `hostVersion` 取值来源 | **未验证** | 无固定宿主版本快照定义；本轮尝试仅用实验性标识 `dsh-0.2.1-rc.5+composed-config-4b20291e9ba9`（dsh 版本 + `logs/composed-config.yml` sha256 前缀），**未被采纳为正式语义** |
+| 真实宿主上的普通 `lib/` 目录迁移 | **未验证** | 真实实例 `hephi/lib` 当前仍是普通目录（非 symlink），迁移会在首次真实部署时发生；本轮未执行 |
+| 恢复派发 | **已完成** | 2026-11-07T01:18:09Z `{"paused":false}` → 1s 内 `paused=false`、10 项 health 全 ready、load `0/0`；证据 `resume.txt` / `state-after-resume.json` |
+
+**额外发现与纠正（如实记录）**：本轮 PR 验收在 `<instance>/hephi-review/hephi` 里跑过 `pnpm check`，而该目录正是宿主 profile link 的实载插件目录，构建改写了其 `lib/`；宿主进程 05:47:12 启动后未重启，导致**磁盘 lib ≠ 已部署 release**（磁盘 index.mjs `5ff4b59b…`，release entry `fe404c0d…`）。已把被重建的 lib 移到 **仓库外** `/Users/zm/dsh-instances/experiment/evidence/live-lib-rebuilt-20261107T011829Z`（保留审计；若留在仓库内会成为未跟踪文件，实测会触发 R2「refusing to build from a dirty working tree」），并从 `releases/hephi/fba676e…/lib` 恢复：恢复后 live `lib/index.mjs` = `fe404c0d…`，live lib 树哈希 = release 树哈希 = snapshot 树哈希 = `10b49b7b…`，宿主 health 不变。**该事件再次说明文件哈希 ≠ 实载 commit**（宿主无实载回读入口）。
+
+证据目录：`/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r3.7-real-host/`（`README.md`、`preflight.txt`、`state-before.json`、`state-paused.json`、`deploy-attempt.txt`、`resume.txt`、`state-after-resume.json`、`live-lib-restore.txt`）。
 
 > 本文件上方全部真实部署记录（`03:57`、`04:29`–`04:31`、`05:47`）均为 **R3 之前的旧脚本**行为，不代表 R3 结论。P8 真实验收在 R3.7 完成并保存原始输出前保持**未通过**；R3 返修（假宿主 N1–N5 待验证）**不改变 P8 仍为部分**。
 

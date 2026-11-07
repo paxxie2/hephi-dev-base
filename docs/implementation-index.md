@@ -59,6 +59,7 @@ site-pnl-diagnosis：#29（MERGED）、#42（MERGED）。
 | hephi 激活证据（合同/决策/检查记录） | `/Users/zm/dsh-instances/experiment/state/hephi/<ticketId>/` |
 | 外部评审证据副本（部署/回滚/宿主状态/P15 归档副本） | `/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/` |
 | R3 返修 negative-direction 证据（新套件在旧提交 `17d3827` 上的 FAIL 日志、快照 sha256、FAIL 清单） | `/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/pr20-fix/` |
+| R3.7 真实宿主尝试（暂停/排空拒绝/恢复、实载 lib 恢复记录） | `/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r3.7-real-host/` |
 
 > R1/R2/R3 的测试原始输出**未随提交归档**：R1/R2 只记录命令与摘要（见 `docs/remediation-r1-validation.md`）；R3 假宿主原始输出在本机 `/tmp/r3-fakehost.log`、`/tmp/r3-pnpm-test.log`（临时目录，不入库），摘要见 `docs/remediation-r3-validation.md`。**R3 返修后的原始输出（`PASS: 69 assertions`，exit 0）：`external-review/evidence/pr20-fix/`（`lead-clean-tree-pnpm-check.log`、`lead-pnpm-test-dirty-tree.log`）**。建议 R5／二次复核独立复跑时统一落盘到证据目录。
 

@@ -133,12 +133,12 @@ PASS: 44 assertions (R3 fake-host suite)
 
 | 项 | 状态 | 原因／后续 |
 | --- | --- | --- |
-| R3.7 真实宿主 A→B→A 部署与回滚 | **未验证** | 本记录未对 B 执行任何部署；需真实暂停/排空后执行并保存原始输出（返修后仍未执行） |
+| R3.7 真实宿主 A→B→A 部署与回滚 | **blocked（已尝试）** | 2026-11-07 对 B 执行暂停→部署尝试→恢复；部署在排空门禁被 fail-closed 拒绝（见 §10），未构建/未切换/未重启；A→B→A 与故障注入因此未执行 |
 | 实载 commit 回读 | **未验证** | 宿主无 `describePlugin`／版本查询入口；成功记录已明确标 `loadedCommitReadback: unverified`，磁盘 sha256 不得替代 |
 | 受控健康故障注入与自动回滚（真实宿主） | **未验证** | 假宿主 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制 |
 | 真实宿主暂停期受控 Issue smoke、恢复后健康/load | **未验证** | R3.7 第 6 项未做 |
-| drain 真实 API 字段语义 | **未验证** | `startupReservations`/`effects`/`jobs`/`subagents`/`unknown` 仅在假宿主按字段存在性验证；真实 API 是否提供、语义是否一致未确认（缺失即拒绝，不按 0） |
-| 真实 `hostVersion` 来源 | **未验证** | 仅验证必填/单行校验；真实固定宿主配置快照的取值未在本轮采集 |
+| drain 真实 API 字段语义 | **未验证（实测缺失）** | 真实 `/orchestrator/api/state` 的 `load` 只有 `running/queued/maxWorkers`；`startupReservations`/`effects`/`jobs`/`subagents`/`unknown` 不存在，脚本按 `unverified` 拒绝（§10） |
+| 真实 `hostVersion` 来源 | **未验证** | 无固定宿主版本快照定义；尝试时仅用实验性标识 `dsh-0.2.1-rc.5+composed-config-4b20291e9ba9`，未采纳为正式语义 |
 | `git archive` 干净构建在真实仓库 | **未验证** | 假宿主使用临时 Git 仓库；真实仓库构建由部署流程在真实宿主验收时验证 |
 | 真实宿主上的普通 `lib/` 目录首次迁移 | **未验证** | N1／N1b 使用临时目录夹具；真实实例当前已是 symlink 布局 |
 | R3-F6 current 校验失败不得被当恢复目标 | **未验证（无动态负例）** | 仅静态拆分 `current_valid`，本轮未补注入用例 |
@@ -367,3 +367,22 @@ node scripts/host/test-deploy-hephi.mjs   # 预期 exit 1；FAIL 清单见 §3.2
 ```
 
 > 本文件不修改任何历史失败记录：`docs/remediation-r3-validation.md` §5 的 44 条断言原文与 `docs/p8-deploy-record.md` 的旧脚本真实部署记录均原样保留，仅追加复核不通过与返修事实。
+
+## 10. R3.7 真实宿主尝试（2026-11-07，结果：blocked）
+
+对宿主 B（`http://127.0.0.1:3083`，pid `29031`，启动 05:47:12，dsh 0.2.1-rc.5）真实执行了暂停→排空→部署尝试→恢复，结果 **blocked / unverified**：
+
+| 步骤 | 真实结果 |
+| --- | --- |
+| 暂停 | `POST /orchestrator/api/executor/pause {"paused":true}` → 1s 内 `paused=true`、load `0/0`、10 项 health 全 ready |
+| 排空检查 | **失败（预期 fail-closed）**：真实 `load` 只有 `running/queued/maxWorkers`，5 个排空字段缺失 → `unverified drain field: startupReservations; … effects; jobs; subagents; unknown` |
+| 部署尝试（dry-run，target `main@5b6fb6e`） | **exit 1**，`drain check failed; refusing to upgrade`；**未构建、未切换指针、未重启**；副作用核对：host.pid 不变、releases 数 6、logs 数 8、`hephi/lib` 普通目录且树哈希不变 |
+| 下一道门禁 | 存在 **2 个 open Ticket**（`b3a7d823…` person/answer、`24983dd7…` person/failed）；排空通过也会被拒绝，无绕过入口 |
+| 恢复派发 | `{"paused":false}` → 1s 内 `paused=false`、10 项 health 全 ready、load `0/0` |
+| hostVersion | 无固定快照定义；尝试仅用 `dsh-0.2.1-rc.5+composed-config-4b20291e9ba9`（dsh 版本 + `logs/composed-config.yml` sha256 前缀），标注为实验性、未采纳 |
+
+**结论**：R3.7 第 3–5 项（真实 A→B→A、实载回读、故障注入回滚）**未执行**，P8 保持未通过。真实排空字段语义与 hostVersion 来源是开放依赖，不是实现缺陷；修复它们需要宿主 API 变更或负责人定义，**不得用默认 0/编造值绕过**。
+
+**额外发现（已纠正）**：PR 验收在实载插件目录 `<instance>/hephi-review/hephi` 里跑过 `pnpm check`，构建改写了其 `lib/`，造成磁盘 lib ≠ 已部署 release（磁盘 `5ff4b59b…` vs release entry `fe404c0d…`）。已将被重建目录移到**仓库外** `/Users/zm/dsh-instances/experiment/evidence/live-lib-rebuilt-20261107T011829Z` 保留审计（留在仓库内实测会触发 R2 dirty 构建拒绝），并从 `releases/hephi/fba676e…/lib` 恢复；恢复后 live `lib/index.mjs` = `fe404c0d…`、三处 lib 树哈希一致（`10b49b7b…`）、宿主 health 不变。该事件再次证明**文件哈希 ≠ 实载 commit**（无实载回读入口）。
+
+证据：`/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r3.7-real-host/`。

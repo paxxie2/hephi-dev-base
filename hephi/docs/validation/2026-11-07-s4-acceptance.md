@@ -22,6 +22,7 @@
 - 结果：`result=ok`；`activation=verified`（日志偏移 10678 后 index/tools 各 1 条，pid 44914，commit `bc21cac`）；10/10 health ready；`keptPaused=yes`；停机后 copy 查询 `total=0`；指针 `e490fe34…/lib → bc21cac…/lib`。
 - 记录：`<instance>/logs/deploy-20261107T181639Z-43593.json`，sha256 `bb2dd8b6d6c9dd240d30df261afe06c5ef949c0d8488854b22d3ab0f45dc69b5`。
 - 恢复：核对后 `POST executor/pause {paused:false}` → paused=false、10/10 ready、load 0/0。
+- S3 smoke（P0-4）：部署后创建 Issue #65 → Ticket `23c3eab1…` → run `6bda58a8…` **passed/exit0/pluginCommit=bc21cac** → ready.pass → PR #66（open，未合并）；随后用 main 版探针复跑 A2：H1 pass(path-B)、H2 fail、H4 pass、H3/H5/H6 manual。
 - 过程发现（待修脚本 UX）：① 未传 `--hephi` 时脚本默认 `$instance/hephi`（非实载路径）→ pointerBefore/current 为空、激活必然失败且回滚报 FATAL；② 旧 e490 是 legacy meta，正向部署的 previous 校验也要求 `--allow-legacy-rollback`（恢复目标语义应自动接受 legacy，或文档写清必须显式传）。这两点已造成三次失败尝试（记录保留），第 4 次带显式参数成功。
 
 ## 2. S1 预检（**旧 main@9fa8598**；新 main 待重跑）

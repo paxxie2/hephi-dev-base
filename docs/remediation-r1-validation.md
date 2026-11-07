@@ -7,7 +7,7 @@
 | 项 | 值 |
 | --- | --- |
 | 起始基线 | `5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1`（`main`，PR #19 合并） |
-| 修复分支 | `agent/hephi-r2-remediation`（**已推送 `origin/agent/hephi-r2-remediation`；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准**） |
+| 修复分支 | `agent/hephi-r2-remediation`（**已推送 `origin/agent/hephi-r2-remediation`；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）**） |
 | R1 提交 | `9e874f85c995b945f8408be46f51fb34661ebaa2`（activation v2 规范化哈希） |
 | R2 提交 | `0d7c031e24ec9aed16cf296a99336e501d3c1fac`（dirty 构建拒绝、完整 commit 身份） |
 | R3 提交 | `0d58bc39ed246c6c9084766c6b495ce2300795d4`（R3 独立验证见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md)） |

@@ -35,3 +35,9 @@
   `org.jboss.netty:netty:3.2.10.Final` 失败，未回退在线下载。`experiment/project-config/` 没有
   `dubbo-checks.json`，本目录不修改宿主侧配置。
 - 全部结果仅为本机构建/检查，不访问宿主、不运行任何 B5/B7 实验、不锁定 PREREG、不产生样本量。
+
+## repo 级 readiness 取值口径
+
+`eval/b7-data.json` 的 `environmentReady/offlineBuild/checksConfig` 对 **site-pnl-diagnosis** 与 **dubbo**
+保持 `false`：前者只在含 data 恢复提交 `ab7c8e0` 的检出上条件通过（B2 task base `1e166fb` 仍失败），
+后者只验证了 `dubbo-common` 作用域且无 `dubbo-checks.json`。条件通过不计入当前 repo 级就绪；详见 `eval/B7-data.md`。

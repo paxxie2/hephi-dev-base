@@ -5,6 +5,8 @@
 恢复 data 源码的提交上 `bash scripts/check.sh` 与平台检查配置命令均 exit 0；dubbo 在干净克隆上
 P10 文档的离线编译 + 离线测试命令通过（全仓离线编译仍失败，见下）。
 
+> 本文件把 site-pnl 与 dubbo 的 readiness 保持为 **false**：条件通过（site-pnl 需 data 恢复提交、dubbo 仅 dubbo-common 作用域）不计入当前 repo 级就绪；证据与前置条件见下。
+
 > 重要限制：site-pnl 默认分支 HEAD `1e166fbe...`（也是 B2 任务 base）**仍然失败**，因为它缺少
 > PR#29 才恢复的 `backend/app/data` 源码。本文件的 site-pnl=true 只表示“该仓库在含 data 恢复提交的
 > 干净检出上环境/检查可用”，**不等于** B2 任务 base 现在可以直接跑检查。矩阵 `eligible` 只表示
@@ -23,8 +25,8 @@ P10 文档的离线编译 + 离线测试命令通过（全仓离线编译仍失�
 | repo | environmentReady | offlineBuild | checksConfig | 说明 |
 |---|---|---|---|---|
 | hephi | true | true | true | 已真实验证（离线安装 + 完整检查） |
-| site-pnl-diagnosis | true | true | true | 仅在含 data 恢复提交 `ab7c8e0` 的干净检出上真实验证；默认 HEAD 失败，B2 task base 需先合入 data 恢复 |
-| dubbo | true | true | **false** | 离线构建只验证 `dubbo-common` 作用域；`experiment/project-config/` 无 `dubbo-checks.json`，本目录不修改宿主配置 |
+| site-pnl-diagnosis | **false** | **false** | **false** | 仅在含 data 恢复提交 `ab7c8e0` 的干净检出上条件通过；默认 HEAD/B2 task base `1e166fb` 失败，故不计入当前就绪 |
+| dubbo | true | **false** | **false** | 工具链可用（Java17/Maven，dubbo-common 离线构建+测试通过）；全仓离线构建缺 netty；无 `dubbo-checks.json` |
 
 false 表示未核验/未通过，不表示确定不可用。禁止把夹具正反向验证提升为整仓就绪，也不得把本机构建写成宿主验收。
 
@@ -48,9 +50,9 @@ node eval/b7-matrix.mjs --repos eval/b7-data.json --models eval/b7-models.json -
 ```
 
 组合数由生成器计算，snapshot 是准备快照；`preregLocked=false`，所有组合 `sampleSizeStatus=pending-prereg`。
-2026-11-08 以真实环境验证更新的矩阵为 **6 组合 / eligible=4**（hephi×2 + site-pnl×2），dubbo×2 因
-`checks-config-not-ready` blocked。**eligible≠正式实验就绪**：无 PREREG 锁定、无样本量、无模型调用；
-site-pnl 的 eligible 还受“B2 task base 缺少 data 恢复提交”这一前置限制。不能据此启动 B7 或声称泛化收益。
+2026-11-08 以真实环境验证更新的矩阵为 **6 组合 / eligible=2**（hephi×2）；site-pnl×2 与 dubbo×2 blocked
+（前者缺 data 恢复提交，后者缺离线全仓依赖与检查配置）。**eligible≠正式实验就绪**：无 PREREG 锁定、
+无样本量、无模型调用；不能据此启动 B7 或声称泛化收益。
 
 ## 未验证 / 待办
 

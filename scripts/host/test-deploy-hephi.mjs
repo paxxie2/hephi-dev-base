@@ -1545,6 +1545,7 @@ if (selectors.has('--f1-bidirectional-only')) {
   await runF02Suite()
   await runT1Suite()
   await runN1Suite()
+  await runF1Suite()
 }
 
 for (const line of results) console.log(line)

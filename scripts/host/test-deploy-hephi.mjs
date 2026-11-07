@@ -54,7 +54,7 @@ function healthPayload() {
     assessment: ready(), reply: ready(), evals: ready(), models: ready(), github: ready(),
   }
   if (state.health === 'github-starting') health.github = { state: 'starting', detail: 'starting', at: new Date().toISOString() }
-  if (state.health === 'always-bad') health.github = { state: 'error', detail: 'boom', at: new Date().toISOString() }
+  if (state.health === 'always-bad') health.github = { state: 'error', detail: state.healthDetail ?? 'boom', at: new Date().toISOString() }
   // 假宿主语义：start.sh 真正跑起来之前（写 started.marker；pauseOnStart 世界还要写 resumed.marker）不报 ready。
   // 否则 deploy 的健康门禁会早于 start.sh 执行就通过，harness 会读到启动前的过渡态（paused 回到 true、
   // 或在进程尚未读取 start.sh 时改写脚本，导致旧进程执行了新脚本）。
@@ -95,6 +95,25 @@ function nodeShimSource() {
   ].join('\n')
 }
 
+// 旧普通 lib 目录恢复 mv 失败注入：只在 deploy 的 PATH 前置一个 mv 垫片。
+// 仅当「源参数含 .migration- 且目标参数等于实载 lib 路径」时失败，即 set_pointer 的恢复 mv。
+function mvShimSource() {
+  return [
+    '#!/bin/sh',
+    'first="$1"; last=""',
+    'for a in "$@"; do last="$a"; done',
+    'if [ -n "${HARNESS_MV_BLOCK_SOURCE_TAG:-}" ] && [ -n "${HARNESS_MV_BLOCK_TARGET:-}" ]; then',
+    '  case "$first" in',
+    '    *"$HARNESS_MV_BLOCK_SOURCE_TAG"*)',
+    '      if [ "$last" = "$HARNESS_MV_BLOCK_TARGET" ]; then echo "injected old-lib restore mv failure" >&2; exit 1; fi',
+    '      ;;',
+    '  esac',
+    'fi',
+    'exec /bin/mv "$@"',
+    '',
+  ].join('\n')
+}
+
 async function initWorld(options = {}) {
   const { plainLib = false, pauseOnStart = false } = options
   deployEnv = {}
@@ -110,12 +129,17 @@ async function initWorld(options = {}) {
   }
   writeFileSync(join(bin, 'node'), nodeShimSource())
   run('chmod', ['+x', join(bin, 'node')])
+  writeFileSync(join(bin, 'mv'), mvShimSource())
+  run('chmod', ['+x', join(bin, 'mv')])
 
   state = {
     paused: true,
     load: { running: 0, queued: 0, startupReservations: 0, effects: 0, jobs: 0, subagents: 0, unknown: 0 },
     tickets: 0,
     health: 'ok',
+    healthDetail: null,
+    failState: false,
+    onState: null,
     marker: null,
     pauseOnStart,
   }
@@ -123,6 +147,9 @@ async function initWorld(options = {}) {
     const url = new URL(req.url ?? '/', 'http://127.0.0.1')
     res.setHeader('content-type', 'application/json')
     if (url.pathname === '/orchestrator/api/state') {
+      // 场景钩子：按当前指针/阶段切换假宿主行为（例如 target 阶段坏健康、restore 阶段 /state 全部 503）。
+      if (state.onState) state.onState()
+      if (state.failState) { res.statusCode = 503; res.end('{}'); return }
       const resumed = state.pauseOnStart && existsSync(join(instance, 'resumed.marker'))
       res.end(JSON.stringify({ paused: resumed ? false : state.paused, load: state.load, health: healthPayload() }))
       return
@@ -195,6 +222,19 @@ function renameFailEnv(at) {
     HARNESS_RENAME_FAIL_AT: String(at),
     HARNESS_RENAME_COUNTER: counter,
     HARNESS_REAL_NODE: process.execPath,
+  }
+}
+// N1c/X3：迁移第二步（symlink rename）失败 + 旧普通目录恢复 mv 也失败的双重故障注入。
+function migrationRestoreFailEnv() {
+  const counter = join(root, 'rename-counter')
+  writeFileSync(counter, '0')
+  return {
+    PATH: `${join(root, 'bin')}:${process.env.PATH ?? ''}`,
+    HARNESS_RENAME_FAIL_AT: '1',
+    HARNESS_RENAME_COUNTER: counter,
+    HARNESS_REAL_NODE: process.execPath,
+    HARNESS_MV_BLOCK_SOURCE_TAG: '.migration-',
+    HARNESS_MV_BLOCK_TARGET: join(instance, 'hephi', 'lib'),
   }
 }
 function treeHash(dir) {
@@ -463,8 +503,141 @@ exec sleep 3600`)
   }
 }
 
+// R3.8 返修回归：X1–X3（独立复核发现的双失败语义缺陷）+ P1–P3（外部验证后纳入自动化）。
+// 每个场景使用独立世界；假宿主只按「当前指针/阶段」切换行为，不给产品脚本留任何后门。
+async function runRemediationSuite() {
+  // X1：目标与恢复都健康失败，且假宿主真实返回 paused=false。
+  // 失败出口必须回读 paused；不得声称 kept paused，记录 keptPaused=no 与真实 paused。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('X1 setup deploys A', false, setup.out); return }
+    let targetSeen = false
+    state.onState = () => {
+      if (pointer() === join(releaseDir(B), 'lib')) targetSeen = true
+      if (targetSeen) { state.paused = false; state.health = 'always-bad'; state.healthDetail = 'x1-target-failure' }
+    }
+    const r = await deploy(['--target', B, '--previous', A, '--timeout', '3'])
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-twice')
+    check('X1 double failure exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('X1 failed-twice keeps real paused=false', Boolean(rec) && rec.paused === false, JSON.stringify(rec))
+    check('X1 output does not claim kept paused', !/kept paused/.test(r.out), r.out)
+    check('X1 output/record flags host not confirmed paused', /not confirmed paused|NOT confirmed paused|manual takeover/i.test(r.out) || /not confirmed paused|NOT confirmed paused|manual takeover/i.test(String(rec?.error ?? '')), `out=${r.out} rec=${JSON.stringify(rec)}`)
+    check('X1 record keeps keptPaused=no', Boolean(rec) && (rec.keptPaused === 'no' || rec.keptPaused === false), JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+
+  // X2：目标阶段健康失败产生可读状态；恢复阶段 /state 全部不可读（503）。
+  // 两次失败必须是独立证据：restoreFailure 不得复用目标阶段字符串。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('X2 setup deploys A', false, setup.out); return }
+    let targetSeen = false
+    state.onState = () => {
+      if (pointer() === join(releaseDir(B), 'lib')) {
+        targetSeen = true; state.health = 'always-bad'; state.healthDetail = 'target-only-evidence'; state.failState = false
+      } else if (targetSeen) {
+        state.failState = true
+      }
+    }
+    const r = await deploy(['--target', B, '--previous', A, '--timeout', '3'])
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-twice')
+    check('X2 restore state unreadable exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('X2 failed-twice record written', Boolean(rec), JSON.stringify(readRecords('deploy')))
+    check('X2 targetFailure keeps target-phase evidence', Boolean(rec) && String(rec.targetFailure).includes('target-only-evidence'), JSON.stringify(rec))
+    check('X2 targetFailureKind recorded', Boolean(rec) && ['stop-timeout', 'state-unreadable', 'health-timeout'].includes(rec.targetFailureKind), JSON.stringify(rec))
+    check('X2 restoreFailureKind state-unreadable or restoreFailure unverified', Boolean(rec) && (rec.restoreFailureKind === 'state-unreadable' || rec.restoreFailure === 'unverified'), JSON.stringify(rec))
+    check('X2 restoreFailure is not the target-phase string', Boolean(rec) && String(rec.restoreFailure).length > 0 && rec.restoreFailure !== rec.targetFailure, JSON.stringify(rec))
+    check('X2 unverified paused path does not claim kept paused', !/kept paused/.test(r.out), r.out)
+  } finally {
+    await closeWorld()
+  }
+
+  // N1c/X3：普通 lib 目录首次迁移时 symlink rename 失败 + 旧目录恢复 mv 也失败（双重故障）。
+  // 不得声称 restored/preserved；记录 failed-pointer 且带 migrationRestore=failed 与备份路径。
+  await initWorld({ plainLib: true })
+  try {
+    deployEnv = migrationRestoreFailEnv()
+    const r = await deploy(['--target', A])
+    check('X3 migration restore double failure exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    const libPath = join(instance, 'hephi', 'lib')
+    const libStat = existsSync(libPath) ? lstatSync(libPath) : null
+    check('X3 live lib is absent after failed migration restore', !libStat || !libStat.isDirectory(), `libStat=${libStat && (libStat.isSymbolicLink() ? 'symlink' : 'directory')}`)
+    const backupName = existsSync(join(instance, 'hephi')) ? readdirSync(join(instance, 'hephi')).find((name) => name.startsWith('.migration-')) : undefined
+    const backupPath = backupName ? join(instance, 'hephi', backupName) : ''
+    check('X3 migration backup keeps legacy content', Boolean(backupPath) && existsSync(join(backupPath, 'legacy.mjs')) && readFileSync(join(backupPath, 'legacy.mjs'), 'utf8') === 'export const legacy = 1\n', String(backupName))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-pointer')
+    check('X3 failed-pointer record marks migrationRestore failed', Boolean(rec) && rec.migrationRestore === 'failed', JSON.stringify(rec))
+    check('X3 failed-pointer record carries migration backup path', Boolean(rec) && Boolean(backupPath) && (rec.migrationBackup === backupPath || rec.migration === backupPath), `backup=${backupPath} rec=${JSON.stringify(rec)}`)
+    check('X3 output does not claim restored or preserved', !/old lib directory restored/.test(r.out) && !/previous state preserved/.test(r.out), r.out)
+    check('X3 output states restore failure and backup path', /NOT restored|restore FAILED|restore failed/i.test(r.out) && Boolean(backupPath) && r.out.includes(backupPath), `backup=${backupPath} out=${r.out}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // P1：F6 动态用例——坏 current 绝不能成为恢复目标。
+  // 先发布 B、再发布 A（pointer A，两个 release 都已存在），篡改 A 的 lib/index.mjs（不改 meta），
+  // rollback --target B 且不带 --previous；目标 B 启动失败后没有合法恢复目标，必须写 failed-no-previous，
+  // pointer 不得回到坏的 A/lib。
+  await initWorld()
+  try {
+    const prebuilt = await deploy(['--target', B])
+    const setup = prebuilt.code === 0 ? await deploy(['--target', A]) : prebuilt
+    if (setup.code !== 0) { check('P1 setup deploys B then A', false, setup.out); return }
+    writeFileSync(join(releaseDir(A), 'lib', 'index.mjs'), 'export const tampered = 1\n')
+    state.health = 'always-bad'
+    state.healthDetail = 'p1-target-failure'
+    const r = await deploy(['--rollback', '--target', B, '--timeout', '3'])
+    const rec = readRecords('rollback').find((x) => x.result === 'failed-no-previous')
+    check('P1 rollback target failure exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('P1 tampered current is not a restore target', pointer() === join(releaseDir(B), 'lib'), pointer())
+    check('P1 failed-no-previous record written', Boolean(rec), JSON.stringify(readRecords('rollback')))
+  } finally {
+    await closeWorld()
+  }
+
+  // P2：非法 --previous 必须在读取宿主/切换之前拒绝，且无任何副作用。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('P2 setup deploys A', false, setup.out); return }
+    const before = pointer()
+    const startsBefore = starts()
+    const recordsBefore = readRecords().length
+    let hostReads = 0
+    state.onState = () => { hostReads += 1 }
+    const r = await deploy(['--rollback', '--target', B, '--previous', 'abc'])
+    check('P2 invalid previous rejected before host read', r.code !== 0 && /previous must be a full 40-char SHA/.test(r.out) && hostReads === 0, `stateReads=${hostReads} ${r.out}`)
+    check('P2 invalid previous has no side effects', pointer() === before && starts() === startsBefore && readRecords().length === recordsBefore && hostReads === 0, `pointer=${pointer()} starts ${startsBefore}->${starts()} records ${recordsBefore}->${readRecords().length}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // P3：普通部署 A→B，目标 B 健康失败，恢复 A 后全量健康 ready。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('P3 setup deploys A', false, setup.out); return }
+    state.onState = () => {
+      if (pointer() === join(releaseDir(B), 'lib')) { state.health = 'always-bad'; state.healthDetail = 'p3-target-health-failed' }
+      else { state.health = 'ok' }
+    }
+    const r = await deploy(['--target', B, '--previous', A, '--timeout', '3'])
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-restored-previous')
+    check('P3 target health failure exits nonzero', r.code !== 0, `code=${r.code} ${r.out}`)
+    check('P3 previous release restored as pointer', pointer() === join(releaseDir(A), 'lib'), pointer())
+    check('P3 failed-restored-previous keeps restoreHealth all-required-ready', Boolean(rec) && rec.restoreHealth === 'all-required-ready', JSON.stringify(rec))
+    check('P3 record keeps real paused=true', Boolean(rec) && rec.paused === true, JSON.stringify(rec))
+  } finally {
+    await closeWorld()
+  }
+}
+
 await runMainSuite()
 await runNegativeSuite()
+await runRemediationSuite()
 
 for (const line of results) console.log(line)
 if (failures > 0) {

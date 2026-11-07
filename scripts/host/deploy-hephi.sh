@@ -135,9 +135,14 @@ set_pointer() {
     mv "$hephi/lib" "$migration" || { rm -f "$tmp"; echo "cannot move plain lib directory aside: $hephi/lib" >&2; return 1; }
     MIGRATION_BACKUP="$migration"
     if ! node -e 'const fs=require("fs");fs.renameSync(process.argv[1],process.argv[2])' "$tmp" "$hephi/lib"; then
-      mv "$migration" "$hephi/lib" 2>/dev/null || echo "cannot restore plain lib directory from $migration" >&2
       rm -f "$tmp"
-      echo "pointer rename failed during plain-directory migration; old lib directory restored" >&2
+      if mv "$migration" "$hephi/lib" 2>/dev/null; then
+        MIGRATION_RESTORE="restored"
+        echo "pointer rename failed during plain-directory migration; old lib directory restored (verified mv back)" >&2
+      else
+        MIGRATION_RESTORE="failed"
+        echo "pointer rename failed during plain-directory migration; old lib directory NOT restored; backup retained at $migration; manual takeover required" >&2
+      fi
       return 1
     fi
     return 0
@@ -146,7 +151,7 @@ set_pointer() {
     || { rm -f "$tmp"; echo "pointer rename failed: $tmp -> $hephi/lib" >&2; return 1; }
 }
 
-SNAP_ROOT=""; MIGRATION_BACKUP=""
+SNAP_ROOT=""; MIGRATION_BACKUP=""; MIGRATION_RESTORE=""
 snapshot_existing_lib() {
   [ -L "$hephi/lib" ] && return 0
   [ -d "$hephi/lib" ] || return 0
@@ -193,24 +198,35 @@ build_release() {
   rm -rf "$build_root"
 }
 
-LAST_STATE=""; FAIL_STATE=""; HEALTH_STATE=""
+LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
+# 每次重启尝试都重置本阶段状态，禁止沿用上一阶段（target/restore）的字符串。
 restart_instance() {
+  LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
   pid=$(cat "$instance/host.pid")
   kill -TERM "$pid" 2>/dev/null || true
   waited=0
   while kill -0 "$pid" 2>/dev/null; do
-    [ "$waited" -ge "$timeout" ] && { FAIL_STATE="$LAST_STATE"; echo "instance did not stop within ${timeout}s" >&2; return 1; }
+    if [ "$waited" -ge "$timeout" ]; then
+      FAIL_KIND="stop-timeout"; FAIL_STATE="$LAST_STATE"
+      echo "instance did not stop within ${timeout}s" >&2
+      return 1
+    fi
     sleep 1; waited=$((waited+1))
   done
   nohup "$instance/start.sh" >> "$instance/logs/host.log" 2>&1 &
   echo $! > "$instance/host.pid"
-  waited=0
+  waited=0; got_state="no"
   while :; do
     if state=$(read_state 2>/dev/null); then
-      LAST_STATE="$state"
+      LAST_STATE="$state"; got_state="yes"
       if health_ok "$state" 2>/dev/null; then HEALTH_STATE="$state"; return 0; fi
     fi
-    [ "$waited" -ge "$timeout" ] && { FAIL_STATE="$LAST_STATE"; echo "instance did not reach full health within ${timeout}s" >&2; return 1; }
+    if [ "$waited" -ge "$timeout" ]; then
+      FAIL_STATE="$LAST_STATE"
+      if [ "$got_state" = "yes" ]; then FAIL_KIND="health-timeout"; else FAIL_KIND="state-unreadable"; fi
+      echo "instance did not reach full health within ${timeout}s (${FAIL_KIND})" >&2
+      return 1
+    fi
     sleep 1; waited=$((waited+1))
   done
 }
@@ -252,6 +268,25 @@ paused_now() {
 fail_keep_paused() {
   echo "$1" >&2
   exit 1
+}
+
+# 失败出口统一回读 paused：yes/false/unverified。只有 confirmed true 才允许说 kept paused。
+paused_flag() {
+  p=$(paused_now 2>/dev/null || true)
+  case "$p" in
+    true) printf 'yes' ;;
+    false) printf 'no' ;;
+    *) printf 'unverified' ;;
+  esac
+}
+fail_after_switch() {
+  msg="$1"
+  flag=$(paused_flag)
+  case "$flag" in
+    yes) fail_keep_paused "$msg; paused=true verified" ;;
+    no) fail_keep_paused "$msg; host is NOT confirmed paused (paused=false); manual takeover required" ;;
+    *) fail_keep_paused "$msg; paused state UNVERIFIED; manual takeover required" ;;
+  esac
 }
 
 # ---- main ----
@@ -298,21 +333,26 @@ if [ "$rollback" = "yes" ]; then
   fi
   snapshot_existing_lib
   if ! set_pointer "$releases/$target/lib"; then
-    record rollback rollback failed-pointer target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" health not-ready migration "${MIGRATION_BACKUP:-none}" error "pointer switch failed"
-    fail_keep_paused "rollback could not switch the loaded pointer; host kept paused"
+    flag=$(paused_flag)
+    record rollback rollback failed-pointer target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" keptPaused "$flag" error "pointer switch failed"
+    if [ "${MIGRATION_RESTORE:-}" = "failed" ]; then
+      fail_after_switch "rollback pointer switch failed and old lib directory restore FAILED; backup at ${MIGRATION_BACKUP}"
+    fi
+    fail_after_switch "rollback could not switch the loaded pointer"
   fi
   if restart_instance; then
     p=$(paused_now) || p=""
     if [ "$p" != "true" ]; then
-      record rollback rollback failed-not-paused target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready error "host did not report paused=true after rollback; manual takeover required"
+      flag=$(paused_flag)
+      record rollback rollback failed-not-paused target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready keptPaused "$flag" error "host did not report paused=true after rollback; manual takeover required"
       fail_keep_paused "host is not paused after rollback; manual takeover required"
     fi
-    record rollback rollback ok target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}"
+    record rollback rollback ok target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused yes
     echo "rollback complete; host remains paused, verify loaded build then resume via API"
     exit 0
   fi
   # rollback 目标失败：用显式 previous（已校验）或通过校验的 current 恢复；两者都没有就记 failed-no-previous。
-  target_fail_state="$FAIL_STATE"
+  target_fail_state="${FAIL_STATE:-unverified}"; target_fail_kind="${FAIL_KIND:-unknown}"
   restore_target=""; restore_kind=""
   if [ "$previous_set" = "yes" ]; then
     restore_target="$releases/$previous/lib"; restore_kind="previous"
@@ -320,19 +360,23 @@ if [ "$rollback" = "yes" ]; then
     restore_target="$releases/$current/lib"; restore_kind="current"
   fi
   if [ -z "$restore_target" ]; then
-    record rollback rollback failed-no-previous target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" error "rollback target failed and no validated previous release exists; host kept paused"
-    fail_keep_paused "rollback target failed and no validated previous release exists; host kept paused"
+    flag=$(paused_flag)
+    record rollback rollback failed-no-previous target "$target" previous "${previous:-$current}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" keptPaused "$flag" error "rollback target failed and no validated previous release exists"
+    fail_after_switch "rollback target failed and no validated previous release exists"
   fi
   if ! set_pointer "$restore_target"; then
-    record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreFailure "pointer restore to $restore_target failed" error "rollback target failed and restoring pointer failed; host kept paused"
-    fail_keep_paused "rollback target failed and restoring the previous pointer failed; host kept paused with both errors recorded"
+    flag=$(paused_flag)
+    record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "rollback target failed and restoring pointer failed"
+    fail_after_switch "rollback target failed and restoring the previous pointer failed"
   fi
   if restart_instance; then
-    record rollback rollback failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreHealth all-required-ready error "rollback target failed; previous build restored and host kept paused"
-    fail_keep_paused "rollback target failed health; previous build restored and host kept paused"
+    flag=$(paused_flag)
+    record rollback rollback failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" error "rollback target failed; previous build restored"
+    fail_after_switch "rollback target failed health; previous build restored"
   fi
-  record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" restoreFailure "$FAIL_STATE" error "rollback target and automatic recovery both failed; host kept paused with both errors recorded"
-  fail_keep_paused "rollback failed twice; host kept paused and needs manual takeover"
+  flag=$(paused_flag)
+  record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "${FAIL_STATE:-unverified}" restoreFailureKind "${FAIL_KIND:-unknown}" keptPaused "$flag" error "rollback target and automatic recovery both failed"
+  fail_after_switch "rollback failed twice"
 fi
 
 # 构建或复用不可变 release。
@@ -358,22 +402,27 @@ if [ -z "$previous" ] && [ -z "$SNAP_ROOT" ]; then
   echo "first install: no previous release and no existing lib; a failed switch will keep the host paused" >&2
 fi
 if ! set_pointer "$releases/$target/lib"; then
-  record deploy deploy failed-pointer target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" error "pointer switch failed"
-  fail_keep_paused "could not switch the loaded pointer; host kept paused and previous state preserved"
+  flag=$(paused_flag)
+  record deploy deploy failed-pointer target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" keptPaused "$flag" error "pointer switch failed"
+  if [ "${MIGRATION_RESTORE:-}" = "failed" ]; then
+    fail_after_switch "pointer switch failed and old lib directory restore FAILED; backup at ${MIGRATION_BACKUP}"
+  fi
+  fail_after_switch "could not switch the loaded pointer"
 fi
 if restart_instance; then
   p=$(paused_now) || p=""
   if [ "$p" != "true" ]; then
-    record deploy deploy failed-not-paused target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" error "host did not report paused=true after switch; manual takeover required"
+    flag=$(paused_flag)
+    record deploy deploy failed-not-paused target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused "$flag" error "host did not report paused=true after switch; manual takeover required"
     fail_keep_paused "host is not paused after switch; manual takeover required"
   fi
-  record deploy deploy ok target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}"
+  record deploy deploy ok target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused yes
   echo "deploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)"
   exit 0
 fi
 
 # 切换后失败：统一错误路径——恢复 previous／快照，重启，全量健康复检，写记录，非零退出。
-target_fail_state="$FAIL_STATE"
+target_fail_state="${FAIL_STATE:-unverified}"; target_fail_kind="${FAIL_KIND:-unknown}"
 restore_target=""; restore_kind=""
 if [ "$previous_valid" = "yes" ]; then
   if release_validate "$releases/$previous" >/dev/null 2>&1; then
@@ -383,16 +432,20 @@ elif [ -n "$SNAP_ROOT" ] && [ -d "$SNAP_ROOT/lib" ]; then
   restore_target="$SNAP_ROOT/lib"; restore_kind="snapshot"
 fi
 if [ -z "$restore_target" ]; then
-  record deploy deploy failed-no-previous target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" error "target failed after switch and no validated previous build exists; host kept paused"
-  fail_keep_paused "target failed after switch and no validated previous build exists; host kept paused"
+  flag=$(paused_flag)
+  record deploy deploy failed-no-previous target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" keptPaused "$flag" error "target failed after switch and no validated previous build exists"
+  fail_after_switch "target failed after switch and no validated previous build exists"
 fi
 if ! set_pointer "$restore_target"; then
-  record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreFailure "pointer restore to $restore_target failed" error "target failed after switch and restoring previous pointer failed; host kept paused"
-  fail_keep_paused "target failed after switch and restoring the previous pointer failed; host kept paused with both errors recorded"
+  flag=$(paused_flag)
+  record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "target failed after switch and restoring previous pointer failed"
+  fail_after_switch "target failed after switch and restoring the previous pointer failed"
 fi
 if restart_instance; then
-  record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreHealth all-required-ready error "target failed after switch; previous build restored and host kept paused"
-  fail_keep_paused "target failed after switch; previous build restored and host kept paused"
+  flag=$(paused_flag)
+  record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" error "target failed after switch; previous build restored"
+  fail_after_switch "target failed after switch; previous build restored"
 fi
-record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" targetFailure "$target_fail_state" restoreFailure "$FAIL_STATE" error "target and automatic recovery both failed; host kept paused with both errors recorded"
-fail_keep_paused "target and automatic recovery both failed; host kept paused with both errors recorded"
+flag=$(paused_flag)
+record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "${FAIL_STATE:-unverified}" restoreFailureKind "${FAIL_KIND:-unknown}" keptPaused "$flag" error "target and automatic recovery both failed"
+fail_after_switch "target and automatic recovery both failed"

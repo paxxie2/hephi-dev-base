@@ -66,3 +66,19 @@ A 线本轮完成了：main S1 PASS、PR30 独立复核（request changes）、A
 - A5 非 blocked 场景均已有记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1；其中 **E4/E10/E2/E3/E6/E7/E8 为 pass**，**E1-off/E1-on/E-PR1 为 partial**（前置或任务类型限制）。
 - E5/E9 保持 blocked；E1-on/E-PR1 为 SMOKE_ONLY 流程证据、E1-off 前置/provenance 无法核验、E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——因此 A5 **未达到“全部应执行场景 pass + 人工复核通过”**，需补正式场景与负责人签收。
 - PR30 复审 F1（activation legacy 降级绕过）**未修复**，S3 真实部署门禁仍需该修复或明确书面降级。
+
+## 10. 证据索引
+
+| 证据 | 位置 | 说明 |
+| --- | --- | --- |
+| S1 预检报告/日志 | `external-review/evidence/roadmap95/main-s1/main-s1-report.json`、`main-s1.log` | main@9fa8598，verdict PASS（459 tests / 174 / 41） |
+| PR30 独立复核 | `external-review/PR30-post-merge-review.md`；`external-review/evidence/pr30-review/` | request changes（F1 major） |
+| F1 修复跟踪 | GitHub issue `paxxie2/super-agent-hephi-review#35`；清单 2 任务 2.7 | 未修复前不得依赖 activation fail-closed |
+| A2 定案 | `hephi/docs/validation/2026-11-07-a2-final.md` | H1–H6 + 哈希核对 + F4 口径风险 |
+| E4 记录 | `hephi/docs/validation/e2e/2026-11-07-E4.md`；stateDir `…/state/hephi/c231654e…`、`13af322b…`；PR #58 | blocked→passed 两阶段 |
+| E10 记录 | `hephi/docs/validation/e2e/2026-11-07-E10.md`；stateDir `…/state/hephi/1612ffac…`；PR #61 | passed，2 文件 |
+| E1-off 记录 | `hephi/docs/validation/e2e/2026-11-07-E1-off.md`；Issue #54 / PR #55 | partial（前置/provenance 无法核验） |
+| E1-on / E-PR1 记录 | `e2e/2026-11-07-E1-on.md`、`E-PR1.md`；Issue #49 / ticket ad3d5016 / PR #50 | partial（SMOKE_ONLY） |
+| E2/E3/E6/E7 记录 | `e2e/2026-11-07-E2.md`、`E3.md`、`E6.md`、`E7.md`；stateDir `…/state/hephi/90150d23…`；PR #53 | 外部执行，决策日志已核对 |
+| 部署记录 | `<instance>/logs/deploy-20261107T141210Z-57984.json`（sha256 804ba302…） | D1/D2/D4/D5 证据 |
+| 记录 PR | `paxxie2/super-agent-hephi-review` PR #34（docs-only） | 本文件与 e2e 记录所在分支 |

@@ -74,7 +74,7 @@
 | **F3 无恢复却记 restored** | 无论是否执行恢复都写 `failed-restored-previous` 并输出 `previous build restored`；rollback 恢复用 `current` 而非显式 `previous`，记录 `previous` 常为空 | 拆成 `failed-no-previous`／`failed-restored-previous`／`failed-twice`；**rollback 显式 target 语义**：恢复目标 = 显式 `--previous`（已 `release_validate`）否则通过校验的 `current`，两者皆无只记 `failed-no-previous`；只有指针真恢复 + 全量健康通过才写 `failed-restored-previous` | N3 |
 | **F4 恢复 rename 失败绕过双失败** | 恢复 `set_pointer` 无错误捕获，`set -e` 下 rename 失败直接以原始码（负例 42）退出，零记录、指针停在失败目标 | 所有 `set_pointer` 调用 `if ! set_pointer ...` 捕获；恢复失败写 `failed-twice`（含 `targetFailure` + `restoreFailure` 真实错误）后非零退出 | N4（注入第 2 次 rename 失败） |
 | **F5 paused 硬编码 true、健康证据缺失** | `record()` 无条件 `paused:true`；双失败写 `health:"not-checked"` | **真实 paused 回读**：`record()` 写盘前 `read_state`，保存真实 `paused`（读不到为 `unverified`）、`load`、`healthReadback`；成功/回滚成功后 `paused_now()` 复核，非 `true` 写 `failed-not-paused` 并非零退出 | N5（假宿主真实返回 `paused=false`）；主套 T17/T08 记录真实性断言 |
-| **F6 current 校验被忽略** | `[ -n "$current" ] && release_validate ... || true` 吞掉失败，校验不过的 current 仍可能被当恢复目标 | 单独计算 `current_valid`；恢复 current 必须 `current_valid=yes`，显式 `--previous` 先校验 | **无专属动态负例**（静态保证，标 unverified-by-test） |
+| **F6 current 校验被忽略** | `[ -n "$current" ] && release_validate ... \|\| true` 吞掉失败，校验不过的 current 仍可能被当恢复目标 | 单独计算 `current_valid`；恢复 current 必须 `current_valid=yes`，显式 `--previous` 先校验 | **无专属动态负例**（静态保证，标 unverified-by-test） |
 
 **双失败证据字段**（返修后记录中用于“保留现场”的字段，`record()` 统一写入）：
 
@@ -88,13 +88,13 @@
 
 > 返修改 3 文件（提交 **`240961395ce0fb323683bab21830fbdc123257d8`**，父提交 `17d3827`）：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`（wrapper 断言 44→69），**未在真实宿主执行任何部署/回滚**。双向均已实测：修复提交上 69 断言全绿 + 全量 `pnpm test` 20 文件 / 202 tests；旧提交上 `PASS 50 / FAIL 19`。**`pnpm check` 的 typecheck+test+build 最终输出`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）。**
 >
-> 旧提交实测的重要细节（不得省略）：N1 复现 `EISDIR`（与复核一致）；N4 在旧提交上是 **`exit 0` + 写 `result:"ok"`**（不是静态推演的裸 42，恢复分支未被走到）；N5 旧脚本在假宿主真实 `paused=false` 时仍 exit 0 并输出 `deploy complete`、记录硬编码 `paused:true`。
+> 旧提交实测的重要细节（不得省略，**按日志区分两个时点，不得混写**）：N1 复现 `EISDIR`（与复核一致）；**N4 的退出码有两个不同时点的日志**——早期改前快照日志（`external-review/evidence/pr20-fix/old-commit-negative-fails.log`、`.run2.log`，2026-11-07T07:35/07:40）中 N4 为 **`exit 0` + 写 `result:"ok"`**（恢复分支未被走到）；而**最终套件日志**（`old-commit-final-suite.log`、`old-commit-final-4664e96-suite.log`、`old-commit-final-7f50c13-suite.log`）中 N4 为 **`code=42`**（`FAIL N4 recovery rename failure exits nonzero without raw 42 :: code=42`）——两者都说明旧实现无法通过 N4 断言；19 FAIL 总数不受此更正影响。N5 旧脚本在假宿主真实 `paused=false` 时仍 exit 0 并输出 `deploy complete`、记录硬编码 `paused:true`。
 >
-> **本次只关闭复核 R3-F1–F6 与 N1–N5 自动化**：R3.7 真实宿主（A→B→A、实载 commit 回读、真实故障注入、真实 drain 语义）仍未验证；**P8 仍为部分**；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）。
+> **本次只关闭复核 R3-F1–F6 与 N1–N5 自动化**：R3.7 真实宿主（A→B→A、实载 commit 回读、真实故障注入、真实 drain 语义）在此时点仍未验证（2026-11-07 09:18 已尝试 → **blocked**，见下方“真实宿主验收”节）；**P8 仍为部分**；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20），其后 PR #21（`5b6fb6e`）与 PR #22（`8fd199d`）已合并，**审查基准 `main@8fd199d`（PR #23 合并后以 `git log` 为准）**。
 
-### 真实宿主验收（2026-11-07 已尝试 → **blocked**，未通过）
+### 真实宿主验收（2026-11-07 09:18 已尝试 → **blocked**，未通过）
 
-2026-11-07 09:18（Asia/Shanghai）对宿主 B（`http://127.0.0.1:3083`，pid `29031`）执行了 R3.7 的暂停→排空→部署尝试→恢复流程。**部署在排空门禁被 fail-closed 拒绝，未发生构建、指针切换或重启**，因此 A→B→A、故障注入回滚等项仍无法执行。
+2026-11-07 09:18（Asia/Shanghai）对宿主 B（`http://127.0.0.1:3083`，pid `29031`）执行了 R3.7 的暂停→排空→部署尝试→恢复流程。**部署在排空门禁被 fail-closed 拒绝，未发生构建、指针切换或重启**，因此 A→B→A、故障注入回滚等项仍无法执行。**R37 独立复核（2026-11-07，审查 `8fd199d`）确认该 blocked 判定正确**（报告 §5）：脚本拒绝与既定方案一致，不是“脚本过严”；且即使排空解阻，2 个 open Ticket 也会在下一道门禁拒绝。
 
 | 项 | 状态 | 说明 |
 | --- | --- | --- |
@@ -109,14 +109,29 @@
 
 **额外发现与纠正（如实记录）**：本轮 PR 验收在 `<instance>/hephi-review/hephi` 里跑过 `pnpm check`，而该目录正是宿主 profile link 的实载插件目录，构建改写了其 `lib/`；宿主进程 05:47:12 启动后未重启，导致**磁盘 lib ≠ 已部署 release**（磁盘 index.mjs `5ff4b59b…`，release entry `fe404c0d…`）。已把被重建的 lib 移到 **仓库外** `/Users/zm/dsh-instances/experiment/evidence/live-lib-rebuilt-20261107T011829Z`（保留审计；若留在仓库内会成为未跟踪文件，实测会触发 R2「refusing to build from a dirty working tree」），并从 `releases/hephi/fba676e…/lib` 恢复：恢复后 live `lib/index.mjs` = `fe404c0d…`，live lib 树哈希 = release 树哈希 = snapshot 树哈希 = `10b49b7b…`，宿主 health 不变。**该事件再次说明文件哈希 ≠ 实载 commit**（宿主无实载回读入口）。
 
+**R37 复核对本节的边界确认（§6）**：磁盘哈希证据成立，但**不能扩大为“运行中的插件已恢复到该 commit”**——宿主没有实载版本回读，且进程未因这次复制而重启；恢复时宿主为 `paused=false`，“移动旧目录 + 从 release 复制”是**非原子**过程，不能作为标准回滚步骤；健康回读不能排除复制窗口内的动态加载风险。运维整改建议（R37 §6）：开发工作树与实载目录彻底分离（禁止在实载工作树跑 `pnpm check`/`build`）、实载只指向已校验不可变 release、若必须恢复先暂停排空停宿主后原子切换、保留“实载 commit unverified”直到宿主提供版本查询入口。**本节即本轮不在工作树运行 `pnpm check`/`pnpm build` 的原因。**
+
 证据目录：`/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r3.7-real-host/`（`README.md`、`preflight.txt`、`state-before.json`、`state-paused.json`、`deploy-attempt.txt`、`resume.txt`、`state-after-resume.json`、`live-lib-restore.txt`）。
 
-> 本文件上方全部真实部署记录（`03:57`、`04:29`–`04:31`、`05:47`）均为 **R3 之前的旧脚本**行为，不代表 R3 结论。P8 真实验收在 R3.7 完成并保存原始输出前保持**未通过**；R3 返修（假宿主 N1–N5 待验证）**不改变 P8 仍为部分**。
+> 本文件上方全部真实部署记录（`03:57`、`04:29`–`04:31`、`05:47`）均为 **R3 之前的旧脚本**行为，不代表 R3 结论。P8 真实验收在 R3.7 完成并保存原始输出前保持**未通过**；R3 返修（假宿主 N1–N5 已双向实测）**不改变 P8 仍为部分**。
+
+### R3.8 复核返修（2026-11-07，提交 `cfb5a18`，待二次独立复核）
+
+R37 独立复核（审查 `8fd199d`）在 69 断言之外动态复现 3 个失败语义缺陷（X1 双失败仍称 kept paused；X2 恢复阶段复用目标状态；X3 旧目录恢复失败仍称 restored/preserved），并验证 P1–P3 行为正确但当时只在仓库外测试。**返修提交 `cfb5a187ad950170b1900b302c0d1f54530f3fe0`**（父 `8fd199d`；3 文件 +265/−39）已完成：
+
+| 项（实测） | 结果 | 证据 |
+| --- | --- | --- |
+| 扩展套件 | **97 断言** = 原 69（未改未删）+ 新 28（X1 5／X2 7／X3 7／P1 3／P2 2／P3 4）；`cfb5a18` 上 **PASS: 97 assertions、exit 0**（r38-tests `2m12.4s`／`2m13.7s`，Lead `real 133.24s`） | `external-review/evidence/r3.8/` |
+| 旧实现对照 | `8fd199d` × 新套件（独立克隆）→ **exit 1、10 FAIL，全为 X1–X3 断言**；原 69 + P1–P3 全 PASS | `old-8fd199d-suite-10fail.log` |
+| 完整 `pnpm check` | 隔离克隆 `/tmp/hephi-r38-fix` @ `cfb5a18` → **exit 0**：20 文件 / 202 tests、`Build complete in 1840ms`；`git diff --check 5efd708..cfb5a18` exit 0 | `fix-cfb5a18-pnpm-check-and-suite.log` |
+| 二次独立复核 | **未做（待外部复核）**：R37 报告是上一轮、不能替代对 `cfb5a18` 的复核 | — |
+
+**结论边界**：本轮只关闭 X1–X3 的假宿主自动化与 P1–P3 自动化，**不等于 R3 或 P8 真实验收通过**；真实宿主 A→B→A、实载 commit 回读、真实 drain 5 字段、正式 hostVersion、open Ticket 解阻、二次独立复核**全部未完成**。**R3.7 不重启、P8 不得记 done。** 逐条根因、§8 门槛对照与未验证边界见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §12。
 
 ## 已证明 / 未证明
 
 - 已证明：暂停→构建→重启→状态恢复的真实链路；构建产物时间 `03:57`；实例以新进程运行且监听正常。R3 的**脚本机制**只由假宿主证明（原 44 断言 + 返修后 69 断言全绿，全量测试 20 文件 / 202 tests）；**这不等于真实宿主验收**。
-- 未证明：**实载插件 commit**（无回读入口，只能确认进程/构建产物时间与 live lib 入口 sha256，不能确证加载了哪个 commit）；**竞态 Trigger**（本记录未创建新 Issue 测试；后由 `docs/p8-race-record.md` 单独验证，结论 partial）；**故障注入下的自动恢复**（假宿主原 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制，**真实宿主未验证**）；**全量健康门禁**（假宿主覆盖，**真实宿主未验证**；旧脚本只看 `runtime`，`deploy-20261107T054720.json` 已记录 `github=starting` 仍判成功）；**普通 `lib/` 目录首迁事务**（返修 N1/N1b 仅在临时夹具验证，真实宿主未迁移）。
-- 已知限制：重启窗口内服务不可用；本记录中的 `lib` 切换在停机状态下用 `mv` 完成，非热切换（R3 改为 release 目录 + 版本指针，尚未验收）；`meta.json` 只有 sha256，没有签名；R3 原实现被独立复核判定不通过（F1–F6），返修提交 `2409613` 已关闭 F1–F6 并补 N1–N5，但**仍需二次独立复核**才能重新送审。
-- 状态口径：**P8 仍为部分（未通过）**。假宿主套件（含返修负例）即使全绿也不等于 R3.7 真实宿主验收。
+- 未证明：**实载插件 commit**（无回读入口，只能确认进程/构建产物时间与 live lib 入口 sha256，不能确证加载了哪个 commit）；**竞态 Trigger**（本记录未创建新 Issue 测试；后由 `docs/p8-race-record.md` 单独验证，结论 partial）；**故障注入下的自动恢复**（假宿主原 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制，**真实宿主未验证**；R37 追加的 X1–X3 表明部分失败语义仍需返修，已由 R3.8 `cfb5a18` 修复（假宿主），待独立复核）；**全量健康门禁**（假宿主覆盖，**真实宿主未验证**；旧脚本只看 `runtime`，`deploy-20261107T054720.json` 已记录 `github=starting` 仍判成功）；**普通 `lib/` 目录首迁事务**（返修 N1/N1b 仅在临时夹具验证，**真实实例 `hephi/lib` 是普通目录（plain-directory，非 symlink）**，真实旧布局迁移未执行）。
+- 已知限制：重启窗口内服务不可用；本记录中的 `lib` 切换在停机状态下用 `mv` 完成，非热切换（R3 改为 release 目录 + 版本指针，尚未验收）；`meta.json` 只有 sha256，没有签名；R3 原实现被独立复核判定不通过（F1–F6），返修提交 `2409613` 已关闭 F1–F6 并补 N1–N5；**R37 二次独立复核（2026-11-07，审查 `8fd199d`）确认 F1–F6 直接修复有效、69 断言独立复跑通过，但新发现 X1–X3 失败语义缺陷 → R3.8 返修提交 `cfb5a18`（97 断言、双向实测）已完成，待对 `cfb5a18` 的二次独立复核**；R3.7 仍 blocked。
+- 状态口径：**P8 仍为部分（未通过）**。假宿主套件（含返修负例与 R3.8 新增用例）即使全绿也不等于 R3.7 真实宿主验收。
 - 备注：脚本新增 `--hephi`/`--repo` 以适配本机 `<instance>/hephi-review` 布局（提交 `185f5e9`）。

@@ -120,15 +120,16 @@ path A/B 均缺失，以及 job-evidence 的 H3 pass/manual/fail 与 H5 pass/fai
 | 一次性 profile + 运行时证据 | 一次性 DSH 0.2.1-rc.5 profile 的真实 Session 快照 + `job-evidence-derived-v2.json` | H3 pass（本 Session 终态 + foreign 抛错 + readAt 文本）、H5 pass（无 truncation、lossy=false）、H2 fail、H1/H4 unavailable（无 check record）；exit 1 |
 | 加 H6 人工结论 | 同上 + `--manual H6=fail`（附 §5 原始写入证据） | H6 fail；其余同上 |
 
-一次性 profile 的运行期实测（真实 `ctx.jobs` + 真实原生 bash，Node v26.1.0 / DSH 0.2.1-rc.5）：
+一次性 profile 的运行期实测（真实 `ctx.jobs`；agent 原生 bash Job + 真实子进程组件集成，Node v26.1.0 / DSH 0.2.1-rc.5）：
 
 - 本 Session 终态：`get(jobId, owner)` → `completed` / `exit code: 0`；
 - 错误 Session：`get/readAt(jobId, foreignSession)` 抛错 `job … belongs to another session`；
 - 完整输出：短命令 21 bytes、`lossy=false`；长命令消费前 40000 bytes 可读；
-- 截断/lossy：真实 `/bin/sh` 子进程 Job（`yes x | head -c 40000`，经真实 `ctx.jobs` 注册）消费后
-  由 40000 收到 16384 bytes、`lossy=true`；agent 前台 Job 收集后即移除，无法在同一条记录上观察 lossy。
-  早前 unowned+预写 ring 的探针只算组件聚焦测试，已由独立验收纠正，不作为 lossy 验收依据；
-  详见 [`host-runtime-probe-record.md`](host-runtime-probe-record.md) §3/§9。
+- 截断/lossy：**真实子进程 + Job 注册表组件集成测试**——诊断插件注册的真实 `/bin/sh` 子进程 Job
+  （`yes x | head -c 40000`）消费后由 40000 收到 16384 bytes、`lossy=true`。这不是原生 agent bash
+  工具的 E2E；agent 前台 Job 收集后即移除，无法在同一条记录上观察 lossy。早前 unowned+预写 ring
+  的探针只算组件聚焦测试，已由独立验收纠正，不作为 lossy 验收依据；详见
+  [`host-runtime-probe-record.md`](host-runtime-probe-record.md) §3/§9。
 - H6：一次性 profile 内 Worker bash 对自身 `$DSH_HOME/sessions/**/session.v*.jsonl.zstd` 追加成功
   （`append_exit=0`），并可写入伪造 `state/hephi/.../run.json`（`state_write_exit=0`）→ **H6 fail**，
   因此**强绑定继续保持关闭**；生产 B 未做写入尝试；

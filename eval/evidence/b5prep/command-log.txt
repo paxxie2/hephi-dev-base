@@ -1,0 +1,28 @@
+# B5 准备命令日志（2026-11-08）
+generatedAt: 2026-11-08 06:40:23 CST
+git HEAD (生成时): 5b5c4efc23b054e1dbdd465469b900b8ab5ab559
+base main: 5b5c4efc23b054e1dbdd465469b900b8ab5ab559
+node: v26.1.0
+git: git version 2.54.0 (Apple Git-157)
+
+$ node eval/prereg-lock.mjs --check
+→ 输出全文见 eval/evidence/b5prep/prereg-lock-check.txt；退出码 1（拒绝锁定，未写 eval/PREREG.lock）
+
+$ node eval/b5-plan.mjs --tasks eval/tasks/b5-tasks.json --seed 20261107 --repeat-fraction 0.2 --out /tmp/b5-trial-plan.json
+plan written: /tmp/b5-trial-plan.json (4 runs, seed=20261107, repeats=0)
+[exit=0]
+→ plan 副本: eval/evidence/b5prep/b5-trial-plan.json
+
+$ ls eval/PREREG.lock
+ls: eval/PREREG.lock: No such file or directory
+[exit=1]（未生成 lock 符合预期）
+
+$ git status --short
+ M eval/decisions-draft.md
+?? eval/B5-trial-plan.md
+?? eval/approvals/
+?? eval/evidence/b5prep/
+[exit=0]
+
+# 本轮未执行：任何 run、模型调用、宿主访问、盲评、样本量计算。
+# plan 中的 seed/repeatFraction 仅为本次准备参数，未锁定 PREREG。

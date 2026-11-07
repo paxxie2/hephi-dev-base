@@ -147,3 +147,9 @@ git diff --check
 6. B4-02 对 `implementationDefect.notes` 的“位置”检查是正则启发式（文件:行 / 第 N 行 / LNN），不解析 diff 定位。
 7. 未在真实运行材料上验证 `export.mjs` 的 git diff 路径（合成仓库只覆盖单文件 diff 与三类硬痕迹）。
 8. 未在真实批次上验证 `report.py` 的 bootstrap/分层输出与 PREREG 锁定后的最终口径。
+
+## 单人评审降级说明（2026-08，owner-approved）
+
+负责人选择“单人 + 独立 agent”后（见 `eval/approvals/2026-11-08-single-human-eval-mode.md`）：
+- 真实两名真人盲评仍未执行，B4 一致性只能记录为 **human–agent agreement**，不得写成 inter-human kappa；
+- 本清单中“工具验证通过”保持不变；B4/B5 的正式盲评结论状态为 partial（single-human mode）。

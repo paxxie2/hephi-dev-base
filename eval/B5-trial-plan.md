@@ -138,3 +138,11 @@ python eval/stats/report.py --input <batch>/runs.json \
 5. **未固定模型/provider/参数与预算**；无真实 off/native 入口证据（E1-off partial、E5/E9 blocked）。
 6. **未计算样本量**；`seed=20261107`、`repeatFraction=0.2` 只是本次计划生成参数，未锁定。
 7. 本计划只覆盖 2 个 fixture 任务、4 个 primary runs、0 个 repeat；**不能**用于重复一致性、模型波动或效应结论。
+
+## 盲评阶段：单人评审降级（2026-11-08）
+
+负责人选择单人+独立 agent 模式（`eval/approvals/2026-11-08-single-human-eval-mode.md`）：
+- 试跑/正式实验的盲评阶段由 **1 名真人（负责人）+ 1 个独立 agent** 完成；
+- 一致性写 `human–agent agreement`，不得写双人 kappa；
+- B5 结果标签 `single-rater`，不得作为双人盲评最终结论；
+- 若日后有第二名真人，按原计划补双人盲评并升级结论。

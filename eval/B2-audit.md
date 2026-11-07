@@ -108,3 +108,10 @@ git diff --check
 
 - 分支：`agent/b2-tasks`（本地 `/tmp/b2tasks`，基线 `93bfd06`），已推送到 `paxxie2/super-agent-hephi-review`。
 - PR：[PR #69](https://github.com/paxxie2/super-agent-hephi-review/pull/69)（**不合并**，等待负责人评审）。
+
+## 6. 单人评审降级（2026-11-08，owner-approved）
+
+负责人于 2026-11-08 选择“单人 + 独立 agent”降级模式（见 `eval/approvals/2026-11-08-single-human-eval-mode.md`）：
+- 本任务集的范围评审为 **1 名真人（负责人）+ agent 辅助评审**，不是两名人类评审；
+- 因此 B2 的“两名评审者”要求仍**未满足**，状态为 partial（single-human mode）；
+- agent 评审记录不得写成人类签名或裁决者记录。

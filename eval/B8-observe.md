@@ -95,3 +95,9 @@ node eval/daily/verify-export.mjs --self-test   # 19 assertions, exit 0
 
 结论：本文件与 `verify-export.mjs` 只证明**工具在合成数据上可复算、可失败**；
 真实 B8 观察数据与结论均**未验证**，任何真实计数都必须来自后续真实归档，不得补 0 或估算。
+
+## 申诉复核：单人评审降级（2026-11-08）
+
+负责人选择单人+独立 agent 模式（`eval/approvals/2026-11-08-single-human-eval-mode.md`）：
+- `hephi/appeal` 复核为 **1 名真人（负责人）+ agent 辅助**，记录 `non-developer: owner; agent-assisted`；
+- 不写成“两名非开发者复核”；无真实申诉数据时仍记 0 条，不虚构。

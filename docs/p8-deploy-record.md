@@ -172,8 +172,8 @@ R37 独立复核（审查 `8fd199d`）在 69 断言之外动态复现 3 个失�
 
 ### 自测（假宿主，聚焦）
 
-`scripts/host/test-deploy-hephi.mjs` 扩展为 **281 断言全绿**（188 基数 + F1 74 + F2 15 + F5 4），套件明确标注为假宿主；
-`hephi/tests/control/deploy-script.test.ts` 同步断言 262 并把超时提高到 900s。新增场景：
+`scripts/host/test-deploy-hephi.mjs` 扩展为 **302 断言全绿**（188 基数 + F1 74 + F2 15 + F5 4 + 部署 UX 21），套件明确标注为假宿主；
+`hephi/tests/control/deploy-script.test.ts` 仍固定断言 281、超时 900s——该文件不在本 PR 的允许改动清单内，**未同步**；合并前需由维护者把它改为 302（否则该 vitest wrapper 会失败）。新增场景：
 
 - T1-A/T1-B：健康 10 项 ready 但缺任一激活标识 → 目标失败、恢复旧版本、记录 `targetFailureKind=activation-missing`；
 - T1-C：纯历史 v1 release 在显式 `--allow-legacy-rollback` 下回滚成功并记录 `unverified-legacy`；
@@ -195,6 +195,34 @@ R37 独立复核（审查 `8fd199d`）在 69 断言之外动态复现 3 个失�
 devDependencies）在 `--prod` 后**不存在**于 `node_modules`；因此真实部署仍需显式 `--peer-root`
 （实验宿主 B 的宿主 peer 根为 `/Users/zm/dsh-instances/runtime/node_modules`）。T1-G 专门覆盖
 “路径已存在”的边界。
+
+### 部署 UX 修复（2026-11-08，`agent/deploy-ux-fixes`）
+
+S3 实战三次失败暴露的两个 UX/安全缺陷（不改变已通过的部署机制）：
+
+1. **`--hephi` 必须指向实载插件目录**：脚本解析 `--hephi`（缺省 `$instance/hephi`）后，在**任何
+   pause/stop/build 之前**校验 `<hephi>/package.json` 存在且 `name == hephi-superagent-plugin`；
+   不满足则打印 `--hephi`/profile `node_modules/hephi-superagent-plugin` 提示并 **exit 2**，不进入停机流程。
+   背景：S3 尝试 1 未传 `--hephi`，默认 `$instance/hephi` 与实载插件目录
+   `<instance>/hephi-review/hephi` 不一致，导致 pointerBefore/current 为空、切换无效、激活失败。
+2. **legacy previous 恢复目标语义**：正向 `--drain effects` 部署时，`previous/current` 只是恢复目标，
+   自动允许 legacy（formatVersion 1）通过校验（无需 `--allow-legacy-rollback`），成功/失败记录写
+   `previousLegacy: true`；需要恢复时该 legacy 以 health-only 启动并如实记录
+   `activation=unverified-legacy`。**target 仍严格校验**（新 release 必须 v2 完整，自动 legacy 一律拒绝）；
+   `--rollback` 的 target/显式 legacy 仍要求 `--allow-legacy-rollback`。
+
+新增假宿主用例（`runDeployUxSuite`，21 断言）：
+
+- UX-1 默认 `--hephi` 目录缺失 → exit 2，错误含 `--hephi`/`hephi-superagent-plugin` 提示；host.pid、
+  starts、指针、deploy 记录全部不变（未进入 pause/stop/build）；
+- UX-2 显式 `--hephi` 指向 `package.json.name != hephi-superagent-plugin` 的目录 → exit 2 且无副作用；
+- UX-3 legacy previous + v2 target 正向部署成功（不加 `--allow-legacy-rollback`），记录
+  `previousLegacy: true`，target 激活仍严格 verified；
+- UX-4 target 启动失败后恢复 legacy previous → `recoverHealth=all-required-ready`、
+  `activation=unverified-legacy`，指针回到 legacy previous；
+- UX-5 target 为 legacy 仍拒绝（提示需显式 `--allow-legacy-rollback`），且在停机前拒绝，host/指针不动。
+
+> 边界：以上均为假宿主机制验证；真实宿主 B 未操作（其运行 `bc21cac`），真实 S3 重试未执行。
 
 ### 状态口径
 

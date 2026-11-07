@@ -97,7 +97,29 @@ printf '%s' "$host_version" | grep -qE '^[[:print:]]+$' || { echo "host version 
 [ -n "$hephi" ] || hephi="$instance/hephi"
 [ -n "$repo" ] || repo="$instance"
 [ -n "$releases" ] || releases="$instance/releases/hephi"
-[ -d "$hephi" ] || { echo "plugin directory not found: $hephi" >&2; exit 2; }
+# --hephi 必须指向“实载插件目录”（含 package.json 与 lib 指针），不是部署脚本猜的默认目录。
+# 该检查必须在任何 pause/stop/build 之前：默认值指错时直接 exit 2，避免进入停机流程后
+# 才发现 pointerBefore/current 为空、切换无效、回滚无目标（S3 实战失败根因）。
+hephi_hint() {
+  echo "hint: pass --hephi <loaded plugin directory> (the directory containing package.json and the lib pointer; e.g. <instance>/hephi-review/hephi); the default <instance>/hephi is only correct when the plugin is loaded there" >&2
+  echo "hint: for a profile layout try <instance>/node_modules/hephi-superagent-plugin or the profile's node_modules path" >&2
+}
+if [ ! -d "$hephi" ]; then
+  echo "plugin directory not found: $hephi" >&2
+  hephi_hint
+  exit 2
+fi
+if [ ! -f "$hephi/package.json" ]; then
+  echo "plugin directory has no package.json: $hephi" >&2
+  hephi_hint
+  exit 2
+fi
+plugin_pkg_name=$("$node_cmd" -e 'const fs=require("fs");try{const p=JSON.parse(fs.readFileSync(process.argv[1],"utf8"));process.stdout.write(typeof p.name==="string"?p.name:"")}catch{process.exit(1)}' "$hephi/package.json" 2>/dev/null) || plugin_pkg_name=""
+if [ "$plugin_pkg_name" != "hephi-superagent-plugin" ]; then
+  echo "plugin directory is not hephi-superagent-plugin: $hephi (package.json name=${plugin_pkg_name:-<unreadable>})" >&2
+  hephi_hint
+  exit 2
+fi
 [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || { echo "not a git repository: $repo" >&2; exit 2; }
 [ -f "$instance/host.pid" ] || { echo "missing host.pid: $instance/host.pid" >&2; exit 2; }
 host=${host%/}
@@ -204,6 +226,26 @@ release_validate() {
     return 1
   }
   rm -f "$rv_err"
+}
+
+# previous/current 只是恢复目标：允许 legacy（formatVersion 1）自动通过校验，不需要操作者
+# 额外传 --allow-legacy-rollback；恢复启动时按 health-only 如实记录 unverified-legacy。
+# 正向 target 仍必须 v2 完整，绝不走这个 helper（target 校验见调用点）。
+# 设置全局 PREVIOUS_LEGACY=yes/no。
+PREVIOUS_LEGACY="no"; PREVIOUS_LEGACY_JSON="false"
+validate_previous_target() {
+  vp_sha="$1"
+  PREVIOUS_LEGACY="no"; PREVIOUS_LEGACY_JSON="false"
+  [ -n "$vp_sha" ] || return 0
+  if release_validate "$releases/$vp_sha" "$vp_sha" >/dev/null 2>&1; then
+    return 0
+  fi
+  if release_validate "$releases/$vp_sha" "$vp_sha" "yes" >/dev/null 2>&1; then
+    PREVIOUS_LEGACY="yes"; PREVIOUS_LEGACY_JSON="true"
+    echo "previous release $vp_sha is legacy (formatVersion 1); it is only a restore target and will be started in health-only mode if recovery is needed" >&2
+    return 0
+  fi
+  return 1
 }
 
 # 目标 release 的导入探针：用宿主 Node 在 release 路径实际导入 index/tools，
@@ -663,7 +705,7 @@ record() {
   state=$(read_state 2>/dev/null || true)
   HEPHI_SINGLE_INSTANCE="${SINGLE_INSTANCE_FAILURE_RECORD:-$SINGLE_INSTANCE_RECORD}" node -e '
     const fs=require("fs"); const [file,action,result,hostVersion,state,...pairs]=process.argv.slice(1);
-    const extra={}; for(let i=0;i+1<pairs.length;i+=2) extra[pairs[i]]=pairs[i+1];
+    const extra={}; for(let i=0;i+1<pairs.length;i+=2) extra[pairs[i]]=pairs[i+1]==="true"?true:(pairs[i+1]==="false"?false:pairs[i+1]);
     let paused="unverified", load="unverified", healthReadback="unverified";
     if(state){ try{const j=JSON.parse(state);
       if(typeof j.paused==="boolean") paused=j.paused;
@@ -935,6 +977,9 @@ effects_no_auto_restart() {
 effects_abort() {
   result="$1"; errors="$2"
   EFFECT_RECOVER_HEALTH="not-attempted"
+  # 恢复实例的激活状态必须随记录一起写出（UX-4）：legacy previous 以 health-only 恢复时
+  # start_instance/activation_check 会把它置为 unverified-legacy；没有尝试恢复时保持 unverified。
+  ACTIVATION_MODE="unverified"; ACTIVATION_EVIDENCE="recovery start not attempted or not verified"
   if [ "$EFFECT_LEAVE_RUNNING" = "yes" ]; then
     # 宿主已自行回来：不杀它、不再启动第二份实例，只记录并交给操作者接管。
     EFFECT_RECOVER_HEALTH="left-running"
@@ -949,8 +994,10 @@ effects_abort() {
     elif [ "$EFFECT_SWITCHED" = "yes" ]; then
       echo "FATAL: no validated previous release/snapshot to restore the pointer to" >&2
     fi
-    # 恢复目标是回滚/恢复上下文：legacy 授权与目标校验使用同一显式标记。
+    # 恢复目标可能是 legacy：自动按 health-only 接受并如实记录 unverified-legacy；
+    # 显式 --allow-legacy-rollback 仍可用于 rollback/restore 目标。
     LEGACY_ACTIVATION="$allow_legacy_rollback"
+    if [ "${PREVIOUS_LEGACY:-no}" = "yes" ]; then LEGACY_ACTIVATION="yes"; fi
     if recovery_start_instance; then
       EFFECT_RECOVER_HEALTH="all-required-ready"
       p=$(paused_now 2>/dev/null || true)
@@ -974,13 +1021,14 @@ effects_abort() {
     EFFECT_RECOVER_HEALTH="not-verified"
   fi
   flag=$(paused_flag)
-  record deploy deploy "$result" drainMode effects target "$target" previous "${previous:-$current}" \
+  record deploy deploy "$result" drainMode effects target "$target" previous "${previous:-$current}" previousLegacy "${PREVIOUS_LEGACY_JSON:-false}" \
     pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready \
     precheckJson "${EFFECT_PRECHECK_JSON:-}" finalCheckJson "${EFFECT_FINAL_JSON:-}" \
     processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
     managedCount "${managed_count:-0}" stopExit "${EFFECT_STOP_EXIT:-none}" stopOutput "${EFFECT_STOP_OUTPUT:-}" \
     stopCommand "${stop_command:-none}" autoRestartWait "${auto_restart_wait}" residualProcesses "${residual_lines:-none}" \
     autoRestartedPid "${AUTO_RESTART_PID:-none}" autoRestartAction "$EFFECT_AUTO_RESTART_ACTION" recoverHealth "$EFFECT_RECOVER_HEALTH" \
+    activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" \
     migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" \
     keptPaused "$flag" error "$errors"
   fail_after_switch "$errors"
@@ -1021,7 +1069,7 @@ deploy_effects() {
   # 5) previous 校验与回滚点（供中止/启动失败时恢复原版本）。
   [ -n "$previous" ] || previous="$current"
   if [ -n "$previous" ]; then
-    release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" || effects_abort failed-drain-previous "previous release is invalid: $previous"
+    validate_previous_target "$previous" || effects_abort failed-drain-previous "previous release is invalid: $previous (legacy is allowed only as a restore target)"
   fi
   previous_valid="no"; [ -n "$previous" ] && previous_valid="yes"
   snapshot_existing_lib
@@ -1075,7 +1123,7 @@ deploy_effects() {
   p=$(paused_now) || p=""
   if [ "$p" != "true" ]; then
     flag=$(paused_flag)
-    record deploy deploy failed-not-paused drainMode effects target "$target" previous "$previous" \
+    record deploy deploy failed-not-paused drainMode effects target "$target" previous "$previous" previousLegacy "${PREVIOUS_LEGACY_JSON:-false}" \
       pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready \
       precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
       processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
@@ -1083,7 +1131,7 @@ deploy_effects() {
       migration "${MIGRATION_BACKUP:-none}" autoRestartWait "${auto_restart_wait}" keptPaused "$flag" error "host did not report paused=true after stop-based deploy; manual takeover required"
     fail_keep_paused "host is not paused after stop-based deploy; manual takeover required"
   fi
-  record deploy deploy ok drainMode effects target "$target" previous "$previous" \
+  record deploy deploy ok drainMode effects target "$target" previous "$previous" previousLegacy "${PREVIOUS_LEGACY_JSON:-false}" \
     pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready \
     precheckJson "$EFFECT_PRECHECK_JSON" finalCheckJson "$EFFECT_FINAL_JSON" \
     processFile "${managed_file:-none}" hostPid "${host_pid:-none}" hostLstart "${host_lstart:-none}" \
@@ -1213,8 +1261,8 @@ if [ "$dry_run" = "yes" ]; then
 fi
 
 [ -n "$previous" ] || previous="$current"
-# previous/current 是恢复目标：legacy 需要同一显式授权，但绝不因此放行正向 target。
-if [ -n "$previous" ]; then release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" || fail_keep_paused "previous release is invalid: $previous"; fi
+# previous/current 是恢复目标：legacy 自动通过校验（health-only），但绝不因此放行正向 target。
+if [ -n "$previous" ]; then validate_previous_target "$previous" || fail_keep_paused "previous release is invalid: $previous (legacy is allowed only as a restore target)"; fi
 previous_valid="no"
 if [ -n "$previous" ]; then previous_valid="yes"; fi
 
@@ -1239,7 +1287,7 @@ if restart_instance; then
     record deploy deploy failed-not-paused target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused "$flag" error "host did not report paused=true after switch; manual takeover required"
     fail_keep_paused "host is not paused after switch; manual takeover required"
   fi
-  record deploy deploy ok target "$target" previous "$previous" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused yes activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version"
+  record deploy deploy ok target "$target" previous "$previous" previousLegacy "${PREVIOUS_LEGACY_JSON:-false}" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health all-required-ready loadedCommitReadback unverified migration "${MIGRATION_BACKUP:-none}" keptPaused yes activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version"
   echo "deploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)"
   exit 0
 fi
@@ -1248,7 +1296,7 @@ fi
 target_fail_state="${FAIL_STATE:-unverified}"; target_fail_kind="${FAIL_KIND:-unknown}"
 restore_target=""; restore_kind=""
 if [ "$previous_valid" = "yes" ]; then
-  if release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" >/dev/null 2>&1; then
+  if [ "$PREVIOUS_LEGACY" = "yes" ] || release_validate "$releases/$previous" "$previous" "$allow_legacy_rollback" >/dev/null 2>&1; then
     restore_target="$releases/$previous/lib"; restore_kind="previous"
   fi
 elif [ -n "$SNAP_ROOT" ] && [ -d "$SNAP_ROOT/lib" ]; then
@@ -1264,8 +1312,9 @@ if ! set_pointer "$restore_target"; then
   record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "target failed after switch and restoring previous pointer failed"
   fail_after_switch "target failed after switch and restoring the previous pointer failed"
 fi
-# 恢复目标是回滚/恢复上下文：legacy 授权与 target 校验使用同一显式标记。
+# 恢复目标可能是 legacy：自动按 health-only 接受并如实记录 unverified-legacy。
 LEGACY_ACTIVATION="$allow_legacy_rollback"
+if [ "${PREVIOUS_LEGACY:-no}" = "yes" ]; then LEGACY_ACTIVATION="yes"; fi
 if recovery_restart_instance; then
   flag=$(paused_flag)
   record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version" error "target failed after switch; previous build restored"

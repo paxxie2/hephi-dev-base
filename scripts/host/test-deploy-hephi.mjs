@@ -3,7 +3,7 @@
 // 不访问 3082/3083，不创建 Issue/PR，不触碰真实 release。
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkSync, renameSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs'
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -201,6 +201,11 @@ async function initWorld(options = {}) {
   repo = join(root, 'repo')
   const bin = join(root, 'bin')
   for (const dir of [instance, join(instance, 'logs'), join(instance, 'hephi'), releases, repo, join(repo, 'hephi'), bin]) mkdirSync(dir, { recursive: true })
+  // 实载插件目录契约（deploy-hephi.sh 的 --hephi 校验）：目录本身必须有 package.json，
+  // 且 name 为 hephi-superagent-plugin；lib 才是指向不可变 release 的指针。
+  writeFileSync(join(instance, 'hephi', 'package.json'), JSON.stringify({
+    name: 'hephi-superagent-plugin', version: '0.0.0', private: true,
+  }, null, 2))
   if (plainLib) {
     mkdirSync(join(instance, 'hephi', 'lib'), { recursive: true })
     writeFileSync(join(instance, 'hephi', 'lib', 'legacy.mjs'), 'export const legacy = 1\n')
@@ -327,6 +332,17 @@ function effectsDeployArgs(extra = [], options = {}) {
 async function deploy(extra, timeout = 120_000) {
   const flags = process.env.HARNESS_DEBUG ? ['-x', script] : [script]
   return runAsync('sh', [...flags, '--instance', instance, '--host', base, '--host-version', 'host-1.0.0', '--repo', repo, '--hephi', join(instance, 'hephi'), '--releases', releases, '--timeout', '6', '--node', process.execPath, ...extra], { timeout, env: deployEnv })
+}
+// 不传 --hephi（验证默认值缺失时的 fail-closed UX）。
+async function deployWithoutHePhi(extra = [], timeout = 60_000) {
+  const flags = process.env.HARNESS_DEBUG ? ['-x', script] : [script]
+  return runAsync('sh', [...flags, '--instance', instance, '--host', base, '--host-version', 'host-1.0.0', '--repo', repo, '--releases', releases, '--timeout', '6', '--node', process.execPath, ...extra], { timeout, env: deployEnv })
+}
+// 模拟“当前实载版本是 legacy”：直接把指针指向该 release（不改运行中的假宿主）。
+function pointAt(sha) {
+  const link = join(instance, 'hephi', 'lib')
+  rmSync(link, { force: true })
+  symlinkSync(join(releaseDir(sha), 'lib'), link)
 }
 function pointer() { try { return readlinkSync(join(instance, 'hephi', 'lib')) } catch { return '' } }
 function releaseDir(sha) { return join(releases, sha) }
@@ -1695,6 +1711,106 @@ async function runF1BidirectionalSuite() {
   }
 }
 
+// ---- deploy UX：--hephi 实载目录校验 + legacy previous 恢复目标语义 ----
+async function runDeployUxSuite() {
+  // UX-1：默认 --hephi 目录缺失 → exit 2，且不进入 pause/stop/build（无副作用）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('UX-1 setup deploys A', setup.code === 0, setup.out)
+    const beforePid = hostPidValue(); const beforeStarts = starts(); const beforeRecords = readRecords('deploy').length
+    const beforePointer = readlinkSync(join(instance, 'hephi', 'lib'))
+    renameSync(join(instance, 'hephi'), join(instance, 'hephi-hidden'))
+    let r
+    try { r = await deployWithoutHePhi(['--target', B, '--previous', A]) } finally { renameSync(join(instance, 'hephi-hidden'), join(instance, 'hephi')) }
+    check('UX-1 missing default --hephi exits 2 before pause/stop', r.code === 2, `code=${r.code} ${r.out}`)
+    check('UX-1 error names the plugin directory and --hephi hint', /plugin directory not found/.test(r.out) && /--hephi/.test(r.out) && /hephi-superagent-plugin/.test(r.out), r.out)
+    check('UX-1 no side effects (pid/starts/pointer/records unchanged)',
+      hostPidValue() === beforePid && starts() === beforeStarts && readRecords('deploy').length === beforeRecords
+        && readlinkSync(join(instance, 'hephi', 'lib')) === beforePointer,
+      `pid=${hostPidValue()} starts=${starts()} records=${readRecords('deploy').length} pointer=${readlinkSync(join(instance, 'hephi', 'lib'))}`)
+
+    // UX-2：显式 --hephi 指向错误目录 → 同样 exit 2 无副作用。
+    const badDir = join(root, 'not-a-plugin')
+    mkdirSync(badDir, { recursive: true })
+    writeFileSync(join(badDir, 'package.json'), JSON.stringify({ name: 'not-hephi-plugin' }, null, 2))
+    const sidePid = hostPidValue(); const sideStarts = starts(); const sidePointer = readlinkSync(join(instance, 'hephi', 'lib'))
+    const bad = await deploy(['--target', B, '--previous', A, '--hephi', badDir])
+    check('UX-2 explicit --hephi that is not the plugin exits 2 with a clear name check', bad.code === 2 && /is not hephi-superagent-plugin/.test(bad.out), `code=${bad.code} ${bad.out}`)
+    check('UX-2 explicit bad --hephi has no side effects', hostPidValue() === sidePid && starts() === sideStarts && readlinkSync(join(instance, 'hephi', 'lib')) === sidePointer, `pid=${hostPidValue()} starts=${starts()}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // UX-3：legacy previous + v2 target 正向部署成功（previous 是恢复目标，不需要 --allow-legacy-rollback）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('UX-3 setup deploys A', setup.code === 0, setup.out)
+    const legacySha = FULL('5')
+    copyRelease(A, legacySha, downgradeToLegacy)
+    pointAt(legacySha)
+    createEffectsDatabase(0).close()
+    const oldPid = hostPidValue(); const startsBefore = starts()
+    const r = await deploy(effectsDeployArgs(['--previous', legacySha]))
+    const rec = readRecords('deploy').find((x) => x.result === 'ok' && x.drainMode === 'effects' && x.previous === legacySha)
+    check('UX-3 legacy previous + v2 target deploys without --allow-legacy-rollback', r.code === 0, `code=${r.code} ${r.out}`)
+    check('UX-3 target B (v2) pointer switched', pointer() === join(releaseDir(B), 'lib'), pointer())
+    check('UX-3 record marks previousLegacy=true', Boolean(rec) && rec.previousLegacy === true && rec.previous === legacySha, JSON.stringify(rec))
+    check('UX-3 target activation is still strictly verified', Boolean(rec) && rec.activation === 'verified' && /"index"/.test(String(rec.activationEvidence)), JSON.stringify(rec && rec.activationEvidence))
+    check('UX-3 host restarted with a new live pid', hostPidValue() !== oldPid && pidAlive(hostPidValue()) && starts() > startsBefore, `old=${oldPid} new=${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // UX-4：target 启动失败时恢复 legacy previous → health-only + unverified-legacy。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('UX-4 setup deploys A', setup.code === 0, setup.out)
+    const legacySha = FULL('4')
+    copyRelease(A, legacySha, downgradeToLegacy)
+    pointAt(legacySha)
+    createEffectsDatabase(0).close()
+    // 第一次启动（target B）健康 ready 但没有激活标识 → 切换后失败；第二次启动（恢复 legacy）正常。
+    writeStart(`echo attempt >> "${instance}/start.log"
+if [ ! -f "${instance}/fail-once-used" ]; then : > "${instance}/fail-once-used"; : > "${instance}/started.marker"; exec sleep 3600; fi
+${activationMarkers()}
+: > "${instance}/started.marker"
+exec sleep 3600`)
+    rmSync(join(instance, 'started.marker'), { force: true })
+    const r = await deploy(effectsDeployArgs(['--previous', legacySha]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-start')
+    check('UX-4 failed target triggers the abort/restore path', r.code !== 0 && Boolean(rec), `code=${r.code} ${r.out}`)
+    check('UX-4 record marks previousLegacy=true for the restore target', Boolean(rec) && rec.previousLegacy === true, JSON.stringify(rec))
+    check('UX-4 legacy previous restored in health-only mode (unverified-legacy)',
+      Boolean(rec) && rec.recoverHealth === 'all-required-ready' && rec.activation === 'unverified-legacy', JSON.stringify({ recoverHealth: rec && rec.recoverHealth, activation: rec && rec.activation }))
+    check('UX-4 pointer restored to the legacy previous release', pointer() === join(releaseDir(legacySha), 'lib'), pointer())
+  } finally {
+    await closeWorld()
+  }
+
+  // UX-5：target 是 legacy 仍然拒绝（正向 target 必须 v2 完整，不接受自动 legacy）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('UX-5 setup deploys A', setup.code === 0, setup.out)
+    const legacySha = FULL('3')
+    copyRelease(A, legacySha, downgradeToLegacy)
+    createEffectsDatabase(0).close()
+    const oldPid = hostPidValue(); const startsBefore = starts()
+    const r = await deploy(effectsDeployArgs(['--target', legacySha, '--previous', A]))
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-release')
+    check('UX-5 legacy forward target is rejected', r.code !== 0 && Boolean(rec), `code=${r.code} ${r.out}`)
+    check('UX-5 rejection requires the explicit legacy rollback flag', /legacy/i.test(r.out) && /allow-legacy-rollback/.test(r.out), r.out)
+    check('UX-5 rejection happens before stop (host/pointer/starts untouched)',
+      pointer() === join(releaseDir(A), 'lib') && hostPidValue() === oldPid && pidAlive(oldPid) && starts() === startsBefore,
+      `pointer=${pointer()} pid=${hostPidValue()} starts ${startsBefore} -> ${starts()}`)
+  } finally {
+    await closeWorld()
+  }
+}
+
 const selectors = new Set(process.argv.slice(2))
 if (selectors.has('--f1-bidirectional-only')) {
   await runF1BidirectionalSuite()
@@ -1709,6 +1825,7 @@ if (selectors.has('--f1-bidirectional-only')) {
   await runN1Suite()
   await runF1Suite()
   await runF2Suite()
+  await runDeployUxSuite()
 }
 
 for (const line of results) console.log(line)

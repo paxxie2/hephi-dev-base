@@ -23,7 +23,14 @@
    - `node hephi/scripts/check-stage-host.mjs`（staged 夹具，既有）；
    - `node hephi/scripts/check-binding-host.mjs --session <快照> --check-record <run.json> --host <url>`（H1/H2/H4 自动 + H3/H5/H6 人工步骤）；
    - `node scripts/host/check-effects-db.mjs --db <state>/orchestrator.sqlite --mode ro --json`（运行中预检查）；
-   - `node scripts/host/test-deploy-hephi.mjs`（假宿主 262 断言，机制回归；含 F1 meta v2 完整性与 legacy 显式授权）。
+   - `node scripts/host/test-deploy-hephi.mjs`（假宿主 **302 断言**，机制回归；含 F1 meta v2 完整性、legacy 显式授权、
+     F2 依赖元数据交叉核对、F5 真实 activationMarker 解析、以及部署 UX：`--hephi` 实载目录校验/legacy previous 恢复语义）。
+   - `--hephi` 必须指向**实载插件目录**（目录内有 `package.json` 且 `name == hephi-superagent-plugin`）；缺省
+     `$instance/hephi` 在 profile/`node_modules` 布局下可能不是实载目录。脚本在**任何 pause/stop/build 之前**校验，
+     失败 exit 2 且无副作用（不暂停、不停机、不写记录）。
+   - `--drain effects` 正向部署时 `previous/current` 只是**恢复目标**：允许 legacy（formatVersion 1）自动通过校验，
+     记录 `previousLegacy=true`；需要恢复时该 legacy 以 health-only 启动并记录 `activation=unverified-legacy`。
+     **target 仍必须 v2 完整**：正向 legacy target 一律拒绝，`--rollback`/显式 legacy target 仍须 `--allow-legacy-rollback`。
    - `--drain effects` 必须显式 `--stop-command`（宿主自己的 stop 脚本）；未验证的默认 SIGINT 路径已删除（fail-closed）；停机后自动重启检测窗口默认 10s（`--auto-restart-wait` 可调）。
 2. 任一项 fail → 停止部署，按 A2 记录定位；不得用“健康 ready”替代接口兼容性。
 3. 插件侧假设变更（如 Session 事件形状、Job detail 格式）必须同步更新本文与 A1-BIND 的适配分支。

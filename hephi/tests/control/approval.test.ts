@@ -329,4 +329,3 @@ describe('C3 contract version 5 (approvers frozen, v1–v4 read-only)', () => {
     await expect(prepareActivation(enabledEnv(await activationStateDir(), verificationConfig(['Alice', 'alice'])))).rejects.toThrow('duplicate approver')
   })
 })
-

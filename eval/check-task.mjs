@@ -16,7 +16,7 @@
 // 本脚本只使用 Node 内置模块，不新增依赖；只在系统临时目录创建 worktree，不动主工作树。
 import { execFileSync, spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, matchesGlob, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -113,6 +113,18 @@ function gitOrNull(cwd, args) {
 const ENVIRONMENT_KEYS = new Set(['offline', 'lockfile', 'commandsMustMatchOffline'])
 const OFFLINE_HINT = 'environment.offline=true 要求锁文件与离线命令；未声明 environment 时不拦截'
 
+/** C4.6：lockfile 必须是 workspace-relative（拒绝绝对路径、`..` 逃逸、空段、控制字符）。 */
+function lockfileProblem(value) {
+  const file = value.trim()
+  if (file.length === 0) return 'lockfile must not be empty'
+  if (isAbsolute(file) || /^[A-Za-z]:[\\/]/.test(file)) return `lockfile must be workspace-relative: ${file}`
+  const segments = file.split(/[\\/]+/)
+  if (segments.includes('..')) return `lockfile must not escape the workspace: ${file}`
+  if (segments.some(segment => segment === '' || segment === '.')) return `lockfile has an invalid path segment: ${file}`
+  if (/[\u0000-\u001f\u007f]/.test(file)) return `lockfile contains control characters: ${file}`
+  return null
+}
+
 function commandLines(text) {
   return text.split('\n').map(line => line.trim()).filter(line => line.length > 0 && !line.startsWith('#'))
 }
@@ -167,6 +179,11 @@ function environmentProblems(task, dir, paths) {
     return { errors, warnings, environment }
   }
   const lockfile = environment.lockfile.trim()
+  const lockfileIssue = lockfileProblem(lockfile)
+  if (lockfileIssue !== null) {
+    errors.push(`environment.lockfile 必须是 workspace-relative 路径（${lockfileIssue}）`)
+    return { errors, warnings, environment }
+  }
   const candidates = [join(dir, lockfile)]
   if (typeof task.repo === 'string' && isAbsolute(task.repo) && existsSync(task.repo)) candidates.push(join(task.repo, lockfile))
   const found = candidates.find(candidate => fileExists(candidate))
@@ -575,6 +592,35 @@ function selfTest(asJson) {
       '未声明 environment → 不拦截（行为不变）',
       dry.ok === true && dry.environment === null && pass.ok === true,
       `dry.environment=${JSON.stringify(dry.environment)} full=${pass.ok}`,
+    )
+    const absoluteLock = makeEnvTask('task-lock-absolute', (_dir, task) => {
+      task.environment = { offline: true, lockfile: '/tmp/package-lock.json', commandsMustMatchOffline: false }
+    })
+    const absoluteLockStructure = validateStructure(absoluteLock)
+    record(
+      'environment lockfile 绝对路径 → 结构校验 FAIL',
+      absoluteLockStructure.ok === false && absoluteLockStructure.errors.some(error => error.includes('workspace-relative')),
+      JSON.stringify(absoluteLockStructure.errors),
+    )
+    const escapeLock = makeEnvTask('task-lock-escape', (_dir, task) => {
+      task.environment = { offline: true, lockfile: '../outside/package-lock.json', commandsMustMatchOffline: false }
+    })
+    const escapeLockStructure = validateStructure(escapeLock)
+    record(
+      'environment lockfile ../ 逃逸 → 结构校验 FAIL',
+      escapeLockStructure.ok === false && escapeLockStructure.errors.some(error => error.includes('escape')),
+      JSON.stringify(escapeLockStructure.errors),
+    )
+    const relativeLock = makeEnvTask('task-lock-relative', (dir, task) => {
+      task.environment = { offline: true, lockfile: 'fixtures/package-lock.json', commandsMustMatchOffline: false }
+      mkdirSync(join(dir, 'fixtures'), { recursive: true })
+      writeFileSync(join(dir, 'fixtures', 'package-lock.json'), '{}\n', 'utf8')
+    })
+    const relativeLockStructure = validateStructure(relativeLock)
+    record(
+      'environment lockfile 合法相对路径 → 结构校验 PASS',
+      relativeLockStructure.ok === true,
+      JSON.stringify(relativeLockStructure.errors ?? relativeLockStructure.warnings),
     )
 
     const ok = steps.every((step) => step.ok)

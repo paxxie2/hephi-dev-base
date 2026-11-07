@@ -5,8 +5,8 @@
  * （`blocked` 且原因不是 `check not started:`）；`running`/`unknown` 不计入（保持现有阻塞语义）；
  * 通过后清零；合同 hash 变化后从 0；操作者 `retry-reset`（A3 通道）按单 check 清零。
  *
- * 决策日志 rule `check.retry-limit` 为新增编号：`docs/decisions-format.md` 不在本任务允许清单内，
- * 该文件的规则表登记待 Lead 统一补（README/代码注释已说明）。本套件只证明本地机制，不证明真实宿主行为。
+ * 决策日志 rule `check.retry-limit` 已在 `docs/decisions-format.md` 规则表登记（见该文件规则编号）。
+ * 本套件只证明本地机制，不证明真实宿主行为。
  */
 import { execFile } from 'node:child_process'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'

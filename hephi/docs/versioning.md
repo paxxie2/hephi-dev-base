@@ -1,7 +1,7 @@
 # 持久格式版本化规则（P5）
 
-状态：**规则已定稿；activation 版本化 v5（规范化哈希 v2–v5，v1／无版本只读兼容；v3 冻结 Session 绑定策略；v4 冻结受保护验收资产与授权，C1；v5 冻结人工审批 approvers，C3）与检查记录版本 3（含 pluginCommit）已实施；任务卡 v2（C1 新增 `protectedAssets`/`authorizes`）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；其余格式仍为 pending。**
-适用范围：activation 合同、任务卡、检查配置、检查记录、`decisions.jsonl`、基线归档。
+状态：**规则已定稿；activation 版本化 v5（规范化哈希 v2–v5，v1／无版本只读兼容；v3 冻结 Session 绑定策略；v4 冻结受保护验收资产与授权，C1；v5 冻结人工审批 approvers，C3）与检查记录版本 3（含 pluginCommit）已实施；任务卡 v2（C1 新增 `protectedAssets`/`authorizes`）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；`resolutions.jsonl` 无独立版本号（v1 语义）、`plan.jsonl` 条目版本 1，两者均为 append-only 并已在本轮登记（见 §2.6/§2.7）；其余格式仍为 pending。**
+适用范围：activation 合同、任务卡、检查配置、检查记录、`decisions.jsonl`、`resolutions.jsonl`（A3）、`plan.jsonl`（C4.2）、基线归档。
 只规定规则；行为改动按本规则实施并带测试（activation 已实施）。
 
 ## 1. 版本矩阵
@@ -13,6 +13,8 @@
 | 检查配置 | 项目检查文件 | 待登记 | 判定语义变化 |
 | 检查记录 | 每工单 evidence | 3（含 `pluginCommit`；v2 记录加载即拒绝） | 字段语义或判定条件变化 |
 | `decisions.jsonl` | 每工单日志 | 1（新增可选字段必须登记；A1-K5b 的 `binding` 已按此登记，不升版） | 字段或含义变化（仅追加写） |
+| `resolutions.jsonl` | `<stateDir>/hephi/<ticketId>/resolutions.jsonl` | v1 语义（**无独立 version 字段**；append-only；`kind` 缺省=历史 run-unblock；A3） | 字段/判定语义变化；新增 `kind` 必须随插件版本发布并在本文登记（旧读者遇未知 kind fail-closed） |
+| `plan.jsonl` | `<stateDir>/hephi/<ticketId>/plan.jsonl` | 1（append-only；条目自带 `version: 1`；绑定 `contractHash`；C4.2） | 字段/判定语义变化；`requirePlan` 启用语义变化必须先登记 |
 | 基线归档 | `tickets.json`/`summary.json` | 1 | 导出字段或口径变化 |
 
 ## 2.1 activation 规范化哈希（version 2 与 version 3）
@@ -51,6 +53,40 @@
 - 优先级（P1-5）：授权不扩大 `allowedPaths`；只覆盖所在验收项 + 精确文件 + 对应操作；未授权 modify/delete 当场拒、shell 绕过在 ready 按最终 diff 拒；清单外测试修改记录 `asset.modified`；授权命中记录 `asset.authorized`（决策日志规则编号见 `decisions-format.md`）。
 - `decisions.jsonl` 新增两个规则编号枚举值：`ready.job-unavailable`（宿主无 Job 接口或 Job 终态不可读）与 `ready.output-unverified`（权威输出不可得或与记录不一致）。字段与 `version` 不变，仅枚举值扩展，按本文件 §2 规则 1 在此登记；`docs/decisions-format.md` 的规则列表属后续维护批次同步项（本轮写范围不含该文件）。
 - 依赖 H1–H5 宿主探针：结论出来前，A1-BIND/A1-OUT 只能记为“机制已实现、fixture 测试通过”，不得记为真实验收通过，也不得据此升版记录格式。
+
+
+## 2.6 A3 `resolutions.jsonl`（操作者解除/重试重置，append-only）
+
+- 路径：`<stateDir>/hephi/<ticketId>/resolutions.jsonl`；只追加，不重写/删除历史行。
+- **无独立 `version` 字段**（历史记录也没有 `kind`）：按 v1 语义解释——`kind` 缺省即 `run-unblock`。
+- `kind`：`run-unblock`（解除一次 interrupted run 的阻塞）| `retry-reset`（C4.5 单 check 重试计数清零）。
+- 字段：
+  - 公共：`ticketId`、`contractHash`、`basis`（`host-terminal` | `operator-risk-accepted`）、
+    `hostQuery`（原始查询输出/失败文本）、`operator`、`at`（ISO 时间）；
+  - `run-unblock`：`runId`（不得带 `checkId`）；`retry-reset`：`checkId`（不得带 `runId`）。
+- 语义：解除/重置只恢复“可以重新检查/重试”的资格，**不修改** `run.json`/`output.log`，也不把旧执行变成通过证据；
+  跨 ticket/合同不生效；重复提交同目标且同 evidence 视为幂等重复（不重复生效），不一致视为损坏。
+- 默认关闭：仅宿主配置/操作者配置文件启用（当前临时开关 `HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1`，不是安全边界）；
+  Worker 不能通过自身环境启用/调用（A3 信任边界，G1#9 未验证）。
+- 损坏处理：任何非法行/未知 kind/字段不匹配 fail-closed（该日志可影响重试/解除判定，不能静默丢弃）。
+- 版本判定：当前字段集合固定、只追加；**新增 `kind` 属于扩展但不升版**——必须随新插件版本发布并在本文登记；
+  旧 reader 遇到未知 kind 会 fail-closed（不会静默误读）。若未来改变公共字段含义，必须升版并给迁移说明。
+- 迁移：无历史版本需要迁移；旧记录缺 `kind` 一律按 `run-unblock` 解释（不得原地补写）。
+
+## 2.7 C4.2 `plan.jsonl`（变更计划，append-only）
+
+- 路径：`<stateDir>/hephi/<ticketId>/plan.jsonl`；只追加，不重写历史版本。
+- 字段（每行一个版本）：`version: 1`、`at`（ISO）、`contractHash`、`files: string[]`（工作区相对精确路径或 glob，
+  与 `allowedPaths` 同 glob 语义；非空、禁绝对路径/`..`/空段/控制字符）、可选 `note`（≤4000 字符，无控制字符）。
+- 绑定：计划只对**同一 `contractHash`** 生效；重新 prepare 后旧计划既不阻塞也不作为 ready 依据。
+- 语义：`files` 声明预期改动；ready 复核最终 diff 必须落在计划并集内；**插件不判断计划合理性**。
+- `requirePlan`（verification 配置 additive，**M1 修复批次已引入 `verification.requirePlan`；以 M1 最终代码为准**）：
+  - 启用时 fail-closed：当前合同没有计划 → 拒绝 write/edit 或 ready，规则 `plan.not-declared`；
+  - 未启用（默认）时保留兼容行为：无计划不拦截，计划存在时按 `plan.outside-plan` 复核（当前降级形式，见 README/项目配置）。
+- 损坏处理：非法行/未知 version/非法 files fail-closed（ready 不得静默忽略不可读计划）。
+- 版本判定：条目自带 `version: 1`；新增字段或改变语义必须升版并在本文登记；`requirePlan` 的默认值变化属于行为变化，
+  需重新走版本/验收流程，不得只改文档。
+- 迁移：无旧版本需要迁移；新增计划只是追加行，不重写历史。
 
 ## 2. 规则
 

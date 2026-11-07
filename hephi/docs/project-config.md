@@ -300,11 +300,11 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
   `requirePlan=true` 且未重新声明时 write/edit 与 ready 均拒绝；
 - 与 C1 共存：判定顺序 scope → plan → C1，拒绝原因可区分。
 
-### 6.4 审计规则（待 `decisions-format.md` 登记）
+### 6.4 审计规则（已在 `decisions-format.md` 登记）
 
 `plan.recorded`（追加/拒绝记录）、`plan.outside-plan`（计划外或计划日志不可读）、
-`plan.not-declared`（`requirePlan=true` 但当前合同无计划）。本轮写范围不含 `decisions-format.md`，
-登记由 Lead 统一补；`version`/字段不变，仅新增规则编号。
+`plan.not-declared`（`requirePlan=true` 但当前合同无计划）已登记在 `decisions-format.md`；
+`version`/字段不变，仅新增规则编号。
 
 ### 6.5 验收边界
 
@@ -319,7 +319,7 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
 | C4.8 聚焦检查提示规则（`lint-task` focus） | **已实现（仅提示，exit 不变）**；阈值/规则调优与真实任务验证待做 | 负责人确认规则与阈值 |
 | C1 `protectedAssets` / `authorizes` / 优先级 | **已实现**（合同 v4/任务卡 v2；P1-5 优先级） | 负责人确认字段命名与启用判据（C 线需 B5 数据） |
 | C1 决策日志新规则登记 | **已实现**（`asset.authorized`/`asset.modified`/`asset.unauthorized-*`） | 与 `decisions-format.md` 已同步 |
-| C4.2 变更计划（`verification.requirePlan`） | **机制级已实现**：默认 optional；`requirePlan=true` 时 write/edit 与 ready fail-closed（`plan.not-declared`）；规则登记待补 | 负责人确认默认值/启用判据与误拦率（需 B5 数据） |
+| C4.2 变更计划（`verification.requirePlan`） | **机制级已实现**：默认 optional；`requirePlan=true` 时 write/edit 与 ready fail-closed（`plan.not-declared`）；规则已登记 | 负责人确认默认值/启用判据与误拦率（需 B5 数据） |
 | C2 赫菲侧提示附件展示 | 待实现（可选） | 负责人确认展示位置与是否只记录 |
 | 示例脚本生产化（大型报告、source map、多模块） | 项目侧 | 各项目自行集成 |
 

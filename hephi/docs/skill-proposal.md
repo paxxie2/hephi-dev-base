@@ -24,7 +24,7 @@
 > 若负责人把“规划/分解”也纳入 C4.1，请参考 SR-4（C4.7 拆小）与 C4.2（`hephi_plan`，插件，不在 Skill 提议范围）。
 >
 > 与实现层的关系：C4.2（`hephi_plan`）、C4.5（重试上限）、C4.9（`hephi stats`）、C5（`hephi lint-task`）
-> 属于插件/CLI 实现，不在本 Skill 提议范围内；C4.9/C5 已分别实现，C4.2/C4.5 仍待实现。
+> 属于插件/CLI 实现，不在本 Skill 提议范围内；C4.2、C4.5、C4.9、C5 均已实现（C4.2 默认 optional，`requirePlan=true` 时 fail-closed；C4.5 为按检查派生的重试上限）。
 
 ## 1. SR-1（C4.1）：先复现再修（仅缺陷修复类任务）
 

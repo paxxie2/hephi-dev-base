@@ -111,8 +111,8 @@ export type AppendResolutionResult = {
   resolution: CheckResolution
 }
 
-/** The temporary host switch for operator resolutions; disabled unless explicitly "1". */
-export function operatorResolutionsAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+/** The temporary host switch for operator resolutions; disabled unless explicitly "1". Callers pass the env explicitly. */
+export function operatorResolutionsAllowed(env: NodeJS.ProcessEnv): boolean {
   return env[OPERATOR_RESOLUTIONS_ENV] === '1'
 }
 

@@ -30,7 +30,7 @@
 - `ready.pass` / `ready.binding` / `ready.evidence-missing` / `ready.pr-mismatch` / `ready.plugin-build` / `ready.other`
 - `plan.recorded`：`hephi_plan` 追加计划（allow）或拒绝（deny）；shadow 模式下同一规则记录 `wouldDecision`。
 - `plan.outside-plan`（deny）：write/edit 目标不在当前合同 `plan.jsonl` 计划内，或计划日志不可读（fail-closed）；shadow 下记录 `wouldDecision`。
-- `plan.not-declared`（deny）：`verification.requirePlan` 启用时，当前合同尚无计划即拒绝 write/edit 或 ready（计划存在但目标不在计划内走 `plan.outside-plan`）；shadow 下记录 `wouldDecision=deny`、`effectiveDecision=allow`。**规则名以 M1 修复批次最终代码为准**（M1 修复批次代码已使用该名：`worker-mount.ts`/`evidence-verifier.ts` 的 `plan.not-declared`；若最终提交改名，以代码为准并同步本行）。未启用 `requirePlan`（默认）时该规则不触发，无计划不拦截（C4.2 降级形式的已知缺口，见 README/`project-config.md`）。
+- `plan.not-declared`（deny）：`verification.requirePlan` 启用时，当前合同尚无计划即拒绝 write/edit 或 ready（计划存在但目标不在计划内走 `plan.outside-plan`）；shadow 下记录 `wouldDecision=deny`、`effectiveDecision=allow`。规则名 `plan.not-declared` 已在 `worker-mount.ts`/`evidence-verifier.ts` 实现。未启用 `requirePlan`（默认）时该规则不触发，无计划不拦截（C4.2 默认 optional，见 `project-config.md` §6）。
 - `check.retry-limit`：C4.5 检查重试达到上限（默认 3，按键 ticketId+contractHash+checkId 从已有记录推导）时拒绝启动；`reason` 含固定 blocked 报告格式（卡住的验收项/每次改了什么/输出要点/原因/需谁决定什么）。`version` 与字段不变，仅新增规则编号。
 - `ready.job-unavailable` / `ready.output-unverified`：A1-BIND/A1-OUT 专用拒绝——后台 Job 终态在 ready 时不可读或无 Job 接口；权威输出（Session 前台 stdout/stderr 或 Job `readAt`）不可得、`lossy`、被截断或与记录不一致。`version` 与字段不变，仅新增规则编号。
 - `asset.authorized`（allow，审计）：C1 授权命中的受保护验收资产变更——`reason` 记录验收项 id、文件与操作（`modify`/`delete`）；仅记录，不放宽其他判定。

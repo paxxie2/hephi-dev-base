@@ -222,11 +222,16 @@ export function mountWorkerGate(
     }
     return problems
   }
-  // Registration is limited to enforce/native/staged Workers with a valid contract AND a
-  // frozen task card: the plan declares files that must stay inside the task scope, and
-  // old task-card-less contracts keep their previous tool surface unchanged (compatibility).
-  const removePlan = shadow || !mountedContract || mountedContract.task === undefined ? () => {} : agent.ctx.tools.register(defineTool({
-    name: 'hephi_plan', description: 'Declare/append the change plan (C4.2) for this Ticket. Planned files must be inside the contract scope; later write/edit calls must target files in the latest plan for the current contract.',
+  // C4.2 tool registration (M1 fix):
+  //  - shadow: never registered (the Worker cannot write a real plan; only wouldDecision is recorded);
+  //  - contract invalid: never registered;
+  //  - `verification.requirePlan === true`: ALWAYS registered (even without a task card), otherwise
+  //    fail-closed enforcement would deadlock a contract that has no way to declare a plan;
+  //  - requirePlan unset/false (default, optional C4.2): keep the earlier "needs a frozen task card"
+  //    condition so legacy task-card-less contracts keep their previous tool surface.
+  const requirePlan = mountedContract?.verification.requirePlan === true
+  const removePlan = shadow || !mountedContract || (!requirePlan && mountedContract.task === undefined) ? () => {} : agent.ctx.tools.register(defineTool({
+    name: 'hephi_plan', description: 'Declare/append the change plan (C4.2). Planned files must be inside the contract scope. When the contract sets verification.requirePlan=true, write/edit and ready are denied until a plan for the current contract exists; otherwise the plan is optional.',
     parameters: { files: { type: 'array', items: { type: 'string' }, required: true }, note: { type: 'string' } },
     output: PLAN_OUTPUT,
     execute: async (args, execution) => {
@@ -395,10 +400,10 @@ export function mountWorkerGate(
       await log('scope.outside-task', problem)
       return decide(problem)
     }
-    // C4.2 (normal form): once a plan exists for the current contract, write/edit targets must
-    // be declared in it (exact path or glob). No plan keeps the previous behavior. This runs
-    // before the C1 protected-asset check so the denial reason stays distinguishable; shadow
-    // mode records the wouldDecision but does not enforce.
+    // C4.2: when verification.requirePlan=true this is fail-closed (no plan -> plan.not-declared);
+    // otherwise the plan is OPTIONAL and only an existing plan constrains targets (default, not an
+    // active interception). This runs before the C1 protected-asset check so denial reasons stay
+    // distinguishable; shadow mode records the wouldDecision but does not enforce.
     let plan
     try {
       plan = await readPlan(stateDir, ticketId, mountedContract.contractHash)
@@ -407,7 +412,16 @@ export function mountWorkerGate(
       await log('plan.outside-plan', problem)
       return decide(problem)
     }
-    if (plan !== undefined && !planIncludes(plan, file)) {
+    if (plan === undefined) {
+      // C4.2 M1 (fail-closed): only contracts that explicitly opted in with requirePlan are
+      // forced to declare a plan. Default (false/absent) keeps C4.2 optional — documented as
+      // OPTIONAL, not as an active interception.
+      if (mountedContract.verification.requirePlan === true) {
+        const problem = `plan.not-declared: HEPHI requirePlan is enabled for this contract but no plan exists; call hephi_plan to declare the files before writing/editing ${file}`
+        await log('plan.not-declared', problem)
+        return decide(problem)
+      }
+    } else if (!planIncludes(plan, file)) {
       const planned = plan.files.slice(0, 10).join(', ') + (plan.files.length > 10 ? ` (+${plan.files.length - 10} more)` : '')
       const problem = `HEPHI plan for this contract does not include ${file}; declare it with hephi_plan or report blocked. Planned: ${planned}`
       await log('plan.outside-plan', problem)

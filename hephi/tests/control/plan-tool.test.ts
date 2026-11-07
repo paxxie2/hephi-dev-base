@@ -60,7 +60,7 @@ const taskBody = (over: { paths?: string[] } = {}) => fence({
 })
 
 function env(stateDir: string, repoDir: string, baseSha: string, over: {
-  issueBody?: string | null; allowedPaths?: string; enforcement?: 'enforce' | 'shadow'; mode?: 'native' | 'staged'; baseRef?: string
+  issueBody?: string | null; allowedPaths?: string; enforcement?: 'enforce' | 'shadow'; mode?: 'native' | 'staged'; baseRef?: string; requirePlan?: boolean
 } = {}): NodeJS.ProcessEnv {
   return {
     HEPHI_ENABLED: '1', HEPHI_STATE_DIR: stateDir, HEPHI_BASE_COMMIT: baseSha,
@@ -70,6 +70,7 @@ function env(stateDir: string, repoDir: string, baseSha: string, over: {
     HEPHI_VERIFICATION_CHECKS: JSON.stringify({
       version: 1,
       checks: [{ id: 'tests', kind: 'test', purpose: 'project tests', command: 'true', args: [], required: true, timeoutMs: 5000 }],
+      ...(over.requirePlan === undefined ? {} : { requirePlan: over.requirePlan }),
     }),
     // The plan tool needs a frozen task card; tests without one pass `issueBody: null`.
     ...(over.issueBody === null ? {} : { HEPHI_ISSUE_BODY: over.issueBody ?? taskBody() }),
@@ -222,13 +223,15 @@ describe('C4.2 hephi_plan execution', () => {
 })
 
 describe('C4.2 write/edit interception against the plan', () => {
-  it('PT-06: with no plan, in-scope writes/edits behave as before', async () => {
+  it('PT-06: with no plan and requirePlan unset (default OPTIONAL), in-scope writes/edits are allowed', async () => {
     const r = await repo()
     const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-tool-state-'))
     cleanup.push(stateDir)
     await prepareActivation(env(stateDir, r.dir, r.baseSha))
     const { fake, mounted } = await mount(stateDir, r.dir)
     try {
+      // 可声称边界：C4.2 默认未启用（verification.requirePlan 缺省 false）时是 OPTIONAL——
+      // 允许不声明计划；这不是“已生效的强制拦截”，明确的绕过路径见 PR25-M1。
       expect(await fake.callbacks().preExecute!(editCall('tests/keep.test.js'), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
     } finally { mounted.dispose() }
   })
@@ -322,6 +325,76 @@ describe('C4.2 write/edit interception against the plan', () => {
       expect(await fake.callbacks().preExecute!(editCall('tests/keep.test.js'), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
       const entry = (await decisions(stateDir)).filter(item => item.rule === 'plan.outside-plan').at(-1)
       expect(entry).toMatchObject({ mode: 'shadow', effectiveDecision: 'allow', wouldDecision: 'deny' })
+    } finally { mounted.dispose() }
+  })
+
+  it('PT-13: requirePlan=true is fail-closed: no plan denies write/edit with plan.not-declared, then a declared plan allows', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-tool-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, { requirePlan: true }))
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      const next = async () => ({ kind: 'allow' as const })
+      const undeclared = await fake.callbacks().preExecute!(editCall('src/app.js'), next)
+      expect(undeclared).toMatchObject({ kind: 'deny', reason: expect.stringContaining('plan.not-declared') })
+      expect((await decisions(stateDir)).filter(item => item.rule === 'plan.not-declared').at(-1))
+        .toMatchObject({ tool: 'edit', effectiveDecision: 'deny', wouldDecision: 'deny' })
+      // Declaring the plan for the current contract unlocks edits inside it...
+      const tool = planToolOf(fake)!
+      await tool.execute({ files: ['src/app.js'] }, planCall(['src/app.js']))
+      expect(await fake.callbacks().preExecute!(editCall('src/app.js'), next)).toEqual({ kind: 'allow' })
+      // ...while an undeclared target is still plan.outside-plan.
+      expect(await fake.callbacks().preExecute!(editCall('tests/keep.test.js'), next))
+        .toMatchObject({ kind: 'deny', reason: expect.stringContaining('does not include tests/keep.test.js') })
+    } finally { mounted.dispose() }
+  })
+
+  it('PT-14: requirePlan=true registers hephi_plan even without a task card (otherwise fail-closed would deadlock)', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-tool-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, { issueBody: null, requirePlan: true }))
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      const tool = planToolOf(fake)
+      expect(tool?.name).toBe('hephi_plan')
+      await tool!.execute({ files: ['src/app.js'] }, planCall(['src/app.js']))
+      expect(await fake.callbacks().preExecute!(editCall('src/app.js'), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
+    } finally { mounted.dispose() }
+  })
+
+  it('PT-15: requirePlan=true in shadow mode records wouldDecision plan.not-declared but never denies', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-tool-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, { requirePlan: true, enforcement: 'shadow' }))
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      expect(await fake.callbacks().preExecute!(editCall('src/app.js'), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
+      const entry = (await decisions(stateDir)).filter(item => item.rule === 'plan.not-declared').at(-1)
+      expect(entry).toMatchObject({ mode: 'shadow', effectiveDecision: 'allow', wouldDecision: 'deny' })
+    } finally { mounted.dispose() }
+  })
+
+  it('PT-16: requirePlan=true after re-prepare: the old contract plan is not effective, so edits need a new plan', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-tool-state-'))
+    cleanup.push(stateDir)
+    await prepareActivation(env(stateDir, r.dir, r.baseSha, { requirePlan: true }))
+    const { fake, mounted } = await mount(stateDir, r.dir)
+    try {
+      await planToolOf(fake)!.execute({ files: ['src/app.js'] }, planCall(['src/app.js']))
+      expect(await fake.callbacks().preExecute!(editCall('src/app.js'), async () => ({ kind: 'allow' as const }))).toEqual({ kind: 'allow' })
+      // Authorized re-prepare with a different baseRef => new contractHash. A freshly mounted
+      // Worker binds the new contract and the old plan is stale for it (requirePlan stays on).
+      await prepareActivation(env(stateDir, r.dir, r.baseSha, { requirePlan: true, baseRef: 'release' }))
+      const remounted = await mount(stateDir, r.dir)
+      try {
+        await expect(remounted.fake.callbacks().preExecute!(editCall('src/app.js'), async () => ({ kind: 'allow' as const })))
+          .resolves.toMatchObject({ kind: 'deny', reason: expect.stringContaining('plan.not-declared') })
+        expect((await decisions(stateDir)).filter(item => item.rule === 'plan.not-declared')).not.toHaveLength(0)
+      } finally { remounted.mounted.dispose() }
     } finally { mounted.dispose() }
   })
 

@@ -484,11 +484,16 @@ export function createEvidenceVerifier(options: {
         if (problem) throw new Error(`ready.awaiting-approval: ${problem}`)
       }
       if (!await clean(workspace) || !sameSource(before, await gitFingerprint(workspace, contract.baseSha))) throw new Error('source changed during ready')
-      // C4.2 (degraded form): only the FINAL diff is compared with the plan declared for
-      // this exact contract hash. No plan (or a plan for another contract) keeps the
-      // legacy behavior. This build does not intercept write/edit calls.
+      // C4.2: the FINAL diff is compared with the plan declared for this exact contract hash.
+      // Default (verification.requirePlan unset/false) keeps C4.2 OPTIONAL: no plan means no
+      // plan check (documented limitation, not an active interception). With requirePlan=true
+      // the contract is fail-closed: ready without a current-contract plan is denied.
       const plan = await readPlan(options.stateDir, contract.ticketId, contract.contractHash)
-      if (plan !== undefined) {
+      if (plan === undefined) {
+        if (verification.requirePlan === true) {
+          throw new Error('plan.not-declared: HEPHI requirePlan is enabled for this contract but no plan exists; call hephi_plan before reporting ready')
+        }
+      } else {
         const outsidePlan = before.changedFiles.filter(file => !allowedPath(file, plan.files))
         if (outsidePlan.length > 0) {
           throw new Error(`plan.outside-plan: changed files outside the declared plan: ${samplePlanFiles(outsidePlan)}`)
@@ -532,7 +537,8 @@ function readyRule(reason: string): string {
   if (reason.includes('PR/base/HEAD mismatch')) return 'ready.pr-mismatch'
   if (reason.includes('missing, failed or stale evidence')) return 'ready.evidence-missing'
   if (reason.includes('contract was prepared by another plugin build')) return 'ready.plugin-build'
-  // C4.2: a change outside the declared plan is its own denial class (owner can see why).
+  // C4.2: plan denials are their own denial classes (owner can see why).
+  if (reason.includes('plan.not-declared')) return 'plan.not-declared'
   if (reason.includes('plan.outside-plan')) return 'plan.outside-plan'
   return 'ready.other'
 }

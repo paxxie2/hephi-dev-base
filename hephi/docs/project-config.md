@@ -1,4 +1,4 @@
-# 项目配置约定（C4.6 / C4.8 / C1 / C2）
+# 项目配置约定（C4.2 / C4.6 / C4.8 / C1 / C2）
 
 状态：**约定与提议（未实现 / 未全部实现）**。本文件规定项目侧配置口径与后续实现字段；
 **本轮没有修改插件代码或任务卡格式**。逐节标注「已实现 / 待实现」；未标注实现的均为提议，
@@ -11,6 +11,7 @@
 | §3 | C1 受保护验收资产 | **已实现（合同 v4/任务卡 v2，机制级，2026-11-07）**；未做真实宿主 E2E |
 | §4 | C2 未覆盖改动提示 | **约定 + 项目侧示例**（赫菲不解析覆盖率；集成待实现） |
 | §5 | 覆盖提示输出格式 | 示例脚本已按此格式输出；赫菲消费/展示待实现 |
+| §6 | C4.2 变更计划 | **机制级已实现（2026-11-07）**：默认 **optional**（不构成强制拦截）；`verification.requirePlan=true` 时 fail-closed；未做真实宿主验证 |
 
 实现依据：`ROADMAP-95.md` §4.10 C1/C2/C4.6/C4.8；字段命名沿用
 `hephi/docs/versioning.md`/`decisions-format.md` 的登记风格。
@@ -271,7 +272,46 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
 - 不写仓库文件（除显式 `--out`）；不包含 token/凭据/绝对路径；
 - 该 JSON 是**提示**，不是赫菲合同/ready 证据，不能替代检查记录。
 
-## 6. 待实现项与负责人决策
+## 6. C4.2 变更计划（optional / requirePlan 启用后 fail-closed）
+
+状态：**机制级已实现（2026-11-07）；默认未启用，不得表述为“强制拦截 / 已生效”。**
+
+### 6.1 字段
+
+- `verification.requirePlan?: boolean`：additive 字段，随 `verification` 一起冻结进合同哈希；
+  **无需升级合同版本**（与 `environment` 同机制）。默认 `false`/缺省。
+- 计划本身仍是 `plan.jsonl`（按版本追加、绑定 contractHash；`$HEPHI_STATE_DIR/hephi/<ticket>/plan.jsonl`）。
+
+### 6.2 默认（`requirePlan` 未启用）：C4.2 是 optional
+
+- `hephi_plan` 在 enforce/native/staged、合同有效且存在冻结任务卡时可用，用于按版本追加计划；
+- 没有当前 `contractHash` 的计划时，write/edit 与 ready **都不做计划拦截**（允许无计划）；
+- **已知绕过（PR25-M1）**：Worker 可以选择不声明计划，因此“计划外编辑”不会被拦截；
+  文档、bundle 与验收记录不得把默认状态写成“已强制拦截”。
+
+### 6.3 `requirePlan=true`：fail-closed
+
+- `hephi_plan` 在合同有效（非 shadow）时**始终注册**（即使没有任务卡，否则 fail-closed 会自锁）；
+- write/edit：当前 `contractHash` 无计划 → 拒绝，理由/决策日志 rule `plan.not-declared`；
+  有计划但目标不在计划内（精确路径或 glob）→ 拒绝 `plan.outside-plan`；
+- ready：无当前合同计划 → 拒绝 `plan.not-declared`；有计划 → 既有最终 diff 复核（越界为 `plan.outside-plan`）；
+- shadow：不注册工具、不实际拒绝，只记录 wouldDecision（`plan.recorded` / `plan.outside-plan` / `plan.not-declared`）；
+- 合同变更（re-prepare 产生新 `contractHash`）：旧计划不再生效，新合同下需重新声明；
+  `requirePlan=true` 且未重新声明时 write/edit 与 ready 均拒绝；
+- 与 C1 共存：判定顺序 scope → plan → C1，拒绝原因可区分。
+
+### 6.4 审计规则（待 `decisions-format.md` 登记）
+
+`plan.recorded`（追加/拒绝记录）、`plan.outside-plan`（计划外或计划日志不可读）、
+`plan.not-declared`（`requirePlan=true` 但当前合同无计划）。本轮写范围不含 `decisions-format.md`，
+登记由 Lead 统一补；`version`/字段不变，仅新增规则编号。
+
+### 6.5 验收边界
+
+机制级 + 单测（`tests/control/plan-tool.test.ts`、`tests/control/plan.test.ts`）；
+未在真实宿主或多项目任务上验证；**默认未启用时不得声称 C4.2 已生效**。
+
+## 7. 待实现项与负责人决策
 
 | 项 | 状态 | 需要谁 |
 | --- | --- | --- |
@@ -279,8 +319,10 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
 | C4.8 聚焦检查提示规则（`lint-task` focus） | **已实现（仅提示，exit 不变）**；阈值/规则调优与真实任务验证待做 | 负责人确认规则与阈值 |
 | C1 `protectedAssets` / `authorizes` / 优先级 | **已实现**（合同 v4/任务卡 v2；P1-5 优先级） | 负责人确认字段命名与启用判据（C 线需 B5 数据） |
 | C1 决策日志新规则登记 | **已实现**（`asset.authorized`/`asset.modified`/`asset.unauthorized-*`） | 与 `decisions-format.md` 已同步 |
+| C4.2 变更计划（`verification.requirePlan`） | **机制级已实现**：默认 optional；`requirePlan=true` 时 write/edit 与 ready fail-closed（`plan.not-declared`）；规则登记待补 | 负责人确认默认值/启用判据与误拦率（需 B5 数据） |
 | C2 赫菲侧提示附件展示 | 待实现（可选） | 负责人确认展示位置与是否只记录 |
 | 示例脚本生产化（大型报告、source map、多模块） | 项目侧 | 各项目自行集成 |
 
-> C1/C4.6/C4.8 的机制级实现已落地（见上表）；C2 与运行时网络隔离仍为提议/待实现。当前插件行为仍以
-> `hephi/README.md` 与 `hephi/src/` 为准，不得把本文当已实现规则使用。
+> C1/C4.2/C4.6/C4.8 的机制级实现已落地（见上表）；C2 与运行时网络隔离仍为提议/待实现。
+> **C4.2 默认未启用（optional），不得写成已强制拦截**。当前插件行为仍以 `hephi/README.md` 与
+> `hephi/src/` 为准，不得把本文当已实现规则使用。

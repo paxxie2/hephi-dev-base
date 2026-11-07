@@ -49,6 +49,14 @@ export type VerificationConfig = {
    * card can only add to the project list, never remove from it.
    */
   protectedAssets?: string[]
+  /**
+   * C4.2 enforcement switch (M1 fix). Default false/absent = the change plan is OPTIONAL:
+   * no plan means no plan check, and a Worker can skip declaring a plan. When true the
+   * contract is fail-closed: write/edit and ready are denied with `plan.not-declared`
+   * until a plan for the current contract hash exists. Additive to verification format 1
+   * (frozen into the contract hash; no contract version bump, like `environment`).
+   */
+  requirePlan?: boolean
 }
 
 const CHECK_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
@@ -90,6 +98,8 @@ const verificationSchema = z.object({
   version: z.literal(1),
   checks: z.array(checkSchema).min(1),
   protectedAssets: z.array(relativePath).optional(),
+  /** C4.2 M1: explicit opt-in to fail-closed plan enforcement (default false/optional). */
+  requirePlan: z.boolean().optional(),
   approvers: z.array(approverLogin).optional(),
   environment: environmentSchema.optional(),
 }).strict().superRefine((config, ctx) => {

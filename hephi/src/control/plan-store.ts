@@ -3,7 +3,13 @@ import { dirname, join } from 'node:path'
 import { allowedPath } from './repository.js'
 
 /**
- * C4.2 (degraded form): append-only change plan per Ticket.
+ * C4.2: append-only change plan per Ticket.
+ *
+ * Enforcement is opt-in: with `verification.requirePlan` unset/false the plan is optional
+ * (write/edit and ready do not require one); when `requirePlan` is true, worker-mount denies
+ * write/edit without a current-contract plan (`plan.not-declared`) and the verifier denies ready
+ * likewise, while out-of-plan edits are denied as `plan.outside-plan`. The final diff is always
+ * checked against an existing plan.
  *
  * The plan is declared by the Worker before/while working and is bound to the frozen
  * contract hash. It is stored as `<stateDir>/hephi/<ticketId>/plan.jsonl` beside, but

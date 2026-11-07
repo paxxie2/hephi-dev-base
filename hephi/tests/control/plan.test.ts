@@ -85,11 +85,13 @@ function nativeTools() {
 const cleanup: string[] = []
 afterEach(async () => { await Promise.all(cleanup.splice(0).map(p => rm(p, { recursive: true, force: true }))) })
 
-async function setup(extraPatched: string[] = []) {
+async function setup(extraPatched: string[] = [], options: { requirePlan?: boolean } = {}) {
   const r = await repo(extraPatched)
   const stateDir = await mkdtemp(join(tmpdir(), 'hephi-plan-state-'))
   cleanup.push(r.dir, stateDir)
-  const c = contract(r.dir, r.baseSha)
+  const base = contract(r.dir, r.baseSha)
+  // C4.2 M1: requirePlan is an explicit per-contract opt-in (additive to verification v1).
+  const c = options.requirePlan === true ? { ...base, verification: { ...base.verification, requirePlan: true } } : base
   const execute = (checkId: string) => runCheck({ stateDir, contract: c, checkId, outer: outer(checkId), tools: nativeTools() })
   const verify = () => createEvidenceVerifier({ stateDir })(c, ready(r.dir))
   const planFiles = (files: string[], over: { contractHash?: string; note?: string } = {}) =>
@@ -144,7 +146,7 @@ describe('plan store (C4.2 append-only)', () => {
   })
 })
 
-describe('ready plan verification (C4.2 degraded: final diff only)', () => {
+describe('ready plan verification (C4.2: optional by default, fail-closed with requirePlan=true)', () => {
   it('accepts a diff fully inside an exact-path plan', async () => {
     const x = await setup()
     await x.execute('build')
@@ -176,11 +178,52 @@ describe('ready plan verification (C4.2 degraded: final diff only)', () => {
     expect(await x.verify()).toEqual({ ok: true }) // appending a version extends the covered set
   })
 
-  it('keeps the legacy behavior when there is no plan', async () => {
+  it('keeps C4.2 OPTIONAL when requirePlan is not set (no plan -> no plan check)', async () => {
     const x = await setup()
     await x.execute('build')
     await x.execute('unit')
+    // 可声称边界：未启用 requirePlan 时这是 optional（已知绕过路径 PR25-M1），不是强制拦截。
     expect(await x.verify()).toEqual({ ok: true })
+  })
+
+  it('fails closed with plan.not-declared when requirePlan=true and no plan exists', async () => {
+    const x = await setup([], { requirePlan: true })
+    await x.execute('build')
+    await x.execute('unit')
+    const result = await x.verify()
+    expect(result.ok).toBe(false)
+    const reason = denialReason(result)
+    expect(reason).toContain('plan.not-declared')
+    expect(await lastDecision(x.stateDir)).toMatchObject({ rule: 'plan.not-declared', effectiveDecision: 'deny' })
+  })
+
+  it('passes with requirePlan=true once a current-contract plan covers the final diff', async () => {
+    const x = await setup([], { requirePlan: true })
+    await x.execute('build')
+    await x.execute('unit')
+    await x.planFiles(['a.txt'])
+    expect(await x.verify()).toEqual({ ok: true })
+  })
+
+  it('with requirePlan=true, a plan bound to another contract hash does not satisfy ready', async () => {
+    const x = await setup([], { requirePlan: true })
+    await x.execute('build')
+    await x.execute('unit')
+    await x.planFiles(['a.txt'], { contractHash: 'sha256:other-contract' })
+    const result = await x.verify()
+    expect(result.ok).toBe(false)
+    expect(denialReason(result)).toContain('plan.not-declared')
+  })
+
+  it('with requirePlan=true, an out-of-plan diff is still plan.outside-plan', async () => {
+    const x = await setup([], { requirePlan: true })
+    await x.execute('build')
+    await x.execute('unit')
+    await x.planFiles(['src/**'])
+    const result = await x.verify()
+    expect(result.ok).toBe(false)
+    expect(denialReason(result)).toContain('plan.outside-plan')
+    expect(await lastDecision(x.stateDir)).toMatchObject({ rule: 'plan.outside-plan' })
   })
 
   it('treats an empty plan log as no plan', async () => {

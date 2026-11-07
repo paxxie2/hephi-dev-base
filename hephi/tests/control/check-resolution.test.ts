@@ -103,16 +103,27 @@ function io(): { io: CliIo; out: string[]; err: string[] } {
   return { io: { out: message => out.push(message), err: message => err.push(message) }, out, err }
 }
 
-/** Operator environment: host switch on unless test turns it off. */
-function operatorEnv(enabled = true): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env }
-  delete env[OPERATOR_RESOLUTIONS_ENV]
-  if (enabled) env[OPERATOR_RESOLUTIONS_ENV] = '1'
-  return env
+/**
+ * A3 operator config for the CLI: a mode-0600 JSON file created per test. The process
+ * environment is never an enable channel; tests pass the file path (env path form below).
+ */
+async function operatorConfigPath(enabled = true): Promise<string | undefined> {
+  if (!enabled) return undefined
+  const dir = await mkdtemp(join(tmpdir(), 'hephi-operator-config-'))
+  cleanup.push(dir)
+  const file = join(dir, 'operator.json')
+  await writeFile(file, JSON.stringify({ allowOperatorResolutions: true }), { mode: 0o600 })
+  return file
 }
 
-async function cli(args: string[], env = operatorEnv()) {
+async function cli(args: string[], options: { enabled?: boolean; env?: NodeJS.ProcessEnv } = {}) {
   const captured = io()
+  const env: NodeJS.ProcessEnv = { ...process.env, ...(options.env ?? {}) }
+  // A Worker-inherited switch is always inert; only the operator config path selects the channel.
+  env[OPERATOR_RESOLUTIONS_ENV] = '1'
+  delete env.HEPHI_OPERATOR_CONFIG
+  const configPath = await operatorConfigPath(options.enabled !== false)
+  if (configPath !== undefined) env.HEPHI_OPERATOR_CONFIG = configPath
   const code = await cliMain(args, env, captured.io)
   return { code, out: captured.out.join('\n'), err: captured.err.join('\n') }
 }
@@ -204,9 +215,12 @@ describe('A3 operator resolutions: CLI', () => {
   it('rejects every resolve while the host switch is off and writes nothing', async () => {
     const x = await fixture()
     const runId = (await seedUnknown(x)).runId
-    const result = await cli(resolveArgs(x.stateDir, runId, {}, ['--accept-risk']), operatorEnv(false))
+    const result = await cli(resolveArgs(x.stateDir, runId), { enabled: false })
     expect(result.code).not.toBe(0)
-    expect(result.err).toContain(OPERATOR_RESOLUTIONS_ENV)
+    // The Worker-inherited HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1 (set by cli()) is inert:
+    // without an operator config file the channel stays closed.
+    expect(result.err).toContain('operator resolutions are disabled')
+    expect(result.err).toContain('--operator-config')
     await expect(readFile(resolutionsPath(x.stateDir, 'ticket-1'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
   })
 

@@ -17,14 +17,26 @@ export const inject = ['agents', 'tools', 'systemPrompt']
  * frozen at prepare) with this host configuration able to tighten it only. Host config
  * still defaults to off until the host's event structure for inner check calls is confirmed.
  */
-export function apply(ctx: Context, config: { stateDir?: string; requireSessionBinding?: boolean; allowOperatorResolutions?: boolean } = {}): void {
+export function apply(ctx: Context, config: {
+  stateDir?: string
+  requireSessionBinding?: boolean
+  /** A3 operator resolution channel (host cordis config). Default false; never read from the environment. */
+  allowOperatorResolutions?: boolean
+  /** C4.5 per-check retry limit (host cordis config). Default 3. */
+  retryLimit?: number
+} = {}): void {
   const stateDir = defaultStateDir(config.stateDir)
   // Host-side requirement. It is combined with the contract value inside the verifier
   // (effective = contract OR host); it can never relax a contract that requires binding.
   const hostRequireSessionBinding = config.requireSessionBinding ?? process.env.HEPHI_REQUIRE_SESSION_BINDING === '1'
-  // A3 host switch. The environment variable is only a temporary bootstrap; the real trust
-  // boundary (operator-only configuration, not inherited by Worker shells) is pending G1.
-  const allowOperatorResolutions = config.allowOperatorResolutions ?? process.env.HEPHI_ALLOW_OPERATOR_RESOLUTIONS === '1'
+  // A3 trust boundary: ONLY the host plugin configuration enables operator resolutions. The
+  // process environment is not an enable channel (a Worker shell cannot opt in), and the CLI
+  // has its own operator-only config file gate (see `hephi resolve --operator-config`).
+  const allowOperatorResolutions = config.allowOperatorResolutions === true
+  const retryLimit = config.retryLimit
+  if (retryLimit !== undefined && (!Number.isInteger(retryLimit) || retryLimit < 1)) {
+    throw new Error(`retryLimit must be a positive integer, got ${String(retryLimit)}`)
+  }
   const readSession = async (sessionId: string): Promise<SessionSnapshot> => {
     const query = ctx.get('sessionQuery') as { readSession(id: string): Promise<SessionSnapshot> } | undefined
     if (!query) throw new Error('host sessionQuery service is unavailable; evidence cannot be bound to native executions')
@@ -36,7 +48,7 @@ export function apply(ctx: Context, config: { stateDir?: string; requireSessionB
   let jobs: NativeJobs | undefined
   try { jobs = ctx.get('jobs') as NativeJobs | undefined } catch { jobs = undefined }
   const verify = createEvidenceVerifier({ stateDir, readSession, requireSessionBinding: hostRequireSessionBinding, allowOperatorResolutions, jobs })
-  const dispose = installWorkerMount(ctx, { stateDir, verify })
+  const dispose = installWorkerMount(ctx, { stateDir, verify, allowOperatorResolutions, retryLimit })
   ctx.effect(() => dispose, `${pluginName}: worker ready gate`)
 }
 

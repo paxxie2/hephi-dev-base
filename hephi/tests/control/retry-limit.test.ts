@@ -111,15 +111,23 @@ function io(): { io: CliIo; out: string[]; err: string[] } {
   return { io: { out: message => out.push(message), err: message => err.push(message) }, out, err }
 }
 
-function operatorEnv(enabled = true): NodeJS.ProcessEnv {
-  const env: NodeJS.ProcessEnv = { ...process.env }
-  delete env[OPERATOR_RESOLUTIONS_ENV]
-  if (enabled) env[OPERATOR_RESOLUTIONS_ENV] = '1'
-  return env
+/** A3 operator config for the CLI: a mode-0600 JSON file (never an environment switch). */
+async function operatorConfigPath(enabled = true): Promise<string | undefined> {
+  if (!enabled) return undefined
+  const dir = await mkdtemp(join(tmpdir(), 'hephi-operator-config-'))
+  cleanup.push(dir)
+  const file = join(dir, 'operator.json')
+  await writeFile(file, JSON.stringify({ allowOperatorResolutions: true }), { mode: 0o600 })
+  return file
 }
 
-async function cli(args: string[], env: NodeJS.ProcessEnv = operatorEnv()) {
+async function cli(args: string[], options: { enabled?: boolean; env?: NodeJS.ProcessEnv } = {}) {
   const captured = io()
+  const env: NodeJS.ProcessEnv = { ...process.env, ...(options.env ?? {}) }
+  env[OPERATOR_RESOLUTIONS_ENV] = '1' // Worker-inherited switch: must be inert.
+  delete env.HEPHI_OPERATOR_CONFIG
+  const configPath = await operatorConfigPath(options.enabled !== false)
+  if (configPath !== undefined) env.HEPHI_OPERATOR_CONFIG = configPath
   const code = await cliMain(args, env, captured.io)
   return { code, out: captured.out.join('\n'), err: captured.err.join('\n') }
 }
@@ -200,9 +208,11 @@ describe('C4.5 retry limit: derived counter', () => {
     const x = await fixture()
     for (let attempt = 1; attempt <= 3; attempt += 1) await x.execute('build', 1)
     // (a) 操作者开关关闭时 CLI 拒绝，且不写记录。
-    const blocked = await cli(resetArgs(x.stateDir, 'build'), operatorEnv(false))
+    const blocked = await cli(resetArgs(x.stateDir, 'build'), { enabled: false })
     expect(blocked.code).not.toBe(0)
-    expect(blocked.err).toContain(OPERATOR_RESOLUTIONS_ENV)
+    // env HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1 is inert; only the operator config enables this.
+    expect(blocked.err).toContain('operator resolutions are disabled')
+    expect(blocked.err).toContain('--operator-config')
     await expect(readFile(resolutionsPath(x.stateDir, 'ticket-1'), 'utf8')).rejects.toMatchObject({ code: 'ENOENT' })
     // (b) 即使存在冒名的 reset 记录，runner 在开关关闭时也不采信（默认 allowOperatorResolutions=false）。
     await appendResolution(x.stateDir, {

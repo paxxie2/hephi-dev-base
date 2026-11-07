@@ -95,10 +95,18 @@ function nativeJobs(ctx: Context): NativeJobs | undefined {
   try { return ctx.get?.('jobs') as NativeJobs | undefined } catch { return undefined }
 }
 
+/** Host plugin configuration that reaches the check runner (A3 / C4.5 trust boundary). */
+export type WorkerControlConfig = {
+  /** A3: allow the operator resolution channel. Default false; the environment never enables it. */
+  allowOperatorResolutions?: boolean
+  /** C4.5: per-check retry limit. Default 3; must be a positive integer. */
+  retryLimit?: number
+}
+
 export function mountWorkerGate(
   ctx: Context,
   agent: Agent,
-  options: { stateDir?: string; verify?: ReadyVerifier } = {},
+  options: { stateDir?: string; verify?: ReadyVerifier } & WorkerControlConfig = {},
 ): MountedWorker | undefined {
   if (!isWorkerAgent(agent)) return undefined
   const ticketId = workerTicketId(agent)
@@ -182,6 +190,7 @@ export function mountWorkerGate(
       try {
         const record = await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
           outer: execution, tools: agent.ctx.tools as unknown as CheckTools, jobs: nativeJobs(ctx), sessionCwd: agent.session.header.cwd,
+          allowOperatorResolutions: options.allowOperatorResolutions === true, retryLimit: options.retryLimit,
           internal: id => { internalCall = id } })
         const passed = record.status === 'passed' && record.exitCode === 0
         await logDecision(stateDir, {
@@ -454,7 +463,7 @@ export function mountWorkerGate(
   }
 }
 
-export function installWorkerMount(ctx: Context, options: { stateDir?: string; verify?: ReadyVerifier } = {}): () => void {
+export function installWorkerMount(ctx: Context, options: { stateDir?: string; verify?: ReadyVerifier } & WorkerControlConfig = {}): () => void {
   const mounted = new WeakMap<Agent, MountedWorker>()
   let closed = false
   const mount = (agent: Agent): MountedWorker | undefined => {

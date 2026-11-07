@@ -6,7 +6,7 @@ import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
 import { allowedPath, clean, defaultPullRequest, defaultPullRequestReviews, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo, type PullRequestReview } from './repository.js'
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
-import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, type CheckRunRecord } from './check-store.js'
+import { checkRunDir, readRuns, resolvedRunIds, type CheckRunRecord } from './check-store.js'
 import { checkCommand, contained, sameSource, type NativeJobView, type NativeJobs } from './check-runner.js'
 import { checkDiscipline } from './discipline.js'
 import { pluginCommit } from '../version.js'
@@ -396,7 +396,8 @@ export function createEvidenceVerifier(options: {
         throw new Error(`contract was prepared by another plugin build (${contract.plugin.commit}); rerun prepare with ${pluginCommit()}`)
       }
       const records = await readRuns(options.stateDir, contract.ticketId)
-      const allowResolutions = options.allowOperatorResolutions ?? operatorResolutionsAllowed()
+      // Host plugin config only; the process environment is never an enable channel (A3 trust boundary).
+      const allowResolutions = options.allowOperatorResolutions === true
       const resolved = allowResolutions
         ? await resolvedRunIds(options.stateDir, contract.ticketId, contract.contractHash)
         : new Set<string>()

@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 import { readFile, readdir } from 'node:fs/promises'
-import { realpathSync } from 'node:fs'
+import { realpathSync, statSync } from 'node:fs'
 import { isAbsolute, join, normalize, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseVerificationConfig } from './contracts/checks.js'
 import { taskCardSchema } from './contracts/task.js'
 import { prepareActivation, defaultStateDir } from './control/activation.js'
 import {
-  OPERATOR_RESOLUTIONS_ENV, RESOLUTION_BASES, RESOLUTION_KINDS, appendResolution, operatorResolutionsAllowed,
-  readRun, readRuns,
+  RESOLUTION_BASES, RESOLUTION_KINDS, appendResolution, readRun, readRuns,
   type ResolutionBasis, type ResolutionKind,
 } from './control/check-store.js'
 
@@ -24,11 +23,13 @@ export const USAGE = `usage: hephi prepare
                      --status <running|terminated|unavailable>
                      (--host-query <raw query output> | --host-query-file <path>)
                      --operator <name> [--accept-risk] [--state-dir <dir>]
+                     [--operator-config <path>]
        hephi resolve --kind retry-reset --ticket <id> --check <checkId>
                      --basis <host-terminal|operator-risk-accepted>
                      --status <running|terminated|unavailable>
                      (--host-query <raw query output> | --host-query-file <path>)
                      --operator <name> [--accept-risk] [--state-dir <dir>]
+                     [--operator-config <path>]
        hephi stats [--state-dir <dir>] [--ticket <id>] [--rule <prefix>] [--json]
        hephi lint-task <task.json> [--json]
 
@@ -50,10 +51,16 @@ run.json/output.log are never edited.
 (ticket + contract + check id) after the operator has reviewed the repeated failures.
 Other checks keep their counters; the switch/trust boundary is the same as run-unblock.
 
-The command is disabled by default. The temporary switch is the host/operator
-environment variable ${OPERATOR_RESOLUTIONS_ENV}=1; it must become the host config
-field allowOperatorResolutions (cordis.patch.yml, read in apply(ctx, config)) so a
-Worker cannot enable or invoke it from its own environment (A3 trust boundary, G1).
+The command is disabled by default and the process environment is NOT an enable channel.
+
+Plugin side (runner/verifier): only the host plugin config field allowOperatorResolutions
+(cordis.patch.yml, read in apply(ctx, config)) can enable the resolution channel.
+
+CLI side (trust boundary): the operator must pass --operator-config <path> (or set the
+HEPHI_OPERATOR_CONFIG path in their own shell, which is only a path hint, not a permission).
+The file must be a regular JSON file with {"allowOperatorResolutions": true} and must not be
+accessible by group/other (mode & 0o077 === 0, e.g. 0600). A Worker-inherited
+HEPHI_ALLOW_OPERATOR_RESOLUTIONS environment variable has no effect at all.
 
 --status running      host still reports the execution: refuse to resolve.
 --kind <kind>         run-unblock (default) or retry-reset (C4.5).
@@ -74,6 +81,7 @@ function parseResolveArgs(args: string[]): {
   kind: ResolutionKind; ticketId: string; runId?: string; checkId?: string
   basis: ResolutionBasis; status: ResolutionStatus
   hostQuery?: string; hostQueryFile?: string; operator: string; acceptRisk: boolean; stateDir?: string
+  operatorConfig?: string
 } {
   const values = new Map<string, string>()
   let acceptRisk = false
@@ -88,7 +96,7 @@ function parseResolveArgs(args: string[]): {
     index += 1
     values.set(arg, value)
   }
-  const allowed = new Set(['--kind', '--ticket', '--run', '--check', '--basis', '--status', '--host-query', '--host-query-file', '--operator', '--state-dir'])
+  const allowed = new Set(['--kind', '--ticket', '--run', '--check', '--basis', '--status', '--host-query', '--host-query-file', '--operator', '--state-dir', '--operator-config'])
   for (const key of values.keys()) if (!allowed.has(key)) throw new UsageError(`unknown argument: ${key}`)
   const ticket = values.get('--ticket'), run = values.get('--run'), checkId = values.get('--check'), basis = values.get('--basis')
   const status = values.get('--status'), operator = values.get('--operator')
@@ -124,14 +132,41 @@ function parseResolveArgs(args: string[]): {
     basis: parsedBasis,
     status: status as ResolutionStatus, hostQuery, hostQueryFile, operator: name, acceptRisk,
     stateDir: values.get('--state-dir'),
+    operatorConfig: values.get('--operator-config'),
   }
 }
 
-async function resolveCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo): Promise<number> {
-  if (!operatorResolutionsAllowed(env)) {
-    io.err(`operator resolutions are disabled: the host must set ${OPERATOR_RESOLUTIONS_ENV}=1 (future host config field allowOperatorResolutions); a Worker must not be able to enable this path`)
-    return 1
+/**
+ * A3 operator-only gate for the CLI. The process environment is not an enable channel: the
+ * operator provides a mode-0600 JSON config explicitly (`--operator-config` or the
+ * HEPHI_OPERATOR_CONFIG *path* in their own shell). The file permission check keeps a
+ * Worker-readable/writable config from enabling the channel.
+ */
+async function operatorGate(options: { operatorConfig?: string }, env: NodeJS.ProcessEnv): Promise<{ ok: true } | { ok: false; problem: string }> {
+  const path = options.operatorConfig ?? env.HEPHI_OPERATOR_CONFIG?.trim()
+  if (!path) {
+    return { ok: false, problem: 'operator resolutions are disabled: provide --operator-config <path> to a mode-0600 JSON file with {"allowOperatorResolutions": true}; the process environment (including HEPHI_ALLOW_OPERATOR_RESOLUTIONS) is not an enable channel' }
   }
+  let stat
+  try { stat = statSync(path) } catch (error) {
+    return { ok: false, problem: `operator resolutions are disabled: cannot read operator config ${path}: ${error instanceof Error ? error.message : String(error)}` }
+  }
+  if (!stat.isFile()) return { ok: false, problem: `operator resolutions are disabled: operator config ${path} is not a regular file` }
+  const mode = stat.mode & 0o777
+  if ((mode & 0o077) !== 0) {
+    return { ok: false, problem: `operator resolutions are disabled: operator config ${path} is accessible by group/other (mode ${mode.toString(8)}); require mode 0600 (mode & 0o077 === 0)` }
+  }
+  let parsed: unknown
+  try { parsed = JSON.parse(await readFile(path, 'utf8')) } catch (error) {
+    return { ok: false, problem: `operator resolutions are disabled: operator config ${path} is not valid JSON: ${error instanceof Error ? error.message : String(error)}` }
+  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed) || (parsed as { allowOperatorResolutions?: unknown }).allowOperatorResolutions !== true) {
+    return { ok: false, problem: `operator resolutions are disabled: operator config ${path} must contain {"allowOperatorResolutions": true}` }
+  }
+  return { ok: true }
+}
+
+async function resolveCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo): Promise<number> {
   let options: ReturnType<typeof parseResolveArgs>
   try { options = parseResolveArgs(args) } catch (error) {
     if (error instanceof UsageError && error.message === 'help') { io.out(USAGE); return 0 }
@@ -139,6 +174,8 @@ async function resolveCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo)
     io.err(USAGE)
     return 2
   }
+  const gate = await operatorGate(options, env)
+  if (!gate.ok) { io.err(gate.problem); return 1 }
   if (options.status === 'running') {
     io.err('host still reports the check as running; stop it, confirm a terminal state and then resolve')
     return 1

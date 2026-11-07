@@ -232,10 +232,20 @@ export async function writeOutputLog(f: Fixture, record: CheckRunRecord, text: s
 export { sha256 }
 export { OPERATOR_RESOLUTIONS_ENV, readResolutions, resolutionsPath } from '../../src/control/check-store.js'
 
-/** Host operator environment: the A3 temporary switch on unless a test turns it off. */
-export function operatorEnv(enabled = true): NodeJS.ProcessEnv {
+/**
+ * A3 operator config for the CLI: a mode-0600 JSON file whose path is placed in
+ * HEPHI_OPERATOR_CONFIG. The process environment (including the legacy
+ * HEPHI_ALLOW_OPERATOR_RESOLUTIONS switch) is not an enable channel.
+ */
+export async function operatorConfigEnv(enabled = true): Promise<NodeJS.ProcessEnv> {
   const env: NodeJS.ProcessEnv = { ...process.env }
   delete env[OPERATOR_RESOLUTIONS_ENV]
-  if (enabled) env[OPERATOR_RESOLUTIONS_ENV] = '1'
+  delete env.HEPHI_OPERATOR_CONFIG
+  if (!enabled) return env
+  const dir = await mkdtemp(join(tmpdir(), 'hephi-redteam-operator-'))
+  cleanup.push(dir)
+  const file = join(dir, 'operator.json')
+  await writeFile(file, JSON.stringify({ allowOperatorResolutions: true }), { mode: 0o600 })
+  env.HEPHI_OPERATOR_CONFIG = file
   return env
 }

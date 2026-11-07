@@ -7,7 +7,7 @@ import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
 import { clean, hasCommit, normalizeRepository, remoteRepository } from './repository.js'
 import { inScope } from './discipline.js'
 import { resolveWorkspace } from './workspace.js'
-import { checkRunDir, operatorResolutionsAllowed, readRetryResets, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
+import { checkRunDir, readRetryResets, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
 import { logDecision } from './decision-log.js'
 import { pluginCommit } from '../version.js'
 
@@ -133,9 +133,11 @@ export async function runCheck(options: {
   if (!Number.isInteger(retryLimit) || retryLimit < 1) throw new Error(`retryLimit must be a positive integer, got ${String(options.retryLimit)}`)
   const old = await readRuns(stateDir, contract.ticketId)
   // A3: only an operator resolution for this exact ticket + contract may clear a
-  // leftover running/unknown execution; disabled feature ignores the log entirely.
-  // A corrupt resolution log throws and fails closed (the check stays blocked).
-  const allowResolutions = options.allowOperatorResolutions ?? operatorResolutionsAllowed()
+  // leftover running/unknown execution. The host plugin configuration is the only switch
+  // (`apply(ctx, config)` passes it down); the process environment is never consulted, so
+  // a Worker-inherited env var cannot enable resolutions. Disabled feature ignores the log
+  // entirely; a corrupt resolution log throws and fails closed (the check stays blocked).
+  const allowResolutions = options.allowOperatorResolutions === true
   const resolved = allowResolutions ? await resolvedRunIds(stateDir, contract.ticketId, contract.contractHash) : new Set<string>()
   if (old.some(r => (r.status === 'running' || r.status === 'unknown') && !resolved.has(r.runId))) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
   // C4.5: refuse to start once the derived failure count reaches the limit. Only the

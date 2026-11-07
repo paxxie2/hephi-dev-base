@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest'
 import { main as cliMain, type CliIo } from '../../src/cli.js'
 import { runCheck } from '../../src/control/check-runner.js'
 import {
-  execute, fixture, nativeTools, operatorEnv, outer, ready, resolutionsPath, verifier,
+  execute, fixture, nativeTools, operatorConfigEnv, outer, ready, resolutionsPath, verifier,
 } from './fixtures.js'
 
 import { OPERATOR_RESOLUTIONS_ENV, readResolutions, readRuns } from '../../src/control/check-store.js'
@@ -20,9 +20,9 @@ function io(): { io: CliIo; out: string[]; err: string[] } {
   return { io: { out: message => out.push(message), err: message => err.push(message) }, out, err }
 }
 
-async function cli(args: string[], env: NodeJS.ProcessEnv = operatorEnv()) {
+async function cli(args: string[], env?: NodeJS.ProcessEnv) {
   const captured = io()
-  const code = await cliMain(args, env, captured.io)
+  const code = await cliMain(args, env ?? await operatorConfigEnv(), captured.io)
   return { code, out: captured.out.join('\n'), err: captured.err.join('\n') }
 }
 
@@ -82,7 +82,7 @@ describe('恢复流程（A3 CLI + verifier）', () => {
 
   it('RT-REC-04: the CLI refuses every resolution while the host switch is off', async () => {
     const { f, record } = await unknownRecord()
-    const result = await cli(resolveArgs(f.stateDir, record.runId), operatorEnv(false))
+    const result = await cli(resolveArgs(f.stateDir, record.runId), await operatorConfigEnv(false))
     expect(result.code).not.toBe(0)
     // 可声称：宿主开关关闭时 CLI 拒绝，且不写任何记录（Worker 不能自行打开该路径）。
     expect(result.err).toContain(OPERATOR_RESOLUTIONS_ENV)

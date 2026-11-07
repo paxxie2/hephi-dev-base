@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises'
+import { appendFile, mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import type { RepositoryFingerprint } from '../verification/fingerprint.js'
@@ -15,10 +15,35 @@ export type CheckRunRecord = {
   before: RepositoryFingerprint; after?: RepositoryFingerprint;
   outputHash?: string; reason?: string;
 }
+const SAFE_EVIDENCE_ID = /^[\w-]+$/
 export function checkRunDir(stateDir: string, ticketId: string, runId = ''): string {
-  if (!/^[\w-]+$/.test(ticketId) || (runId && !/^[\w-]+$/.test(runId))) throw new Error('unsafe evidence id')
+  if (!SAFE_EVIDENCE_ID.test(ticketId) || (runId && !SAFE_EVIDENCE_ID.test(runId))) throw new Error('unsafe evidence id')
   return join(stateDir, 'hephi', ticketId, 'checks', runId)
 }
+
+function assertRecord(value: unknown, ticketId: string, expectedRunId: string): CheckRunRecord {
+  const record = value as CheckRunRecord
+  if (!record || typeof record !== 'object' || record.version !== 3 || typeof record.pluginCommit !== 'string'
+    || typeof record.runId !== 'string' || record.runId !== expectedRunId || record.ticketId !== ticketId
+    || !Number.isSafeInteger(record.sequence) || !['running', 'passed', 'blocked', 'unknown'].includes(record.status)) {
+    throw new Error('unsupported or corrupt check evidence')
+  }
+  return record
+}
+
+/** Read one stored run record; a missing run is an error, not an empty result. */
+export async function readRun(stateDir: string, ticketId: string, runId: string): Promise<CheckRunRecord> {
+  const file = join(checkRunDir(stateDir, ticketId, runId), 'run.json')
+  let text: string
+  try { text = await readFile(file, 'utf8') } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') throw new Error(`check run not found: ${ticketId}/${runId}`)
+    throw error
+  }
+  let value: unknown
+  try { value = JSON.parse(text) } catch { throw new Error('unsupported or corrupt check evidence') }
+  return assertRecord(value, ticketId, runId)
+}
+
 export async function saveRun(stateDir: string, record: CheckRunRecord): Promise<void> {
   const path = join(checkRunDir(stateDir, record.ticketId, record.runId), 'run.json')
   await mkdir(dirname(path), { recursive: true })
@@ -34,9 +59,149 @@ export async function readRuns(stateDir: string, ticketId: string): Promise<Chec
   const records: CheckRunRecord[] = []
   for (const entry of entries.filter(e => e.isDirectory())) {
     const value = JSON.parse(await readFile(join(dir, entry.name, 'run.json'), 'utf8')) as CheckRunRecord
-    if (value.version !== 3 || typeof value.pluginCommit !== 'string' || value.runId !== entry.name || value.ticketId !== ticketId || !Number.isSafeInteger(value.sequence)
-      || !['running', 'passed', 'blocked', 'unknown'].includes(value.status)) throw new Error('unsupported or corrupt check evidence')
-    records.push(value)
+    records.push(assertRecord(value, ticketId, entry.name))
   }
   return records.sort((a, b) => a.sequence - b.sequence)
+}
+
+/**
+ * A3 operator resolution: one append-only record per unresolved check execution.
+ *
+ * `resolutions.jsonl` lives beside the run records but outside `checks/`, so the
+ * run scanner never reads it. A resolution only restores the right to run the
+ * check again; it never turns the resolved execution into passing evidence and
+ * it never edits, deletes or moves the original `run.json` / `output.log`.
+ *
+ * Trust boundary: the temporary switch is the host-set environment variable
+ * `HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1`. It must become the host config field
+ * `allowOperatorResolutions` (cordis.patch.yml, read once in `apply`) because a
+ * Worker that can set an environment variable can also enable this path; the
+ * A3 requirement is that the resolution command runs outside the Worker env.
+ */
+export type ResolutionBasis = 'host-terminal' | 'operator-risk-accepted'
+export const RESOLUTION_BASES: readonly ResolutionBasis[] = ['host-terminal', 'operator-risk-accepted']
+export const OPERATOR_RESOLUTIONS_ENV = 'HEPHI_ALLOW_OPERATOR_RESOLUTIONS'
+const MAX_HOST_QUERY_LENGTH = 100_000
+const MAX_OPERATOR_LENGTH = 200
+
+export type CheckResolution = {
+  /** Ticket the resolution is scoped to. */
+  ticketId: string
+  /** Contract the resolved execution belongs to; a different contract is never unblocked. */
+  contractHash: string
+  /** Original run this resolution applies to; repeats are idempotent. */
+  runId: string
+  /** How the operator established that the execution no longer runs. */
+  basis: ResolutionBasis
+  /** Raw query output (host Job/process query) or the query failure text. */
+  hostQuery: string
+  /** Operator identity recorded for audit. */
+  operator: string
+  at: string
+}
+
+export type ResolutionInput = Omit<CheckResolution, 'at'>
+
+export type AppendResolutionResult = {
+  /** False when an equivalent resolution for this run already existed (idempotent repeat). */
+  appended: boolean
+  resolution: CheckResolution
+}
+
+/** The temporary host switch for operator resolutions; disabled unless explicitly "1". */
+export function operatorResolutionsAllowed(env: NodeJS.ProcessEnv = process.env): boolean {
+  return env[OPERATOR_RESOLUTIONS_ENV] === '1'
+}
+
+export function resolutionsPath(stateDir: string, ticketId: string): string {
+  if (!SAFE_EVIDENCE_ID.test(ticketId)) throw new Error('unsafe evidence id')
+  return join(stateDir, 'hephi', ticketId, 'resolutions.jsonl')
+}
+
+function resolutionProblem(value: unknown, ticketId: string): string | undefined {
+  const record = value as CheckResolution
+  if (!record || typeof record !== 'object' || Array.isArray(record)) return 'resolution is not an object'
+  if (record.ticketId !== ticketId || !SAFE_EVIDENCE_ID.test(String(record.ticketId))) return 'resolution ticket id does not match its directory'
+  if (typeof record.contractHash !== 'string' || !record.contractHash.trim()) return 'resolution contract hash is missing'
+  if (typeof record.runId !== 'string' || !SAFE_EVIDENCE_ID.test(record.runId)) return 'resolution run id is invalid'
+  if (!RESOLUTION_BASES.includes(record.basis)) return `resolution basis is invalid: ${String(record.basis)}`
+  if (typeof record.hostQuery !== 'string' || !record.hostQuery.trim()) return 'resolution host query is missing'
+  if (record.hostQuery.length > MAX_HOST_QUERY_LENGTH) return 'resolution host query is too long'
+  if (typeof record.operator !== 'string' || !record.operator.trim()) return 'resolution operator is missing'
+  if (record.operator.length > MAX_OPERATOR_LENGTH) return 'resolution operator is too long'
+  if (/[\u0000-\u001f\u007f]/.test(record.operator)) return 'resolution operator contains control characters'
+  if (typeof record.at !== 'string' || Number.isNaN(Date.parse(record.at))) return 'resolution timestamp is invalid'
+  return undefined
+}
+
+/**
+ * Read the ticket's resolution log. Any malformed line is an error: this log can
+ * unblock reruns, so corruption must fail closed instead of silently dropping an
+ * entry. The file is never written by this function.
+ */
+export async function readResolutions(stateDir: string, ticketId: string): Promise<CheckResolution[]> {
+  const file = resolutionsPath(stateDir, ticketId)
+  let text: string
+  try { text = await readFile(file, 'utf8') } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+    throw error
+  }
+  const seen = new Map<string, CheckResolution>()
+  const resolutions: CheckResolution[] = []
+  const lines = text.split('\n')
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index]!
+    if (!line.trim()) continue
+    let parsed: unknown
+    try { parsed = JSON.parse(line) } catch { throw new Error(`corrupt resolution log: invalid JSON at line ${index + 1} (${file})`) }
+    const problem = resolutionProblem(parsed, ticketId)
+    if (problem) throw new Error(`corrupt resolution log: ${problem} at line ${index + 1} (${file})`)
+    const resolution = parsed as CheckResolution
+    const previous = seen.get(resolution.runId)
+    if (previous) {
+      // A retried identical resolution (same evidence, another timestamp) is a
+      // duplicate; any disagreement is corruption and fails closed.
+      const equivalent = previous.contractHash === resolution.contractHash && previous.basis === resolution.basis
+        && previous.hostQuery === resolution.hostQuery && previous.operator === resolution.operator
+      if (!equivalent) throw new Error(`conflicting resolution records for run ${resolution.runId} (${file})`)
+      continue
+    }
+    seen.set(resolution.runId, resolution)
+    resolutions.push(resolution)
+  }
+  return resolutions
+}
+
+/**
+ * Append one resolution. Repeats for the same run id never append again and
+ * always return the first record, so a retried command is idempotent.
+ */
+export async function appendResolution(stateDir: string, input: ResolutionInput): Promise<AppendResolutionResult> {
+  const file = resolutionsPath(stateDir, input.ticketId)
+  const problem = resolutionProblem({ ...input, at: new Date().toISOString() }, input.ticketId)
+  if (problem) throw new Error(problem)
+  const existing = (await readResolutions(stateDir, input.ticketId)).find(record => record.runId === input.runId)
+  if (existing) {
+    if (existing.contractHash !== input.contractHash) throw new Error(`run ${input.runId} is already resolved for another contract`)
+    return { appended: false, resolution: existing }
+  }
+  const resolution: CheckResolution = {
+    ticketId: input.ticketId, contractHash: input.contractHash, runId: input.runId,
+    basis: input.basis, hostQuery: input.hostQuery, operator: input.operator, at: new Date().toISOString(),
+  }
+  await mkdir(dirname(file), { recursive: true })
+  await appendFile(file, `${JSON.stringify(resolution)}\n`, { mode: 0o600 })
+  return { appended: true, resolution }
+}
+
+/** Run ids resolved for exactly this ticket and contract; a different contract never matches. */
+export async function resolvedRunIds(stateDir: string, ticketId: string, contractHash: string): Promise<Set<string>> {
+  const resolutions = await readResolutions(stateDir, ticketId)
+  return new Set(resolutions.filter(record => record.contractHash === contractHash).map(record => record.runId))
+}
+
+/** The resolution for one run under exactly this contract, if any. */
+export async function resolutionFor(stateDir: string, ticketId: string, contractHash: string, runId: string): Promise<CheckResolution | undefined> {
+  const resolutions = await readResolutions(stateDir, ticketId)
+  return resolutions.find(record => record.runId === runId && record.contractHash === contractHash)
 }

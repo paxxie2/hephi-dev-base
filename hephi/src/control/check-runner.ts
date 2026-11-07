@@ -7,7 +7,7 @@ import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
 import { clean, hasCommit, normalizeRepository, remoteRepository } from './repository.js'
 import { inScope } from './discipline.js'
 import { resolveWorkspace } from './workspace.js'
-import { checkRunDir, readRuns, saveRun, type CheckRunRecord } from './check-store.js'
+import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
 import { pluginCommit } from '../version.js'
 
 export type CheckTools = { execute(input: ToolExecutionInput): Promise<ToolExecutionResult> }
@@ -91,12 +91,19 @@ async function confirmTerminal(jobs: NativeJobs, jobId: string, sessionId: strin
 export async function runCheck(options: {
   stateDir: string; contract: ActivationContract; checkId: string; outer: ToolExecution;
   tools: CheckTools; jobs?: NativeJobs; sessionCwd?: string; internal?: (id?: string) => void;
+  /** A3: read operator resolutions. Defaults to the temporary host env switch; Lead wires the host config field here. */
+  allowOperatorResolutions?: boolean;
 }): Promise<CheckRunRecord> {
   const { contract, stateDir, outer } = options
   const check = verificationOf(contract).checks.find(c => c.id === options.checkId)
   if (!check) throw new Error('unknown checkId or missing frozen verification contract')
   const old = await readRuns(stateDir, contract.ticketId)
-  if (old.some(r => r.status === 'running' || r.status === 'unknown')) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
+  // A3: only an operator resolution for this exact ticket + contract may clear a
+  // leftover running/unknown execution; disabled feature ignores the log entirely.
+  // A corrupt resolution log throws and fails closed (the check stays blocked).
+  const allowResolutions = options.allowOperatorResolutions ?? operatorResolutionsAllowed()
+  const resolved = allowResolutions ? await resolvedRunIds(stateDir, contract.ticketId, contract.contractHash) : new Set<string>()
+  if (old.some(r => (r.status === 'running' || r.status === 'unknown') && !resolved.has(r.runId))) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
   const workspace = await resolveWorkspace(contract.workspace, options.sessionCwd)
   if (normalizeRepository(await remoteRepository(workspace)) !== normalizeRepository(contract.repository)
     || !await hasCommit(workspace, contract.baseSha) || !await clean(workspace)) throw new Error('repository/base/clean check failed')

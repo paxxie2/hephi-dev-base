@@ -183,3 +183,11 @@ native 侧已有 4 次真实运行（另一线执行，**待核验**）；off �
 5. **未安装/未运行统计或盲评环境**，无 human–agent agreement 数值。
 6. **未锁定 PREREG、未生成 `eval/PREREG.lock`**（`prereg-lock --check` 仍 exit 1）；未计算样本量/成本上限（D-3/D-4 仍 `pending-trial`）。
 7. hephi 流程验证任务未执行；不声称任何 hephi 配对数据。
+
+## 试跑执行状态更新（2026-11-08，Lead 核验）
+
+- **native 4/4 已执行**（另一线）：`paxxie2/b5-native-site-pnl` Issues #2/#4/#6/#7 → PRs #3(draft)/#5/#8/#9；ticket：run1 `blocked`，run1-retry/run2/run3 `ready`。
+- **off 4/4 已完成**（本次，回退仓库 `paxxie2/b5-off-site-pnl`）：Issues #7/#9/#11/#13 → PRs #8/#10/#12/#14；ticket 全部 open/person/report=ready；off 实例已停止、凭据与临时目录已清理。
+- **隐藏测试独立复核（Lead 亲手）**：base `1e166fb` exit 1；8 个 PR head（native 4 + off 4）全部 exit 0 PASS。证据 `eval/evidence/b5pairing/verification.md`。
+- **配对限制**：off 为回退仓库（非同仓），任务文本逐字节一致但环境/仓库不同，属弱配对；native run1 与 retry/2/3 的 project-regression 口径不同（完整 check.sh vs test_money.py），需在分析时单列。
+- **未完成**：单人+agent 盲评（human–agent agreement）尚未执行；PREREG 未锁、无样本量、不产生效果结论。

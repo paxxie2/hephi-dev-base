@@ -93,7 +93,7 @@ describe('Session binding (criterion 3)', () => {
 
   it('rejects a result whose exit code differs from the record', async () => {
     const p = await delivered()
-    const altered = map(p.events, e => e.type === 'tool/result' ? { ...e, data: { message: { ...e.data.message, content: [{ type: 'text', text: '{"exitCode":1}' }] } } } : e)
+    const altered = map(p.events, e => e.type === 'tool/result' ? { ...e, data: { message: { ...e.data.message, content: [{ type: 'text', text: '{"exitCode":1}' }], value: { ...e.data.message.value, exitCode: 1 } } } } : e)
     expect(await verdict(p, altered)).toMatchObject({ ok: false, reason: expect.stringContaining('exit code 1 differs') })
   })
 

@@ -46,7 +46,11 @@ export function bashHost(log: SessionSnapshot['events']) {
       if (!Number.isInteger(error.code)) throw error
       exitCode = error.code; stdout = error.stdout; stderr = error.stderr
     }
-    log.push({ seq: log.length, type: 'tool/result', data: { message: { toolCallId: callId, isError: false, content: [{ type: 'text', text: JSON.stringify({ exitCode }) }] } } })
+    log.push({ seq: log.length, type: 'tool/result', data: { message: {
+      toolCallId: callId, isError: false, content: [{ type: 'text', text: JSON.stringify({ exitCode }) }],
+      // A1-BIND/A1-OUT read this structured native value; the host shape is pending H2/H3.
+      value: { kind: 'foreground', exitCode, signal: null, timedOut: false, aborted: false, stdout: { text: stdout, truncated: false }, stderr: { text: stderr, truncated: false } },
+    } } })
     return { isError: false as const, content: [], value: { kind: 'foreground', exitCode, stdout: { text: stdout }, stderr: { text: stderr } } }
   } }
 }

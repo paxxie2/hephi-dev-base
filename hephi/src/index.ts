@@ -1,6 +1,7 @@
 /** HEPHI Super Agent plugin bundle entry point. */
 import type { Context } from '@deepseek-ai/cordis'
 import { defaultStateDir } from './control/activation.js'
+import type { NativeJobs } from './control/check-runner.js'
 import { createEvidenceVerifier, type SessionSnapshot } from './control/evidence-verifier.js'
 import { installWorkerMount } from './control/worker-mount.js'
 import { pluginCommit, pluginName, pluginVersion } from './version.js'
@@ -29,7 +30,12 @@ export function apply(ctx: Context, config: { stateDir?: string; requireSessionB
     if (!query) throw new Error('host sessionQuery service is unavailable; evidence cannot be bound to native executions')
     return query.readSession(sessionId)
   }
-  const verify = createEvidenceVerifier({ stateDir, readSession, requireSessionBinding: hostRequireSessionBinding, allowOperatorResolutions })
+  // A1-BIND/A1-OUT: the host Job registry is optional. Without it a background check's
+  // terminal state and output cannot be verified, so ready denies that evidence instead of
+  // trusting the record; foreground checks are unaffected.
+  let jobs: NativeJobs | undefined
+  try { jobs = ctx.get('jobs') as NativeJobs | undefined } catch { jobs = undefined }
+  const verify = createEvidenceVerifier({ stateDir, readSession, requireSessionBinding: hostRequireSessionBinding, allowOperatorResolutions, jobs })
   const dispose = installWorkerMount(ctx, { stateDir, verify })
   ctx.effect(() => dispose, `${pluginName}: worker ready gate`)
 }

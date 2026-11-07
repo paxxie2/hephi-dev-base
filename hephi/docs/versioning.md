@@ -35,6 +35,12 @@
 - 校验：**无论绑定开关**，ready 都要求记录里的 `sessionId` 等于当前 Worker Session id，ready 报缺少 Worker Session id 时失败关闭（A1-K4；修复的是“绑定关闭时没有约束”）。绑定生效时另有 Session 快照核对（同 callId 的 bash 调用/结果、命令、目录、退出码）。宿主 id 与记录写入值是否一致仍未在真实宿主确认（H4 探针）：机制已无条件实现，H4 结论出来前只标注为“待 H4 验证”；若 H4 证明不一致，check-runner 改为写 `session.header.id` 并升检查记录格式版本（v4）。
 - 默认值：A2 完成前 prepare 默认仍为 `false`；A2 确认宿主内部调用事件结构后才把默认值改为开启（A1-K1b）。
 
+## 2.3 A1-BIND/A1-OUT：只改核对逻辑，不改持久格式
+
+- A1-BIND/A1-OUT 只改变 ready 的核对逻辑（合同冻结命令与目录、Session 原生调用与结构化结果、宿主 Job 终态、权威输出哈希），**不新增或修改任何持久格式**：合同仍为 `version: 3`，检查记录仍为 `version: 3`，`decisions.jsonl` 仍为 `version: 1`。
+- `decisions.jsonl` 新增两个规则编号枚举值：`ready.job-unavailable`（宿主无 Job 接口或 Job 终态不可读）与 `ready.output-unverified`（权威输出不可得或与记录不一致）。字段与 `version` 不变，仅枚举值扩展，按本文件 §2 规则 1 在此登记；`docs/decisions-format.md` 的规则列表属后续维护批次同步项（本轮写范围不含该文件）。
+- 依赖 H1–H5 宿主探针：结论出来前，A1-BIND/A1-OUT 只能记为“机制已实现、fixture 测试通过”，不得记为真实验收通过，也不得据此升版记录格式。
+
 ## 2. 规则
 
 1. 任何会改变判定结果的字段变化必须升版；只增加说明性字段可不升版，但必须在本文档登记。

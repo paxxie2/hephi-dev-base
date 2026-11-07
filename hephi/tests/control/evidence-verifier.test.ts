@@ -157,6 +157,37 @@ async function lastDecision(stateDir: string, ticketId: string): Promise<any> {
   const text = await readFile(join(stateDir, 'hephi', ticketId, 'decisions.jsonl'), 'utf8')
   return JSON.parse(text.trim().split('\n').at(-1)!)
 }
+function jobRegisteredEvent(record: CheckRunRecord, contract: ActivationContract, seq: number, over: {
+  jobId?: string; owner?: string; command?: string; workdir?: string; withArguments?: boolean; rootCallId?: string; kind?: string
+} = {}): SessionEvent {
+  const definition = contract.verification.checks.find(check => check.id === record.checkId)!
+  const command = over.command ?? checkCommand(contract.baseSha, definition.command, definition.args)
+  const data: any = {
+    jobId: over.jobId ?? 'job-1', owner: over.owner ?? 'worker-session', kind: over.kind ?? 'bash',
+    label: command, toolCall: { callId: record.innerCallId, rootCallId: over.rootCallId ?? record.callId },
+  }
+  if (over.withArguments) data.arguments = JSON.stringify({ command, workdir: over.workdir ?? record.cwd })
+  return { seq, type: 'job/registered', data }
+}
+function jobSettledEvent(record: CheckRunRecord, seq: number, over: {
+  jobId?: string; owner?: string; status?: string; detail?: string | null
+} = {}): SessionEvent {
+  return {
+    seq, type: 'job/settled',
+    data: {
+      jobId: over.jobId ?? 'job-1', owner: over.owner ?? 'worker-session', kind: 'bash',
+      toolCall: { callId: record.innerCallId, rootCallId: record.callId },
+      status: over.status ?? 'completed',
+      ...(over.detail === null ? {} : { detail: over.detail ?? 'exit code: 0' }),
+    },
+  }
+}
+function jobEvents(record: CheckRunRecord, contract: ActivationContract, over: {
+  registered?: Parameters<typeof jobRegisteredEvent>[3]; settled?: Parameters<typeof jobSettledEvent>[2]
+} = {}): SessionEvent[] {
+  return [jobRegisteredEvent(record, contract, 0, over.registered), jobSettledEvent(record, 1, over.settled)]
+}
+
 /** A single-check contract with one build record converted into a completed/cleared background Job. */
 async function backgroundFixture(jobOutput = 'job output\n') {
   const x = await setup(); await x.execute('build'); await x.execute('unit')
@@ -619,5 +650,96 @@ describe('A1-OUT: authoritative output hash', () => {
     expect(await bindingVerifier(x.stateDir, snapshotOf(events), cleared)(c, ready(x.r.dir)))
       .toMatchObject({ ok: false, reason: expect.stringContaining('output is not readable') })
     expect((await lastDecision(x.stateDir, c.ticketId)).rule).toBe('ready.output-unverified')
+  })
+})
+
+// ---------------------------------------------------------------------------------------
+// Path B: the historical real-host shape (A2 Round 2 observations). The internal dispatch
+// leaves job/registered (toolCall.callId=innerCallId, rootCallId=outer) and job/settled
+// (textual `exit code: N`) but no tool/call, tool/result or structured message.value.
+// Shape assumptions are pending the current-candidate host probe (H1/H2/H3).
+// ---------------------------------------------------------------------------------------
+describe('A1-BIND path B: job/registered + job/settled evidence', () => {
+  it('U-BIND-J1: a background Job binds through the real-host Job events (workdir absent is noted, not guessed)', async () => {
+    const { x, c, record, jobOutput } = await backgroundFixture()
+    const events = jobEvents(record, c)
+    const jobs = fakeJobs({
+      views: { 'job-1': { status: 'completed', detail: 'exit code: 0' } },
+      reads: { 'job-1': { chunks: [{ at: 0, text: jobOutput }], lossy: false } },
+    })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), jobs)(c, ready(x.r.dir))).toEqual({ ok: true })
+  })
+
+  it('U-BIND-J2: a Job whose raw arguments carry a matching workdir also binds', async () => {
+    const { x, c, record, jobOutput } = await backgroundFixture()
+    const events = jobEvents(record, c, { registered: { withArguments: true } })
+    const jobs = fakeJobs({
+      views: { 'job-1': { status: 'completed', detail: 'exit code: 0' } },
+      reads: { 'job-1': { chunks: [{ at: 0, text: jobOutput }], lossy: false } },
+    })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), jobs)(c, ready(x.r.dir))).toEqual({ ok: true })
+  })
+
+  it('U-BIND-J3: a Job id in the Session events that differs from the record is rejected', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { registered: { jobId: 'job-2' }, settled: { jobId: 'job-2' } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('differs from the recorded Job') })
+  })
+
+  it('U-BIND-J4: Job events owned by another Session are rejected', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { registered: { owner: 'other-session' }, settled: { owner: 'other-session' } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('another Session') })
+  })
+
+  it('U-BIND-J5: a job/settled exit code that differs from the record is rejected', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { settled: { detail: 'exit code: 1' } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('exit code 1 differs from the record') })
+  })
+
+  it('U-BIND-J6: a job/settled without a parseable exit code is rejected', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { settled: { detail: null } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('not the documented exit-code form') })
+  })
+
+  it('U-BIND-J7: structured evidence and Job events present at once are rejected as ambiguous', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const records = await readRuns(x.stateDir, x.c.ticketId)
+    const events = [...nativeEvents(records, x.c), ...jobEvents(records[0]!, x.c)]
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events))(x.c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('both structured tool/result evidence and job/registered+job/settled evidence') })
+  })
+
+  it('U-BIND-J8: missing workdir is annotated but a mismatched command still fails', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { registered: { command: 'true' } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringMatching(/different command.*workdir: absent/) })
+  })
+
+  it('U-BIND-J9: a foreground record can only produce ready.output-unverified on path B (no structured output)', async () => {
+    const x = await setup(); await x.execute('build'); await x.execute('unit')
+    const c: ActivationContract = { ...x.c, verification: { version: 1, checks: [build] } }
+    const record = (await readRuns(x.stateDir, x.c.ticketId)).find(item => item.checkId === 'build')!
+    const events = jobEvents(record, c)
+    const result = await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir))
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining('authoritative check output is unavailable') })
+    // The foreground record names no Job, so no structured stdout/stderr can be trusted; the
+    // denial is categorised as unverified output, and the absent workdir is still surfaced.
+    expect(result).toMatchObject({ reason: expect.stringContaining('workdir: absent') })
+    expect((await lastDecision(x.stateDir, c.ticketId)).rule).toBe('ready.output-unverified')
+  })
+
+  it('U-BIND-J10: a non-completed job/settled status is rejected', async () => {
+    const { x, c, record } = await backgroundFixture()
+    const events = jobEvents(record, c, { settled: { status: 'failed', detail: 'exit code: 1' } })
+    expect(await bindingVerifier(x.stateDir, snapshotOf(events), fakeJobs())(c, ready(x.r.dir)))
+      .toMatchObject({ ok: false, reason: expect.stringContaining('terminal status is failed') })
   })
 })

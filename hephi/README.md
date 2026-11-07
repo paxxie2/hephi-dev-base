@@ -70,23 +70,27 @@
 绑定生效时，ready 不再只信任检查记录，而是按下面每一环从当前 Worker Session 重新核对（实现：`src/control/evidence-verifier.ts`；测试：`tests/control/evidence-verifier.test.ts` 的 U-BIND-*／U-OUT-*，fixture 合成 Session 快照）：
 
 1. **合同冻结定义。** 预期命令由合同检查定义的 `command`、`args` 与合同 `baseSha` 重新生成（`checkCommand`），预期目录由 `contained(workspace, definition.cwd)` 解析；不以记录里的 `argv`／`cwd` 作为依据。
-2. **唯一的原生调用。** 当前 Session（`seq >= inheritedEventCount`，不含父 Session 继承事件）中必须恰好有一条 `callId === record.innerCallId` 的 `tool/call`，工具名为 `bash`，`arguments.command`／`workdir` 与第 1 步**逐字符**相等（不解析 shell、不做归一化）。
-3. **唯一的原生结果与分支。** 必须恰好有一条对应 `tool/result` 且 `isError === false`，其结构化 `value.kind` 决定分支（分支取自 Session 结果，不取自记录是否带 `jobId`）：
-   - `foreground`：`exitCode` 为整数且等于记录值、且为 0；无 `timedOut`／`aborted`／`signal`；记录不得带 `jobId`。
-   - `promoted`／`background`：`value.jobId` 必须严格等于记录 `jobId`；宿主 Job 接口 `jobs.get(jobId, sessionId)` 必须读到该 Job（读不到＝已清除或不属于本 Session→拒绝），终态必须为 `completed`，`detail` 中的退出码按 `exit code: <n>` 解析且等于记录值、且为 0。
-   - 其他 kind、结构缺失或解析失败：拒绝。
-4. **Job 不可得。** 宿主没有 Job 接口，或 Job 在 ready 前已被清除：拒绝，决策日志规则 `ready.job-unavailable`。
-5. **权威输出哈希（A1-OUT）。** `foreground` 用 Session 结果里的 `stdout.text`／`stderr.text` 按 runner 持久化格式（`${stdout.text}\n${stderr.text}`）重算 sha256；`background` 用 `jobs.readAt(jobId, 0, sessionId)` 的 chunks 拼接重算（`lossy === true` 即不可用）。重算值必须等于 `record.outputHash`；`output.log` 与 `record.outputHash` 已在前面核对。权威输出不可得（截断／`lossy`／已清除／无接口）或与记录不一致时一律拒绝，决策日志规则 `ready.output-unverified`，不静默降级。
+2. **两种互斥的 Session 事件形状。** 同一 `innerCallId` 的证据必须且只能命中一种形状（都命中或都不命中一律拒绝，并在拒绝原因里记录诊断）：
+   - **路径 A（结构化形状）**：唯一 `tool/call`（`callId=innerCallId`、`name=bash`、`arguments.command`／`workdir` 与第 1 步**逐字符**相等，不解析 shell），加上唯一 `tool/result`（`isError === false`）并携带结构化 `message.value`（含 `kind`）。
+   - **路径 B（历史真实宿主形状，A2 Round 2 实测）**：唯一 `job/registered`（`data.toolCall.callId=innerCallId`、`rootCallId=外层调用`、`kind/name=bash`；`arguments` 可以是原始 JSON 字符串或对象，其中 `command` 必须与第 1 步重算值逐字符相等；`workdir` 缺失时跳过目录比较并在证据里标注 `workdir: absent`），加上唯一 `job/settled`（`data.toolCall.callId=innerCallId`、`owner` 必须是本 Session、`status=completed`、`detail` 必须能解析出 `exit code: <n>` 且等于记录值且为 0）。
+3. **分支判定按证据来源的 kind。** 路径 A 的 `foreground` 要求 `exitCode` 为整数且等于记录值、且为 0，无 `timedOut`／`aborted`／`signal`，记录不得带 `jobId`；路径 A 的 `promoted`／`background` 要求 `value.jobId` 严格等于记录 `jobId`。**路径 B 只能证明 Job 终态**，因此只能支撑 background／promoted 语义；若记录带 `jobId` 但只命中路径 A 的 foreground 结构化结果，拒绝（规则不变）。其他 kind、结构缺失或解析失败：拒绝。
+4. **Job 不可得。** 宿主没有 Job 接口，或 Job 在 ready 前已被清除（`jobs.get` 读不到／抛错）：拒绝，决策日志规则 `ready.job-unavailable`。
+5. **权威输出哈希（A1-OUT）。** foreground 的结构化 `stdout.text`／`stderr.text` **只在路径 A 可用**，按 runner 持久化格式（`${stdout.text}\n${stderr.text}`）重算 sha256；background 用 `jobs.readAt(jobId, 0, sessionId)` 的 chunks 拼接重算（`lossy === true` 即不可用）。重算值必须等于 `record.outputHash`；`output.log` 与 `record.outputHash` 已在前面核对。**路径 B 或没有结构化输出时，前台权威输出不可得，绑定生效时一律拒绝**，决策日志规则 `ready.output-unverified`，不按文本猜测、不静默降级。
 6. **Session 归属。** 无论绑定开关，记录的 `sessionId` 必须等于当前 Worker Session id（A1-K4）。
 
-**当前可声称的边界（H1–H5 未验证）。** 以上是机制实现与 fixture 测试：真实宿主对第 2 步 `arguments` 的编码形态（H1）、第 3 步结构化 `value` 的字段名与退出码格式（H2）、Job 终态视图与 `detail` 格式（H3）、`jobs.readAt` 的 chunk／`lossy`／截断语义（H3a）、Session id 与记录写入值是否一致（H4）、继承事件计数语义（H5）都尚未在真实宿主上核实。因此本版本只能声称“机制已实现、负例已覆盖”，不能声称 D1 的真实证据链验收通过。绑定关闭时仍只做原有核对（合同冻结命令／目录 + `output.log`↔`record.outputHash`），见「已知限制」。
+**当前可声称的边界（H1–H5 未验证）。** 以上是机制实现与 fixture 测试，覆盖两种形状：
+
+- 路径 A 的结构来自计划书与 fixture；路径 B 来自 **2026-11-06/07 的历史真实 Worker 快照**（插件早于 A1 v3）的只读观察：内部 dispatch 只留下 `job/registered`／`job/settled`，没有 innerCallId 的 `tool/call`／`tool/result`，持久化 `tool/result.message` 无结构化 `value`，退出码只有文本 `exit code: N`；历史 bash 调用 0 条带 `workdir`。**路径 B 尚未在当前候选插件上复跑验证**。
+- H1（调用参数的编码与 workdir 形态）、H2（结构化 `value` 的字段与退出码格式）、H3（Job 终态视图与 `detail` 格式）、H3a（`jobs.readAt` 的 chunk／`lossy`／截断语义）、H4（Session id 与记录写入值一致性）、H5（继承事件计数）都仍待宿主探针。path B 的 `label` 携带命令、`arguments` 作为命令来源属于待确认假设。
+- 因此在 H1–H5 结论出来前，本版本只能声称“机制已实现、两种形状的负例已覆盖”，不能声称 D1 真实证据链验收通过。已知后果：在只有路径 B 的真实宿主上，前台检查（记录无 `jobId`）无法提供结构化前台输出，绑定生效时会被 `ready.output-unverified` 拒绝——这是 fail-closed 的预期行为，不是通过。
+- 绑定关闭时仍只做原有核对（合同冻结命令／目录 + `output.log`↔`record.outputHash`），见「已知限制」。
 
 ## 已知限制
 
 以下是当前版本已确认、尚未用机制消除的限制。README 与验收记录都不得把它们当作已解决：
 
 1. **检查期间改动又改回无法发现。** 检查前后文件指纹相同只能证明两个时点一致，不能证明检查期间没有被改过再改回。检查期间 Worker 的修改类工具会被拦下，但检查命令本身或后台进程仍可能改文件；本版本不新增机制。
-2. **绑定关闭时输出只与记录自身哈希一致。** 绑定关闭（默认）时，ready 只核对 `output.log` 与记录 `outputHash`，不与 Session／Job 的权威输出比对，“输出哈希一致”只说明日志文件没有被改动。绑定生效时按「证据链核对」执行 A1-OUT；但权威输出的真实宿主格式仍依赖 H1–H5 结论，未取得前不得声称已验证。
+2. **绑定关闭时输出只与记录自身哈希一致。** 绑定关闭（默认）时，ready 只核对 `output.log` 与记录 `outputHash`，不与 Session／Job 的权威输出比对，“输出哈希一致”只说明日志文件没有被改动。绑定生效时按「证据链核对」执行 A1-OUT；路径 B（历史 Job 事件形状）没有结构化前台输出，前台证据会被 `ready.output-unverified` 拒绝。权威输出的真实宿主格式仍依赖 H1–H5 结论，未取得前不得声称已验证。
 3. **绑定关闭时手写记录可以通过。** 默认（绑定关闭）时，ready 只要求记录的 `argv`、`cwd` 与合同冻结的检查一致；状态目录可写的前提下，手写一条这两项都正确的记录不需要真实执行就能通过。只有打开绑定（合同字段或宿主配置）才会要求当前 Worker Session 中对应的原生调用。
 
 ## 开发和验收

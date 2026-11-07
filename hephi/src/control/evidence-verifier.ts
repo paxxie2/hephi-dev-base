@@ -30,7 +30,7 @@ function argumentsOf(data: any): any {
 }
 
 /**
- * Native bash result value carried by a Session `tool/result` message.
+ * Native bash result value carried by a Session `tool/result` message (path A).
  * FI-FIXME(H2): the host shape of this structured value (field name, exit-code form,
  * foreground/promoted kinds, truncation flags) has not been confirmed on a real host.
  */
@@ -43,6 +43,24 @@ type NativeResultValue = {
   signal?: string | null
   stdout?: { text?: string; truncated?: boolean }
   stderr?: { text?: string; truncated?: boolean }
+}
+
+/**
+ * `job/registered` / `job/settled` payload (path B, observed on historical real-host snapshots).
+ * FI-FIXME(H1/H2/H3): the current candidate plugin has not been re-probed; `label` carrying the
+ * shell command and the `arguments` fallback are assumptions to confirm on the host.
+ */
+type JobEventData = {
+  jobId?: string
+  owner?: string
+  kind?: string
+  name?: string
+  label?: string
+  command?: string
+  arguments?: unknown
+  toolCall?: { callId?: string; rootCallId?: string; name?: string; arguments?: unknown }
+  status?: string
+  detail?: string
 }
 
 /** Host `jobs.readAt` projection. Mirrored structurally because check-runner keeps its type private. */
@@ -66,59 +84,50 @@ type NativeEvidence = {
   bindingProblem?: string
   /** The Job terminal state cannot be read at ready time (cleared, foreign Session, no registry). */
   jobUnavailable?: string
-  /** A1-OUT: the authoritative output cannot be reconstructed (truncated, lossy, cleared). */
+  /** A1-OUT: the authoritative output cannot be reconstructed (truncated, lossy, cleared, path B). */
   outputProblem?: string
   /** A1-OUT: authoritative output text when it can be reconstructed. */
   output?: string
+  /** Non-fatal facts about the matched evidence (for example `workdir: absent` on path B). */
+  notes?: string[]
 }
 
 const truncated = (part: { truncated?: boolean } | undefined): boolean => part?.truncated === true
 
+function withNotes(evidence: NativeEvidence, notes: string[]): NativeEvidence {
+  return notes.length ? { ...evidence, notes: [...(evidence.notes ?? []), ...notes] } : evidence
+}
+
 /**
- * A1-BIND: reconstruct the native execution from the Session snapshot, using the contract's
- * frozen check definition (command, args, cwd) and the Session's structured result value.
- * A1-OUT: return the authoritative output so the verifier can re-hash it.
- *
- * FI-FIXME(H1-H5): the exact host encodings are pending the host probes:
- * H1 (tool/call arguments string and workdir), H2 (structured result value / exit-code form),
- * H3 (Job terminal view, detail exit-code format), H3a (jobs.readAt chunks and `lossy`),
- * H5 (inherited event count). Fixture-tested only until then.
+ * A1-BIND path A: the structured shape. Exactly one bash `tool/call` for the recorded inner call
+ * with the frozen command/directory, plus exactly one non-error `tool/result` carrying a
+ * structured `message.value` with a `kind`.
  */
-async function analyzeNativeEvidence(
-  snapshot: SessionSnapshot, sessionId: string, contract: ActivationContract, record: CheckRunRecord,
-  workspace: string, jobs: NativeJobs | undefined,
-): Promise<NativeEvidence> {
-  if (snapshot.session?.id !== sessionId) return { bindingProblem: 'Session snapshot belongs to a different Session' }
-  const own = snapshot.events.filter(event => event.seq >= snapshot.inheritedEventCount)
-  // The expected command and directory come from the frozen contract, not from the record's argv/cwd.
-  const definition = verificationOf(contract).checks.find(check => check.id === record.checkId)
-  if (!definition) return { bindingProblem: `${record.checkId}: no frozen check definition in the contract` }
-  let expectedCommand: string
-  let expectedCwd: string
-  try {
-    expectedCommand = checkCommand(contract.baseSha, definition.command, definition.args)
-    expectedCwd = await contained(workspace, definition.cwd)
-  } catch (error) {
-    return { bindingProblem: `${record.checkId}: cannot resolve the frozen check command or directory: ${error instanceof Error ? error.message : String(error)}` }
-  }
+function checkStructuredPath(
+  own: SessionSnapshot['events'], record: CheckRunRecord, expectedCommand: string, expectedCwd: string,
+): { matched: boolean; problem?: string; value?: NativeResultValue } {
   const calls = own.filter(event => event.type === 'tool/call' && event.data?.callId === record.innerCallId)
-  if (calls.length !== 1) return { bindingProblem: `${record.checkId}: expected one native call ${record.innerCallId} in this Session, found ${calls.length}` }
+  if (calls.length !== 1) return { matched: false, problem: `expected one native call ${record.innerCallId} in this Session, found ${calls.length}` }
   const call = calls[0].data
-  if (call.name !== 'bash') return { bindingProblem: `${record.checkId}: Session call ${record.innerCallId} is ${String(call.name)}, not bash` }
+  if (call.name !== 'bash') return { matched: false, problem: `Session call ${record.innerCallId} is ${String(call.name)}, not bash` }
   const args = argumentsOf(call)
   // Exact string comparison: the shell command is never parsed or normalised.
   if (args?.command !== expectedCommand || args?.workdir !== expectedCwd) {
-    return { bindingProblem: `${record.checkId}: Session call ${record.innerCallId} ran a different command or directory` }
+    return { matched: false, problem: `Session call ${record.innerCallId} ran a different command or directory` }
   }
   const results = own.filter(event => event.type === 'tool/result' && event.data?.message?.toolCallId === record.innerCallId)
-  if (results.length !== 1) return { bindingProblem: `${record.checkId}: expected one result for ${record.innerCallId} in this Session, found ${results.length}` }
+  if (results.length !== 1) return { matched: false, problem: `expected one result for ${record.innerCallId} in this Session, found ${results.length}` }
   const message = results[0].data.message
-  if (message.isError !== false) return { bindingProblem: `${record.checkId}: Session result for ${record.innerCallId} is an error` }
+  if (message.isError !== false) return { matched: false, problem: `Session result for ${record.innerCallId} is an error` }
   const value = message.value as NativeResultValue | undefined
   if (!value || typeof value !== 'object' || typeof value.kind !== 'string') {
-    return { bindingProblem: `${record.checkId}: Session result for ${record.innerCallId} carries no structured native value` }
+    return { matched: false, problem: `Session result for ${record.innerCallId} carries no structured native value` }
   }
-  // Branch on the Session result kind, never on the presence of record.jobId.
+  return { matched: true, value }
+}
+
+/** A1-BIND path A branch: branch on the structured Session result kind, never on record.jobId. */
+function structuredEvidence(value: NativeResultValue, record: CheckRunRecord, sessionId: string, jobs: NativeJobs | undefined): NativeEvidence {
   if (value.kind === 'foreground') {
     if (record.jobId !== undefined) return { bindingProblem: `${record.checkId}: foreground Session result but the record names a Job` }
     if (!Number.isInteger(value.exitCode)) return { bindingProblem: `${record.checkId}: foreground Session result has no exit code` }
@@ -140,33 +149,154 @@ async function analyzeNativeEvidence(
     if (value.jobId !== record.jobId) {
       return { bindingProblem: `${record.checkId}: Session result Job ${String(value.jobId)} differs from the recorded Job ${record.jobId}` }
     }
-    if (!jobs) return { jobUnavailable: `${record.checkId}: Job terminal state is unavailable (host Job registry is not mounted)` }
-    let view: NativeJobView | undefined
-    try { view = jobs.get(record.jobId, sessionId) } catch { view = undefined }
-    if (!view || typeof view.status !== 'string') {
-      return { jobUnavailable: `${record.checkId}: Job terminal state is unavailable (Job ${record.jobId} is cleared or belongs to another Session)` }
-    }
-    if (view.status !== 'completed') return { bindingProblem: `${record.checkId}: Job ${record.jobId} terminal status is ${view.status}` }
-    const code = jobDetailExitCode(view.detail)
-    if (code === undefined) return { bindingProblem: `${record.checkId}: Job ${record.jobId} detail is not the documented exit-code form` }
-    if (code !== 0 || record.exitCode !== 0) {
-      return { bindingProblem: `${record.checkId}: Job ${record.jobId} exit code ${code} does not confirm a successful check` }
-    }
-    let read: NativeJobReadView | undefined
-    try { read = jobs.readAt(record.jobId, 0, sessionId) as NativeJobReadView } catch { read = undefined }
-    if (!read || !Array.isArray(read.chunks) || typeof read.lossy !== 'boolean'
-      || read.chunks.some(chunk => !chunk || typeof chunk.at !== 'number' || typeof chunk.text !== 'string')) {
-      return { outputProblem: `${record.checkId}: Job ${record.jobId} output is not readable` }
-    }
-    if (read.lossy) return { outputProblem: `${record.checkId}: Job ${record.jobId} output was lost (lossy)` }
-    return { output: read.chunks.map(chunk => chunk.text).join('') }
+    return jobTerminalEvidence(record.jobId, sessionId, record, jobs)
   }
   return { bindingProblem: `${record.checkId}: unsupported Session result kind ${value.kind}` }
 }
 
+/** Shared Job checks: the recorded Job must be readable for this Session, completed, exit 0, output readable. */
+function jobTerminalEvidence(jobId: string, sessionId: string, record: CheckRunRecord, jobs: NativeJobs | undefined): NativeEvidence {
+  if (!jobs) return { jobUnavailable: `${record.checkId}: Job terminal state is unavailable (host Job registry is not mounted)` }
+  let view: NativeJobView | undefined
+  try { view = jobs.get(jobId, sessionId) } catch { view = undefined }
+  if (!view || typeof view.status !== 'string') {
+    return { jobUnavailable: `${record.checkId}: Job terminal state is unavailable (Job ${jobId} is cleared or belongs to another Session)` }
+  }
+  if (view.status !== 'completed') return { bindingProblem: `${record.checkId}: Job ${jobId} terminal status is ${view.status}` }
+  const code = jobDetailExitCode(view.detail)
+  if (code === undefined) return { bindingProblem: `${record.checkId}: Job ${jobId} detail is not the documented exit-code form` }
+  if (code !== 0 || record.exitCode !== 0) {
+    return { bindingProblem: `${record.checkId}: Job ${jobId} exit code ${code} does not confirm a successful check` }
+  }
+  let read: NativeJobReadView | undefined
+  try { read = jobs.readAt(jobId, 0, sessionId) as NativeJobReadView } catch { read = undefined }
+  if (!read || !Array.isArray(read.chunks) || typeof read.lossy !== 'boolean'
+    || read.chunks.some(chunk => !chunk || typeof chunk.at !== 'number' || typeof chunk.text !== 'string')) {
+    return { outputProblem: `${record.checkId}: Job ${jobId} output is not readable` }
+  }
+  if (read.lossy) return { outputProblem: `${record.checkId}: Job ${jobId} output was lost (lossy)` }
+  return { output: read.chunks.map(chunk => chunk.text).join('') }
+}
+
+/**
+ * A1-BIND path B: the historical real-host shape. The internal dispatch leaves one
+ * `job/registered` (toolCall.callId = innerCallId, rootCallId = outer callId) and one
+ * `job/settled` (status/detail carrying the textual exit code) but no `tool/call`/`tool/result`
+ * for the inner call and no structured `message.value`.
+ *
+ * Path B can only attest a Job terminal. When the record is not a Job record (no `jobId`, i.e. a
+ * foreground check on that host) there is no structured foreground output A1-OUT can trust, so
+ * the verifier denies it as output-unverified instead of guessing from text.
+ */
+function jobEventCommand(data: JobEventData): { command?: string; workdir?: string } {
+  const raw = data.arguments ?? data.toolCall?.arguments
+  if (raw !== undefined) {
+    let parsed: unknown = raw
+    if (typeof raw === 'string') {
+      try { parsed = JSON.parse(raw) } catch { parsed = undefined }
+    }
+    const args = parsed as { command?: unknown; workdir?: unknown } | undefined
+    if (args && typeof args.command === 'string') {
+      return { command: args.command, workdir: typeof args.workdir === 'string' ? args.workdir : undefined }
+    }
+  }
+  // The probe fixture and historical snapshots expose the shell command as the Job label.
+  if (typeof data.label === 'string') return { command: data.label }
+  if (typeof data.command === 'string') return { command: data.command }
+  return {}
+}
+
+function jobEventEvidence(
+  own: SessionSnapshot['events'], sessionId: string, record: CheckRunRecord,
+  expectedCommand: string, expectedCwd: string, jobs: NativeJobs | undefined,
+): NativeEvidence {
+  const registered = own.filter(event => event.type === 'job/registered' && event.data?.toolCall?.callId === record.innerCallId)
+  if (registered.length !== 1) return { bindingProblem: `${record.checkId}: expected one job/registered for ${record.innerCallId} in this Session, found ${registered.length}` }
+  const settled = own.filter(event => event.type === 'job/settled' && event.data?.toolCall?.callId === record.innerCallId)
+  if (settled.length !== 1) return { bindingProblem: `${record.checkId}: expected one job/settled for ${record.innerCallId} in this Session, found ${settled.length}` }
+  const start = registered[0].data as JobEventData
+  const done = settled[0].data as JobEventData
+  if (start.toolCall?.rootCallId !== record.callId) {
+    return { bindingProblem: `${record.checkId}: job/registered for ${record.innerCallId} belongs to another root call` }
+  }
+  const isBash = start.kind === 'bash' || start.name === 'bash' || start.toolCall?.name === 'bash'
+  if (!isBash) return { bindingProblem: `${record.checkId}: job/registered for ${record.innerCallId} is not a bash execution` }
+  const command = jobEventCommand(start)
+  // Historical bash calls carry no workdir (the command runs in the Session cwd). Accepting that
+  // is a documented weakening: record the fact instead of pretending the directory matched.
+  const notes = command.workdir === undefined ? ['workdir: absent'] : []
+  if (command.command === undefined) return withNotes({ bindingProblem: `${record.checkId}: job/registered for ${record.innerCallId} carries no parseable command` }, notes)
+  if (command.command !== expectedCommand) return withNotes({ bindingProblem: `${record.checkId}: Session Job for ${record.innerCallId} ran a different command` }, notes)
+  if (command.workdir !== undefined && command.workdir !== expectedCwd) {
+    return withNotes({ bindingProblem: `${record.checkId}: Session Job for ${record.innerCallId} ran in a different directory` }, notes)
+  }
+  const owner = typeof start.owner === 'string' ? start.owner : (typeof done.owner === 'string' ? done.owner : undefined)
+  if (owner !== undefined && owner !== sessionId) return withNotes({ bindingProblem: `${record.checkId}: job event for ${record.innerCallId} belongs to another Session` }, notes)
+  const startJobId = typeof start.jobId === 'string' ? start.jobId : undefined
+  const doneJobId = typeof done.jobId === 'string' ? done.jobId : undefined
+  if (startJobId !== undefined && doneJobId !== undefined && startJobId !== doneJobId) {
+    return withNotes({ bindingProblem: `${record.checkId}: job/registered and job/settled disagree on the Job id` }, notes)
+  }
+  const eventJobId = startJobId ?? doneJobId
+  if (record.jobId !== undefined) {
+    if (eventJobId === undefined) return withNotes({ bindingProblem: `${record.checkId}: Job events carry no Job id to match the record` }, notes)
+    if (eventJobId !== record.jobId) return withNotes({ bindingProblem: `${record.checkId}: Session Job ${eventJobId} differs from the recorded Job ${record.jobId}` }, notes)
+  }
+  if (done.status !== 'completed') return withNotes({ bindingProblem: `${record.checkId}: Job terminal status is ${String(done.status)}` }, notes)
+  const code = jobDetailExitCode(typeof done.detail === 'string' ? done.detail : undefined)
+  if (code === undefined) return withNotes({ bindingProblem: `${record.checkId}: Job detail is not the documented exit-code form` }, notes)
+  if (code !== record.exitCode) return withNotes({ bindingProblem: `${record.checkId}: Session result exit code ${code} differs from the record` }, notes)
+  if (code !== 0) return withNotes({ bindingProblem: `${record.checkId}: Job exit code ${code} does not confirm a successful check` }, notes)
+  if (record.jobId === undefined) {
+    // Foreground record on a real host that only leaves Job events: no structured stdout/stderr.
+    return withNotes({ outputProblem: `${record.checkId}: job/registered+job/settled evidence carries no structured foreground output and the record names no Job` }, notes)
+  }
+  return withNotes(jobTerminalEvidence(record.jobId, sessionId, record, jobs), notes)
+}
+
+/**
+ * A1-BIND: reconstruct the native execution from the Session snapshot, using the contract's
+ * frozen check definition (command, args, cwd) and one of two mutually exclusive Session shapes:
+ * path A (structured `tool/call` + `tool/result.message.value`) or path B (historical real-host
+ * `job/registered` + `job/settled` textual exit code). A1-OUT: return the authoritative output.
+ *
+ * FI-FIXME(H1-H5): the exact host encodings are pending the host probes:
+ * H1 (tool/call or Job arguments string and workdir), H2 (structured result value / exit-code
+ * form), H3 (Job registered/settled shape, terminal view, detail exit-code format), H3a
+ * (jobs.readAt chunks and `lossy`), H5 (inherited event count). Fixture-tested only until then.
+ */
+async function analyzeNativeEvidence(
+  snapshot: SessionSnapshot, sessionId: string, contract: ActivationContract, record: CheckRunRecord,
+  workspace: string, jobs: NativeJobs | undefined,
+): Promise<NativeEvidence> {
+  if (snapshot.session?.id !== sessionId) return { bindingProblem: 'Session snapshot belongs to a different Session' }
+  const own = snapshot.events.filter(event => event.seq >= snapshot.inheritedEventCount)
+  // The expected command and directory come from the frozen contract, not from the record's argv/cwd.
+  const definition = verificationOf(contract).checks.find(check => check.id === record.checkId)
+  if (!definition) return { bindingProblem: `${record.checkId}: no frozen check definition in the contract` }
+  let expectedCommand: string
+  let expectedCwd: string
+  try {
+    expectedCommand = checkCommand(contract.baseSha, definition.command, definition.args)
+    expectedCwd = await contained(workspace, definition.cwd)
+  } catch (error) {
+    return { bindingProblem: `${record.checkId}: cannot resolve the frozen check command or directory: ${error instanceof Error ? error.message : String(error)}` }
+  }
+  const jobEventsPresent = own.some(event => (event.type === 'job/registered' || event.type === 'job/settled')
+    && event.data?.toolCall?.callId === record.innerCallId)
+  const structured = checkStructuredPath(own, record, expectedCommand, expectedCwd)
+  if (structured.matched && jobEventsPresent) {
+    return { bindingProblem: `${record.checkId}: both structured tool/result evidence and job/registered+job/settled evidence are present for ${record.innerCallId}; refusing to choose a shape` }
+  }
+  if (structured.matched) return structuredEvidence(structured.value!, record, sessionId, jobs)
+  if (jobEventsPresent) return jobEventEvidence(own, sessionId, record, expectedCommand, expectedCwd, jobs)
+  return { bindingProblem: `${record.checkId}: no native evidence for ${record.innerCallId} in this Session (structured path: ${structured.problem ?? 'unmatched'}; job events: none present)` }
+}
+
 /**
  * A record is bound only to this Session's own bash call matching the frozen check, with a
- * successful Session result (foreground exit 0, or a completed Job with exit 0).
+ * successful Session result (structured foreground exit 0, a completed Job exit 0 via the
+ * structured value, or a completed Job reported by job/registered+job/settled).
  * Returns the first binding problem, if any; Job-unavailable and output problems are covered
  * by `analyzeNativeEvidence` for the verifier's A1-OUT pass.
  */
@@ -279,13 +409,16 @@ export function createEvidenceVerifier(options: {
         const snapshot = await options.readSession(sessionId)
         for (const r of used) {
           const evidence = await analyzeNativeEvidence(snapshot, sessionId, contract, r, workspace, options.jobs)
-          if (evidence.jobUnavailable) throw new Error(`evidence is not bound to a native execution: ${evidence.jobUnavailable}`)
-          if (evidence.bindingProblem) throw new Error(`evidence is not bound to a native execution: ${evidence.bindingProblem}`)
+          // Non-fatal shape facts (for example `workdir: absent` on the job-event path) are kept
+          // in the denial reason so the operator can see what could not be compared.
+          const notes = evidence.notes && evidence.notes.length > 0 ? ` (${evidence.notes.join('; ')})` : ''
+          if (evidence.jobUnavailable) throw new Error(`evidence is not bound to a native execution: ${evidence.jobUnavailable}${notes}`)
+          if (evidence.bindingProblem) throw new Error(`evidence is not bound to a native execution: ${evidence.bindingProblem}${notes}`)
           // A1-OUT: the record's output hash must also match the authoritative Session/Job
           // output. Unavailable authoritative output is a denial, never a silent downgrade.
-          if (evidence.outputProblem) throw new Error(`authoritative check output is unavailable: ${evidence.outputProblem}`)
-          if (evidence.output === undefined) throw new Error(`authoritative check output is unavailable: ${r.checkId}: no native output`)
-          if (sha256(evidence.output) !== r.outputHash) throw new Error(`authoritative check output differs from the record: ${r.checkId}`)
+          if (evidence.outputProblem) throw new Error(`authoritative check output is unavailable: ${evidence.outputProblem}${notes}`)
+          if (evidence.output === undefined) throw new Error(`authoritative check output is unavailable: ${r.checkId}: no native output${notes}`)
+          if (sha256(evidence.output) !== r.outputHash) throw new Error(`authoritative check output differs from the record: ${r.checkId}${notes}`)
         }
       }
       if (contract.requirePullRequest) {

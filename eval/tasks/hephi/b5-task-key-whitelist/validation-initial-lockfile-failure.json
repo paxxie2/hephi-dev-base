@@ -1,0 +1,21 @@
+{
+  "mode": "full",
+  "taskDir": "/Users/zm/dsh-instances/experiment/work/bline-prep-2/eval/tasks/hephi/b5-task-key-whitelist",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "pnpm-lock.yaml",
+      "found": false,
+      "ok": false
+    }
+  },
+  "ok": false,
+  "error": "environment.offline=true 但 lockfile 不存在于 base checkout 或任务目录：pnpm-lock.yaml"
+}

@@ -1,0 +1,12 @@
+diff --git a/eval/b5-plan.mjs b/eval/b5-plan.mjs
+--- a/eval/b5-plan.mjs
++++ b/eval/b5-plan.mjs
+@@ -96,6 +96,8 @@
+   const seen = new Set()
+   for (const entry of raw) {
+     if (!entry || typeof entry !== 'object') throw new UsageError('each task must be an object with taskId/repo/category')
++    const unknownKeys = Object.keys(entry).filter(key => !["taskId", "repo", "category"].includes(key))
++    if (unknownKeys.length) throw new UsageError(`unknown task fields: ${unknownKeys.join(", ")}`)
+     const taskId = entry.taskId
+     if (typeof taskId !== 'string' || !SAFE_TASK_ID.test(taskId)) throw new UsageError(`invalid taskId: ${String(taskId)}`)
+     if (seen.has(taskId)) throw new UsageError(`duplicate taskId: ${taskId}`)

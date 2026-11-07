@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "taskId": "b5-task-key-whitelist",
+  "repo": "hephi",
+  "base": "9fa8598f2beabe179b28733e484275c3775279d3",
+  "category": "new-feature",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "eval/b5-plan.mjs"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "Training cutoff / contamination unknown; no decontamination claim; fixture only."
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "hephi/pnpm-lock.yaml",
+    "commandsMustMatchOffline": true
+  }
+}

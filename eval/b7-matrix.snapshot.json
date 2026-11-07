@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "eval/b7-matrix.mjs",
+  "generatedAt": "2026-11-07T15:27:20.606Z",
+  "preregLocked": false,
+  "notes": [
+    "This file is a B7 preparation matrix, not an experiment result: no run was executed, no host was accessed and no model was called.",
+    "sampleSizeStatus is fixed to \"pending-prereg\": per repo/model sample sizes must be locked in eval/PREREG.md §6 (D-4) before any run. This tool does not compute or invent any sample size.",
+    "No eligible combination: at least one P10 environment or checks-config precondition is missing for every supplied repository."
+  ],
+  "source": {
+    "repos": "eval/b7-data.json",
+    "models": "eval/b7-models.json"
+  },
+  "targets": {
+    "minRepos": 3,
+    "minModels": 2,
+    "reposMet": true,
+    "modelsMet": true
+  },
+  "totalCombinations": 6,
+  "eligibleCombinations": 0,
+  "blockedCombinations": 6,
+  "repos": [
+    {
+      "repoId": "dubbo",
+      "language": "java",
+      "stack": "Java / Maven",
+      "environmentReady": false,
+      "checksConfig": false,
+      "offlineBuild": false,
+      "notes": "Local Git base 42bd630514371db37b09afb36dae7190a82662d6 verified. docs/p10-offline-build.md is historical evidence only; current offline build/checks/environment not verified."
+    },
+    {
+      "repoId": "hephi",
+      "language": "typescript",
+      "stack": "Node / TypeScript",
+      "environmentReady": false,
+      "checksConfig": false,
+      "offlineBuild": false,
+      "notes": "Local Git base 9fa8598f2beabe179b28733e484275c3775279d3 verified; focused fixture is not full offline build or host checks evidence; current matrix readiness unverified."
+    },
+    {
+      "repoId": "site-pnl-diagnosis",
+      "language": "python",
+      "stack": "Python backend / TypeScript frontend",
+      "environmentReady": false,
+      "checksConfig": false,
+      "offlineBuild": false,
+      "notes": "Local Git base 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f verified; stdlib fixture does not prove backend/frontend offline build or host checks readiness."
+    }
+  ],
+  "models": [
+    {
+      "modelId": "deepseek-flash",
+      "provider": "deepseek",
+      "notes": "API model name declared by current DeepSeek Harness tool catalog; candidate only, no host or model experiment performed."
+    },
+    {
+      "modelId": "gpt-6-astra",
+      "provider": "openai",
+      "notes": "Available model name in current agent tool catalog; candidate only, host access and experiment capability unverified."
+    }
+  ],
+  "combos": [
+    {
+      "comboId": "b7-dubbo-deepseek-flash",
+      "repo": "dubbo",
+      "model": "deepseek-flash",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    },
+    {
+      "comboId": "b7-dubbo-gpt-6-astra",
+      "repo": "dubbo",
+      "model": "gpt-6-astra",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    },
+    {
+      "comboId": "b7-hephi-deepseek-flash",
+      "repo": "hephi",
+      "model": "deepseek-flash",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    },
+    {
+      "comboId": "b7-hephi-gpt-6-astra",
+      "repo": "hephi",
+      "model": "gpt-6-astra",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    },
+    {
+      "comboId": "b7-site-pnl-diagnosis-deepseek-flash",
+      "repo": "site-pnl-diagnosis",
+      "model": "deepseek-flash",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    },
+    {
+      "comboId": "b7-site-pnl-diagnosis-gpt-6-astra",
+      "repo": "site-pnl-diagnosis",
+      "model": "gpt-6-astra",
+      "environmentReady": false,
+      "checksReady": false,
+      "eligible": false,
+      "blockers": [
+        "environment-not-ready",
+        "offline-build-not-ready",
+        "checks-config-not-ready"
+      ],
+      "sampleSizeStatus": "pending-prereg"
+    }
+  ]
+}

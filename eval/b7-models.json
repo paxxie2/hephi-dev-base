@@ -1,0 +1,12 @@
+[
+  {
+    "modelId": "gpt-6-astra",
+    "provider": "openai",
+    "notes": "Available model name in current agent tool catalog; candidate only, host access and experiment capability unverified."
+  },
+  {
+    "modelId": "deepseek-flash",
+    "provider": "deepseek",
+    "notes": "API model name declared by current DeepSeek Harness tool catalog; candidate only, no host or model experiment performed."
+  }
+]

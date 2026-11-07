@@ -1,0 +1,12 @@
+PASS dry-run 结构校验（合成示例） :: ok
+PASS 完整双向校验：base 失败 / 参考修复通过 / 3 次一致 :: base codes=[1,1,1] ref codes=[0,0,0] scope=["src/calc.mjs"]
+PASS 负例：隐藏测试在 base 上通过 → 必须判任务无效 :: [0,0,0]
+PASS 负例：参考修复越出 allowedFiles → 必须判任务无效 :: {"allowedFiles":["src/**"],"changedFiles":["src/calc.mjs","notes.txt"],"outside":["notes.txt"],"ok":false}
+PASS environment 合法 offline：结构通过且完整校验通过 :: [] {"offline":true,"lockfile":"package-lock.json","found":true,"ok":true}
+PASS environment offline 但缺 lockfile → 完整校验 FAIL :: {"offline":true,"lockfile":"package-lock.json","found":false,"ok":false}
+PASS environment offline 但 hidden-test 含 npm install → 结构校验 FAIL 并列出命令 :: ["environment.offline=true 但发现疑似联网命令（hidden-test.sh）：npm install lodash"]
+PASS 未声明 environment → 不拦截（行为不变） :: dry.environment=null full=true
+PASS environment lockfile 绝对路径 → 结构校验 FAIL :: ["environment.lockfile 必须是 workspace-relative 路径（lockfile must be workspace-relative: /tmp/package-lock.json）"]
+PASS environment lockfile ../ 逃逸 → 结构校验 FAIL :: ["environment.lockfile 必须是 workspace-relative 路径（lockfile must not escape the workspace: ../outside/package-lock.json）"]
+PASS environment lockfile 合法相对路径 → 结构校验 PASS :: []
+SELF-TEST: PASS

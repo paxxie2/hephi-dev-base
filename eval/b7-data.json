@@ -1,0 +1,29 @@
+[
+  {
+    "repoId": "hephi",
+    "language": "typescript",
+    "stack": "Node / TypeScript",
+    "environmentReady": false,
+    "checksConfig": false,
+    "offlineBuild": false,
+    "notes": "Local Git base 9fa8598f2beabe179b28733e484275c3775279d3 verified; focused fixture is not full offline build or host checks evidence; current matrix readiness unverified."
+  },
+  {
+    "repoId": "site-pnl-diagnosis",
+    "language": "python",
+    "stack": "Python backend / TypeScript frontend",
+    "environmentReady": false,
+    "checksConfig": false,
+    "offlineBuild": false,
+    "notes": "Local Git base 1e166fbe2217ac378e5bb7062cd34a2da1e75e6f verified; stdlib fixture does not prove backend/frontend offline build or host checks readiness."
+  },
+  {
+    "repoId": "dubbo",
+    "language": "java",
+    "stack": "Java / Maven",
+    "environmentReady": false,
+    "checksConfig": false,
+    "offlineBuild": false,
+    "notes": "Local Git base 42bd630514371db37b09afb36dae7190a82662d6 verified. docs/p10-offline-build.md is historical evidence only; current offline build/checks/environment not verified."
+  }
+]

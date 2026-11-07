@@ -1,0 +1,61 @@
+PASS self-test all-ready: 3 repos x 2 models = 6 combos
+PASS self-test all-ready: every combo is eligible
+PASS self-test combo rows carry the required fields
+PASS self-test sampleSizeStatus is fixed to pending-prereg
+PASS self-test output is not an experiment result (preregLocked=false + notes)
+PASS self-test B7 target 3 repos / 2 models is met and recorded
+PASS self-test comboIds are unique and deterministic
+PASS self-test missing environment: only that repo blocked
+PASS self-test missing offline build: environmentReady=false + blocker
+PASS self-test missing checks config: checksReady=false + blocker
+PASS self-test blockers use only the documented vocabulary
+PASS self-test blockedCombinations = total - eligible
+PASS self-test below-target inventory is flagged in notes
+PASS self-test input order does not change the matrix
+PASS self-test combos sorted by (repo, model)
+PASS self-test different generatedAt only changes generatedAt
+PASS self-test rejects duplicate repoId
+PASS self-test rejects duplicate modelId
+PASS self-test rejects empty repos
+PASS self-test rejects empty models
+PASS self-test rejects unknown repo field
+PASS self-test rejects unknown top-level repos field
+PASS self-test rejects invalid language enum
+PASS self-test rejects non-boolean environmentReady
+PASS self-test rejects unknown model field
+PASS self-test rejects invalid modelId
+PASS self-test CLI --out writes a parseable matrix with source paths
+PASS self-test CLI is deterministic apart from generatedAt
+PASS self-test --dry-run prints the matrix and writes nothing
+PASS self-test rejects invalid input: unknown argument (exit 2)
+PASS self-test rejects invalid input: missing --repos (exit 2)
+PASS self-test rejects invalid input: missing --out without --dry-run (exit 2)
+PASS self-test rejects invalid input: unreadable repos file (exit 2)
+PASS self-test rejects invalid input: duplicate repoId (exit 2)
+PASS self-test rejects invalid input: unknown repo field (exit 2)
+PASS self-test rejects invalid input: empty models (exit 2)
+
+PASS: 36 assertions (b7-matrix self-test)
+matrix written: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b7-matrix-self-QNCjTn/matrix-a.json (6 combos, eligible=6/6, sampleSizeStatus=pending-prereg)
+matrix written: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b7-matrix-self-QNCjTn/matrix-b.json (6 combos, eligible=6/6, sampleSizeStatus=pending-prereg)
+unknown argument: --bogus
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+--repos is required
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+--out is required unless --dry-run is used
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+cannot read --repos file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b7-matrix-self-QNCjTn/missing.json: ENOENT: no such file or directory, open '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b7-matrix-self-QNCjTn/missing.json'
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+duplicate repoId: dubbo
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+repo dubbo: unknown field "extra"; allowed fields: repoId, language, stack, environmentReady, checksConfig, offlineBuild, notes
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test
+models must be a non-empty array (or { "models": [...] })
+usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)
+       node eval/b7-matrix.mjs --self-test

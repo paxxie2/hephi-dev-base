@@ -1,0 +1,12 @@
+[
+  {
+    "taskId": "previous-window-order",
+    "repo": "site-pnl-diagnosis",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "b5-task-key-whitelist",
+    "repo": "hephi",
+    "category": "new-feature"
+  }
+]

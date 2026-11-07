@@ -1,0 +1,58 @@
+PASS self-test same seed yields identical plan
+PASS self-test different seed changes the order
+PASS self-test plan contains seed and generation time
+PASS self-test run entries carry runId/group/order/repeat
+PASS self-test runIds are unique and ordered
+PASS self-test groups run adjacently per task (interleaving)
+PASS self-test repeat fraction selects 20% of tasks
+PASS self-test repeated tasks get one extra run per group
+PASS self-test primary runs equal taskCount × groups
+PASS self-test repeat fraction 0 and 1 boundaries
+PASS self-test staged experiment can use native+staged
+PASS self-test CLI --out writes a parseable plan
+PASS self-test CLI same seed produces the same plan
+PASS self-test --dry-run prints the plan and writes nothing
+PASS self-test rejects invalid input: unknown argument (exit 2)
+PASS self-test rejects invalid input: missing --seed (exit 2)
+PASS self-test rejects invalid input: bad seed (exit 2)
+PASS self-test rejects invalid input: bad repeat fraction (exit 2)
+PASS self-test rejects invalid input: unknown group (exit 2)
+PASS self-test rejects invalid input: staged mixed with off (exit 2)
+PASS self-test rejects invalid input: missing --out without --dry-run (exit 2)
+PASS self-test rejects invalid input: duplicate taskId (exit 2)
+PASS self-test rejects invalid input: bad category (exit 2)
+PASS self-test rejects invalid input: unreadable tasks file (exit 2)
+
+PASS: 24 assertions (b5-plan self-test)
+plan written: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b5-plan-self-38F3n5/plan-a.json (24 runs, seed=20261107, repeats=2)
+plan written: /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b5-plan-self-38F3n5/plan-b.json (24 runs, seed=20261107, repeats=2)
+unknown argument: --bogus
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+--seed is required
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+--seed must be an integer, got "abc"
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+--repeat-fraction must be between 0 and 1, got "1.5"
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+unknown group "other"; allowed: off, native, staged
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+staged must not be mixed with off (staged is a separate Q3 experiment)
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+--out is required unless --dry-run is used
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+duplicate taskId: dup
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+task a-task: category must be one of defect-fix, new-feature, behavior-preserving-refactor, cross-module, staged-suitable
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test
+cannot read --tasks file /var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b5-plan-self-38F3n5/missing.json: ENOENT: no such file or directory, open '/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/b5-plan-self-38F3n5/missing.json'
+usage: node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+       node eval/b5-plan.mjs --self-test

@@ -1,6 +1,6 @@
 # S4 验收记录（A 线，2026-11-07）
 
-> 状态：**partial（F1/F2–F5 已修复合并；**S3 真实部署已于 2026-11-08 完成**；E5/E9 blocked；E1-off partial；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
+> 状态：**partial（F1/F2–F5、deploy UX 均已修复合并；**S3 真实部署已于 2026-11-08 完成**；E5/E9 blocked；E1-off partial；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
 > 未执行/未验证项显式列出。**不是最终验收通过证明；人类负责人签收前不得记 A5/D5 为通过。**
 >
 > 更新（2026-11-08 02:20）：main 为 **`bc21cac`**；S3 已把该提交部署到宿主 B（见 §2b）。本轮仅更新对象/状态与 S1 标注，
@@ -10,11 +10,15 @@
 
 | 项 | 值 |
 | --- | --- |
-| main（代码） | **`0c0b7ac069c5c424c95915e2948695f652caafa3`**（PR37 `→b1a70bd`、PR38 F1 `→d9d70b1`、PR33 `→5176df5`、PR39 `→62ea0b9`、PR40 F2–F5 `→0c0b7ac`，均 fast-forward 合并） |
+| main（代码） | **`fc03cf0160ca3da1b56ea420ee2fc1fe6f900032`**（PR37/38/33/39/40 后，PR44/47/48/51 等亦已合并；部署构建仍为 `bc21cac`，后续提交均为 docs/eval/部署脚本，不改插件运行时代码） |
 | 历史验收时点 | 证据采集于旧 main `9fa8598f2beabe179b28733e484275c3775279d3`（PR30 merge `2c603c6` + PR31 docs）；本次 rebase 未重跑验收 |
 | 实载构建 | **`bc21cac`**（2026-11-08 02:16 由 S3 部署；host pid 44914；activation markers index/tools 均为 bc21cac；已保持 paused 后恢复接单） |
 | 部署记录 | `deploy-20261107T141210Z-57984.json`，sha256 `804ba302d373da5b2613d3a6a986180149715b8c35d9d76844e4c3df060d7454` |
 | 宿主 | B `http://127.0.0.1:3083`，DSH 0.2.1-rc.5，Node v26.1.0（宿主运行）/v22.19.0（本地验证工具） |
+
+## 2a. 最新 S1 预检（2026-11-08 03:0x，main `2eb05b1`）
+
+`preflight.mjs --ref 2eb05b1` → **PASS**：`pnpm check` exit 0（403s）、假宿主套件 exit 0（379s）、effects-db 0s；报告归档 `external-review/evidence/roadmap95/s1-latest-main-2eb05b1.{json,log}`。此后 main 追加的 `93bfd06`/`fc03cf0`（B4/B6 工具、deploy UX 修复）为 eval/docs/部署脚本变更；插件运行代码未变。
 
 ## 2b. S3 真实部署（2026-11-08 02:16，PASS）
 
@@ -23,9 +27,10 @@
 - 记录：`<instance>/logs/deploy-20261107T181639Z-43593.json`，sha256 `bb2dd8b6d6c9dd240d30df261afe06c5ef949c0d8488854b22d3ab0f45dc69b5`。
 - 恢复：核对后 `POST executor/pause {paused:false}` → paused=false、10/10 ready、load 0/0。
 - S3 smoke（P0-4）：部署后创建 Issue #65 → Ticket `23c3eab1…` → run `6bda58a8…` **passed/exit0/pluginCommit=bc21cac** → ready.pass → PR #66（open，未合并）；随后用 main 版探针复跑 A2：H1 pass(path-B)、H2 fail、H4 pass、H3/H5/H6 manual。
-- 过程发现（待修脚本 UX）：① 未传 `--hephi` 时脚本默认 `$instance/hephi`（非实载路径）→ pointerBefore/current 为空、激活必然失败且回滚报 FATAL；② 旧 e490 是 legacy meta，正向部署的 previous 校验也要求 `--allow-legacy-rollback`（恢复目标语义应自动接受 legacy，或文档写清必须显式传）。这两点已造成三次失败尝试（记录保留），第 4 次带显式参数成功。
+- **deploy UX 已修复**：PR #51 合入（`--hephi` 早期校验、legacy previous 自动作为恢复目标并记录 `previousLegacy`/`activation=unverified-legacy`、target 仍严格 v2；假宿主 302 断言、`pnpm check` 545 tests 全绿）。
+- 过程发现（原始失败，已由 PR51 修复）：① 未传 `--hephi` 时脚本默认 `$instance/hephi`（非实载路径）→ pointerBefore/current 为空、激活必然失败且回滚报 FATAL；② 旧 e490 是 legacy meta，正向部署的 previous 校验也要求 `--allow-legacy-rollback`（恢复目标语义应自动接受 legacy，或文档写清必须显式传）。这两点已造成三次失败尝试（记录保留），第 4 次带显式参数成功。
 
-## 2. S1 预检（**旧 main@9fa8598**；新 main 待重跑）
+## 2. S1 预检（旧 main@9fa8598；最新一次在 `2eb05b1` 上 PASS：check 403s / 假宿主 379s / effects 0s；`fc03cf0` 相对其仅 docs/eval/部署脚本变更）
 
 > ⚠️ 本节是**对 `9fa8598` 的 S1 预检**，不是对当前 `d9d70b1` 的复跑。合并 PR37/PR38 后代码已变化
 > （尤其 F1 修复与 host 脚本），**应在 `d9d70b1` 上重跑 S1**；重跑前不得把本节当作新 main 的预检结论。

@@ -5,6 +5,7 @@ import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
 import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
+import { authorizationProblem } from './discipline.js'
 import { pluginCommit, pluginVersion } from '../version.js'
 
 export type ExecutionMode = 'native' | 'staged'
@@ -19,7 +20,10 @@ export type EnforcementMode = 'enforce' | 'shadow'
 export type EvidencePolicy = { requireSessionBinding: boolean }
 
 /** The format this plugin writes. Older formats are read-only compatible; unknown versions are rejected. */
-export const ACTIVATION_VERSION = 3
+export const ACTIVATION_VERSION = 4
+
+/** Evidence policy field exists from this contract version (A1-K5). */
+export const EVIDENCE_POLICY_SINCE = 3
 
 /** Contract formats written before canonical hashing. Their stored hash uses the raw JSON key order. */
 export const LEGACY_ACTIVATION_VERSION = 1
@@ -144,8 +148,7 @@ export function executionModeOf(contract: ActivationContract): ExecutionMode {
  * for v1/v2 (and unversioned) contracts undefined means "host configuration decides".
  */
 export function evidenceOf(contract: ActivationContract): EvidencePolicy | undefined {
-  if (contract.version !== ACTIVATION_VERSION) return undefined
-  return contract.evidence
+  return typeof contract.version === 'number' && contract.version >= EVIDENCE_POLICY_SINCE ? contract.evidence : undefined
 }
 
 /**
@@ -339,6 +342,9 @@ export async function prepareActivation(env: NodeJS.ProcessEnv = process.env): P
     evidence: { requireSessionBinding },
     ...(task ? { task } : {}),
   }
+  // C1: an authorization never widens the contract scope or the authorizing item's paths.
+  const authorizationIssue = authorizationProblem({ allowedPaths: base.allowedPaths, task })
+  if (authorizationIssue) throw new Error(`invalid HEPHI task authorizations: ${authorizationIssue}`)
   const contract: ActivationContract = { ...base, contractHash: contractHash(base) }
   const filePath = activationPath(stateDir, ticketId)
   const temporary = `${filePath}.tmp-${process.pid}-${Date.now()}`
@@ -367,12 +373,13 @@ const ACTIVATION_FIELDS = new Set([
   'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'evidence', 'task', 'contractHash',
 ])
 
-/** Formats that use the canonical (sorted-key) hash: version 2 and version 3 share the same algorithm. */
+/** Formats that use the canonical (sorted-key) hash: versions 2, 3 and 4 share the same algorithm. */
+const CANONICAL_ACTIVATION_VERSIONS = new Set<unknown>([2, 3, ACTIVATION_VERSION])
 function usesCanonicalHash(version: unknown): boolean {
-  return version === 2 || version === ACTIVATION_VERSION
+  return CANONICAL_ACTIVATION_VERSIONS.has(version)
 }
 
-const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSION, 2, ACTIVATION_VERSION])
+const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSION, 2, 3, ACTIVATION_VERSION])
 
 /**
  * The evidence policy is part of version 3 only. Version 1/2 writers never emit it, so an
@@ -382,8 +389,8 @@ const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSIO
 function contractEvidenceProblem(contractRecord: Record<string, unknown>): string | undefined {
   const version = contractRecord.version
   const evidence = contractRecord.evidence
-  if (version === ACTIVATION_VERSION) {
-    if (evidence === undefined) return 'version 3 requires evidence.requireSessionBinding'
+  if (typeof version === 'number' && version >= EVIDENCE_POLICY_SINCE) {
+    if (evidence === undefined) return `${String(version)} requires evidence.requireSessionBinding`
   } else if (evidence !== undefined) {
     return `unsupported HEPHI activation field for this version: evidence (version ${String(version)})`
   }
@@ -405,7 +412,7 @@ function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: stri
 }
 
 /**
- * Current format is 3. Version 1 and version 2 contracts stay readable.
+ * Current format is 4. Version 1, 2 and 3 contracts stay readable.
  * Anything else is rejected with an explicit migration instruction.
  */
 function supportedVersion(value: unknown, filePath: string): void {
@@ -447,6 +454,8 @@ function parseActivation(text: string, filePath: string): ActivationContract {
     for (const item of task.acceptance) {
       if (!verification.checks.some(check => check.id === item.check)) throw new Error(`HEPHI activation contract acceptance ${item.id} refers to unknown check ${item.check}`)
     }
+    const authorizationIssue = authorizationProblem({ allowedPaths: base.allowedPaths, task })
+    if (authorizationIssue) throw new Error(`invalid HEPHI activation contract: ${authorizationIssue} (${filePath})`)
   }
   return parsed as ActivationContract
 }

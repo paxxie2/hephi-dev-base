@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
+import type { AssetOp, TaskCard } from '../contracts/task.js'
 import type { ActivationContract } from './activation.js'
 import { allowedPath } from './repository.js'
 
@@ -12,7 +13,7 @@ export function inScope(contract: ActivationContract, file: string): boolean {
   return !contract.task || contract.task.acceptance.some(item => allowedPath(file, item.paths))
 }
 
-export type ChangeSummary = { files: string[]; changedLines: number; deleted: string[] }
+export type ChangeSummary = { files: string[]; changedLines: number; deleted: string[]; added: string[] }
 
 export async function summarizeChanges(workspace: string, baseSha: string): Promise<ChangeSummary> {
   const files = (await git(workspace, 'diff', '--name-only', '-z', '--no-renames', baseSha, '--')).split('\0').filter(Boolean)
@@ -23,26 +24,160 @@ export async function summarizeChanges(workspace: string, baseSha: string): Prom
     changedLines += added === '-' ? 1 : Number(added) + Number(removed)
   }
   const deleted = (await git(workspace, 'diff', '--name-only', '-z', '--no-renames', '--diff-filter=D', baseSha, '--')).split('\0').filter(Boolean)
-  return { files, changedLines, deleted }
+  const added = (await git(workspace, 'diff', '--name-only', '-z', '--no-renames', '--diff-filter=A', baseSha, '--')).split('\0').filter(Boolean)
+  return { files, changedLines, deleted, added }
+}
+
+// ---- C1 protected acceptance assets ----------------------------------------
+//
+// Effective protected list = project default (verification.protectedAssets) ∪ task card
+// `protectedAssets`; the task card can only add, never shrink the project list.
+// Priority (must be checked in this order, later rules never override earlier ones):
+//   1. allowedPaths: an authorization never widens the contract scope;
+//   2. the authorizing acceptance item's own `paths`;
+//   3. exact acceptance item + exact file + exact operation (no cross-item/file/op inheritance);
+//   4. unauthorized deletion of a protected asset is denied;
+//   5. unauthorized modification/migration of a protected asset is denied;
+//   6. modification of a non-protected existing test is record-only (`asset.modified`);
+//   7. an authorization hit is recorded for audit (`asset.authorized`);
+//   8. none of this changes ready/check semantics beyond those denials.
+export type AssetAuthorization = { path: string; op: AssetOp }
+export type AssetRecord = {
+  rule: 'asset.authorized' | 'asset.modified'
+  path: string
+  op: 'modify' | 'delete'
+  /** Acceptance item that authorized the change; absent for record-only asset.modified. */
+  acceptance?: string
+  detail: string
+}
+
+export function protectedAssetsOf(contract: ActivationContract): string[] {
+  const project = contract.verification?.protectedAssets ?? []
+  const task = contract.task?.protectedAssets ?? []
+  return [...project, ...task]
+}
+
+export function isProtectedAsset(contract: ActivationContract, file: string): boolean {
+  return allowedPath(file, protectedAssetsOf(contract))
+}
+
+/**
+ * C1 authorization match. The file must be inside contract.allowedPaths and the
+ * acceptance item's own `paths`; the authorization must live in that same item and name
+ * exactly this file. `modify` never covers `delete`/`migrate` and `migrate` never covers
+ * a plain `delete` (a migration needs a replacement file in the same diff).
+ */
+export function authorizedAcceptance(contract: ActivationContract, file: string, op: AssetOp): string | undefined {
+  if (!allowedPath(file, contract.allowedPaths)) return undefined
+  for (const item of contract.task?.acceptance ?? []) {
+    if (!allowedPath(file, item.paths)) continue
+    for (const authorization of item.authorizes ?? []) {
+      if (authorization.path !== file) continue
+      if (authorization.op !== op) continue
+      return item.id
+    }
+  }
+  return undefined
+}
+
+/** A protected asset deletion is allowed by `delete`, or by `migrate` when a replacement file exists. */
+function deletedAcceptance(contract: ActivationContract, file: string, changes: ChangeSummary): string | undefined {
+  const deleted = authorizedAcceptance(contract, file, 'delete')
+  if (deleted) return deleted
+  const migrated = authorizedAcceptance(contract, file, 'migrate')
+  if (!migrated) return undefined
+  return changes.added.length > 0 ? migrated : undefined
+}
+
+/** C1 protected-asset problems only (used by the ready-time shell-bypass recheck). */
+export function assetProblems(contract: ActivationContract, changes: ChangeSummary): string[] {
+  const problems: string[] = []
+  const protectedFiles = protectedAssetsOf(contract)
+  if (protectedFiles.length === 0) return problems
+  const deleted = new Set(changes.deleted)
+  const added = new Set(changes.added)
+  for (const file of changes.files) {
+    if (deleted.has(file) || added.has(file) || !allowedPath(file, protectedFiles)) continue
+    if (!authorizedAcceptance(contract, file, 'modify')) {
+      problems.push(`protected acceptance asset modified without authorization from its acceptance item: ${file}`)
+    }
+  }
+  for (const file of changes.deleted) {
+    if (!allowedPath(file, protectedFiles)) continue
+    if (!deletedAcceptance(contract, file, changes)) {
+      problems.push(`protected acceptance asset deleted without authorization from its acceptance item: ${file}`)
+    }
+  }
+  return problems
+}
+
+/** C1 audit records: matching authorizations (`asset.authorized`) and record-only test edits (`asset.modified`). */
+export function assetRecords(contract: ActivationContract, changes: ChangeSummary): AssetRecord[] {
+  const records: AssetRecord[] = []
+  const protectedFiles = protectedAssetsOf(contract)
+  const task = contract.task
+  const deleted = new Set(changes.deleted)
+  const added = new Set(changes.added)
+  for (const file of changes.files) {
+    if (deleted.has(file) || added.has(file)) continue
+    if (allowedPath(file, protectedFiles)) {
+      const acceptance = authorizedAcceptance(contract, file, 'modify')
+      if (acceptance) records.push({ rule: 'asset.authorized', path: file, op: 'modify', acceptance, detail: `${file} modified under authorization ${acceptance}` })
+    } else if (task && allowedPath(file, task.protect)) {
+      // Not a protected acceptance asset: the legacy protect list still blocks deletion, but a
+      // modification is record-only (no deny) as required by C1.
+      records.push({ rule: 'asset.modified', path: file, op: 'modify', detail: `${file} modified outside the protected asset list (record-only)` })
+    }
+  }
+  for (const file of changes.deleted) {
+    if (!allowedPath(file, protectedFiles)) continue
+    const acceptance = deletedAcceptance(contract, file, changes)
+    if (acceptance) records.push({ rule: 'asset.authorized', path: file, op: 'delete', acceptance, detail: `${file} deleted under authorization ${acceptance}` })
+  }
+  return records
+}
+
+/**
+ * Contract-shape validation for C1 authorizations: an authorization may never widen
+ * allowedPaths or the authorizing item's `paths`. Called by prepare and by contract load
+ * (fail closed instead of silently ignoring an out-of-scope authorization).
+ */
+export function authorizationProblem(contract: { allowedPaths: string[]; task?: TaskCard }): string | undefined {
+  for (const item of contract.task?.acceptance ?? []) {
+    for (const authorization of item.authorizes ?? []) {
+      if (!allowedPath(authorization.path, contract.allowedPaths)) {
+        return `acceptance ${item.id} authorizes ${authorization.path}, which is outside contract allowedPaths`
+      }
+      if (!allowedPath(authorization.path, item.paths)) {
+        return `acceptance ${item.id} authorizes ${authorization.path}, which is outside its own paths`
+      }
+    }
+  }
+  return undefined
 }
 
 const sample = (items: string[]) => items.slice(0, 10).join(', ') + (items.length > 10 ? ` (+${items.length - 10} more)` : '')
 
 /**
- * Mechanical limits only: paths, an explicitly requested budget, and protected
- * test deletion. They do not detect semantic drift inside allowed paths.
+ * Mechanical limits only: paths, an explicitly requested budget, protected test deletion,
+ * and the C1 protected acceptance assets. They do not detect semantic drift inside
+ * allowed paths.
  */
 export function disciplineProblems(contract: ActivationContract, changes: ChangeSummary): string[] {
   const problems: string[] = []
   const outside = changes.files.filter(file => !inScope(contract, file))
   if (outside.length) problems.push(`revert files outside the task scope: ${sample(outside)}`)
   const task = contract.task
-  if (!task) return problems
-  const { maxFiles, maxChangedLines } = task.budget ?? {}
-  if (maxFiles !== undefined && changes.files.length > maxFiles) problems.push(`change touches ${changes.files.length} files, the task budget is ${maxFiles}`)
-  if (maxChangedLines !== undefined && changes.changedLines > maxChangedLines) problems.push(`change has ${changes.changedLines} changed lines, the task budget is ${maxChangedLines}`)
-  const protectedDeleted = changes.deleted.filter(file => allowedPath(file, task.protect))
-  if (protectedDeleted.length) problems.push(`existing tests must not be deleted: ${sample(protectedDeleted)}`)
+  if (task) {
+    const { maxFiles, maxChangedLines } = task.budget ?? {}
+    if (maxFiles !== undefined && changes.files.length > maxFiles) problems.push(`change touches ${changes.files.length} files, the task budget is ${maxFiles}`)
+    if (maxChangedLines !== undefined && changes.changedLines > maxChangedLines) problems.push(`change has ${changes.changedLines} changed lines, the task budget is ${maxChangedLines}`)
+    // Existing-test deletion: keep the historical rule, but a protected asset deleted under
+    // an explicit C1 authorization is handled by assetProblems (authorized deletion allowed).
+    const protectedDeleted = changes.deleted.filter(file => allowedPath(file, task.protect) && !isProtectedAsset(contract, file))
+    if (protectedDeleted.length) problems.push(`existing tests must not be deleted: ${sample(protectedDeleted)}`)
+  }
+  problems.push(...assetProblems(contract, changes))
   return problems
 }
 
@@ -51,4 +186,13 @@ export async function checkDiscipline(contract: ActivationContract, workspace: s
   const problems = disciplineProblems(contract, changes)
   if (problems.length) throw new Error(`HEPHI change discipline: ${problems.join('; ')}`)
   return changes
+}
+
+/**
+ * Ready-time C1 recheck for paths that bypass the write/edit tools (shell writes, git
+ * operations): recompute the final diff and return both the denials and the audit records.
+ */
+export async function assetReadyReport(contract: ActivationContract, workspace: string): Promise<{ changes: ChangeSummary; problems: string[]; records: AssetRecord[] }> {
+  const changes = await summarizeChanges(workspace, contract.baseSha)
+  return { changes, problems: assetProblems(contract, changes), records: assetRecords(contract, changes) }
 }

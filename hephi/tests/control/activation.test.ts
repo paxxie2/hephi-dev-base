@@ -153,9 +153,9 @@ describe('activation format versioning', () => {
     const dir = await stateDir()
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
-    expect(prepared.contract.version).toBe(3)
+    expect(prepared.contract.version).toBe(4)
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
-    expect(raw.version).toBe(3)
+    expect(raw.version).toBe(4)
     const { contractHash: hash, ...base } = raw as Record<string, unknown> & { contractHash: string }
     expect(hash).toBe(contractHash(base as never))
     expect(contractHash({ ...base, version: 1 } as never)).not.toBe(hash)
@@ -166,11 +166,11 @@ describe('activation format versioning', () => {
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
-    raw.version = 4
+    raw.version = 5
     delete raw.contractHash
     raw.contractHash = legacyContractHash(raw as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
-    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 4')
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
   })
 
   it('rejects an unknown top-level field even when the stored hash matches it', async () => {
@@ -206,7 +206,7 @@ describe('A1-K5 contract Session-binding policy', () => {
     const dir = await stateDir()
     const prepared = await prepareActivation({ ...enabledEnv(dir), HEPHI_REQUIRE_SESSION_BINDING: '1' })
     if (!prepared.enabled) throw new Error('activation was not enabled')
-    expect(prepared.contract.version).toBe(3)
+    expect(prepared.contract.version).toBe(4)
     expect(prepared.contract.evidence).toEqual({ requireSessionBinding: true })
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
     expect(raw.evidence).toEqual({ requireSessionBinding: true })
@@ -239,7 +239,7 @@ describe('A1-K5 contract Session-binding policy', () => {
     await expect(loadActivation(prepared.filePath)).rejects.toThrow('hash mismatch')
   })
 
-  it('U-K5-03: reads v3, keeps v1/v2 readable with host-decided binding, and rejects unknown versions', async () => {
+  it('U-K5-03: reads v4/v3, keeps v1/v2 readable with host-decided binding, and rejects unknown versions', async () => {
     const dir = await stateDir()
     const current = await prepareActivation({ ...enabledEnv(dir), HEPHI_REQUIRE_SESSION_BINDING: '1' })
     if (!current.enabled) throw new Error('activation was not enabled')
@@ -249,6 +249,21 @@ describe('A1-K5 contract Session-binding policy', () => {
     const v2Dir = await stateDir()
     const v2Prepared = await prepareActivation(enabledEnv(v2Dir))
     if (!v2Prepared.enabled) throw new Error('activation was not enabled')
+    // v3: readable, still carries the frozen evidence policy (EVIDENCE_POLICY_SINCE).
+    const v3Dir = await stateDir()
+    const v3Prepared = await prepareActivation({ ...enabledEnv(v3Dir), HEPHI_REQUIRE_SESSION_BINDING: '1' })
+    if (!v3Prepared.enabled) throw new Error('activation was not enabled')
+    const v3raw = JSON.parse(await readFile(v3Prepared.filePath, 'utf8')) as Record<string, unknown>
+    v3raw.version = 3
+    delete v3raw.contractHash
+    v3raw.contractHash = contractHash(v3raw as never)
+    await import('node:fs/promises').then(({ writeFile }) => writeFile(v3Prepared.filePath, `${JSON.stringify(v3raw, null, 2)}\n`))
+    const v3loaded = await loadActivation(v3Prepared.filePath)
+    expect(v3loaded.version).toBe(3)
+    expect(evidenceOf(v3loaded)).toEqual({ requireSessionBinding: true })
+    expect(sessionBindingPolicy(v3loaded, false)).toEqual({ contract: true, host: false, effective: true })
+
+    // v2: readable, no frozen policy, host configuration decides.
     const v2raw = JSON.parse(await readFile(v2Prepared.filePath, 'utf8')) as Record<string, unknown>
     delete v2raw.evidence
     v2raw.version = 2
@@ -266,11 +281,11 @@ describe('A1-K5 contract Session-binding policy', () => {
     const futurePrepared = await prepareActivation(enabledEnv(futureDir))
     if (!futurePrepared.enabled) throw new Error('activation was not enabled')
     const future = JSON.parse(await readFile(futurePrepared.filePath, 'utf8')) as Record<string, unknown>
-    future.version = 4
+    future.version = 5
     delete future.contractHash
     future.contractHash = legacyContractHash(future as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(futurePrepared.filePath, JSON.stringify(future)))
-    await expect(loadActivation(futurePrepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 4')
+    await expect(loadActivation(futurePrepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
   })
 
   it('U-K5-03b: an old-format contract cannot smuggle the evidence policy to change the binding', async () => {
@@ -285,7 +300,7 @@ describe('A1-K5 contract Session-binding policy', () => {
     await expect(loadActivation(prepared.filePath)).rejects.toThrow(/unsupported HEPHI activation field for this version: evidence/)
   })
 
-  it('U-K5-03c: a v3 contract must carry a well-formed evidence policy', async () => {
+  it('U-K5-03c: a v3+ contract must carry a well-formed evidence policy', async () => {
     const dir = await stateDir()
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
@@ -294,7 +309,7 @@ describe('A1-K5 contract Session-binding policy', () => {
     delete raw.contractHash
     raw.contractHash = contractHash(raw as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
-    await expect(loadActivation(prepared.filePath)).rejects.toThrow('version 3 requires evidence.requireSessionBinding')
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow(/requires evidence\.requireSessionBinding/)
     raw.evidence = { requireSessionBinding: 'yes' }
     delete raw.contractHash
     raw.contractHash = contractHash(raw as never)
@@ -424,15 +439,15 @@ describe('activation canonical hashing (R1)', () => {
     await expect(loadActivation(filePath)).rejects.toThrow('hash mismatch')
   })
 
-  it('R1-T05: new contracts are version 3, canonical and tolerant of whitespace formatting', async () => {
+  it('R1-T05: new contracts are version 4, canonical and tolerant of whitespace formatting', async () => {
     const { filePath, raw } = await prepared()
-    expect(ACTIVATION_VERSION).toBe(3)
-    expect(raw.version).toBe(3)
+    expect(ACTIVATION_VERSION).toBe(4)
+    expect(raw.version).toBe(4)
     expect(raw.contractHash).toBe(contractHash(withoutHash(raw)))
     const compact = JSON.stringify(raw)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, compact))
     const loaded = await loadActivation(filePath)
-    expect(loaded.version).toBe(3)
+    expect(loaded.version).toBe(4)
     expect(loaded.contractHash).toBe(raw.contractHash)
   })
 
@@ -479,11 +494,11 @@ describe('activation canonical hashing (R1)', () => {
 
   it('R1-T09: unknown versions are rejected with re-prepare guidance', async () => {
     const { filePath, raw } = await prepared()
-    const future: Record<string, unknown> = { ...raw, version: 4 }
+    const future: Record<string, unknown> = { ...raw, version: 5 }
     delete future.contractHash
     future.contractHash = legacyContractHash(future as never)
     await writeContract(filePath, future)
-    await expect(loadActivation(filePath)).rejects.toThrow('unsupported HEPHI activation version: 4')
+    await expect(loadActivation(filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
     await expect(loadActivation(filePath)).rejects.toThrow(/re-prepare a new contract/)
   })
 

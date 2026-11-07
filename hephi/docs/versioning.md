@@ -1,6 +1,6 @@
 # 持久格式版本化规则（P5）
 
-状态：**规则已定稿；activation 版本化 v3（规范化哈希 v2/v3，v1／无版本只读兼容，v3 冻结 Session 绑定策略）与检查记录版本 3（含 pluginCommit）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；其余格式仍为 pending。**
+状态：**规则已定稿；activation 版本化 v4（规范化哈希 v2–v4，v1／无版本只读兼容；v3 冻结 Session 绑定策略；v4 冻结受保护验收资产与授权，C1）与检查记录版本 3（含 pluginCommit）已实施；任务卡 v2（C1 新增 `protectedAssets`/`authorizes`）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；其余格式仍为 pending。**
 适用范围：activation 合同、任务卡、检查配置、检查记录、`decisions.jsonl`、基线归档。
 只规定规则；行为改动按本规则实施并带测试（activation 已实施）。
 
@@ -8,8 +8,8 @@
 
 | 格式 | 载体 | 当前状态 | 升版条件 |
 | --- | --- | --- | --- |
-| activation 合同 | `activation.json` | 新合同 `version: 3`（规范化哈希；冻结 `evidence.requireSessionBinding`）；`version: 2` 可读（规范化哈希，无 `evidence`，绑定由宿主配置决定）；`version: 1` 与无 version 的历史合同只读兼容（原始键序哈希） | 任何影响判定或挂载的字段变化；v3 由 A1-K5 引入 |
-| 任务卡 | 合同内 `task` | 固定 1 | 影响拦截或验收判定的变化 |
+| activation 合同 | `activation.json` | 新合同 `version: 4`（规范化哈希；冻结 `evidence.requireSessionBinding` 与 C1 的受保护验收资产/授权）；`version: 3` 可读（规范化哈希，含 `evidence`，无 C1 字段）；`version: 2` 可读（无 `evidence`，绑定由宿主配置决定）；`version: 1` 与无 version 的历史合同只读兼容（原始键序哈希） | 任何影响判定或挂载的字段变化；v3 由 A1-K5 引入，v4 由 C1 引入 |
+| 任务卡 | 合同内 `task` | `version: 2`（C1：`protectedAssets` + 验收项 `authorizes`）；`version: 1` 可读（无新字段，出现即拒绝） | 影响拦截或验收判定的变化；v2 由 C1 引入 |
 | 检查配置 | 项目检查文件 | 待登记 | 判定语义变化 |
 | 检查记录 | 每工单 evidence | 3（含 `pluginCommit`；v2 记录加载即拒绝） | 字段语义或判定条件变化 |
 | `decisions.jsonl` | 每工单日志 | 1（新增可选字段必须登记；A1-K5b 的 `binding` 已按此登记，不升版） | 字段或含义变化（仅追加写） |
@@ -37,7 +37,15 @@
 
 ## 2.3 A1-BIND/A1-OUT：只改核对逻辑，不改持久格式
 
-- A1-BIND/A1-OUT 只改变 ready 的核对逻辑（合同冻结命令与目录、Session 原生调用与结构化结果、宿主 Job 终态、权威输出哈希），**不新增或修改任何持久格式**：合同仍为 `version: 3`，检查记录仍为 `version: 3`，`decisions.jsonl` 仍为 `version: 1`。
+- A1-BIND/A1-OUT 只改变 ready 的核对逻辑（合同冻结命令与目录、Session 原生调用与结构化结果、宿主 Job 终态、权威输出哈希），**不改变这些持久格式**；C1 将合同升到 `version: 4` 并新增任务卡 v2 字段（见 §2.4）。
+- A1-BIND 的证据形状适配（路径 A 结构化 `tool/call`+`message.value`；路径 B 历史实测 `job/registered`+`job/settled`）不改变记录 v3 或决策日志 v1。
+
+### 2.4 C1 合同 v4 / 任务卡 v2 / 项目检查配置
+
+- 合同 `version: 4`：新增冻结字段（任务卡 `protectedAssets` + 验收项 `authorizes` 派生），纳入 v4 规范化哈希（算法同 v2/v3）；v3 合同仍按 v3 语义解释 `evidence`。
+- 任务卡 `version: 2`：`protectedAssets: string[]`（glob，工作区相对路径）；验收项 `authorizes: [{ path, op: modify|delete|migrate }]`（精确文件，禁 glob；重复授权拒绝）。`version: 1` 任务卡出现新字段即拒绝。
+- 项目检查配置：新增可选 `protectedAssets: string[]`（additive，配置 version 仍 1）；生效清单 = 项目 ∪ 任务卡。
+- 优先级（P1-5）：授权不扩大 `allowedPaths`；只覆盖所在验收项 + 精确文件 + 对应操作；未授权 modify/delete 当场拒、shell 绕过在 ready 按最终 diff 拒；清单外测试修改记录 `asset.modified`；授权命中记录 `asset.authorized`（决策日志规则编号见 `decisions-format.md`）。
 - `decisions.jsonl` 新增两个规则编号枚举值：`ready.job-unavailable`（宿主无 Job 接口或 Job 终态不可读）与 `ready.output-unverified`（权威输出不可得或与记录不一致）。字段与 `version` 不变，仅枚举值扩展，按本文件 §2 规则 1 在此登记；`docs/decisions-format.md` 的规则列表属后续维护批次同步项（本轮写范围不含该文件）。
 - 依赖 H1–H5 宿主探针：结论出来前，A1-BIND/A1-OUT 只能记为“机制已实现、fixture 测试通过”，不得记为真实验收通过，也不得据此升版记录格式。
 

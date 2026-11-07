@@ -2,11 +2,12 @@ import { defineTool, type PreToolDecision, type ToolExecution } from '@deepseek-
 import { runCheck, type CheckTools, type NativeJobs } from './check-runner.js'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { Context } from '@deepseek-ai/cordis'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { loadKnowledgeBases } from '../kb/index.js'
 import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, enforcementOf, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type EnforcementMode, type ExecutionMode } from './activation.js'
 import { createReadyGate, type ReadyVerifier } from './ready-gate.js'
-import { checkDiscipline, inScope } from './discipline.js'
+import { assetReadyReport, authorizedAcceptance, checkDiscipline, inScope, isProtectedAsset, type AssetRecord } from './discipline.js'
 import { checkoutRelative, resolveWorkspace } from './workspace.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
 import { installStageControl, type StageAgents, type StageJobs, type StageSessionQuery, type StageSubagents } from './stage-mount.js'
@@ -197,14 +198,30 @@ export function mountWorkerGate(
   const shadowVerify: ReadyVerifier = async (contract, execution) => {
     let wouldDecision: 'allow' | 'deny' = 'allow'
     let reason: string | undefined
+    let assetLog: AssetRecord[] = []
     try {
       const workspace = await resolveWorkspace(contract.workspace, execution.agent?.session.header.cwd)
+      const report = await assetReadyReport(contract, workspace)
+      assetLog = report.records
       await checkDiscipline(contract, workspace)
+      if (report.problems.length) {
+        wouldDecision = 'deny'
+        reason = `shadow would deny: ${report.problems.join('; ')}`
+      }
     } catch (error) {
       wouldDecision = 'deny'
       reason = `shadow would deny: ${error instanceof Error ? error.message : String(error)}`
     }
     const sessionId = execution.agent?.session.header.id
+    // C1 audit records are record-only; shadow mode never changes the real decision.
+    for (const record of assetLog) {
+      await logDecision(stateDir, {
+        ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+        callId: String(execution.callId), tool: 'orchestrator_report', mode: 'shadow',
+        effectiveDecision: 'allow', wouldDecision: 'allow', rule: record.rule, reason: record.detail,
+        contractHash: contract.contractHash,
+      })
+    }
     await logDecision(stateDir, {
       ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
       callId: String(execution.callId), tool: 'orchestrator_report', mode: 'shadow',
@@ -213,32 +230,71 @@ export function mountWorkerGate(
     })
     return { ok: true }
   }
+  // C1: shell/git changes bypass the write/edit tools, so ready rechecks the final diff and
+  // records authorized/record-only changes for audit. A protected-asset deny here is not
+  // overridden by the rest of ready.
+  const assetReadyGuard = async (contract: ActivationContract, execution: ToolExecution): Promise<string | undefined> => {
+    let report: Awaited<ReturnType<typeof assetReadyReport>>
+    try {
+      const workspace = await resolveWorkspace(contract.workspace, execution.agent?.session.header.cwd)
+      report = await assetReadyReport(contract, workspace)
+    } catch {
+      // Workspace resolution errors stay with the existing verifier so its reason is unchanged.
+      return undefined
+    }
+    const sessionId = execution.agent?.session.header.id
+    for (const record of report.records) {
+      await logDecision(stateDir, {
+        ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+        callId: String(execution.callId), tool: 'orchestrator_report', mode: 'enforce',
+        effectiveDecision: 'allow', wouldDecision: 'allow', rule: record.rule, reason: record.detail,
+        contractHash: contract.contractHash,
+      })
+    }
+    if (report.problems.length === 0) return undefined
+    const rule = report.problems.some(problem => problem.includes(' deleted ')) ? 'asset.unauthorized-delete' : 'asset.unauthorized-modify'
+    const reason = `HEPHI protected acceptance asset change is not authorized: ${report.problems.join('; ')}`
+    await logDecision(stateDir, {
+      ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+      callId: String(execution.callId), tool: 'orchestrator_report', mode: 'enforce',
+      effectiveDecision: 'deny', wouldDecision: 'deny', rule, reason, contractHash: contract.contractHash,
+    })
+    return reason
+  }
+  const guardedVerify: ReadyVerifier | undefined = options.verify
+    ? async (contract, execution) => {
+        const denied = await assetReadyGuard(contract, execution)
+        if (denied) return { ok: false, reason: denied }
+        return options.verify!(contract, execution)
+      }
+    : undefined
   const gate = createReadyGate({
     loadActivation: loadBoundActivation,
     allowUnavailable: shadow,
-    verify: shadow ? shadowVerify : options.verify ? (contract, execution) => stages
-      ? stages.verify(() => options.verify!(contract, execution), execution.signal, execution.token)
-      : options.verify!(contract, execution) : undefined,
+    verify: shadow ? shadowVerify : guardedVerify ? (contract, execution) => stages
+      ? stages.verify(() => guardedVerify(contract, execution), execution.signal, execution.token)
+      : guardedVerify(contract, execution) : undefined,
   })
   // Early feedback for direct file edits; shell writes and unreadable tool paths are caught by the check and ready gates.
   const scopeProblem = async (execution: ToolExecution): Promise<string | undefined> => {
     if (!mountedContract || (execution.name !== 'write' && execution.name !== 'edit')) return undefined
     const path = editedPath(execution.arguments)
     if (!path) return undefined
-    const log = async (rule: string, problem?: string) => {
+    const log = async (rule: string, problem?: string, recordReason?: string) => {
       await logDecision(stateDir, {
         ticketId, sessionId: String(agent.session.header.id), callId: String(execution.callId), tool: execution.name,
         mode: shadow ? 'shadow' : 'enforce',
         effectiveDecision: shadow ? 'allow' : problem ? 'deny' : 'allow',
         wouldDecision: problem ? 'deny' : 'allow',
-        rule, reason: problem, contractHash: mountedContract.contractHash,
+        rule, reason: problem ?? recordReason, contractHash: mountedContract.contractHash,
       })
     }
     const decide = (problem: string): string | undefined => (shadow ? undefined : problem)
     let file: string | undefined
+    let checkout: string | undefined
     try {
       const sessionCwd = agent.session.header.cwd
-      const checkout = await resolveWorkspace(mountedContract.workspace, sessionCwd)
+      checkout = await resolveWorkspace(mountedContract.workspace, sessionCwd)
       file = await checkoutRelative(checkout, sessionCwd ?? checkout, path)
     } catch (error) {
       const problem = `HEPHI cannot resolve the Worker checkout: ${error instanceof Error ? error.message : String(error)}`
@@ -254,6 +310,18 @@ export function mountWorkerGate(
       const problem = `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
       await log('scope.outside-task', problem)
       return decide(problem)
+    }
+    // C1: modifying an existing protected acceptance asset requires an authorization in the
+    // same acceptance item for this exact file and the `modify` operation. Creating a new file
+    // is not covered by this rule; delete/migrate go through the ready-time final-diff recheck.
+    if (checkout !== undefined && isProtectedAsset(mountedContract, file) && existsSync(join(checkout, file))) {
+      const acceptance = authorizedAcceptance(mountedContract, file, 'modify')
+      if (!acceptance) {
+        const problem = `HEPHI protected acceptance asset ${file} requires its acceptance item to authorize "modify"; report blocked instead of editing it`
+        await log('asset.unauthorized-modify', problem)
+        return decide(problem)
+      }
+      await log('asset.authorized', undefined, `${file} modified under authorization ${acceptance}`)
     }
     await log('scope.allowed')
     return undefined

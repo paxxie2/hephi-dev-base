@@ -30,6 +30,9 @@
 - `ready.pass` / `ready.binding` / `ready.evidence-missing` / `ready.pr-mismatch` / `ready.plugin-build` / `ready.other`
 - `check.retry-limit`：C4.5 检查重试达到上限（默认 3，按键 ticketId+contractHash+checkId 从已有记录推导）时拒绝启动；`reason` 含固定 blocked 报告格式（卡住的验收项/每次改了什么/输出要点/原因/需谁决定什么）。`version` 与字段不变，仅新增规则编号。
 - `ready.job-unavailable` / `ready.output-unverified`：A1-BIND/A1-OUT 专用拒绝——后台 Job 终态在 ready 时不可读或无 Job 接口；权威输出（Session 前台 stdout/stderr 或 Job `readAt`）不可得、`lossy`、被截断或与记录不一致。`version` 与字段不变，仅新增规则编号。
+- `asset.authorized`（allow，审计）：C1 授权命中的受保护验收资产变更——`reason` 记录验收项 id、文件与操作（`modify`/`delete`）；仅记录，不放宽其他判定。
+- `asset.modified`（allow，仅记录）：C1 清单外的已有测试被修改（受旧 `protect` 清单约束的文件）——只记录、不拦截；清单外删除仍按旧规则拒绝。
+- `asset.unauthorized-modify` / `asset.unauthorized-delete`（deny）：C1 受保护验收资产在缺少“同一验收项 + 精确文件 + 对应操作”授权时被修改/删除（write/edit 当场拒绝；shell/git 绕过由 ready 的最终 diff 复核拒绝）。`version` 与字段不变，仅新增规则编号。
 
 ## 写入约束
 

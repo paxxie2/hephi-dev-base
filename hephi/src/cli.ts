@@ -1,15 +1,17 @@
 #!/usr/bin/env node
-import { readFile, readdir } from 'node:fs/promises'
-import { realpathSync, statSync } from 'node:fs'
-import { isAbsolute, join, normalize, sep } from 'node:path'
+import { readFile, readdir, writeFile } from 'node:fs/promises'
+import { existsSync, realpathSync, statSync } from 'node:fs'
+import { basename, dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseVerificationConfig } from './contracts/checks.js'
 import { taskCardSchema } from './contracts/task.js'
-import { prepareActivation, defaultStateDir } from './control/activation.js'
+import { activationPath, defaultStateDir, loadActivation, prepareActivation } from './control/activation.js'
 import {
   RESOLUTION_BASES, RESOLUTION_KINDS, appendResolution, readRun, readRuns,
-  type ResolutionBasis, type ResolutionKind,
+  type CheckRunRecord, type ResolutionBasis, type ResolutionKind,
 } from './control/check-store.js'
+import { readPlanEntries } from './control/plan-store.js'
+import { allowedPath } from './control/repository.js'
 
 export type CliIo = { out(message: string): void; err(message: string): void }
 const consoleIo: CliIo = { out: message => console.log(message), err: message => console.error(message) }
@@ -31,6 +33,7 @@ export const USAGE = `usage: hephi prepare
                      --operator <name> [--accept-risk] [--state-dir <dir>]
                      [--operator-config <path>]
        hephi stats [--state-dir <dir>] [--ticket <id>] [--rule <prefix>] [--json]
+       hephi summary --ticket <id> [--state-dir <dir>] [--coverage-hint <file>] [--json] [--out <file>]
        hephi lint-task <task.json> [--json]
 
 hephi stats reads (never writes) decision logs under <stateDir>/hephi/<ticketId>/decisions.jsonl.
@@ -519,6 +522,343 @@ async function statsCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo): 
   return 0
 }
 
+// ---- summary：只读汇总 Ticket 状态，不写 state 目录、不改变 ready ---------------
+
+const SUMMARY_USAGE = `usage: hephi summary --ticket <id> [--state-dir <dir>] [--coverage-hint <file>] [--json] [--out <file>]
+
+Reads (never writes) the Ticket state: activation.json, the latest check run for the frozen
+contract, plan.jsonl, decisions.jsonl and an optional coverage hint (examples/coverage-node
+format). The summary is evidence for a human: it never changes ready and it never writes the
+input state directory. --out writes the same JSON outside the state directory; an existing
+path is overwritten only when it is not one of the state inputs (including through symlinks).
+
+sections: header (ticket/head/contractHash/time/read-only), acceptance groups (acceptance
+paths → changedFiles), unassigned files, plan files/entries/match, coverage uncovered lines
+(a risk hint, NOT a pass/fail decision), decisions (last ready rule and allow/deny counts).
+exit: 0 = summary produced (also with only warnings); 1 = corrupt state; 2 = usage error.`
+
+const SUMMARY_READ_ONLY = 'read-only: this command did not create or modify the state directory and it does not change ready'
+
+type SummaryAcceptance = {
+  id: string
+  text: string
+  check: string
+  paths: string[]
+  changedFiles: string[]
+}
+
+type SummaryCoverageUncovered = { path: string; lines: number[]; reason?: string }
+type SummaryCoverage = {
+  source: string | null
+  uncovered: SummaryCoverageUncovered[]
+  summary: Record<string, number> | null
+}
+type SummaryDecisions = {
+  entries: number
+  allow: number
+  deny: number
+  lastRule: string | null
+  lastAt: string | null
+}
+type SummaryPlan = { files: string[]; entries: number; match: boolean | null }
+type SummaryPayload = {
+  schemaVersion: 1
+  ticketId: string
+  head: string | null
+  contractHash: string
+  acceptance: SummaryAcceptance[]
+  unassigned: string[]
+  plan: SummaryPlan
+  coverage: SummaryCoverage
+  decisions: SummaryDecisions
+  generatedAt: string
+}
+
+function parseSummaryArgs(args: string[]): {
+  ticket?: string; stateDir?: string; coverageHint?: string; json: boolean; out?: string
+} {
+  let ticket: string | undefined
+  let stateDir: string | undefined
+  let coverageHint: string | undefined
+  let out: string | undefined
+  let json = false
+  for (let index = 0; index < args.length; index++) {
+    const arg = args[index]!
+    if (arg === '--json') { json = true; continue }
+    if (arg === '--help' || arg === '-h') throw new UsageError('help')
+    if (arg === '--ticket' || arg === '--state-dir' || arg === '--coverage-hint' || arg === '--out') {
+      const value = args[index + 1]
+      if (value === undefined || value.startsWith('--')) throw new UsageError(`missing value for ${arg}`)
+      index += 1
+      if (arg === '--ticket') { if (ticket !== undefined) throw new UsageError('duplicate argument: --ticket'); ticket = value }
+      else if (arg === '--state-dir') { if (stateDir !== undefined) throw new UsageError('duplicate argument: --state-dir'); stateDir = value }
+      else if (arg === '--coverage-hint') { if (coverageHint !== undefined) throw new UsageError('duplicate argument: --coverage-hint'); coverageHint = value }
+      else { if (out !== undefined) throw new UsageError('duplicate argument: --out'); out = value }
+      continue
+    }
+    throw new UsageError(`unknown argument: ${arg}`)
+  }
+  if (ticket === undefined) throw new UsageError('--ticket is required')
+  if (!SAFE_TICKET_ID.test(ticket)) throw new UsageError(`--ticket is not a safe identifier: ${ticket}`)
+  return { ticket, stateDir, coverageHint, json, out }
+}
+
+/** Total, stable ordering for the latest current-contract check. */
+function compareRuns(a: CheckRunRecord, b: CheckRunRecord): number {
+  return a.sequence - b.sequence
+    || a.startedAt.localeCompare(b.startedAt)
+    || a.runId.localeCompare(b.runId)
+    || a.checkId.localeCompare(b.checkId)
+}
+
+/** The latest current-contract check supplies head and changedFiles; none means no evidence. */
+function summaryEvidence(runs: CheckRunRecord[], contractHash: string, io: CliIo): { head: string | null; changedFiles: string[] } {
+  const current = runs.filter(record => record.contractHash === contractHash)
+  if (current.length === 0) {
+    io.err('[summary] no check records for the current contract; head and changedFiles are unavailable')
+    return { head: null, changedFiles: [] }
+  }
+  const latest = [...current].sort(compareRuns)[current.length - 1]!
+  const fingerprint = latest.after ?? latest.before
+  return {
+    head: fingerprint?.headCommit ?? null,
+    changedFiles: [...(fingerprint?.changedFiles ?? [])].sort(),
+  }
+}
+
+async function summaryPlan(stateDir: string, ticketId: string, contractHash: string, changedFiles: string[]): Promise<SummaryPlan> {
+  const entries = (await readPlanEntries(stateDir, ticketId)).filter(entry => entry.contractHash === contractHash)
+  const files = [...new Set(entries.flatMap(entry => entry.files.map(file => file.trim())))].sort()
+  if (entries.length === 0) return { files, entries: 0, match: null }
+  return { files, entries: entries.length, match: changedFiles.every(file => allowedPath(file, files)) }
+}
+
+/**
+ * Decision summary. A malformed line is corrupt state (exit 1) instead of a silently
+ * smaller count: the summary must not pretend the log is complete.
+ */
+async function summaryDecisions(stateDir: string, ticketId: string): Promise<SummaryDecisions> {
+  const file = join(stateDir, 'hephi', ticketId, 'decisions.jsonl')
+  let text: string
+  try { text = await readFile(file, 'utf8') } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { entries: 0, allow: 0, deny: 0, lastRule: null, lastAt: null }
+    throw error
+  }
+  const result: SummaryDecisions = { entries: 0, allow: 0, deny: 0, lastRule: null, lastAt: null }
+  const lines = text.split('\n')
+  for (let index = 0; index < lines.length; index++) {
+    const line = lines[index]!.trim()
+    if (line.length === 0) continue
+    let parsed: unknown
+    try { parsed = JSON.parse(line) } catch {
+      throw new Error(`corrupt decisions.jsonl line ${index + 1}: invalid JSON (${file})`)
+    }
+    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error(`corrupt decisions.jsonl line ${index + 1}: not a JSON object (${file})`)
+    }
+    const record = parsed as Record<string, unknown>
+    if (typeof record.rule !== 'string' || record.rule.trim().length === 0
+      || typeof record.at !== 'string' || Number.isNaN(Date.parse(record.at))
+      || (record.effectiveDecision !== 'allow' && record.effectiveDecision !== 'deny')) {
+      throw new Error(`corrupt decisions.jsonl line ${index + 1}: missing rule/at/effectiveDecision (${file})`)
+    }
+    result.entries += 1
+    if (record.effectiveDecision === 'allow') result.allow += 1
+    else result.deny += 1
+    if (record.rule.startsWith('ready.')) {
+      result.lastRule = record.rule
+      result.lastAt = record.at
+    }
+  }
+  return result
+}
+
+function coverageHintProblem(parsed: unknown): string | undefined {
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return 'top-level value must be a JSON object'
+  const uncovered = (parsed as { uncovered?: unknown }).uncovered
+  if (!Array.isArray(uncovered)) return 'uncovered must be an array'
+  for (const [index, item] of uncovered.entries()) {
+    if (item === null || typeof item !== 'object' || Array.isArray(item)) return `uncovered[${index}] must be an object`
+    const entry = item as Record<string, unknown>
+    if (typeof entry.path !== 'string' || entry.path.trim().length === 0) return `uncovered[${index}].path must be a non-empty string`
+    if (!Array.isArray(entry.lines) || entry.lines.length === 0
+      || !entry.lines.every(line => Number.isSafeInteger(line) && (line as number) > 0)) {
+      return `uncovered[${index}].lines must be a non-empty array of positive integers`
+    }
+    if (entry.reason !== undefined && typeof entry.reason !== 'string') return `uncovered[${index}].reason must be a string`
+  }
+  const summary = (parsed as { summary?: unknown }).summary
+  if (summary !== undefined) {
+    if (summary === null || typeof summary !== 'object' || Array.isArray(summary)) return 'summary must be an object'
+    for (const [key, value] of Object.entries(summary as Record<string, unknown>)) {
+      if (typeof value !== 'number' || !Number.isFinite(value)) return `summary.${key} must be a number`
+    }
+  }
+  return undefined
+}
+
+/** Optional coverage hint: invalid input is only a warning; coverage never decides ready. */
+async function summaryCoverage(hintFile: string | undefined, io: CliIo): Promise<SummaryCoverage> {
+  const empty: SummaryCoverage = { source: hintFile ?? null, uncovered: [], summary: null }
+  if (hintFile === undefined) return empty
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(await readFile(hintFile, 'utf8'))
+  } catch (error) {
+    io.err(`[summary] coverage hint ignored (${hintFile}): ${error instanceof Error ? error.message : String(error)}`)
+    return empty
+  }
+  const problem = coverageHintProblem(parsed)
+  if (problem) {
+    io.err(`[summary] coverage hint ignored (${hintFile}): ${problem}`)
+    return empty
+  }
+  const record = parsed as { uncovered: SummaryCoverageUncovered[]; summary?: Record<string, number> }
+  return {
+    source: hintFile,
+    uncovered: record.uncovered.map(item => ({
+      path: item.path,
+      lines: [...item.lines],
+      ...(item.reason === undefined ? {} : { reason: item.reason }),
+    })),
+    summary: record.summary ?? null,
+  }
+}
+
+function isWithin(parent: string, child: string): boolean {
+  const rel = relative(parent, child)
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel))
+}
+
+function realOrResolve(path: string): string {
+  try { return realpathSync(path) } catch { return resolve(path) }
+}
+
+/**
+ * --out must stay outside the input state directory and must not overwrite one of the
+ * inputs, including when it (or its parent) is a symlink into the state directory.
+ */
+function summaryOutProblem(out: string, stateDir: string, protectedInputs: string[]): string | undefined {
+  const stateReal = realOrResolve(stateDir)
+  const outAbs = resolve(out)
+  const parentReal = realOrResolve(dirname(outAbs))
+  const candidate = join(parentReal, basename(outAbs))
+  const target = existsSync(outAbs) ? realOrResolve(outAbs) : candidate
+  if (isWithin(stateReal, outAbs) || isWithin(stateReal, candidate) || isWithin(stateReal, target)) {
+    return `--out must point outside the input state directory (${stateDir})`
+  }
+  for (const input of protectedInputs) {
+    const inputReal = realOrResolve(input)
+    if (candidate === inputReal || target === inputReal) return `--out must not overwrite the state input ${input}`
+  }
+  return undefined
+}
+
+function formatSummary(payload: SummaryPayload): string {
+  const lines: string[] = [
+    `HEPHI summary — ticket ${payload.ticketId}`,
+    `  head=${payload.head ?? 'unavailable'} contractHash=${payload.contractHash} generatedAt=${payload.generatedAt}`,
+    '  ' + SUMMARY_READ_ONLY,
+    '',
+    'acceptance:',
+  ]
+  if (payload.acceptance.length === 0) lines.push('  (no acceptance items in the task card)')
+  for (const item of payload.acceptance) {
+    lines.push(`  ${item.id} (${item.check}) paths=${item.paths.join(', ')} changed=${item.changedFiles.length}`)
+    for (const file of item.changedFiles) lines.push(`    ${file}`)
+  }
+  lines.push('', 'unassigned:')
+  if (payload.unassigned.length === 0) lines.push('  (none)')
+  for (const file of payload.unassigned) lines.push(`  ${file}`)
+  lines.push('', 'plan:')
+  if (payload.plan.entries === 0) {
+    lines.push('  entries=0 match=null (no plan for the current contract)')
+  } else {
+    lines.push(`  entries=${payload.plan.entries} match=${String(payload.plan.match)}`)
+    for (const file of payload.plan.files) lines.push(`    ${file}`)
+  }
+  lines.push('', 'coverage (risk hint only; this is NOT a pass/fail decision):')
+  if (payload.coverage.source === null) {
+    lines.push('  source=(none)')
+  } else {
+    lines.push(`  source=${payload.coverage.source}`)
+    for (const item of payload.coverage.uncovered) {
+      lines.push(`  ${item.path}: lines ${item.lines.join(', ')}${item.reason === undefined ? '' : ` — ${item.reason}`}`)
+    }
+    if (payload.coverage.summary !== null) {
+      lines.push(`  summary: ${Object.entries(payload.coverage.summary).map(([key, value]) => `${key}=${value}`).join(' ')}`)
+    }
+    if (payload.coverage.uncovered.length === 0) lines.push('  (no uncovered-change hints; this does not mean the change is verified)')
+  }
+  lines.push('', 'decisions:')
+  lines.push(`  entries=${payload.decisions.entries} allow=${payload.decisions.allow} deny=${payload.decisions.deny}`)
+  lines.push(`  lastReadyRule=${payload.decisions.lastRule ?? '(none)'} lastReadyAt=${payload.decisions.lastAt ?? '(none)'}`)
+  lines.push('', `This summary is ${SUMMARY_READ_ONLY}.`)
+  return lines.join('\n')
+}
+
+async function summaryCommand(args: string[], env: NodeJS.ProcessEnv, io: CliIo): Promise<number> {
+  let options: ReturnType<typeof parseSummaryArgs>
+  try {
+    options = parseSummaryArgs(args)
+  } catch (error) {
+    if (error instanceof UsageError && error.message === 'help') { io.out(SUMMARY_USAGE); return 0 }
+    io.err(error instanceof Error ? error.message : String(error))
+    io.err(SUMMARY_USAGE)
+    return 2
+  }
+  const ticketId = options.ticket!
+  const stateDir = defaultStateDir(options.stateDir)
+  let payload: SummaryPayload
+  try {
+    const contract = await loadActivation(activationPath(stateDir, ticketId))
+    const runs = await readRuns(stateDir, ticketId)
+    const evidence = summaryEvidence(runs, contract.contractHash, io)
+    const acceptance: SummaryAcceptance[] = (contract.task?.acceptance ?? []).map(item => ({
+      id: item.id,
+      text: item.text,
+      check: item.check,
+      paths: [...item.paths],
+      changedFiles: evidence.changedFiles.filter(file => allowedPath(file, item.paths)),
+    }))
+    const assigned = new Set(acceptance.flatMap(item => item.changedFiles))
+    payload = {
+      schemaVersion: 1,
+      ticketId,
+      head: evidence.head,
+      contractHash: contract.contractHash,
+      acceptance,
+      unassigned: evidence.changedFiles.filter(file => !assigned.has(file)),
+      plan: await summaryPlan(stateDir, ticketId, contract.contractHash, evidence.changedFiles),
+      coverage: await summaryCoverage(options.coverageHint, io),
+      decisions: await summaryDecisions(stateDir, ticketId),
+      generatedAt: new Date().toISOString(),
+    }
+  } catch (error) {
+    io.err(`[summary] cannot read the Ticket state: ${error instanceof Error ? error.message : String(error)}`)
+    return 1
+  }
+  const json = JSON.stringify(payload, null, 2)
+  if (options.out !== undefined) {
+    const outProblem = summaryOutProblem(options.out, stateDir, [
+      activationPath(stateDir, ticketId),
+      join(stateDir, 'hephi', ticketId, 'plan.jsonl'),
+      join(stateDir, 'hephi', ticketId, 'decisions.jsonl'),
+      ...(options.coverageHint === undefined ? [] : [options.coverageHint]),
+    ])
+    if (outProblem) { io.err(`[summary] ${outProblem}`); return 2 }
+    try {
+      await writeFile(options.out, `${json}\n`)
+    } catch (error) {
+      io.err(`[summary] cannot write --out: ${error instanceof Error ? error.message : String(error)}`)
+      return 1
+    }
+  }
+  if (options.json) { io.out(json); return 0 }
+  io.out(formatSummary(payload))
+  return 0
+}
+
 // ---- lint-task (C5)：离线校验任务卡 bundle，不依赖网络/git ------------------
 
 const LINT_TASK_USAGE = `usage: hephi lint-task <task.json> [--json]
@@ -737,6 +1077,7 @@ export async function main(
 ): Promise<number> {
   const command = argv[0]
   if (command === 'stats') return statsCommand(argv.slice(1), env, io)
+  if (command === 'summary') return summaryCommand(argv.slice(1), env, io)
   if (command === 'lint-task') return lintTaskCommand(argv.slice(1), io)
   if (command === 'prepare') {
     try {

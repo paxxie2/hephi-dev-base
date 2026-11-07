@@ -47,7 +47,7 @@ instance=""; host=""; host_version=""; target=""; previous=""; rollback="no"; dr
 target_set="no"; previous_set="no"
 releases=""; repo=""; hephi=""; timeout=120
 drain_mode=""; effects_db=""; stop_command=""; stop_timeout=""; auto_restart_wait=""; process_file=""
-node_cmd=""; peer_root=""
+node_cmd=""; peer_root=""; instance_pattern_input=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --instance) [ $# -ge 2 ] || usage; instance="$2"; shift 2 ;;
@@ -69,6 +69,7 @@ while [ $# -gt 0 ]; do
     --process-file) [ $# -ge 2 ] || usage; process_file="$2"; shift 2 ;;
     --node) [ $# -ge 2 ] || usage; node_cmd="$2"; shift 2 ;;
     --peer-root) [ $# -ge 2 ] || usage; peer_root="$2"; shift 2 ;;
+    --instance-pattern) [ $# -ge 2 ] || usage; instance_pattern_input="$2"; shift 2 ;;
     -h|--help) usage ;;
     *) echo "unknown argument: $1" >&2; usage ;;
   esac
@@ -93,6 +94,20 @@ printf '%s' "$host_version" | grep -qE '^[[:print:]]+$' || { echo "host version 
 [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || { echo "not a git repository: $repo" >&2; exit 2; }
 [ -f "$instance/host.pid" ] || { echo "missing host.pid: $instance/host.pid" >&2; exit 2; }
 host=${host%/}
+
+# §4.5 single-instance matching: only host entry processes (start.sh/bin.js) of this
+# instance count. The default is the instance's absolute path as a literal regex; an
+# operator-provided --instance-pattern is validated before anything is read or switched.
+instance_abs=$(CDPATH= cd -- "$instance" && pwd)
+if [ -n "$instance_pattern_input" ]; then
+  if ! node -e 'try { new RegExp(process.argv[1]); } catch (error) { process.exit(1) }' "$instance_pattern_input" 2>/dev/null; then
+    echo "invalid --instance-pattern regular expression: $instance_pattern_input" >&2
+    exit 2
+  fi
+  instance_pattern="$instance_pattern_input"
+else
+  instance_pattern=$(node -e 'process.stdout.write(process.argv[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))' "$instance_abs")
+fi
 
 # §4.5 停机式排空模式：与默认的 API 字段排空模式互斥，且不能用于 rollback。
 if [ -n "$drain_mode" ] && [ "$drain_mode" != "effects" ]; then
@@ -390,6 +405,160 @@ build_release() {
   rm -rf "$build_root"
 }
 
+SINGLE_INSTANCE_RECORD='{"ok":false,"pids":[],"checkedAt":null,"phase":"not-run"}'
+SINGLE_INSTANCE_FAILURE_RECORD=""
+HOST_PID_LSTART=""
+
+# §4.5 single-instance recheck. Counts only instance host entries (start.sh/bin.js) whose
+# command line matches the instance pattern, keeps only root processes, and independently
+# verifies the managed host.pid by the lstart captured when this script started it.
+# It never kills processes found by the pattern. expect=one requires exactly the managed
+# host; expect=none requires no instance at all (used after the stop / auto-restart window).
+single_instance_failed() {
+  if [ -z "$SINGLE_INSTANCE_FAILURE_RECORD" ]; then SINGLE_INSTANCE_FAILURE_RECORD="$SINGLE_INSTANCE_RECORD"; fi
+}
+single_instance_check() {
+  si_phase="$1"
+  si_expect="$2"
+  si_checked_at=$(now)
+  si_snapshot="$instance/logs/single-instance-$si_phase-$(date -u +%Y%m%dT%H%M%SZ)-$$.txt"
+  si_host_pid=""; si_host_lstart_ok="no"
+  if [ -f "$instance/host.pid" ]; then si_host_pid=$(cat "$instance/host.pid" 2>/dev/null || true); fi
+  if [ -n "$si_host_pid" ]; then
+    if pid_running "$si_host_pid"; then
+      if [ -n "$HOST_PID_LSTART" ]; then
+        si_current_lstart=$(ps -p "$si_host_pid" -o lstart= 2>/dev/null | sed 's/^ *//;s/ *$//' | tr -s ' ' || true)
+        if [ -n "$si_current_lstart" ] && [ "$si_current_lstart" = "$HOST_PID_LSTART" ]; then si_host_lstart_ok="yes"; fi
+      fi
+    else
+      si_host_pid=""
+    fi
+  fi
+  if ! ps -ax -o pid=,ppid=,stat=,command= > "$si_snapshot" 2>/dev/null; then
+    SINGLE_INSTANCE_RECORD=$(node -e 'process.stdout.write(JSON.stringify({ok:false,pids:[],checkedAt:process.argv[1],phase:process.argv[2]}))' "$si_checked_at" "$si_phase")
+    single_instance_failed
+    echo "single-instance check could not read the process table (phase=$si_phase)" >&2
+    return 1
+  fi
+  if ! si_result=$(node -e '
+const fs = require("fs");
+const [file, patternSource, phase, checkedAt, expect, hostPidText, hostLstartOk] = process.argv.slice(1);
+const rows = [];
+for (const line of fs.readFileSync(file, "utf8").split("\n")) {
+  const m = line.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(.*)$/);
+  if (m) rows.push({ pid: Number(m[1]), ppid: Number(m[2]), stat: m[3], command: m[4] });
+}
+let regex;
+try { regex = new RegExp(patternSource); } catch (error) { process.stdout.write(JSON.stringify({ ok: false, pids: [], checkedAt, phase })); process.exit(0); }
+const baseName = (value) => value.replace(/\\/g, "/").split("/").pop();
+const isEntryToken = (token) => { const base = baseName(token); return base === "start.sh" || base === "bin.js"; };
+const SHELL = /^(sh|bash|zsh|dash)$/;
+const WRAPPER = /^(env|nohup|exec|sudo)$/;
+const VALUE_OPTIONS = new Set(["-u","-g","-p","-C","-h","-r","-t","-U","--user","--group","--prompt","--chdir","--host","--role","--type","--unset","--split-string","--close-from","--other-user"]);
+function isEntry(command, depth) {
+  if (depth > 4) return false;
+  const tokens = command.trim().split(/\s+/).filter(Boolean);
+  if (tokens.length === 0) return false;
+  if (isEntryToken(tokens[0])) return true;
+  const first = baseName(tokens[0]);
+  if (SHELL.test(first)) {
+    for (let index = 1; index < tokens.length; index += 1) {
+      const token = tokens[index];
+      if (token === "--") return false;
+      if (token === "-c") return isEntry(tokens.slice(index + 1).join(" "), depth + 1);
+      if (/^-[A-Za-z]*c[A-Za-z]*$/.test(token)) return isEntry(tokens.slice(index + 1).join(" "), depth + 1);
+      if (token.startsWith("-")) continue;
+      return isEntryToken(token);
+    }
+    return false;
+  }
+  if (first === "node" || first === "nodejs") {
+    for (let index = 1; index < tokens.length; index += 1) {
+      if (tokens[index].startsWith("-")) continue;
+      return isEntryToken(tokens[index]);
+    }
+    return false;
+  }
+  if (WRAPPER.test(first)) {
+    let index = 1;
+    while (index < tokens.length) {
+      const token = tokens[index];
+      if (token === "--") { index += 1; continue; }
+      if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(token)) { index += 1; continue; }
+      if (token.startsWith("-")) { if (VALUE_OPTIONS.has(token)) index += 1; index += 1; continue; }
+      if (isEntryToken(token)) return true;
+      if (SHELL.test(token) || token === "node" || token === "nodejs" || WRAPPER.test(token)) return isEntry(tokens.slice(index).join(" "), depth + 1);
+      return false;
+    }
+    return false;
+  }
+  return false;
+}
+const live = rows.filter((row) => !/^Z/.test(row.stat));
+const candidates = live.filter((row) => isEntry(row.command, 0) && regex.test(row.command));
+const candidatePids = new Set(candidates.map((row) => row.pid));
+const parentOf = new Map(rows.map((row) => [row.pid, row.ppid]));
+const roots = candidates.filter((row) => {
+  let current = row.ppid;
+  let depth = 0;
+  while (current && depth < 64) { if (candidatePids.has(current)) return false; current = parentOf.get(current); depth += 1; }
+  return true;
+});
+const pids = new Set(roots.map((row) => row.pid));
+const hostPid = Number(hostPidText);
+const isDescendantOf = (pid, ancestor) => {
+  let current = parentOf.get(pid);
+  let depth = 0;
+  while (current && depth < 64) { if (current === ancestor) return true; current = parentOf.get(current); depth += 1; }
+  return false;
+};
+const hostInAnyRoot = hostPid > 0 && [...candidatePids].some((pid) => hostPid === pid || isDescendantOf(hostPid, pid));
+if (expect === "one" && hostPid > 0 && hostLstartOk === "yes" && !hostInAnyRoot) pids.add(hostPid);
+const list = [...pids].sort((a, b) => a - b);
+// expect=one: exactly one instance root, and the managed host pid must be identity-verified
+// (lstart) and belong to that same single instance (root itself or a managed child such as
+// bin.js under start.sh). A regex hit alone is never enough.
+const ok = expect === "one"
+  ? (hostLstartOk === "yes" && hostPid > 0 && list.length === 1 && (list[0] === hostPid || isDescendantOf(hostPid, list[0])))
+  : (list.length === 0 && hostPid === 0);
+process.stdout.write(JSON.stringify({ ok, pids: list, checkedAt, phase }));
+' "$si_snapshot" "$instance_pattern" "$si_phase" "$si_checked_at" "$si_expect" "$si_host_pid" "$si_host_lstart_ok" 2>/dev/null); then
+    SINGLE_INSTANCE_RECORD=$(node -e 'process.stdout.write(JSON.stringify({ok:false,pids:[],checkedAt:process.argv[1],phase:process.argv[2]}))' "$si_checked_at" "$si_phase")
+    single_instance_failed
+    echo "single-instance check could not parse the process table (phase=$si_phase)" >&2
+    return 1
+  fi
+  SINGLE_INSTANCE_RECORD="$si_result"
+  if ! printf '%s' "$si_result" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{let ok=false;try{ok=JSON.parse(s).ok===true}catch(e){}process.exit(ok?0:1)})'; then
+    single_instance_failed
+    echo "single-instance check failed (phase=$si_phase): $si_result" >&2
+    return 1
+  fi
+  echo "single-instance check ok (phase=$si_phase, expect=$si_expect): $si_result" >&2
+  return 0
+}
+# Recovery starts recheck the same rule; on failure stop only the host this script just
+# started, so a stray instance is never joined by a second one (no pattern-based kill).
+# recovery_restart_instance keeps the original restart semantics: stop the managed target
+# host first, then start the previous release. recovery_start_instance is only for the
+# effects-drain abort path, which already stopped the managed host.
+recovery_start_instance() {
+  if start_instance; then return 0; fi
+  if [ "${FAIL_KIND:-}" = "single-instance" ]; then
+    kill_current_host >/dev/null 2>&1 || true
+    echo "single-instance recheck failed after the recovery start; stopped the recovered host to avoid running a second instance" >&2
+  fi
+  return 1
+}
+recovery_restart_instance() {
+  if restart_instance; then return 0; fi
+  if [ "${FAIL_KIND:-}" = "single-instance" ]; then
+    kill_current_host >/dev/null 2>&1 || true
+    echo "single-instance recheck failed after the recovery start; stopped the recovered host to avoid running a second instance" >&2
+  fi
+  return 1
+}
+
 LAST_STATE=""; FAIL_STATE=""; FAIL_KIND=""; HEALTH_STATE=""
 # 启动 $instance/start.sh 并等待 10 项全量健康；随后核对本次启动日志偏移之后的插件激活标识。
 # 健康 ready 但缺少任一激活标识按启动失败处理，交由既有恢复/回滚路径。
@@ -401,12 +570,17 @@ start_instance() {
   nohup "$instance/start.sh" >> "$instance/logs/host.log" 2>&1 &
   echo $! > "$instance/host.pid"
   pid=$!
+  HOST_PID_LSTART=$(ps -p "$pid" -o lstart= 2>/dev/null | sed 's/^ *//;s/ *$//' | tr -s ' ' || true)
   waited=0; got_state="no"
   while :; do
     if state=$(read_state 2>/dev/null); then
       LAST_STATE="$state"; got_state="yes"
       if health_ok "$state" 2>/dev/null; then
         if activation_check "$activation_sha" "$pid" "$activation_offset" "$activation_mode"; then
+          if ! single_instance_check post-start one; then
+            FAIL_STATE="$state"; FAIL_KIND="single-instance"
+            return 1
+          fi
           HEALTH_STATE="$state"; return 0
         fi
         FAIL_STATE="$state"; FAIL_KIND="activation-missing"
@@ -445,7 +619,7 @@ record() {
   shift 3
   file="$instance/logs/$kind-$(date -u +%Y%m%dT%H%M%SZ)-$$.json"
   state=$(read_state 2>/dev/null || true)
-  node -e '
+  HEPHI_SINGLE_INSTANCE="${SINGLE_INSTANCE_FAILURE_RECORD:-$SINGLE_INSTANCE_RECORD}" node -e '
     const fs=require("fs"); const [file,action,result,hostVersion,state,...pairs]=process.argv.slice(1);
     const extra={}; for(let i=0;i+1<pairs.length;i+=2) extra[pairs[i]]=pairs[i+1];
     let paused="unverified", load="unverified", healthReadback="unverified";
@@ -455,6 +629,8 @@ record() {
       if(j.health&&typeof j.health==="object") healthReadback=j.health;
     }catch(e){} }
     const rec={at:new Date().toISOString(), action, result, hostVersion, paused, load, healthReadback, ...extra};
+    const single=process.env.HEPHI_SINGLE_INSTANCE;
+    if(single){ try{ rec.singleInstance=JSON.parse(single) }catch(e){ rec.singleInstance={ok:false,pids:[],checkedAt:null,phase:"unreadable"} } }
     fs.writeFileSync(file, JSON.stringify(rec,null,2)+"\n");
   ' "$file" "$action" "$result" "$host_version" "$state" "$@"
   echo "record: $file"
@@ -731,13 +907,22 @@ effects_abort() {
     elif [ "$EFFECT_SWITCHED" = "yes" ]; then
       echo "FATAL: no validated previous release/snapshot to restore the pointer to" >&2
     fi
-    if start_instance; then
+    if recovery_start_instance; then
       EFFECT_RECOVER_HEALTH="all-required-ready"
       p=$(paused_now 2>/dev/null || true)
       if [ "$p" != "true" ]; then echo "warning: restored host did not report paused=true (paused=$p)" >&2; fi
     else
-      EFFECT_RECOVER_HEALTH="not-restarted"
-      echo "FATAL: original version restart failed after effects-drain abort" >&2
+      case "${FAIL_KIND:-}" in
+        single-instance)
+          EFFECT_RECOVER_HEALTH="single-instance-failed"
+          errors="$errors; single-instance recheck failed after the recovery start; the recovered host was stopped and requires operator takeover"
+          echo "FATAL: original version reached health but failed the single-instance recheck after the effects-drain abort; recovered host stopped for operator takeover" >&2
+          ;;
+        *)
+          EFFECT_RECOVER_HEALTH="not-restarted"
+          echo "FATAL: original version restart failed after effects-drain abort" >&2
+          ;;
+      esac
     fi
   elif state_now=$(read_state 2>/dev/null) && health_ok "$state_now" 2>/dev/null; then
     EFFECT_RECOVER_HEALTH="all-required-ready"
@@ -827,6 +1012,10 @@ deploy_effects() {
   if ! effects_no_auto_restart; then
     EFFECT_LEAVE_RUNNING="yes"
     effects_abort failed-drain-auto-restart "host came back after stop (auto-restarted pid=${AUTO_RESTART_PID:-unknown}); no switch performed; left running and requires operator takeover"
+  fi
+  # 9b) single-instance recheck after the existing auto-restart window, before any switch.
+  if ! single_instance_check post-auto-restart none; then
+    effects_abort failed-drain-single-instance "single-instance recheck after the auto-restart window failed; no switch performed: $SINGLE_INSTANCE_RECORD"
   fi
 
   # 10) 原子切换 + 启动 + 全量健康 + paused 回读。
@@ -946,7 +1135,7 @@ if [ "$rollback" = "yes" ]; then
     record rollback rollback failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "rollback target failed and restoring pointer failed"
     fail_after_switch "rollback target failed and restoring the previous pointer failed"
   fi
-  if restart_instance; then
+  if recovery_restart_instance; then
     flag=$(paused_flag)
     record rollback rollback failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version" error "rollback target failed; previous build restored"
     fail_after_switch "rollback target failed health; previous build restored"
@@ -1023,7 +1212,7 @@ if ! set_pointer "$restore_target"; then
   record deploy deploy failed-twice target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreFailure "pointer restore to $restore_target failed" restoreFailureKind pointer-restore-failed keptPaused "$flag" error "target failed after switch and restoring previous pointer failed"
   fail_after_switch "target failed after switch and restoring the previous pointer failed"
 fi
-if restart_instance; then
+if recovery_restart_instance; then
   flag=$(paused_flag)
   record deploy deploy failed-restored-previous target "$target" previous "$restore_kind:$restore_target" pointerBefore "$pointer_before" pointerAfter "$(pointer_after)" health not-ready migration "${MIGRATION_BACKUP:-none}" migrationRestore "${MIGRATION_RESTORE:-none}" targetFailure "$target_fail_state" targetFailureKind "$target_fail_kind" restoreHealth all-required-ready keptPaused "$flag" activation "$ACTIVATION_MODE" activationEvidence "$ACTIVATION_EVIDENCE" importProbe "$IMPORT_PROBE" nodeVersion "$node_version" error "target failed after switch; previous build restored"
   fail_after_switch "target failed after switch; previous build restored"

@@ -23,7 +23,8 @@
    - `node hephi/scripts/check-stage-host.mjs`（staged 夹具，既有）；
    - `node hephi/scripts/check-binding-host.mjs --session <快照> --check-record <run.json> --host <url>`（H1/H2/H4 自动 + H3/H5/H6 人工步骤）；
    - `node scripts/host/check-effects-db.mjs --db <state>/orchestrator.sqlite --mode ro --json`（运行中预检查）；
-   - `node scripts/host/test-deploy-hephi.mjs`（假宿主 141 断言，机制回归）。
+   - `node scripts/host/test-deploy-hephi.mjs`（假宿主 188 断言，机制回归）。
+   - `--drain effects` 必须显式 `--stop-command`（宿主自己的 stop 脚本）；未验证的默认 SIGINT 路径已删除（fail-closed）；停机后自动重启检测窗口默认 10s（`--auto-restart-wait` 可调）。
 2. 任一项 fail → 停止部署，按 A2 记录定位；不得用“健康 ready”替代接口兼容性。
 3. 插件侧假设变更（如 Session 事件形状、Job detail 格式）必须同步更新本文与 A1-BIND 的适配分支。
 4. 升级前后各记录一次宿主版本（DSH 版本 + composed-config sha256 或 API 提供的版本）；`hostVersion` 的正式语义仍待 D2 决定。

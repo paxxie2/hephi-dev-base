@@ -957,6 +957,132 @@ async function runF02Suite() {
   }
 }
 
+
+// N1（§4.5 single instance）：假宿主只启动真实进程；单实例扫描不执行生产命令、
+// 不证明真实宿主。额外实例进程由测试显式创建/清理，部署脚本不得按 regex 杀未知进程。
+function extraInstanceScript(name) {
+  const dir = join(instance, name)
+  mkdirSync(dir, { recursive: true })
+  const file = join(dir, 'start.sh')
+  writeFileSync(file, '#!/bin/sh\nwhile :; do sleep 1; done\n')
+  run('chmod', ['+x', file])
+  return file
+}
+function spawnDetached(command, args) {
+  const child = spawn(command, args, { detached: true, stdio: 'ignore' })
+  child.unref()
+  return child.pid
+}
+
+async function runN1Suite() {
+  // N1-01：正常单实例 → 成功记录带 singleInstance {ok:true, pids:[host.pid], phase:post-start}。
+  await initWorld()
+  try {
+    const r = await deploy(['--target', A])
+    const hostPid = hostPidValue()
+    const rec = readRecords('deploy').find((x) => x.result === 'ok' && x.target === A)
+    check('N1-01 normal single instance deploy exits 0', r.code === 0, `code=${r.code} ${r.out}`)
+    check('N1-01 success record keeps singleInstance ok=true with the managed host pid', Boolean(rec) && Boolean(rec.singleInstance) && rec.singleInstance.ok === true && Array.isArray(rec.singleInstance.pids) && rec.singleInstance.pids.length === 1 && rec.singleInstance.pids[0] === hostPid && rec.singleInstance.phase === 'post-start' && typeof rec.singleInstance.checkedAt === 'string', JSON.stringify(rec && rec.singleInstance))
+  } finally {
+    await closeWorld()
+  }
+
+  // N1-02：stop hook 留下匹配进程 → 切换前拒绝；记录 stray pid；不杀未知进程；
+  // 恢复启动后的复检仍失败，于是停掉本次恢复启动的宿主并如实记录 single-instance-failed。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('N1-02 setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const strayScript = extraInstanceScript('stray')
+    const strayPidFile = join(root, 'stray.pid')
+    const hook = writeHook('leave-stray.sh', [
+      `kill -TERM "$(cat "${join(instance, 'host.pid')}")" 2>/dev/null || true`,
+      `nohup "${strayScript}" >/dev/null 2>&1 &`,
+      `echo $! > "${strayPidFile}"`,
+      'exit 0',
+    ].join('\n'))
+    const r = await deploy(effectsDeployArgs(['--stop-command', hook], { waitSeconds: 1 }))
+    const strayPid = readPid(strayPidFile)
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-drain-single-instance')
+    check('N1-02 a matching process left after stop rejects the switch', r.code !== 0 && pointer() === join(releaseDir(A), 'lib'), `code=${r.code} pointer=${pointer()} ${r.out}`)
+    check('N1-02 record keeps singleInstance ok=false, the stray pid and the post-auto-restart phase', Boolean(rec) && Boolean(rec.singleInstance) && rec.singleInstance.ok === false && rec.singleInstance.pids.includes(strayPid) && rec.singleInstance.phase === 'post-auto-restart' && typeof rec.singleInstance.checkedAt === 'string', JSON.stringify(rec && rec.singleInstance))
+    check('N1-02 stray process is left running (never killed by pattern)', pidAlive(strayPid), `strayPid=${strayPid} alive=${pidAlive(strayPid)}`)
+    check('N1-02 recovery stops its own host instead of running beside the stray', Boolean(rec) && rec.recoverHealth === 'single-instance-failed' && !pidAlive(hostPidValue()) && String(rec.error).includes('single-instance'), JSON.stringify(rec && { recoverHealth: rec.recoverHealth, error: rec.error }))
+  } finally {
+    killPid(readPid(join(root, 'stray.pid')))
+    await closeWorld()
+  }
+
+  // N1-03：目标 start.sh 窗口内再拉一个实例 → 启动健康后复检 pids>=2，不切换；
+  // 恢复启动后仍看到多余实例 → 复检失败并停掉恢复启动的宿主，记录 failed-twice。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('N1-03 setup deploys A', false, setup.out); return }
+    const windowScript = extraInstanceScript('window')
+    const windowPidFile = join(instance, 'window-extra.pid')
+    writeStart([
+      `echo attempt >> "${instance}/start.log"`,
+      `if [ ! -f "${instance}/window-spawned" ]; then`,
+      `  : > "${instance}/window-spawned"`,
+      `  nohup "${windowScript}" >/dev/null 2>&1 &`,
+      `  echo $! > "${windowPidFile}"`,
+      'fi',
+      activationMarkers(),
+      `: > "${instance}/started.marker"`,
+      'exec sleep 3600',
+    ].join('\n'))
+    rmSync(join(instance, 'started.marker'), { force: true })
+    const r = await deploy(['--target', B, '--previous', A])
+    const extraPid = readPid(windowPidFile)
+    const rec = readRecords('deploy').find((x) => x.result === 'failed-twice')
+    check('N1-03 a second instance in the start window fails the deployment', r.code !== 0 && pointer() === join(releaseDir(A), 'lib'), `code=${r.code} pointer=${pointer()} ${r.out}`)
+    check('N1-03 record keeps pids>=2 including the extra window instance', Boolean(rec) && Boolean(rec.singleInstance) && rec.singleInstance.ok === false && rec.singleInstance.pids.length >= 2 && rec.singleInstance.pids.includes(extraPid) && rec.singleInstance.phase === 'post-start', JSON.stringify(rec && rec.singleInstance))
+    check('N1-03 recovery recheck failed and its own host was stopped', Boolean(rec) && rec.restoreFailureKind === 'single-instance' && !pidAlive(hostPidValue()), JSON.stringify(rec && { restoreFailureKind: rec.restoreFailureKind, restoreFailure: rec.restoreFailure }))
+    check('N1-03 extra window instance is left running (never killed by pattern)', pidAlive(extraPid), `extraPid=${extraPid} alive=${pidAlive(extraPid)}`)
+  } finally {
+    killPid(readPid(join(instance, 'window-extra.pid')))
+    await closeWorld()
+  }
+
+  // N1-04：无关进程（含命令行匹配 instance 路径但不是 start.sh/bin.js 入口）不误报。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    if (setup.code !== 0) { check('N1-04 setup deploys A', false, setup.out); return }
+    createEffectsDatabase(0).close()
+    const unrelated = []
+    unrelated.push(spawnDetached('/bin/sleep', ['3600']))
+    const worker = join(instance, 'worker.js')
+    writeFileSync(worker, 'setInterval(() => {}, 1000)\n')
+    unrelated.push(spawnDetached(process.execPath, [worker]))
+    // 命令行包含 instance 路径与 start.sh，但入口是 node -e：不得计为宿主入口。
+    unrelated.push(spawnDetached(process.execPath, ['-e', 'setInterval(() => {}, 1000)', join(instance, 'start.sh')]))
+    const r = await deploy(effectsDeployArgs([], { waitSeconds: 1 }))
+    const hostPid = hostPidValue()
+    const rec = readRecords('deploy').find((x) => x.result === 'ok' && x.drainMode === 'effects')
+    check('N1-04 unrelated processes do not block a normal deploy', r.code === 0, `code=${r.code} ${r.out}`)
+    check('N1-04 singleInstance counts only the managed host pid', Boolean(rec) && Boolean(rec.singleInstance) && rec.singleInstance.ok === true && rec.singleInstance.pids.length === 1 && rec.singleInstance.pids[0] === hostPid, JSON.stringify(rec && rec.singleInstance))
+    for (const pid of unrelated) killPid(pid)
+  } finally {
+    await closeWorld()
+  }
+
+  // N1-05：--instance-pattern 必须是有效 regex，且在读取宿主/切换之前拒绝。
+  await initWorld()
+  try {
+    const before = readRecords().length
+    const invalid = await deploy(['--target', A, '--instance-pattern', '(['])
+    check('N1-05 an invalid --instance-pattern exits 2 before any host read or switch', invalid.code === 2 && /invalid --instance-pattern/.test(invalid.out) && pointer() === '' && readRecords().length === before, `code=${invalid.code} pointer=${pointer()} ${invalid.out}`)
+    const custom = await deploy(['--target', A, '--instance-pattern', 'instance/start\\.sh'])
+    const rec = readRecords('deploy').find((x) => x.result === 'ok' && x.target === A)
+    check('N1-05 a valid custom --instance-pattern still records a single-instance success', custom.code === 0 && Boolean(rec) && Boolean(rec.singleInstance) && rec.singleInstance.ok === true && rec.singleInstance.pids.length === 1, `code=${custom.code} ${JSON.stringify(rec && rec.singleInstance)} ${custom.out}`)
+  } finally {
+    await closeWorld()
+  }
+}
+
 // T1（issue #26）：发布依赖打包、停机前导入探针、双入口激活门禁与旧版本回滚边界。
 // 全部是聚焦假宿主测试：stub 仓库用 file: 依赖离线构建，假 start 脚本写激活标识；
 // 不访问真实宿主、不证明真实部署通过。
@@ -1160,6 +1286,7 @@ await runNegativeSuite()
 await runRemediationSuite()
 await runF02Suite()
 await runT1Suite()
+await runN1Suite()
 
 for (const line of results) console.log(line)
 if (failures > 0) {

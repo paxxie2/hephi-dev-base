@@ -1,6 +1,6 @@
 # 持久格式版本化规则（P5）
 
-状态：**规则已定稿；activation 版本化 v4（规范化哈希 v2–v4，v1／无版本只读兼容；v3 冻结 Session 绑定策略；v4 冻结受保护验收资产与授权，C1）与检查记录版本 3（含 pluginCommit）已实施；任务卡 v2（C1 新增 `protectedAssets`/`authorizes`）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；其余格式仍为 pending。**
+状态：**规则已定稿；activation 版本化 v5（规范化哈希 v2–v5，v1／无版本只读兼容；v3 冻结 Session 绑定策略；v4 冻结受保护验收资产与授权，C1；v5 冻结人工审批 approvers，C3）与检查记录版本 3（含 pluginCommit）已实施；任务卡 v2（C1 新增 `protectedAssets`/`authorizes`）已实施；`decisions.jsonl` 保持 v1，新增可选 `binding` 字段已登记；其余格式仍为 pending。**
 适用范围：activation 合同、任务卡、检查配置、检查记录、`decisions.jsonl`、基线归档。
 只规定规则；行为改动按本规则实施并带测试（activation 已实施）。
 
@@ -8,7 +8,7 @@
 
 | 格式 | 载体 | 当前状态 | 升版条件 |
 | --- | --- | --- | --- |
-| activation 合同 | `activation.json` | 新合同 `version: 4`（规范化哈希；冻结 `evidence.requireSessionBinding` 与 C1 的受保护验收资产/授权）；`version: 3` 可读（规范化哈希，含 `evidence`，无 C1 字段）；`version: 2` 可读（无 `evidence`，绑定由宿主配置决定）；`version: 1` 与无 version 的历史合同只读兼容（原始键序哈希） | 任何影响判定或挂载的字段变化；v3 由 A1-K5 引入，v4 由 C1 引入 |
+| activation 合同 | `activation.json` | 新合同 `version: 5`（规范化哈希；冻结 `evidence.requireSessionBinding`、C1 受保护验收资产/授权、C3 `verification.approvers`）；`version: 4` 可读（C1 字段，无 `approvers`，出现即拒绝）；`version: 3` 可读（规范化哈希，含 `evidence`，无 C1 字段）；`version: 2` 可读（无 `evidence`，绑定由宿主配置决定）；`version: 1` 与无 version 的历史合同只读兼容（原始键序哈希） | 任何影响判定或挂载的字段变化；v3 由 A1-K5 引入，v4 由 C1 引入，v5 由 C3 引入 |
 | 任务卡 | 合同内 `task` | `version: 2`（C1：`protectedAssets` + 验收项 `authorizes`）；`version: 1` 可读（无新字段，出现即拒绝） | 影响拦截或验收判定的变化；v2 由 C1 引入 |
 | 检查配置 | 项目检查文件 | 待登记 | 判定语义变化 |
 | 检查记录 | 每工单 evidence | 3（含 `pluginCommit`；v2 记录加载即拒绝） | 字段语义或判定条件变化 |
@@ -42,6 +42,9 @@
 
 ### 2.4 C1 合同 v4 / 任务卡 v2 / 项目检查配置
 
+> 注：C3 之后新合同为 v5（见 §2.5）；本节描述 v4 引入的 C1 字段语义，v5 合同同样携带。
+
+- 合同 `version: 5`：在 v4 基础上新增冻结 `verification.approvers: string[]`（C3；非空时 ready 要求 PR 评审满足名单；该字段进入合同哈希，v4 合同出现即拒绝）。
 - 合同 `version: 4`：新增冻结字段（任务卡 `protectedAssets` + 验收项 `authorizes` 派生），纳入 v4 规范化哈希（算法同 v2/v3）；v3 合同仍按 v3 语义解释 `evidence`。
 - 任务卡 `version: 2`：`protectedAssets: string[]`（glob，工作区相对路径）；验收项 `authorizes: [{ path, op: modify|delete|migrate }]`（精确文件，禁 glob；重复授权拒绝）。`version: 1` 任务卡出现新字段即拒绝。
 - 项目检查配置：新增可选 `protectedAssets: string[]`（additive，配置 version 仍 1）；生效清单 = 项目 ∪ 任务卡。
@@ -67,3 +70,10 @@
 - 插件构建身份：`tsdown.config.ts` 注入 `__HEPHI_COMMIT__`。**dirty 工作树（已跟踪／暂存／未跟踪任一）直接构建失败**，不产出可发布构建；`HEPHI_BUILD_COMMIT` 不能覆盖 dirty 的 Git HEAD。无 `.git` 的源码归档必须显式提供完整 40 位十六进制 `HEPHI_BUILD_COMMIT`，缺失或非法值同样失败；不存在静默 `unknown` 或 `-dirty` 发布路径。`describePlugin()` 返回 `{name, version, commit}`，prepare 合同冻结 `plugin: {version, commit}` 并纳入哈希。
 - 其余格式（任务卡、`decisions.jsonl`、基线归档）：代码实施前，任何"已版本化"的结论不得写入验收记录。
 - 活跃工单禁止升级由 P8 部署流程执行，不在本文件实现。
+
+### 2.5 C3 合同 v5：人工审批 approvers
+
+- `verification.approvers: string[]`（GitHub 用户名）在 prepare 时冻结并纳入 v5 规范化哈希；未配置/空数组时 ready 行为不变。
+- ready：非空 approvers → 需要 `pr_number` 与 PR；名单内每人只取最新 review；任一最新为 `CHANGES_REQUESTED` → 拒绝；至少一名名单内 approver 的 `APPROVED` 且 `commitId === PR HEAD` 才放行；否则 `ready.awaiting-approval`（不是检查失败、不计 C4.5 重试计数、不写 check 记录）。
+- v4 及更旧合同手工携带 `approvers` → 加载即拒绝。
+- 真实宿主 review→Trigger 唤醒未验证。

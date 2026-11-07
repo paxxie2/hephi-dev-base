@@ -28,11 +28,14 @@
 - `scope.allowed` / `scope.outside-checkout` / `scope.outside-task`：写/改文件前的路径与范围判定
 - `check.pass` / `check.blocked` / `check.unknown` / `check.running`：`hephi_check` 结果与拒绝运行
 - `ready.pass` / `ready.binding` / `ready.evidence-missing` / `ready.pr-mismatch` / `ready.plugin-build` / `ready.other`
+- `plan.recorded`：`hephi_plan` 追加计划（allow）或拒绝（deny）；shadow 模式下同一规则记录 `wouldDecision`。
+- `plan.outside-plan`（deny）：write/edit 目标不在当前合同 `plan.jsonl` 计划内，或计划日志不可读（fail-closed）；shadow 下记录 `wouldDecision`。
 - `check.retry-limit`：C4.5 检查重试达到上限（默认 3，按键 ticketId+contractHash+checkId 从已有记录推导）时拒绝启动；`reason` 含固定 blocked 报告格式（卡住的验收项/每次改了什么/输出要点/原因/需谁决定什么）。`version` 与字段不变，仅新增规则编号。
 - `ready.job-unavailable` / `ready.output-unverified`：A1-BIND/A1-OUT 专用拒绝——后台 Job 终态在 ready 时不可读或无 Job 接口；权威输出（Session 前台 stdout/stderr 或 Job `readAt`）不可得、`lossy`、被截断或与记录不一致。`version` 与字段不变，仅新增规则编号。
 - `asset.authorized`（allow，审计）：C1 授权命中的受保护验收资产变更——`reason` 记录验收项 id、文件与操作（`modify`/`delete`）；仅记录，不放宽其他判定。
 - `asset.modified`（allow，仅记录）：C1 清单外的已有测试被修改（受旧 `protect` 清单约束的文件）——只记录、不拦截；清单外删除仍按旧规则拒绝。
 - `asset.unauthorized-modify` / `asset.unauthorized-delete`（deny）：C1 受保护验收资产在缺少“同一验收项 + 精确文件 + 对应操作”授权时被修改/删除（write/edit 当场拒绝；shell/git 绕过由 ready 的最终 diff 复核拒绝）。`version` 与字段不变，仅新增规则编号。
+- `ready.awaiting-approval`（deny，等待审批）：C3 人工审批——合同 v5+ 冻结了非空 `verification.approvers` 时，PR 评审必须满足：名单内每人只取最新一条 review；名单内任一人最新为 `CHANGES_REQUESTED` 即拒绝；至少一名名单内 approver 对当前 PR HEAD（`commitId === headSha`）`APPROVED` 才放行。没有有效批准返回该规则并在 `reason` 说明是等待审批（**不是检查失败，不计入 C4.5 重试计数**）。`version` 与字段不变，仅新增规则编号。
 
 ## 写入约束
 

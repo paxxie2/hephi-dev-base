@@ -91,9 +91,9 @@ git diff --check
 5. **hephi TS 模块任务未纳入**：`hephi/src/**` 的真实修复提交（如 check-runner/activation）需要 `node_modules` 才能跑 vitest，而 check-task 的临时 worktree 不带依赖且禁止联网安装；因此 hephi 任务全部基于纯 Node 的 `eval/*.mjs` / `scripts/host/*.mjs` 真实提交。
 6. **参考补丁子集**：`site-pnl-diagnosis/frontend-form-feedback` 剔除了该真实提交里的 `*.png` 证据截图与含 `curl` 的 e2e/证据文档（二进制与本地服务命令），只保留代码/前端/e2e spec 子集，已在任务 review.md 记录；`hephi/repro-manifest` 因补丁源码注释含 `pip install` 文本，`environment.commandsMustMatchOffline=false`（如实记录），其余任务为 true。
 7. **隐藏测试的边界**：hephi 多个任务的 hidden-test 调用仓库自带 `--self-test`（这些自测使用系统临时目录）；site-pnl 多个任务的 hidden-test 是纯 Python 标准库/ AST 源码契约断言。它们能真实区分 base 与 reference，但覆盖范围窄于整仓回归，也未逐条人工复核断言语义。
-8. **基线漂移**：本分支基于指定基线 `93bfd06`；远端 GitHub `main` 已前进到 `4a038f4`（+8 commits，未改动 `eval/tasks/**`、`eval/b5-tasks.json`、`eval/B2-audit.md`、`eval/check-task.mjs`、`eval/b5-plan.mjs`）。分支未 rebase，PR 若合并需按当时的 main 复查（三点 diff 只包含本分支改动）。
+8. **基线漂移**：本分支基于指定基线 `93bfd06`；远端 GitHub `main` 已前进到 `4a038f4`（+8 commits，未改动 `eval/tasks/**`、`eval/b5-tasks.json`、`eval/B2-audit.md`、`eval/check-task.mjs`、`eval/b5-plan.mjs`）。分支未 rebase；创建 PR 时远端 `main` 为 `0b7bada2ca3e6e0664e6e5009eca9f2dfbb035ee`，PR 三点 diff 只包含本分支改动；若合并需按当时 main 复查。
 
 ## 7. 分支与 PR
 
-- 分支：`agent/b2-tasks`（本地 `/tmp/b2tasks`，基线 `93bfd06`）。
-- PR：待创建（PR 创建后在本文件补链接）（**不合并**，等待负责人评审）。
+- 分支：`agent/b2-tasks`（本地 `/tmp/b2tasks`，基线 `93bfd06`），已推送到 `paxxie2/super-agent-hephi-review`。
+- PR：[PR #69](https://github.com/paxxie2/super-agent-hephi-review/pull/69)（**不合并**，等待负责人评审）。

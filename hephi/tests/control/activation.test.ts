@@ -153,9 +153,9 @@ describe('activation format versioning', () => {
     const dir = await stateDir()
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
-    expect(prepared.contract.version).toBe(4)
+    expect(prepared.contract.version).toBe(5)
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
-    expect(raw.version).toBe(4)
+    expect(raw.version).toBe(5)
     const { contractHash: hash, ...base } = raw as Record<string, unknown> & { contractHash: string }
     expect(hash).toBe(contractHash(base as never))
     expect(contractHash({ ...base, version: 1 } as never)).not.toBe(hash)
@@ -166,11 +166,11 @@ describe('activation format versioning', () => {
     const prepared = await prepareActivation(enabledEnv(dir))
     if (!prepared.enabled) throw new Error('activation was not enabled')
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
-    raw.version = 5
+    raw.version = 6
     delete raw.contractHash
     raw.contractHash = legacyContractHash(raw as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(prepared.filePath, JSON.stringify(raw)))
-    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
+    await expect(loadActivation(prepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 6')
   })
 
   it('rejects an unknown top-level field even when the stored hash matches it', async () => {
@@ -206,7 +206,7 @@ describe('A1-K5 contract Session-binding policy', () => {
     const dir = await stateDir()
     const prepared = await prepareActivation({ ...enabledEnv(dir), HEPHI_REQUIRE_SESSION_BINDING: '1' })
     if (!prepared.enabled) throw new Error('activation was not enabled')
-    expect(prepared.contract.version).toBe(4)
+    expect(prepared.contract.version).toBe(5)
     expect(prepared.contract.evidence).toEqual({ requireSessionBinding: true })
     const raw = JSON.parse(await readFile(prepared.filePath, 'utf8')) as Record<string, unknown>
     expect(raw.evidence).toEqual({ requireSessionBinding: true })
@@ -281,11 +281,11 @@ describe('A1-K5 contract Session-binding policy', () => {
     const futurePrepared = await prepareActivation(enabledEnv(futureDir))
     if (!futurePrepared.enabled) throw new Error('activation was not enabled')
     const future = JSON.parse(await readFile(futurePrepared.filePath, 'utf8')) as Record<string, unknown>
-    future.version = 5
+    future.version = 6
     delete future.contractHash
     future.contractHash = legacyContractHash(future as never)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(futurePrepared.filePath, JSON.stringify(future)))
-    await expect(loadActivation(futurePrepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
+    await expect(loadActivation(futurePrepared.filePath)).rejects.toThrow('unsupported HEPHI activation version: 6')
   })
 
   it('U-K5-03b: an old-format contract cannot smuggle the evidence policy to change the binding', async () => {
@@ -439,15 +439,15 @@ describe('activation canonical hashing (R1)', () => {
     await expect(loadActivation(filePath)).rejects.toThrow('hash mismatch')
   })
 
-  it('R1-T05: new contracts are version 4, canonical and tolerant of whitespace formatting', async () => {
+  it('R1-T05: new contracts are version 5, canonical and tolerant of whitespace formatting', async () => {
     const { filePath, raw } = await prepared()
-    expect(ACTIVATION_VERSION).toBe(4)
-    expect(raw.version).toBe(4)
+    expect(ACTIVATION_VERSION).toBe(5)
+    expect(raw.version).toBe(5)
     expect(raw.contractHash).toBe(contractHash(withoutHash(raw)))
     const compact = JSON.stringify(raw)
     await import('node:fs/promises').then(({ writeFile }) => writeFile(filePath, compact))
     const loaded = await loadActivation(filePath)
-    expect(loaded.version).toBe(4)
+    expect(loaded.version).toBe(5)
     expect(loaded.contractHash).toBe(raw.contractHash)
   })
 
@@ -494,11 +494,11 @@ describe('activation canonical hashing (R1)', () => {
 
   it('R1-T09: unknown versions are rejected with re-prepare guidance', async () => {
     const { filePath, raw } = await prepared()
-    const future: Record<string, unknown> = { ...raw, version: 5 }
+    const future: Record<string, unknown> = { ...raw, version: 6 }
     delete future.contractHash
     future.contractHash = legacyContractHash(future as never)
     await writeContract(filePath, future)
-    await expect(loadActivation(filePath)).rejects.toThrow('unsupported HEPHI activation version: 5')
+    await expect(loadActivation(filePath)).rejects.toThrow('unsupported HEPHI activation version: 6')
     await expect(loadActivation(filePath)).rejects.toThrow(/re-prepare a new contract/)
   })
 

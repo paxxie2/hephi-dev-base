@@ -25,6 +25,12 @@ export type VerificationConfig = {
   version: 1
   checks: VerificationCheck[]
   /**
+   * C3: GitHub usernames allowed to approve the pull request at ready time. Frozen
+   * into the contract from activation version 5; empty/absent means no approval is
+   * required (legacy behavior).
+   */
+  approvers?: string[]
+  /**
    * C1: project-level protected acceptance assets (workspace-relative globs). The
    * effective list is these entries plus the task card's `protectedAssets`; the task
    * card can only add to the project list, never remove from it.
@@ -33,6 +39,9 @@ export type VerificationConfig = {
 }
 
 const CHECK_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/
+/** GitHub login: alphanumeric single characters or hyphen-separated, max 39 chars. */
+const GITHUB_LOGIN = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/
+const approverLogin = z.string().regex(GITHUB_LOGIN, 'approver must be a GitHub username')
 
 function safeRelativePath(value: string): boolean {
   if (!value || value.includes('\0')) return false
@@ -58,6 +67,7 @@ const verificationSchema = z.object({
   version: z.literal(1),
   checks: z.array(checkSchema).min(1),
   protectedAssets: z.array(relativePath).optional(),
+  approvers: z.array(approverLogin).optional(),
 }).strict().superRefine((config, ctx) => {
   const ids = new Set<string>()
   for (const check of config.checks) {
@@ -66,6 +76,13 @@ const verificationSchema = z.object({
   }
   if (!config.checks.some(check => check.required)) {
     ctx.addIssue({ code: 'custom', message: 'at least one check must be required' })
+  }
+  // GitHub logins are case-insensitive; a duplicated approver must not be accepted.
+  const approvers = new Set<string>()
+  for (const approver of config.approvers ?? []) {
+    const key = approver.toLowerCase()
+    if (approvers.has(key)) ctx.addIssue({ code: 'custom', message: `duplicate approver: ${approver}` })
+    approvers.add(key)
   }
 })
 

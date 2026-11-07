@@ -20,10 +20,13 @@ export type EnforcementMode = 'enforce' | 'shadow'
 export type EvidencePolicy = { requireSessionBinding: boolean }
 
 /** The format this plugin writes. Older formats are read-only compatible; unknown versions are rejected. */
-export const ACTIVATION_VERSION = 4
+export const ACTIVATION_VERSION = 5
 
 /** Evidence policy field exists from this contract version (A1-K5). */
 export const EVIDENCE_POLICY_SINCE = 3
+
+/** C3 approvers are frozen in the contract from this format version. */
+export const APPROVERS_SINCE = 5
 
 /** Contract formats written before canonical hashing. Their stored hash uses the raw JSON key order. */
 export const LEGACY_ACTIVATION_VERSION = 1
@@ -373,13 +376,13 @@ const ACTIVATION_FIELDS = new Set([
   'allowedPaths', 'requirePullRequest', 'executionMode', 'enforcement', 'plugin', 'verification', 'evidence', 'task', 'contractHash',
 ])
 
-/** Formats that use the canonical (sorted-key) hash: versions 2, 3 and 4 share the same algorithm. */
-const CANONICAL_ACTIVATION_VERSIONS = new Set<unknown>([2, 3, ACTIVATION_VERSION])
+/** Formats that use the canonical (sorted-key) hash: versions 2, 3, 4 and 5 share the same algorithm. */
+const CANONICAL_ACTIVATION_VERSIONS = new Set<unknown>([2, 3, 4, ACTIVATION_VERSION])
 function usesCanonicalHash(version: unknown): boolean {
   return CANONICAL_ACTIVATION_VERSIONS.has(version)
 }
 
-const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSION, 2, 3, ACTIVATION_VERSION])
+const SUPPORTED_ACTIVATION_VERSIONS = new Set<unknown>([LEGACY_ACTIVATION_VERSION, 2, 3, 4, ACTIVATION_VERSION])
 
 /**
  * The evidence policy is part of version 3 only. Version 1/2 writers never emit it, so an
@@ -404,6 +407,18 @@ function contractEvidenceProblem(contractRecord: Record<string, unknown>): strin
   return undefined
 }
 
+/**
+ * C3 approvers live in the frozen verification config from version 5. Older writers never
+ * emit them, so a v1–v4 contract carrying approvers was hand-edited: reject instead of
+ * enforcing an approval list that contract format could not freeze.
+ */
+function contractApproversProblem(contractRecord: Record<string, unknown>, verification: VerificationConfig): string | undefined {
+  if (verification.approvers === undefined) return undefined
+  const version = contractRecord.version
+  if (typeof version === 'number' && version >= APPROVERS_SINCE) return undefined
+  return `unsupported HEPHI activation field for this version: verification.approvers (version ${String(version)})`
+}
+
 /** An unknown top-level field could change a decision in a newer writer; it must not be ignored. */
 function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: string): void {
   for (const key of Object.keys(parsed)) {
@@ -412,7 +427,7 @@ function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: stri
 }
 
 /**
- * Current format is 4. Version 1, 2 and 3 contracts stay readable.
+ * Current format is 5. Version 1, 2, 3 and 4 contracts stay readable.
  * Anything else is rejected with an explicit migration instruction.
  */
 function supportedVersion(value: unknown, filePath: string): void {
@@ -449,6 +464,8 @@ function parseActivation(text: string, filePath: string): ActivationContract {
     if (typeof plugin?.version !== 'string' || typeof plugin?.commit !== 'string') throw new Error(`invalid HEPHI activation plugin metadata: ${filePath}`)
   }
   const verification = parseVerificationConfig(base.verification)
+  const approversProblem = contractApproversProblem(parsed as Record<string, unknown>, verification)
+  if (approversProblem) throw new Error(`invalid HEPHI activation contract: ${approversProblem} (${filePath})`)
   if (base.task !== undefined) {
     const task = parseTaskCard(base.task)
     for (const item of task.acceptance) {

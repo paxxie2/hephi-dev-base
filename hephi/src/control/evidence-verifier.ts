@@ -3,7 +3,7 @@ import { join } from 'node:path'
 import { sessionBindingPolicy, verificationOf, type ActivationContract } from './activation.js'
 import type { ReadyVerifier } from './ready-gate.js'
 import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
-import { allowedPath, clean, defaultPullRequest, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo } from './repository.js'
+import { allowedPath, clean, defaultPullRequest, defaultPullRequestReviews, hasCommit, normalizeRepository, remoteRepository, type PullRequestInfo, type PullRequestReview } from './repository.js'
 import { resolveWorkspace } from './workspace.js'
 import { requireKnowledgeQuery } from '../kb/index.js'
 import { checkRunDir, operatorResolutionsAllowed, readRuns, resolvedRunIds, type CheckRunRecord } from './check-store.js'
@@ -326,6 +326,34 @@ async function frozenCheckProblem(contract: ActivationContract, record: CheckRun
   return undefined
 }
 
+const normalizeLogin = (value: string) => value.trim().toLowerCase()
+
+/**
+ * C3 approval rules (ROADMAP-95 §4.10): only the latest review of each listed approver
+ * counts; a listed approver's latest CHANGES_REQUESTED blocks even when others approve;
+ * an APPROVED review must target the current PR HEAD commit. Reviews are consumed in host
+ * order (GitHub returns them chronologically), so the map keeps the last one per author.
+ * Awaiting approval is a wait state, not a failed check: C4.5 counts check-run failures
+ * only (check records / retry counters), so this denial never consumes a retry.
+ */
+function approvalProblem(info: PullRequestInfo, approvers: string[], headCommit: string | undefined): string | undefined {
+  const reviews = info.reviews
+  if (!Array.isArray(reviews)) return 'PR reviews are unavailable; cannot verify the configured approvers'
+  const latest = new Map<string, PullRequestReview>()
+  for (const review of reviews) {
+    if (!review || typeof review.author !== 'string' || typeof review.state !== 'string') return 'PR reviews are malformed; cannot verify the configured approvers'
+    latest.set(normalizeLogin(review.author), review)
+  }
+  const blocked = approvers.filter(approver => latest.get(normalizeLogin(approver))?.state === 'CHANGES_REQUESTED')
+  if (blocked.length > 0) return `changes requested by ${blocked.join(', ')}; waiting for review resolution (not a failed check)`
+  const approved = approvers.some(approver => {
+    const review = latest.get(normalizeLogin(approver))
+    return review?.state === 'APPROVED' && review.commitId !== undefined && headCommit !== undefined && review.commitId === headCommit
+  })
+  if (!approved) return 'no listed approver approved the current PR HEAD; waiting for approval (not a failed check)'
+  return undefined
+}
+
 const samplePlanFiles = (items: string[]) => items.slice(0, 10).join(', ') + (items.length > 10 ? ` (+${items.length - 10} more)` : '')
 
 export function createEvidenceVerifier(options: {
@@ -424,12 +452,35 @@ export function createEvidenceVerifier(options: {
           if (sha256(evidence.output) !== r.outputHash) throw new Error(`authoritative check output differs from the record: ${r.checkId}${notes}`)
         }
       }
-      if (contract.requirePullRequest) {
+      // C3: approvals are verified against the PR reviews; the same PR must be open and
+      // point at the local HEAD. A contract with approvers therefore needs a PR number
+      // even if `requirePullRequest` is false.
+      const approvers = verification.approvers ?? []
+      let pullRequest: PullRequestInfo | undefined
+      if (contract.requirePullRequest || approvers.length > 0) {
         const number = (execution.arguments as { pr_number?: number }).pr_number
-        if (!Number.isInteger(number) || number! <= 0) throw new Error('pr_number required')
-        const fetch = options.pullRequest ?? ((repo, n) => defaultPullRequest(repo, n, join(options.stateDir, 'worker-bin', 'gh')))
-        const pr = await fetch(contract.repository, number!)
-        if (pr.state !== 'open' || pr.baseRef !== contract.baseRef || pr.headSha !== before.headCommit) throw new Error('PR/base/HEAD mismatch')
+        if (!Number.isInteger(number) || number! <= 0) {
+          if (approvers.length > 0) {
+            throw new Error('ready.awaiting-approval: approvers are configured; pr_number is required to verify approval (waiting for approval, not a failed check)')
+          }
+          throw new Error('pr_number required')
+        }
+        const cli = join(options.stateDir, 'worker-bin', 'gh')
+        // Only approval-enabled contracts pay for the extra reviews API call; without
+        // approvers the legacy PR check behavior is byte-for-byte unchanged. An injected
+        // `pullRequest` fixture supplies `reviews` directly (tests never use the network).
+        const fetch = options.pullRequest ?? (approvers.length > 0
+          ? async (repo: string, n: number) => ({
+            ...await defaultPullRequest(repo, n, cli),
+            reviews: await defaultPullRequestReviews(repo, n, cli),
+          })
+          : (repo: string, n: number) => defaultPullRequest(repo, n, cli))
+        pullRequest = await fetch(contract.repository, number!)
+        if (pullRequest.state !== 'open' || pullRequest.baseRef !== contract.baseRef || pullRequest.headSha !== before.headCommit) throw new Error('PR/base/HEAD mismatch')
+      }
+      if (approvers.length > 0) {
+        const problem = approvalProblem(pullRequest!, approvers, before.headCommit)
+        if (problem) throw new Error(`ready.awaiting-approval: ${problem}`)
       }
       if (!await clean(workspace) || !sameSource(before, await gitFingerprint(workspace, contract.baseSha))) throw new Error('source changed during ready')
       // C4.2 (degraded form): only the FINAL diff is compared with the plan declared for
@@ -470,6 +521,8 @@ export function createEvidenceVerifier(options: {
 
 /** Stable rule ids for ready denials; P3 aggregates by rule. */
 function readyRule(reason: string): string {
+  // C3: waiting for a human approval is its own denial class (a wait state, not a failed check).
+  if (reason.includes('ready.awaiting-approval')) return 'ready.awaiting-approval'
   // A1-BIND/A1-OUT: an unreadable Job terminal state or unverifiable output is not a
   // generic binding mismatch; keep them distinguishable for P3 aggregation.
   if (reason.includes('Job terminal state is unavailable')) return 'ready.job-unavailable'

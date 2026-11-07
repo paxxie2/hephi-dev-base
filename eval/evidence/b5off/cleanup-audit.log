@@ -12,3 +12,7 @@ HTTP/2.0 404 Not Found
 []
 {"message":"Not Found","documentation_url":"https://docs.github.com/rest/repos/repos#get-a-repository","status":"404"}gh: Not Found (HTTP 404)
 instance dir removed: YES at 2026-11-07T23:35:45Z
+=== final temp cleanup 2026-11-07T23:38:33Z ===
+port3093_listen=0  hostB_pid74123_alive=YES  port3083_listen=2
+credentials_in_instance_dir=NO (instance dir removed earlier)
+collaborator_monsterhunterw2=404 (absent); invitations=[] (checked 2026-11-07T23:35Z)

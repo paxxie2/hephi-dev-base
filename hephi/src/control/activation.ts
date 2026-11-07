@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, resolve } from 'node:path'
 import { parseVerificationConfig, type VerificationConfig } from '../contracts/checks.js'
 import { parseIssueTask, parseTaskCard, type TaskCard } from '../contracts/task.js'
 import { authorizationProblem } from './discipline.js'
@@ -72,29 +72,195 @@ export type ActivationResult =
 // environment keeps the previous behavior (no interception). This runs at prepare
 // because the frozen check commands are what the Worker will execute later.
 
-/** Networked install/command patterns that cannot be pinned offline (mirrors eval/check-task.mjs). */
-function offlineCommandProblem(line: string): string | undefined {
-  if (/\bgit\s+clone\b/.test(line)) return 'git clone is a networked command'
-  if (/\b(curl|wget)\b/.test(line)) return 'curl/wget are networked commands'
-  if (/\bnpm\s+(install|i|add)\b/.test(line) && !/\bnpm\s+ci\b/.test(line) && !/--offline|--prefer-offline|--cache\b/.test(line)) {
-    return 'npm install without --offline/--prefer-offline/--cache'
+/**
+ * Networked install/command patterns that cannot be pinned offline (mirrors eval/check-task.mjs).
+ *
+ * Review N2/N4 hardening: the scan is static and command-position based. It splits
+ * shell -c payloads at `; && || |` and newlines outside quotes, strips env/sudo/nohup
+ * prefixes, and only flags the command being run (never a filename or a grep pattern).
+ * It is NOT a network sandbox and never executes the command: a shell alias, Makefile
+ * target or runtime downloader can still reach the network.
+ */
+const MAX_SHELL_SCAN_DEPTH = 8
+
+/** Split a shell payload at unquoted `; && || | &` and newlines, preserving token boundaries. */
+function shellSegments(line: string): string[][] {
+  const segments: string[][] = []
+  let tokens: string[] = []
+  let token = ''
+  let quoting: "'" | '"' | null = null
+  let hasToken = false
+  const pushToken = (): void => { if (hasToken) { tokens.push(token); token = ''; hasToken = false } }
+  const pushSegment = (): void => { pushToken(); if (tokens.length > 0) { segments.push(tokens); tokens = [] } }
+  for (let index = 0; index < line.length; index++) {
+    const char = line[index]!
+    if (quoting === "'") {
+      if (char === "'") quoting = null
+      else { token += char; hasToken = true }
+      continue
+    }
+    if (quoting === '"') {
+      if (char === '\\' && index + 1 < line.length && '"\\$`'.includes(line[index + 1]!)) {
+        token += line[index + 1]; hasToken = true; index += 1
+      } else if (char === '"') quoting = null
+      else { token += char; hasToken = true }
+      continue
+    }
+    if (char === '\\' && index + 1 < line.length) { token += line[index + 1]; hasToken = true; index += 1; continue }
+    if (char === "'" || char === '"') { quoting = char; hasToken = true; continue }
+    if (char === '\n' || char === ';') { pushSegment(); continue }
+    if ((char === '&' || char === '|') && line[index + 1] === char) { pushSegment(); index += 1; continue }
+    if (char === '|') { pushSegment(); continue }
+    // A lone & backgrounds a command; keep redirections (2>&1, &>file) intact.
+    if (char === '&' && line[index + 1] !== '>' && line[index - 1] !== '>') { pushSegment(); continue }
+    if (/\s/.test(char)) { pushToken(); continue }
+    token += char; hasToken = true
   }
-  if (/\bnpm\s+exec\b/.test(line)) return 'npm exec can download packages from the network'
-  if (/\bpnpm\s+(install|i|add)\b/.test(line) && !/--frozen-lockfile|--offline/.test(line)) {
-    return 'pnpm install without --frozen-lockfile or --offline'
+  pushSegment()
+  return segments
+}
+
+const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/
+const SUDO_OPTIONS_WITH_VALUE = new Set(['-u', '-g', '-p', '-C', '-h', '-r', '-t', '-U'])
+
+/** Drop leading VAR=value assignments and env/sudo/nohup wrappers. */
+function stripShellPrefixes(tokens: string[]): string[] {
+  let index = 0
+  while (index < tokens.length) {
+    const command = basename(tokens[index]!)
+    if (ENV_ASSIGNMENT.test(tokens[index]!)) { index += 1; continue }
+    if (command === 'env') {
+      index += 1
+      while (index < tokens.length && (tokens[index]!.startsWith('-') || ENV_ASSIGNMENT.test(tokens[index]!))) index += 1
+      continue
+    }
+    if (command === 'sudo') {
+      index += 1
+      while (index < tokens.length && tokens[index]!.startsWith('-')) {
+        if (SUDO_OPTIONS_WITH_VALUE.has(tokens[index]!) && tokens[index + 1] !== undefined && !tokens[index + 1]!.startsWith('-')) index += 1
+        index += 1
+      }
+      continue
+    }
+    if (command === 'nohup') {
+      index += 1
+      while (index < tokens.length && tokens[index]!.startsWith('-')) index += 1
+      continue
+    }
+    break
   }
-  if (/\bpnpm\s+dlx\b/.test(line)) return 'pnpm dlx downloads packages from the network'
-  if (/\b(?:npx)\b/.test(line)) return 'npx can download packages from the network'
-  if (/\bmvn(w)?\b/.test(line) && !/-o\b|--offline/.test(line)) return 'mvn without -o/--offline'
-  if (/\bgradle(w)?\b/.test(line) && !/--offline/.test(line)) return 'gradle without --offline'
-  if (/\byarn\s+install\b/.test(line) && !/--offline|--frozen-lockfile/.test(line)) return 'yarn install without an offline/frozen flag'
-  if (/\byarn\s+add\b/.test(line) && !/--offline|--frozen-lockfile/.test(line)) return 'yarn add without an offline/frozen flag'
-  if (/\byarn\s+dlx\b/.test(line)) return 'yarn dlx downloads packages from the network'
-  if (/\bbun\s+(add|install)\b/.test(line)) return 'bun add/install can download packages from the network'
-  if (/\bpip3?\s+install\b/.test(line) && !/--no-index|--find-links/.test(line)) return 'pip install without --no-index/--find-links'
-  if (/\bpip3?\s+download\b/.test(line)) return 'pip download fetches packages from the network'
-  if (/\bgo\s+get\b/.test(line)) return 'go get fetches modules from the network'
-  if (/\bcorepack\s+prepare\b/.test(line)) return 'corepack prepare downloads package managers from the network'
+  return tokens.slice(index)
+}
+
+const hasFlag = (args: string[], ...flags: string[]): boolean =>
+  args.some(arg => flags.some(flag => arg === flag || arg.startsWith(`${flag}=`)))
+
+/** Problems of one already-split command (argv or shell segment); no prefix stripping here. */
+function commandProblem(tokens: string[], depth: number): string | undefined {
+  const command = basename(tokens[0]!)
+  const args = tokens.slice(1)
+  const shellWrapper = command === 'sh' || command === 'bash' || command === 'zsh'
+  if (shellWrapper) {
+    for (let index = 0; index < args.length; index++) {
+      const arg = args[index]!
+      const payload = arg === '-c' ? args[index + 1] : arg.startsWith('-c') && arg.length > 2 ? arg.slice(2) : undefined
+      if (payload === undefined) continue
+      if (depth >= MAX_SHELL_SCAN_DEPTH) return `shell -c payload nesting exceeds the static scan depth (${MAX_SHELL_SCAN_DEPTH})`
+      return shellLineProblem(payload, depth + 1)
+    }
+    return undefined
+  }
+  switch (command) {
+    case 'git': return args[0] === 'clone' ? 'git clone is a networked command' : undefined
+    case 'curl': case 'wget': return 'curl/wget are networked commands'
+    case 'npm': {
+      const subcommand = args[0]
+      if (subcommand === 'install' || subcommand === 'i' || subcommand === 'add') {
+        if (hasFlag(args, '--offline', '--prefer-offline', '--cache')) return undefined
+        return 'npm install without --offline/--prefer-offline/--cache'
+      }
+      if (subcommand === 'exec') return 'npm exec can download packages from the network'
+      if (subcommand === 'create') return 'npm create can download packages from the network'
+      return undefined
+    }
+    case 'pnpm': {
+      const subcommand = args[0]
+      if (subcommand === 'install' || subcommand === 'i' || subcommand === 'add') {
+        if (hasFlag(args, '--frozen-lockfile', '--offline')) return undefined
+        return 'pnpm install without --frozen-lockfile or --offline'
+      }
+      if (subcommand === 'dlx') return 'pnpm dlx downloads packages from the network'
+      if (subcommand === 'create') return 'pnpm create can download packages from the network'
+      return undefined
+    }
+    case 'npx': return args.includes('--no-install') ? undefined : 'npx can download packages from the network'
+    case 'yarn': {
+      const subcommand = args[0]
+      if (subcommand === 'install') {
+        if (hasFlag(args, '--offline', '--frozen-lockfile')) return undefined
+        return 'yarn install without an offline/frozen flag'
+      }
+      if (subcommand === 'add') {
+        if (hasFlag(args, '--offline', '--frozen-lockfile')) return undefined
+        return 'yarn add without an offline/frozen flag'
+      }
+      if (subcommand === 'dlx') return 'yarn dlx downloads packages from the network'
+      if (subcommand === 'create') return 'yarn create can download packages from the network'
+      return undefined
+    }
+    case 'bun': {
+      const subcommand = args[0]
+      if (subcommand === 'add' || subcommand === 'install') return 'bun add/install can download packages from the network'
+      if (subcommand === 'x') return 'bun x can download packages from the network'
+      return undefined
+    }
+    case 'bunx': return 'bunx can download packages from the network'
+    case 'pip': case 'pip3': {
+      const subcommand = args[0]
+      if (subcommand === 'install') {
+        if (hasFlag(args, '--no-index', '--find-links')) return undefined
+        return 'pip install without --no-index/--find-links'
+      }
+      if (subcommand === 'download') {
+        if (hasFlag(args, '--no-index')) return undefined
+        return 'pip download fetches packages from the network'
+      }
+      return undefined
+    }
+    case 'pipx': return args[0] === 'run' || args[0] === 'install' ? 'pipx run/install can download packages from the network' : undefined
+    case 'poetry': return args[0] === 'add' || args[0] === 'install' ? 'poetry add/install can download packages from the network' : undefined
+    case 'uv': return args[0] === 'add' || args[0] === 'pip' || args[0] === 'run' ? 'uv add/pip/run can download packages from the network' : undefined
+    case 'uvx': return 'uvx can download packages from the network'
+    case 'go': return args[0] === 'get' || args[0] === 'install' ? `go ${args[0]} fetches modules from the network` : undefined
+    case 'cargo': return args[0] === 'install' ? 'cargo install can download crates from the network' : undefined
+    case 'corepack': return args[0] === 'prepare' ? 'corepack prepare downloads package managers from the network' : undefined
+    case 'mvn': case 'mvnw': return hasFlag(args, '-o', '--offline') ? undefined : 'mvn without -o/--offline'
+    case 'gradle': case 'gradlew': return hasFlag(args, '--offline') ? undefined : 'gradle without --offline'
+    default: return undefined
+  }
+}
+
+/** Scan one shell text line (used for a shell -c payload, which may hold several commands). */
+function shellLineProblem(line: string, depth: number): string | undefined {
+  for (const tokens of shellSegments(line)) {
+    const stripped = stripShellPrefixes(tokens)
+    if (stripped.length === 0) continue
+    const problem = commandProblem(stripped, depth)
+    if (problem) return problem
+  }
+  return undefined
+}
+
+/**
+ * A declared check is spawned as one quoted argv, so operators only take effect inside
+ * a `sh -c` payload (or in the command token of a legacy config). Scan the command
+ * position, then recurse into a shell wrapper's payload.
+ */
+function offlineCommandProblem(command: string, args: string[]): string | undefined {
+  const stripped = stripShellPrefixes([command, ...args])
+  const direct = stripped.length === 0 ? undefined : commandProblem(stripped, 0)
+  if (direct) return direct
+  if (/[;&|\n]/.test(command)) return shellLineProblem(command, 0)
   return undefined
 }
 
@@ -116,7 +282,7 @@ function offlineEnvironmentProblems(verification: VerificationConfig, workspace:
   }
   for (const check of verification.checks) {
     const line = [check.command, ...check.args].join(' ')
-    const problem = offlineCommandProblem(line)
+    const problem = offlineCommandProblem(check.command, check.args)
     if (problem) problems.push(`check "${check.id}" runs a non-offline command (${problem}): ${line}`)
   }
   return problems

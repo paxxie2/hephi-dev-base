@@ -1,0 +1,17 @@
+============================================================
+[PASS] 计划未被篡改
+       expected=984b0c1fe303… actual=984b0c1fe303…
+[PASS] 改动范围在允许清单内
+       改动 0 个文件
+[PASS] 受保护文件未被改动
+       受保护 0 个
+[PASS] 验收命令: git diff --exit-code
+       exit=0
+[PASS] 验收命令: cd hephi && pnpm check
+       exit=0 | $ tsdown -c tsdown.config.ts
+[PASS] 验收命令: node scripts/host/test-deploy-hephi.mjs
+       exit=0 | PASS: 69 assertions (R3 fake-host suite)
+[PASS] 验收命令: git diff --check 5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1..HEAD
+       exit=0
+============================================================
+总体: PASS

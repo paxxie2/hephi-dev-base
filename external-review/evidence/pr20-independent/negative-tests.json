@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "reviewedCommit": "17d3827d3a73d3afb7a3b8de130d1615bd351769",
+  "script": "scripts/host/deploy-hephi.sh",
+  "node": "v22.19.0",
+  "platform": "darwin",
+  "executedAt": "2026-11-06T23:20:01.707Z",
+  "note": "REPRODUCED means the suspected defect was confirmed; it is not a product pass.",
+  "results": [
+    {
+      "id": "N1 regular-directory migration fails at pointer rename",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "snapshot existing lib: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n1-regular-directory/instance/releases/hephi/.migration-20261106T231957Z\nnode:fs:1020\n  binding.rename(\n          ^\n\nError: EISDIR: illegal operation on a directory, rename '/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n1-regular-directory/instance/hephi/.lib-new-41760' -> '/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n1-regular-directory/instance/hephi/lib'\n    at Object.renameSync (node:fs:1020:11)\n    at [eval]:1:27\n    at runScriptInThisContext (node:internal/vm:209:10)\n    at node:internal/process/execution:446:12\n    at [eval]-wrapper:6:24\n    at runScriptInContext (node:internal/process/execution:444:60)\n    at evalFunction (node:internal/process/execution:279:30)\n    at evalTypeScript (node:internal/process/execution:291:3)\n    at node:internal/main/eval_string:74:3 {\n  errno: -21,\n  code: 'EISDIR',\n  syscall: 'rename',\n  path: '/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n1-regular-directory/instance/hephi/.lib-new-41760',\n  dest: '/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n1-regular-directory/instance/hephi/lib'\n}\n\nNode.js v22.19.0\n",
+        "libRemainsDirectory": true
+      }
+    },
+    {
+      "id": "N2 rollback without --target silently rolls to HEAD",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 0,
+        "output": "record: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n2-rollback-implicit-target/instance/logs/rollback-20261106T231957Z.json\nrollback complete; host remains paused, verify loaded build then resume via API\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n2-rollback-implicit-target/instance/releases/hephi/611f5a4bb8983b9d2316b0659ee006cf774e5057/lib",
+        "record": {
+          "at": "2026-11-06T23:19:57.789Z",
+          "action": "rollback",
+          "result": "ok",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "target": "611f5a4bb8983b9d2316b0659ee006cf774e5057",
+          "previous": "3ea50dc38e4af9c6d577734308c3c67b5baa274c",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n2-rollback-implicit-target/instance/releases/hephi/3ea50dc38e4af9c6d577734308c3c67b5baa274c/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n2-rollback-implicit-target/instance/releases/hephi/611f5a4bb8983b9d2316b0659ee006cf774e5057/lib",
+          "health": "all-required-ready"
+        }
+      }
+    },
+    {
+      "id": "N3 failed rollback without current build claims previous restored",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 1,
+        "output": "instance did not reach full health within 1s\nrecord: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n3-no-current-false-restoration/instance/logs/rollback-20261106T231959Z.json\nrollback target failed health; previous build restored and host kept paused\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n3-no-current-false-restoration/instance/releases/hephi/611f5a4bb8983b9d2316b0659ee006cf774e5057/lib",
+        "record": {
+          "at": "2026-11-06T23:19:59.319Z",
+          "action": "rollback",
+          "result": "failed-restored-previous",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "target": "611f5a4bb8983b9d2316b0659ee006cf774e5057",
+          "previous": "",
+          "pointerBefore": "",
+          "health": "not-checked"
+        }
+      }
+    },
+    {
+      "id": "N4 recovery rename failure bypasses double-failure recording",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 42,
+        "output": "instance did not reach full health within 1s\ninjected recovery rename failure\n",
+        "pointer": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n4-recovery-rename-failure/instance/releases/hephi/3a25ac5fb1313ce514ce9af6711b3b7b8bd0130c/lib",
+        "recordCount": 0
+      }
+    },
+    {
+      "id": "N5 success record hardcodes paused=true instead of readback",
+      "reproduced": true,
+      "evidence": {
+        "exitCode": 0,
+        "output": "record: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n5-paused-readback/instance/logs/deploy-20261106T232001Z.json\ndeploy complete; host remains paused; loaded commit readback is unavailable (disk hash only)\n",
+        "observedPausedAfterSwitch": false,
+        "record": {
+          "at": "2026-11-06T23:20:01.675Z",
+          "action": "deploy",
+          "result": "ok",
+          "hostVersion": "host-1.0.0",
+          "paused": true,
+          "target": "eba38c38aedf8a1841612618744319ef8022ba55",
+          "previous": "fc60cb19c5eb3fc1d68dfd84abadf3ae76f999e4",
+          "pointerBefore": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n5-paused-readback/instance/releases/hephi/fc60cb19c5eb3fc1d68dfd84abadf3ae76f999e4/lib",
+          "pointerAfter": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/.pr20-negative-5soiku/n5-paused-readback/instance/releases/hephi/eba38c38aedf8a1841612618744319ef8022ba55/lib",
+          "health": "all-required-ready",
+          "loadedCommitReadback": "unverified"
+        }
+      }
+    }
+  ]
+}

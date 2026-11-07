@@ -1,0 +1,55 @@
+2026-11-07T01:17:41Z
+== host.pid ==
+29031
+== repo HEAD ==
+c2865feaf27962bb686a7f934d59bb39a99dc0f2
+== live lib type ==
+plain-directory
+== live lib tree hash ==
+acbe88bac5048858a582e1d896e43addcb7b8dad5ff74c8a37c2087edec032b0  -
+== releases ==
+dde783a58f5e86984e27b6e2e7f2e62b172adee1
+fba676e89ee19b2cbcf685cdb8b2a350504021fc
+last-snapshot
+live-20261107T042937
+live-20261107T043051
+live-20261107T054631
+== release meta ==
+releases/hephi/dde783a58f5e86984e27b6e2e7f2e62b172adee1/
+{"sha":"dde783a58f5e86984e27b6e2e7f2e62b172adee1","at":"2026-11-06T20:31:30Z","entrySha256":"a9f7dbfeadf2e58e475a0314a334af9913082984ad5773a5f3fe2c136c6c6e0b"}
+
+releases/hephi/fba676e89ee19b2cbcf685cdb8b2a350504021fc/
+{"sha":"fba676e89ee19b2cbcf685cdb8b2a350504021fc","at":"2026-11-06T21:47:10Z","entrySha256":"fe404c0ddc7bb6fa798f99be08213571789696e431fcf3e4b2054bf3da078438"}
+
+releases/hephi/live-20261107T042937/
+{"origin":"live-snapshot","at":"2026-11-06T20:29:37Z","entrySha256":"54bce386ecfb1fd9da74eee7902e495da8499d16e9ffd928b81f340fa0f32beb"}
+
+releases/hephi/live-20261107T043051/
+{"origin":"live-snapshot","at":"2026-11-06T20:30:51Z","entrySha256":"54bce386ecfb1fd9da74eee7902e495da8499d16e9ffd928b81f340fa0f32beb"}
+
+releases/hephi/live-20261107T054631/
+{"origin":"live-snapshot","at":"2026-11-06T21:46:31Z","entrySha256":"fe404c0ddc7bb6fa798f99be08213571789696e431fcf3e4b2054bf3da078438"}
+
+== state ==
+2484464673dcdcdbd867ab0ebffbd4069da8f7730c830f82cc6cb50cfcd05022  /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r3.7-real-host/state-before.json
+== open tickets ==
+{"items":[{"id":"b3a7d823bad0339e77dde1fb22f2060b","title":"[native] 健康检查 200/503 响应增加固定 service 字段","state":"open","stage":"person","action":"answer","note":{"text":"基线 main@e00f338 未跟踪 backend/app/data（被根 .gitignore 的 data/ 规则忽略），project-regression 必然在收集阶段失败，与本次改动无关。请决定：先合并已开放、可合并的基线修复 PR #23 后由本分支重跑检查；还是修订方案/允许路径，授权在本
+== config hash ==
+4b20291e9ba9e1368edadc86ce0c83d7c2ebc4055c48a9ed44e352682918b8dd  logs/composed-config.yml
+c5286c542ddc14f85e18ddbfcde891956d1136c7928579df4daae097e558a356  logs/initial-config.yml
+== dsh version ==
+0.2.1-rc.5
+== host start time / pid ==
+  PID STARTED                      COMMAND
+29031 Sat Nov  7 05:47:12 2026     /Users/zm/.nvm/versions/node/v26.1.0/bin/node /Users/zm/dsh-instances/runtime/node_modules/@deepseek-ai/dsh/lib/bin.js --profile experiment --no-open
+== live lib mtime ==
+Nov  7 08:34:50 2026 hephi-review/hephi/lib/index.mjs
+== open ticket count ==
+count=2
+b3a7d823bad0339e77dde1fb22f2060b open person answer
+24983dd77e986b48866bb016a909d490 open person failed
+== logs before ==
+       8
+host.log
+initial-config.yml
+rollback-20261107T043045.json

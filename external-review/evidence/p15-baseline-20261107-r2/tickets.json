@@ -1,0 +1,847 @@
+[
+  {
+    "id": "6c5b2c3d20598e608c59e611315f28e1",
+    "title": "修复 Triple REST 问号路径截断问题",
+    "createdAt": "2026-10-31T19:24:46.784Z",
+    "updatedAt": "2026-10-31T19:39:20.104Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/14"
+    ],
+    "assignmentCount": 3,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "f2e975294545985c8f3d970540842461",
+    "title": "修复 Triple 半开连接清理问题",
+    "createdAt": "2026-10-31T19:24:46.785Z",
+    "updatedAt": "2026-10-31T19:29:57.724Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/13"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "887445ed2dd1a971766f25f9bdd59a5e",
+    "title": "修复 UnsafeByteArrayInputStream 零长度读取 EOF",
+    "createdAt": "2026-10-31T19:24:46.786Z",
+    "updatedAt": "2026-10-31T19:28:02.637Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/12"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c9743737c8f774761d92926defac7e30",
+    "title": "修复配置合并修改输入参数问题",
+    "createdAt": "2026-10-31T19:24:46.787Z",
+    "updatedAt": "2026-10-31T19:35:01.547Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/16"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a3a3b165ae7a6cef931d175e1d09e8d4",
+    "title": "修复 DefaultFuture.cancel 空指针问题",
+    "createdAt": "2026-10-31T19:24:46.788Z",
+    "updatedAt": "2026-10-31T19:38:39.533Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/19"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "d11da74fbc40b7ce3dfa4380ab8f15da",
+    "title": "修复 QoS count 忽略 times 参数问题",
+    "createdAt": "2026-10-31T19:24:46.788Z",
+    "updatedAt": "2026-10-31T19:36:02.777Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/18"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "d4fe4269f72696220ed34e7b185f268c",
+    "title": "修复 AccessLogFilter 路径警告问题",
+    "createdAt": "2026-10-31T19:24:46.789Z",
+    "updatedAt": "2026-10-31T19:41:18.274Z",
+    "ended": {
+      "at": "2026-10-31T19:41:18.274Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c42f65481bb9e3f65b1b85f8257e63de",
+    "title": "修复 UnsafeByteArrayInputStream 大跳过溢出问题",
+    "createdAt": "2026-10-31T19:24:46.789Z",
+    "updatedAt": "2026-10-31T19:41:27.724Z",
+    "ended": {
+      "at": "2026-10-31T19:41:27.724Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/20"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "b11c279696ae9c394c41e10b364a3626",
+    "title": "修复 Triple 最大消息大小配置读取问题",
+    "createdAt": "2026-10-31T19:24:46.790Z",
+    "updatedAt": "2026-10-31T19:40:54.400Z",
+    "ended": {
+      "at": "2026-10-31T19:40:54.400Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a2813fe24ca0241ff4a632826a0e7166",
+    "title": "修复嵌套配置刷新覆盖策略问题",
+    "createdAt": "2026-10-31T19:24:46.790Z",
+    "updatedAt": "2026-10-31T19:40:43.350Z",
+    "ended": {
+      "at": "2026-10-31T19:40:43.350Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "6e10e69705ee003ea811340a2796832f",
+    "title": "修复 StreamUtils 错误使用 available 长度",
+    "createdAt": "2026-10-31T19:33:11.514Z",
+    "updatedAt": "2026-10-31T19:41:05.016Z",
+    "ended": {
+      "at": "2026-10-31T19:41:05.016Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "051457410f388b7a7d1265ae60f27a82",
+    "title": "修复 LRU2Cache.put 忽略主缓存更新",
+    "createdAt": "2026-10-31T23:38:06.439Z",
+    "updatedAt": "2026-10-31T23:40:30.628Z",
+    "ended": {
+      "at": "2026-10-31T23:40:30.627Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ebc0b53b707a14c33c7f7b963b6efb02",
+    "title": "修复 CacheFilter 逗号参数元组结果错误",
+    "createdAt": "2026-10-31T23:41:45.188Z",
+    "updatedAt": "2026-10-31T23:48:18.910Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "dc3149d7a86c0290e378700cc065d4c3",
+    "title": "修复 CacheFilter 元组键冲突",
+    "createdAt": "2026-11-01T00:12:22.038Z",
+    "updatedAt": "2026-11-01T00:20:30.481Z",
+    "ended": {
+      "at": "2026-11-01T00:20:30.480Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/34"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "062bcb763e992bda4fa6f61dc87b8ea6",
+    "title": "修复 CacheFilter 逗号参数元组问题",
+    "createdAt": "2026-11-01T00:25:26.753Z",
+    "updatedAt": "2026-11-01T00:32:09.661Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/36"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "df7785b8a4f63cbf06ec1da71a9c9e1f",
+    "title": "修复 UnsafeByteArrayInputStream 零长度读取",
+    "createdAt": "2026-11-01T09:37:27.794Z",
+    "updatedAt": "2026-11-01T10:06:54.445Z",
+    "ended": {
+      "at": "2026-11-01T10:06:54.445Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "1df23f2c96b09a2326d87989eeafa98c",
+    "title": "修复 LRU2Cache 主缓存更新问题",
+    "createdAt": "2026-11-01T10:15:46.563Z",
+    "updatedAt": "2026-11-01T10:56:10.234Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "2699c7b7b0e0d6b7e513e43b1ea22907",
+    "title": "修复配置合并修改输入参数",
+    "createdAt": "2026-11-01T11:13:48.870Z",
+    "updatedAt": "2026-11-01T11:26:49.313Z",
+    "ended": {
+      "at": "2026-11-01T11:26:49.313Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "e2c14b27a36f57482a2da13b60dd094c",
+    "title": "修复 QoS count 忽略 times 参数",
+    "createdAt": "2026-11-01T11:29:29.252Z",
+    "updatedAt": "2026-11-01T11:35:51.807Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "37408253eda5510f8570060f84eb2d5a",
+    "title": "修复 Triple REST 问号路径截断",
+    "createdAt": "2026-11-01T15:02:47.787Z",
+    "updatedAt": "2026-11-01T15:08:47.004Z",
+    "ended": {
+      "at": "2026-11-01T15:08:47.003Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "9656c5311ac7bea529f10e09e378f6ae",
+    "title": "修复 Triple REST 问号路径截断",
+    "createdAt": "2026-11-01T15:39:35.299Z",
+    "updatedAt": "2026-11-01T15:48:44.845Z",
+    "ended": {
+      "at": "2026-11-01T15:48:44.844Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "8c6d37965ad7229d8ecf360266129f23",
+    "title": "修复 Triple REST 问号路径截断",
+    "createdAt": "2026-11-01T15:52:49.877Z",
+    "updatedAt": "2026-11-01T16:00:20.455Z",
+    "ended": {
+      "at": "2026-11-01T16:00:20.455Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "6d5c2660f83a9e76d83c19539181c25d",
+    "title": "修复 UnsafeByteArrayInputStream 零长度读取",
+    "createdAt": "2026-11-01T15:58:53.826Z",
+    "updatedAt": "2026-11-01T16:00:33.991Z",
+    "ended": {
+      "at": "2026-11-01T16:00:33.991Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "d63b7b27cc49f59f1edeee54a99f62da",
+    "title": "Minimal Triple REST question-mark truncation fix via native HEPHI flow",
+    "createdAt": "2026-11-01T16:05:04.476Z",
+    "updatedAt": "2026-11-01T16:18:12.785Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/54"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "69f5c32499468a0fcbbb75f6631f65c6",
+    "title": "重新修复 UnsafeByteArrayInputStream 零长度读取并进行原生 HEPHI 验证",
+    "createdAt": "2026-11-01T17:09:16.238Z",
+    "updatedAt": "2026-11-01T17:47:43.103Z",
+    "ended": {
+      "at": "2026-11-01T17:47:43.103Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/56"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c1c479198ff05be1b01b2d0080cb9d90",
+    "title": "Fix Hessian2 element types in nested generic collections",
+    "createdAt": "2026-11-01T17:10:25.283Z",
+    "updatedAt": "2026-11-01T17:24:09.378Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/58"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "9beb45630e079ee3ae1c03b34eb15876",
+    "title": "Fix OpenAPI nested response schemas and Schema annotations",
+    "createdAt": "2026-11-01T17:19:24.299Z",
+    "updatedAt": "2026-11-01T17:40:50.302Z",
+    "ended": {
+      "at": "2026-11-01T17:40:50.302Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/59"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "bddd2e933a711dd80a72fabe9009a230",
+    "title": "Independent acceptance replay of OpenAPI Issue #57",
+    "createdAt": "2026-11-01T17:40:50.304Z",
+    "updatedAt": "2026-11-01T18:00:52.309Z",
+    "ended": {
+      "at": "2026-11-01T18:00:52.309Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "23d348ccecb5ef2119dc2e1695c7a352",
+    "title": "Independent acceptance replay of zero-length reads in Issue #52",
+    "createdAt": "2026-11-01T17:47:43.105Z",
+    "updatedAt": "2026-11-01T17:50:46.528Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/61"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c8e0a67fd4effc6ed3de98cebb64ea90",
+    "title": "OpenAPI Issue #57 acceptance replay with 91fa6cf",
+    "createdAt": "2026-11-01T18:00:52.311Z",
+    "updatedAt": "2026-11-01T18:11:19.630Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/62"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a13a31eba85394fd66a564b32d4988cb",
+    "title": "Fix JavaBeanSerializeUtil serialization of maps with null keys",
+    "createdAt": "2026-11-01T19:09:02.703Z",
+    "updatedAt": "2026-11-01T19:18:32.693Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/64"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "531f0daa5420e2f8e1bcb50d2780b2bb",
+    "title": "升级 Topic Bench 现代工作台 UI 与响应式布局",
+    "createdAt": "2026-11-01T21:45:46.552Z",
+    "updatedAt": "2026-11-01T23:09:39.246Z",
+    "ended": {
+      "at": "2026-11-01T23:06:58.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "status": "merged",
+    "prRefs": [
+      "https://github.com/paxxie2/topic-bench/pull/2"
+    ],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "1c41d4815a9bca2299f3eb3342b459ae",
+    "title": "开发点位 P&L 诊断 Web Agent：完整需求与验收",
+    "createdAt": "2026-11-03T20:24:07.346Z",
+    "updatedAt": "2026-11-03T20:28:20.813Z",
+    "ended": {
+      "at": "2026-11-03T20:28:20.812Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "7c36250a6afdde7bfb11a7ebdac77ee6",
+    "title": "开发点位 P&L 诊断 Web Agent：完整需求与验收（Issue #3）",
+    "createdAt": "2026-11-03T20:52:36.600Z",
+    "updatedAt": "2026-11-03T21:43:43.374Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-agent/pull/4"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c6d113b3ace851a40c02da981e8ddec0",
+    "title": "修复 ExpiringMap 过期检查误删并发替换值（HEPHI 验证）",
+    "createdAt": "2026-11-04T00:02:29.201Z",
+    "updatedAt": "2026-11-04T00:07:55.472Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/dubbo/pull/66"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "f757211299cc39538fbec6b4c572a8b3",
+    "title": "直营点位 P&L 诊断 Web 系统（完整设计与实施计划）",
+    "createdAt": "2026-11-04T01:09:17.457Z",
+    "updatedAt": "2026-11-04T11:51:27.892Z",
+    "ended": {
+      "at": "2026-11-04T11:44:41.000Z",
+      "by": "executor",
+      "outcome": "merged"
+    },
+    "status": "merged",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/3"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "dc324d706dcb86363bbae9f806e2e472",
+    "title": "诊断历史默认每页 10 条及翻页体验",
+    "createdAt": "2026-11-04T11:36:07.361Z",
+    "updatedAt": "2026-11-04T12:03:13.295Z",
+    "ended": {
+      "at": "2026-11-04T12:03:13.295Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "368b272636e721fb82e533eeca4f2e62",
+    "title": "假设测算输入校验与错误提示（赫菲串行）",
+    "createdAt": "2026-11-04T11:36:07.362Z",
+    "updatedAt": "2026-11-04T12:03:13.302Z",
+    "ended": {
+      "at": "2026-11-04T12:03:13.302Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "407257e408507785be89912e76f1c9ed",
+    "title": "诊断历史默认每页 10 条及翻页体验（替代 #4）",
+    "createdAt": "2026-11-04T12:07:00.288Z",
+    "updatedAt": "2026-11-04T12:24:05.029Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/8"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "165fa85a37369382271e4a43cf5943b1",
+    "title": "假设测算输入校验与错误提示（赫菲串行，替代 #5）",
+    "createdAt": "2026-11-04T12:07:03.351Z",
+    "updatedAt": "2026-11-04T12:26:27.125Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/9"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "f94f5d0bcffcbc2c2b1881b5d75404be",
+    "title": "日常实例重新端到端验收：诊断历史每页 10 条",
+    "createdAt": "2026-11-04T18:18:06.170Z",
+    "updatedAt": "2026-11-04T18:27:21.172Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "78753e771f23779b6b6320a5190fe22e",
+    "title": "日常实例重新端到端验收：测算校验与表单反馈（串行）",
+    "createdAt": "2026-11-04T18:18:06.172Z",
+    "updatedAt": "2026-11-04T18:28:03.614Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "58c521b5ac242bc49400ae40c8d8bd63",
+    "title": "重启后新任务端到端验收：诊断历史每页 10 条",
+    "createdAt": "2026-11-04T18:49:45.842Z",
+    "updatedAt": "2026-11-04T19:02:59.297Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/14"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "ba1a4b2c8a2a182207a0ea6d6e135faf",
+    "title": "重启后新任务端到端验收：测算校验与表单反馈（串行）",
+    "createdAt": "2026-11-04T18:49:45.843Z",
+    "updatedAt": "2026-11-04T19:05:14.668Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/15"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "cfb0b21fe73b22c6bc4a42b297287166",
+    "title": "后台检查修复后全新端到端验收：诊断历史每页 10 条",
+    "createdAt": "2026-11-04T19:31:58.442Z",
+    "updatedAt": "2026-11-04T19:42:03.336Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/17"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "a14940729e3a3880095e8413336a08a2",
+    "title": "当前版本完整端到端验收：诊断历史每页 10 条",
+    "createdAt": "2026-11-04T19:59:53.494Z",
+    "updatedAt": "2026-11-04T20:10:04.020Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/20"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "145961661edbca85111cf210a00a2dad",
+    "title": "当前版本完整端到端验收：测算校验与表单反馈（赫菲串行）",
+    "createdAt": "2026-11-04T19:59:55.243Z",
+    "updatedAt": "2026-11-04T20:17:10.859Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/21"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "3a680328c1f1ac449cc53a2e3006c29d",
+    "title": "修复干净 checkout 无法启动：恢复 backend/app/data 与 .gitignore 规则",
+    "createdAt": "2026-11-04T20:22:49.672Z",
+    "updatedAt": "2026-11-04T20:27:12.951Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/23"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "06ec5471c429f1e4f2ccbbcbe56b26a0",
+    "title": "G1 宿主能力探针（B 实验宿主，临时任务）",
+    "createdAt": "2026-11-06T18:08:08.848Z",
+    "updatedAt": "2026-11-06T18:18:12.143Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/31"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "166f70890d3eab8eaf4154499e43f341",
+    "title": "smoke：原生入口链路验证（README 注释，仅记录不合并）",
+    "createdAt": "2026-11-06T20:02:33.824Z",
+    "updatedAt": "2026-11-06T20:05:22.917Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/34"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite"
+  },
+  {
+    "id": "c040bd53efbeba7f1236b5969be9df23",
+    "title": "评估输出纠偏：移除伪语义指标与未经验证的效果判定",
+    "createdAt": "2026-11-05T19:57:12.254Z",
+    "updatedAt": "2026-11-05T20:01:00.761Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/super-agent-hephi-review/pull/4"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "ea83956bfdd92aaf42eb34feb8884578",
+    "title": "feat: 独立 Claude 网页飞书常驻桥接（原生 A）",
+    "createdAt": "2026-11-05T21:16:30.945Z",
+    "updatedAt": "2026-11-05T22:36:00.903Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "d200b45343133759740e64b70e76c18a",
+    "title": "[G1] 核实 Super Agent B 与赫菲的宿主能力（11 项）",
+    "createdAt": "2026-11-06T03:23:41.398Z",
+    "updatedAt": "2026-11-06T03:34:58.249Z",
+    "ended": {
+      "at": "2026-11-06T03:34:58.249Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "9fdc1eeaedbb590e4885ef354b87bfd5",
+    "title": "[接入验收] 记录本地 GitLab 原生 Worker 的真实检出与 MR",
+    "createdAt": "2026-11-06T03:33:04.804Z",
+    "updatedAt": "2026-11-06T03:37:20.192Z",
+    "ended": {
+      "at": "2026-11-06T03:37:20.191Z",
+      "by": "executor",
+      "outcome": "completed"
+    },
+    "status": "completed",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "95e452f83325c5dc126d018ca40da9fc",
+    "title": "[G1] 核实 Super Agent B 与赫菲的宿主能力（本地重验）",
+    "createdAt": "2026-11-06T10:17:57.166Z",
+    "updatedAt": "2026-11-06T11:46:10.561Z",
+    "ended": {
+      "at": "2026-11-06T11:46:10.561Z",
+      "by": "executor",
+      "outcome": "completed"
+    },
+    "status": "completed",
+    "prRefs": [],
+    "assignmentCount": 2,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "2cdb4afb4c2cb82fc887b59143ddd59c",
+    "title": "[G1 依赖] 为隔离的 Super Agent B 接入本地 GitLab",
+    "createdAt": "2026-11-06T10:53:08.529Z",
+    "updatedAt": "2026-11-06T12:15:07.208Z",
+    "ended": {
+      "at": "2026-11-06T12:15:07.208Z",
+      "by": "executor",
+      "outcome": "completed"
+    },
+    "status": "completed",
+    "prRefs": [],
+    "assignmentCount": 4,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "d0f78a5fcf8a08554776bb03469120f7",
+    "title": "[G2] 核定已合入 main 的赫菲代码基线",
+    "createdAt": "2026-11-06T11:55:55.941Z",
+    "updatedAt": "2026-11-06T12:03:45.616Z",
+    "ended": {
+      "at": "2026-11-06T12:03:45.616Z",
+      "by": "executor",
+      "outcome": "completed"
+    },
+    "status": "completed",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite"
+  },
+  {
+    "id": "24983dd77e986b48866bb016a909d490",
+    "title": "健康检查 200/503 响应增加固定 service 字段",
+    "createdAt": "2026-11-05T20:36:52.214Z",
+    "updatedAt": "2026-11-05T20:37:00.612Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b3a7d823bad0339e77dde1fb22f2060b",
+    "title": "[native] 健康检查 200/503 响应增加固定 service 字段",
+    "createdAt": "2026-11-05T20:48:46.112Z",
+    "updatedAt": "2026-11-05T20:52:04.306Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/27"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "f6c1954920dad4c1c76a89e48bca888d",
+    "title": "[native] 恢复指定 data 源码并为健康接口增加固定 service 字段",
+    "createdAt": "2026-11-05T21:47:25.835Z",
+    "updatedAt": "2026-11-05T21:51:22.766Z",
+    "ended": null,
+    "status": "open",
+    "prRefs": [
+      "https://github.com/paxxie2/site-pnl-diagnosis/pull/29"
+    ],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  },
+  {
+    "id": "b61dfbe3525e29fedf3ecf071023f80e",
+    "title": "[native] G1 宿主能力探针（B 实验宿主，临时任务，不合并）",
+    "createdAt": "2026-11-06T03:35:33.091Z",
+    "updatedAt": "2026-11-06T03:36:02.985Z",
+    "ended": {
+      "at": "2026-11-06T03:36:02.985Z",
+      "by": "human",
+      "outcome": "stopped"
+    },
+    "status": "stopped",
+    "prRefs": [],
+    "assignmentCount": 1,
+    "source": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite"
+  }
+]

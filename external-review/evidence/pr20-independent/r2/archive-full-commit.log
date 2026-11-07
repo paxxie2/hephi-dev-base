@@ -1,0 +1,26 @@
+$ tsdown -c tsdown.config.ts
+ℹ tsdown v0.22.14 powered by rolldown v1.2.16
+ℹ config file: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/r2-independent-archive/hephi/tsdown.config.ts 
+fatal: not a git repository (or any of the parent directories): .git
+ℹ entry: src/index.ts, src/tools.ts, src/cli.ts
+ℹ target: node22.19.0
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Granting execute permission to lib/cli.mjs
+ℹ lib/index.mjs                       11.36 kB │ gzip:  3.76 kB
+ℹ lib/tools.mjs                        2.67 kB │ gzip:  1.17 kB
+ℹ lib/cli.mjs                          0.50 kB │ gzip:  0.33 kB
+ℹ lib/worker-mount-BJYzUjMO.mjs.map  151.50 kB │ gzip: 38.99 kB
+ℹ lib/worker-mount-BJYzUjMO.mjs       78.85 kB │ gzip: 21.48 kB
+ℹ lib/activation-hIXv0HoQ.mjs.map     35.82 kB │ gzip: 10.20 kB
+ℹ lib/activation-hIXv0HoQ.mjs         19.40 kB │ gzip:  6.01 kB
+ℹ lib/index.mjs.map                   17.68 kB │ gzip:  5.58 kB
+ℹ lib/tools.mjs.map                    4.38 kB │ gzip:  1.76 kB
+ℹ lib/index.d.mts.map                  2.68 kB │ gzip:  1.05 kB
+ℹ lib/cli.mjs.map                      0.85 kB │ gzip:  0.50 kB
+ℹ lib/tools.d.mts.map                  0.15 kB │ gzip:  0.14 kB
+ℹ lib/index.d.mts                     13.31 kB │ gzip:  4.16 kB
+ℹ lib/tools.d.mts                      0.53 kB │ gzip:  0.33 kB
+ℹ lib/cli.d.mts                        0.01 kB │ gzip:  0.03 kB
+ℹ 15 files, total: 339.66 kB
+✔ Build complete in 1356ms

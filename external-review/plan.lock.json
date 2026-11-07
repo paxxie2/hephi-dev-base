@@ -1,0 +1,52 @@
+{
+  "acceptance_commands": [
+    "cd hephi && pnpm check",
+    "node scripts/host/test-deploy-hephi.mjs",
+    "git diff --check 5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1..HEAD"
+  ],
+  "allowed_files": [
+    "hephi/src/control/activation.ts",
+    "hephi/tests/control/activation.test.ts",
+    "hephi/docs/versioning.md",
+    "hephi/tsdown.config.ts",
+    "hephi/tests/control/build-commit.test.ts",
+    "scripts/host/deploy-hephi.sh",
+    "scripts/host/test-deploy-hephi.mjs",
+    "hephi/tests/control/deploy-script.test.ts",
+    "docs/implementation-index.md",
+    "docs/self-check-2026-11-07.md",
+    "docs/p8-deploy-record.md",
+    "docs/p8-race-record.md",
+    "docs/p11-hephi-smoke-record.md",
+    "docs/source-consistency.md",
+    "docs/remediation-r1-validation.md",
+    "docs/remediation-r3-validation.md"
+  ],
+  "base_commit": "5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1",
+  "baseline_tag": "hephi-baseline-1 = 3f276a533bceaa63f3e43ff8d0d1e75af9dac8c8（不得移动）",
+  "branch": "agent/hephi-r2-remediation",
+  "checklist": "HEPHI-R2-remediation-checklist.md",
+  "frozen_at": "2026-11-06T22:50:28+00:00",
+  "frozen_by": "DSH Agent（模型自冻结，按 checklist R0.4 不能替代独立验收）",
+  "notes": [
+    "docs/remediation-r3-validation.md 为 R3 证据文档；如实现不需要可删除，删除不算越界。",
+    "reviewer 原始 lock 保留为 plan.lock.reviewer-2026-11-07.json。"
+  ],
+  "protected_files": [
+    "hephi/src/control/evidence-verifier.ts",
+    "hephi/src/control/check-runner.ts",
+    "hephi/src/control/check-store.ts",
+    "hephi/src/control/worker-mount.ts",
+    "hephi/src/control/decision-log.ts",
+    "hephi/tests/control/evidence-verifier.test.ts",
+    "hephi/tests/control/plugin-version.test.ts",
+    "hephi/tests/control/decision-log.test.ts",
+    "hephi/tests/control/worker-mount.test.ts"
+  ],
+  "repo": "/Users/zm/dsh-instances/experiment/hephi-review",
+  "required_environment": {
+    "node": "22.19.0",
+    "pnpm": "11.7.0"
+  },
+  "task": "HEPHI-R2 整改实现（checklist R0–R5）"
+}

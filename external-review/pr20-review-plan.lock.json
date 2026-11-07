@@ -1,0 +1,12 @@
+{
+  "acceptance_commands": [
+    "git diff --exit-code",
+    "cd hephi && pnpm check",
+    "node scripts/host/test-deploy-hephi.mjs"
+  ],
+  "allowed_files": [],
+  "base_commit": "17d3827d3a73d3afb7a3b8de130d1615bd351769",
+  "protected_files": {},
+  "repo": "/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/pr20",
+  "task": "独立复核 PR20 的三个修复，不修改审查工作树"
+}

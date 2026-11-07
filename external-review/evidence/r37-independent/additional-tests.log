@@ -1,0 +1,7 @@
+PASS P1 invalid current is not restored and records failed-no-previous
+PASS P2 invalid rollback previous rejected without side effects
+PASS P3 target health failure recovers previous to full health
+REPRODUCED X1 double failure exits with real paused=false but claims kept paused
+REPRODUCED X2 unreadable restore state is replaced by stale target state
+REPRODUCED X3 failed old-directory restore is still reported as restored/preserved
+Evidence: /Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/evidence/r37-independent/additional-tests.json

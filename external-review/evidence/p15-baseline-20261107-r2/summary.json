@@ -1,0 +1,51 @@
+{
+  "generator": "eval/export-baseline.mjs",
+  "exportedAt": "2026-11-06T20:22:49.416Z",
+  "window": null,
+  "sources": [
+    {
+      "db": "/Users/zm/.dsh/state/superagent-desktop/orchestrator.sqlite",
+      "tickets": 50,
+      "triggers": 65,
+      "dispositions": 65,
+      "threads": 92,
+      "triggerThreads": 65
+    },
+    {
+      "db": "/Users/zm/dsh-instances/daily/state/orchestrator.sqlite",
+      "tickets": 7,
+      "triggers": 15,
+      "dispositions": 15,
+      "threads": 8,
+      "triggerThreads": 15
+    },
+    {
+      "db": "/Users/zm/dsh-instances/experiment/state/orchestrator.sqlite",
+      "tickets": 4,
+      "triggers": 5,
+      "dispositions": 5,
+      "threads": 7,
+      "triggerThreads": 5
+    }
+  ],
+  "total": 61,
+  "uniqueIds": 61,
+  "duplicates": 0,
+  "prLinked": 33,
+  "noPr": 28,
+  "byStatus": {
+    "open": 34,
+    "stopped": 21,
+    "merged": 2,
+    "completed": 4
+  },
+  "triggers": 85,
+  "dispositions": 85,
+  "threads": 107,
+  "triggerThreads": 85,
+  "unknownCount": 0,
+  "notes": [
+    "PR 关联为 JSON 中 https://github.com/<owner>/<repo>/pull/<n> 的启发式提取，不保证覆盖所有人工记录。",
+    "无 ended 记录的 Ticket 计为 status=open，不自动归为 off。"
+  ]
+}

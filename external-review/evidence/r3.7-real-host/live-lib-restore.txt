@@ -1,0 +1,16 @@
+== release vs snapshot lib tree ==
+releases/hephi/fba676e89ee19b2cbcf685cdb8b2a350504021fc/lib ef8f96cfb87e2b5e64165a08b4133246a41f1a95af61c365be7e9ed5e4f4b984  -
+releases/hephi/live-20261107T054631/lib f59d2d885acb61e09cbc5b625ec030c342cd311c5ab53d4e7b3fcf026b022963  -
+== move diverged build aside and restore deployed release lib ==
+moved old to .lib-rebuilt-20261107T011829Z
+== verify ==
+fe404c0ddc7bb6fa798f99be08213571789696e431fcf3e4b2054bf3da078438  hephi-review/hephi/lib/index.mjs
+75fef463de48103563edd281de97ba2e1c436b630f09dcc20492274fefc8083a  -
+== expected entry fe404c0ddc7bb6fa798f99be08213571789696e431fcf3e4b2054bf3da078438 ==
+lib is plain-directory (as before)
+release lib tree: 10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+snapshot lib tree: 10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+live lib tree: 10b49b7be29a8df7506fca8ce05f1ffc6b923b7ba8bedd3bfb6db487b9a8cdee  -
+== health after restore ==
+paused=false load={"running":0,"queued":0,"maxWorkers":3}
+states={"runtime":"ready","relay":"ready","notice":"ready","launch":"ready","delivery":"ready","assessment":"ready","reply":"ready","evals":"ready","models":"ready","github":"ready"}

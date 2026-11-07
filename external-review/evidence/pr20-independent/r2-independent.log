@@ -1,0 +1,9 @@
+node=v22.19.0
+pnpm=11.7.0
+commit=17d3827d3a73d3afb7a3b8de130d1615bd351769
+clean-git exit=0 expected=0
+dirty-git-with-override exit=1 expected=1
+archive-no-commit exit=1 expected=1
+archive-full-commit exit=0 expected=0
+{"name":"hephi-superagent-plugin","version":"0.1.0","commit":"17d3827d3a73d3afb7a3b8de130d1615bd351769"}
+R2 independent checks passed

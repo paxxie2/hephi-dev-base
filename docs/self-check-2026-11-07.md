@@ -3,7 +3,7 @@
 范围：本仓库相对 `718087c` 的全部新增/修改（39 个源/测试/脚本/文档文件，约 +1.8k 行），对照资料包
 `implementation-checklist.md`、`validation-matrix.md` 与 `task-tree.yaml`。
 
-> **状态指针（R4 同步，2026-11-07 06:54，R3 提交后；07:37 追加 R3 复核返修）**：本文是**初次自检时点**的记录；其中 L6、L7 已在后续提交修复（`bc95bf3`、`e862cf7`），L4 的不可变发布/自动回滚/全量健康门禁已由 R3 提交 `0d58bc3` 实现，但**原实现已被 PR #20 独立复核判定 R3 不通过（R3-F1–F6）**，返修已提交为 `2409613`（07:57 更新）（父 `17d3827`），补 N1–N5 负例后假宿主套件 **69 断言全绿**（旧提交上 PASS 50 / FAIL 19，双向实测）；假宿主验证通过也**不等于**真实宿主验收（R3.7 与实载回读仍未验证）。改后 `pnpm test` 实测 **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`，因假宿主门禁等待变长属预期；不新增测试文件）；`pnpm check` 的构建段须在 docs 提交后的干净树复跑（`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`））。历史 176→202 的时点链保留。当前状态以 [`docs/implementation-index.md`](implementation-index.md) §6 的修复索引为准（本轮修复分支**尚未合并**，合并后以 index 中的最终合并段为准）；逐条命令与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。历史数字保留原时点，不回改。
+> **状态指针（R4 同步，2026-11-07 06:54，R3 提交后；07:37 追加 R3 复核返修）**：本文是**初次自检时点**的记录；其中 L6、L7 已在后续提交修复（`bc95bf3`、`e862cf7`），L4 的不可变发布/自动回滚/全量健康门禁已由 R3 提交 `0d58bc3` 实现，但**原实现已被 PR #20 独立复核判定 R3 不通过（R3-F1–F6）**，返修已提交为 `2409613`（07:57 更新）（父 `17d3827`），补 N1–N5 负例后假宿主套件 **69 断言全绿**（旧提交上 PASS 50 / FAIL 19，双向实测）；假宿主验证通过也**不等于**真实宿主验收（R3.7 与实载回读仍未验证）。改后 `pnpm test` 实测 **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`，因假宿主门禁等待变长属预期；不新增测试文件）；`pnpm check` 的构建段须在 docs 提交后的干净树复跑（`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`））。历史 176→202 的时点链保留。当前状态以 [`docs/implementation-index.md`](implementation-index.md) §6 的修复索引为准（本轮修复分支的合并状态以 index §1／§6 与 `main` merge commit 为准）；逐条命令与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。历史数字保留原时点，不回改。
 
 方法：静态审阅、`pnpm check`（typecheck + 176 tests + 构建）、`test:unit`/`test:integration` 分层运行、
 脚本正反例实跑、与验收矩阵逐条对照。所有结论附可复核命令。
@@ -118,7 +118,7 @@
   P1 按用户决定不实施，其余受外部资源或仓库外改动阻塞；验收层面只有 G2 由 Agent 代办完成（缺人类签名）。**R1–R3 代码完成不会自动把 P2／P5／P8 改为真实验收 done**（见 §6）。
 - 建议下一步：优先完成 R3 返修的二次独立复核（复核报告 §6 的 7 条门槛，见 §6.3），再补 P8 真实宿主验收（R3.7：A→B→A、实载回读、受控故障注入）与 P15 trigger 关联表；G1 真机探针与 P9–P13 需外部资源；
   P4 三组对照需要 super-agent 仓库与宿主导出。
-- R3 复核结论（2026-11-07 追加）：原 R3 实现被 PR #20 独立复核判定 **不通过**（F1–F6）；返修提交 `2409613` 已关闭 F1–F6 并补 N1–N5（假宿主 69 断言全绿，旧提交 20 条 FAIL）。**P8 仍为部分**：R3.7 真实宿主（A→B→A、实载回读、故障注入、真实 drain 语义）仍未验证；PR #20 **未合并**。
+- R3 复核结论（2026-11-07 追加）：原 R3 实现被 PR #20 独立复核判定 **不通过**（F1–F6）；返修提交 `2409613` 已关闭 F1–F6 并补 N1–N5（假宿主 69 断言全绿，旧提交 PASS 50 / FAIL 19）。**P8 仍为部分**：R3.7 真实宿主（A→B→A、实载回读、故障注入、真实 drain 语义）仍未验证；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准。
 
 ## 6. 本轮修复追记（R4 同步，2026-11-07）
 
@@ -141,5 +141,5 @@
 
 - **复核事实**：PR #20 独立复核（审查提交 `17d3827`，独立工作树复跑 + 隔离故障注入）判定 **R3 不通过**，列出 R3-F1–F6；原假宿主 44 断言全过，但 5 组独立负例全部复现缺陷，其中首次从普通 `lib/` 目录迁移直接阻断部署。R1／R2 代码层通过。**PR #20 不批准合并，不得进入 R3.7。**（报告在仓库外：`/Users/zm/Documents/kimi/tasks/2026-11-07/02-08-22-85063b14/external-review/PR20-independent-review.md`）
 - **返修事实**：返修提交 **`240961395ce0fb323683bab21830fbdc123257d8`**（父 `17d3827`）修复 F1–F6（普通目录迁移事务、rollback 显式 target、三态恢复结果、恢复失败捕获、真实 paused 回读、`current_valid` 拆分），并把复核要求的 N1–N5 纳入 `scripts/host/test-deploy-hephi.mjs` 的 `runNegativeSuite()`（另含 N1b 迁移第二步失败）。**双向实测**：修复提交 → **`PASS: 69 assertions`、FAIL 0、exit 0**（`real 84.23s`，主套 46 + 负例 23）；旧提交 `17d3827` → **exit 1、PASS 50 / FAIL 19**（复跑一致）；N1 复现 `EISDIR`，N4 在旧提交上是 `exit 0` + 写 `result:ok`（非裸 42），N5 旧脚本在真实 `paused=false` 时仍 exit 0 且记录硬编码 `paused:true`。改后全量 `pnpm test` 实测 **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`）；**`pnpm check` 的 typecheck+test+build 最终输出`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）**。
-- **边界不变**：假宿主（含返修负例）通过 **不等于** R3.7 真实宿主验收；实载 commit 回读、真实健康故障注入、真实 drain 语义仍 **unverified**；**P8 仍为部分**；**本次只关闭 R3-F1–F6 与 N1–N5 自动化，PR #20 未合并**；复核 §6 的重新送审门槛仍有多条未完全满足（见返修登记 §3.1），不得写成“已满足”。
+- **边界不变**：假宿主（含返修负例）通过 **不等于** R3.7 真实宿主验收；实载 commit 回读、真实健康故障注入、真实 drain 语义仍 **unverified**；**P8 仍为部分**；**本次只关闭 R3-F1–F6 与 N1–N5 自动化；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准**；复核 §6 的重新送审门槛仍有多条未完全满足（见返修登记 §3.1），不得写成“已满足”。
 - 历史失败记录（44 断言、F1–F6）原样保留，不回改、不删除。

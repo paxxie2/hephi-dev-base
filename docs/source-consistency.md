@@ -8,7 +8,7 @@
 | --- | --- | --- | --- | --- |
 | 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | `5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1`（PR #19 合并提交；2026-11-07 06:42 `git ls-remote` 回读） | 当前主干 |
 | 执行分支 | `/Users/zm/dsh-instances/experiment/hephi-review` | `codex/dual-instance-hephi` | `b660051` | 历史时点；已随 PR #7 合入 main（`3f276a5`） |
-| 本轮修复分支 | 同上 | `agent/hephi-r2-remediation` | 提交历史 `0d58bc3` → R4 `17d3827d3a73d3afb7a3b8de130d1615bd351769` → **R3 返修 `240961395ce0fb323683bab21830fbdc123257d8`**（仅 `scripts/host/` 两文件）；`docs/` 返修登记随本文件所在提交（docs）提交 | **已推送 origin；PR #20 OPEN、未合并**；R3 原实现被 PR #20 独立复核判定**不通过**（R3-F1–F6），`2409613` 已修复并补 N1–N5（假宿主 69 断言全绿），待二次独立复核 |
+| 本轮修复分支 | 同上 | `agent/hephi-r2-remediation` | 提交历史 `0d58bc3` → R4 `17d3827d3a73d3afb7a3b8de130d1615bd351769` → **R3 返修 `240961395ce0fb323683bab21830fbdc123257d8`**（仅 `scripts/host/` 两文件）；`docs/` 返修登记随本文件所在提交（docs）提交 | **已推送 origin；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准**；R3 原实现被 PR #20 独立复核判定**不通过**（R3-F1–F6），`2409613` 已修复并补 N1–N5（假宿主 69 断言全绿），待二次独立复核 |
 | 旧路线图目录 | `/Users/zm/Documents/hephi-roadmap-work` | `work/hephi-95` | 已不存在 | 2026-11-07 核验时目录已删除；`c547dc1` 无法再取用 |
 | 隔离 Super Agent 副本 | `/Users/zm/dsh-instances/experiment/superagent` | `codex/dual-instance-experiment` | `62d7d53` | 工作树干净 |
 | 隔离赫菲副本 | `/Users/zm/dsh-instances/experiment/hephi-review/hephi` | 本轮修复分支 | `0d58bc3` 内容 + R4 `17d3827` 文档 + 返修 `2409613` 脚本（`hephi/` 代码区干净；`docs/` 返修登记随文档提交） | 2026-11-07 06:51 实测 `pnpm test` **20 文件 / 202 tests** 通过（Node `v22.19.0`、pnpm `11.7.0`）；返修后假宿主套件 **69 断言全绿**（`84.23s`）、全量 `pnpm test` **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`）；`pnpm check` 构建段须在 docs 提交后的干净树复跑（`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）） |
@@ -36,8 +36,8 @@
 ## 3.1 交付 PR
 
 - 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。#8（状态记录）、#9（部署脚本 + P8 记录）、#10（P11 smoke + A 实例）随后合并；#11–#19 已合入当前 `main@5efd708`。
-- 本轮修复提交（未合并）：R1 `9e874f8`（activation v2 规范化哈希）、R2 `0d7c031`（dirty 构建拒绝）、R3 `0d58bc3`（不可变部署/自动回滚/全量健康门禁）、R4 `17d3827`（文档同步）；分支 `agent/hephi-r2-remediation` 已推送 origin，PR #20 OPEN、未合并。验收记录见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)。
-- **R3 复核返修（提交 `2409613`）**：PR #20 独立复核判定 R3 不通过（R3-F1–F6），已修复六项并新增负例 N1／N1b／N2／N3／N4／N5 到 `scripts/host/test-deploy-hephi.mjs`，提交 **`2409613`**；**双向实测**：修复提交 → `PASS: 69 assertions`、FAIL 0、exit 0（`84.23s`）；旧提交 `17d3827` → exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 F1–F6 与 N1–N5 自动化；R3.7 真实宿主未验证；PR 未合并。**登记见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。假宿主通过 ≠ 真实宿主验收，R3.7 仍 unverified。
+- 本轮修复提交（未合并）：R1 `9e874f8`（activation v2 规范化哈希）、R2 `0d7c031`（dirty 构建拒绝）、R3 `0d58bc3`（不可变部署/自动回滚/全量健康门禁）、R4 `17d3827`（文档同步）；分支 `agent/hephi-r2-remediation` 已推送 origin，PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准。验收记录见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)。
+- **R3 复核返修（提交 `2409613`）**：PR #20 独立复核判定 R3 不通过（R3-F1–F6），已修复六项并新增负例 N1／N1b／N2／N3／N4／N5 到 `scripts/host/test-deploy-hephi.mjs`，提交 **`2409613`**；**双向实测**：修复提交 → `PASS: 69 assertions`、FAIL 0、exit 0（`84.23s`）；旧提交 `17d3827` → exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 F1–F6 与 N1–N5 自动化；R3.7 真实宿主未验证；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准。**登记见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。假宿主通过 ≠ 真实宿主验收，R3.7 仍 unverified。
 - 基线标签 **`hephi-baseline-1`**（annotated，tag object `1e93e4b`）指向合并后的 `main` commit `3f276a5`，已推送远端。
 - 审查记录见 `docs/g2-baseline-review.md`：按用户 2026-11-07 授权由 Agent 代办，**不是人类独立审查**。
 

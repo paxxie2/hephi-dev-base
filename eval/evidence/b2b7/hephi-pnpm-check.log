@@ -345,7 +345,7 @@ stdout | tests/probes/issue1-regression.test.ts > Session binding (criterion 3) 
 
 $ tsdown -c tsdown.config.ts
 ℹ tsdown v0.22.14 powered by rolldown v1.2.16
-ℹ config file: /private/tmp/b7-hephi/hephi/tsdown.config.ts 
+ℹ config file: /private/tmp/b7-hephi/hephi/tsdown.config.ts
 ℹ entry: src/index.ts, src/tools.ts, src/cli.ts
 ℹ target: node22.19.0
 ℹ tsconfig: tsconfig.json

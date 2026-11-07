@@ -1,5 +1,6 @@
 import { appendFile, mkdir, readFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
+import { allowedPath } from './repository.js'
 
 /**
  * C4.2 (degraded form): append-only change plan per Ticket.
@@ -18,9 +19,11 @@ import { dirname, join } from 'node:path'
  *   - a plan only applies to its own `contractHash`; after re-prepare (new hash) the
  *     old plan neither blocks nor justifies a ready report.
  *   - the plugin does NOT judge whether the planned changes are reasonable; ready only
- *     checks that the final diff is inside the declared files (this build is the
- *     degraded form: no write/edit-time interception yet).
+ *     checks that the final diff is inside the declared files, and (normal form, C4.2)
+ *     write/edit are additionally intercepted against the plan for the current contract.
  *   - a corrupt log fails closed: ready must not silently ignore an unreadable plan.
+ *   - `planIncludes` is the single exact-path/glob membership check shared by the
+ *     write/edit interception and the tool's own reporting.
  */
 export const PLAN_VERSION = 1
 
@@ -128,6 +131,11 @@ export async function readPlan(stateDir: string, ticketId: string, contractHash:
     }
   }
   return { contractHash, files, entries: matching.length }
+}
+
+/** True when the merged plan for this contract declares `file` (exact path or glob). */
+export function planIncludes(plan: PlanSummary | undefined, file: string): boolean {
+  return plan !== undefined && allowedPath(file, plan.files)
 }
 
 /**

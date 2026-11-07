@@ -8,6 +8,7 @@ import { loadKnowledgeBases } from '../kb/index.js'
 import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, enforcementOf, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type EnforcementMode, type ExecutionMode } from './activation.js'
 import { createReadyGate, type ReadyVerifier } from './ready-gate.js'
 import { assetReadyReport, authorizedAcceptance, checkDiscipline, inScope, isProtectedAsset, type AssetRecord } from './discipline.js'
+import { appendPlan, planIncludes, readPlan } from './plan-store.js'
 import { checkoutRelative, resolveWorkspace } from './workspace.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
 import { installStageControl, type StageAgents, type StageJobs, type StageSessionQuery, type StageSubagents } from './stage-mount.js'
@@ -194,6 +195,65 @@ export function mountWorkerGate(
     },
   }))
 
+  // C4.2 (normal form): the Worker declares an append-only change plan for the current
+  // contract; write/edit are intercepted against it. In shadow mode the tool is NOT
+  // registered (the Worker cannot write a real plan) and only a wouldDecision is recorded.
+  const PLAN_OUTPUT = {
+    schema: { type: 'json' as const },
+    render: (_args: unknown, value: unknown) => [{ type: 'text' as const, text: JSON.stringify(value, null, 2) }],
+  }
+  const planInputProblems = (contract: ActivationContract, files: string[]): string[] => {
+    const problems: string[] = []
+    if (files.length === 0) problems.push('hephi_plan requires at least one planned file')
+    for (const file of files) {
+      if (!file) { problems.push('planned file must be a non-empty string'); continue }
+      // C4.2: every planned file must stay inside the contract allowedPaths/task scope;
+      // a plan never widens the contract. exact paths and globs share this check.
+      if (!inScope(contract, file)) problems.push(`planned file is outside the contract allowedPaths/task scope: ${file}`)
+    }
+    return problems
+  }
+  // Registration is limited to enforce/native/staged Workers with a valid contract AND a
+  // frozen task card: the plan declares files that must stay inside the task scope, and
+  // old task-card-less contracts keep their previous tool surface unchanged (compatibility).
+  const removePlan = shadow || !mountedContract || mountedContract.task === undefined ? () => {} : agent.ctx.tools.register(defineTool({
+    name: 'hephi_plan', description: 'Declare/append the change plan (C4.2) for this Ticket. Planned files must be inside the contract scope; later write/edit calls must target files in the latest plan for the current contract.',
+    parameters: { files: { type: 'array', items: { type: 'string' }, required: true }, note: { type: 'string' } },
+    output: PLAN_OUTPUT,
+    execute: async (args, execution) => {
+      const sessionId = String(agent.session.header.id)
+      const contract = await loadBoundActivation()
+      const files = Array.isArray(args.files) ? args.files.map(file => String(file).trim()) : []
+      const problems = planInputProblems(contract, files)
+      if (problems.length) {
+        await logDecision(stateDir, {
+          ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_plan', mode: 'enforce',
+          effectiveDecision: 'deny', wouldDecision: 'deny', rule: 'plan.recorded', reason: problems.join('; '),
+          contractHash: contract.contractHash,
+        })
+        throw new Error(`HEPHI plan rejected: ${problems.join('; ')}`)
+      }
+      let appended
+      try {
+        appended = await appendPlan(stateDir, ticketId, {
+          contractHash: contract.contractHash, files, ...(typeof args.note === 'string' ? { note: args.note } : {}),
+        })
+      } catch (error) {
+        throw new Error(`HEPHI plan could not be recorded: ${error instanceof Error ? error.message : String(error)}`)
+      }
+      const plan = await readPlan(stateDir, ticketId, contract.contractHash)
+      // Rule `plan.recorded` is new; decisions-format.md registration is pending Lead
+      // (that file is outside this change's allowed list).
+      await logDecision(stateDir, {
+        ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_plan', mode: 'enforce',
+        effectiveDecision: 'allow', wouldDecision: 'allow', rule: 'plan.recorded',
+        reason: `recorded ${files.join(', ')} (entry ${appended.entry.at}; ${plan?.entries ?? 1} plan version(s) for this contract)`,
+        contractHash: contract.contractHash,
+      })
+      return { files, entries: plan?.entries ?? 1 }
+    },
+  }))
+
   // Shadow ready: only range/discipline is computed, recorded as wouldDecision, and always allowed.
   const shadowVerify: ReadyVerifier = async (contract, execution) => {
     let wouldDecision: 'allow' | 'deny' = 'allow'
@@ -277,7 +337,22 @@ export function mountWorkerGate(
   })
   // Early feedback for direct file edits; shell writes and unreadable tool paths are caught by the check and ready gates.
   const scopeProblem = async (execution: ToolExecution): Promise<string | undefined> => {
-    if (!mountedContract || (execution.name !== 'write' && execution.name !== 'edit')) return undefined
+    if (!mountedContract) return undefined
+    // C4.2 shadow mode: hephi_plan is not registered, so nothing can be written; record what
+    // the decision would have been for the model-visible attempt instead of enforcing.
+    if (shadow && execution.name === 'hephi_plan') {
+      const args = (execution.arguments ?? {}) as { files?: unknown }
+      const files = Array.isArray(args.files) ? args.files.map(file => String(file).trim()) : []
+      const problems = planInputProblems(mountedContract, files)
+      await logDecision(stateDir, {
+        ticketId, sessionId: String(agent.session.header.id), callId: String(execution.callId), tool: 'hephi_plan', mode: 'shadow',
+        effectiveDecision: 'allow', wouldDecision: problems.length ? 'deny' : 'allow',
+        rule: 'plan.recorded', reason: problems.length ? `shadow would deny: ${problems.join('; ')}` : `shadow would record plan: ${files.join(', ')}`,
+        contractHash: mountedContract.contractHash,
+      })
+      return undefined
+    }
+    if (execution.name !== 'write' && execution.name !== 'edit') return undefined
     const path = editedPath(execution.arguments)
     if (!path) return undefined
     const log = async (rule: string, problem?: string, recordReason?: string) => {
@@ -309,6 +384,24 @@ export function mountWorkerGate(
     if (!inScope(mountedContract, file)) {
       const problem = `HEPHI task scope does not include ${file}; change only files an acceptance item needs, or report blocked`
       await log('scope.outside-task', problem)
+      return decide(problem)
+    }
+    // C4.2 (normal form): once a plan exists for the current contract, write/edit targets must
+    // be declared in it (exact path or glob). No plan keeps the previous behavior. This runs
+    // before the C1 protected-asset check so the denial reason stays distinguishable; shadow
+    // mode records the wouldDecision but does not enforce.
+    let plan
+    try {
+      plan = await readPlan(stateDir, ticketId, mountedContract.contractHash)
+    } catch (error) {
+      const problem = `HEPHI plan is unreadable; refusing edits until an operator fixes it: ${error instanceof Error ? error.message : String(error)}`
+      await log('plan.outside-plan', problem)
+      return decide(problem)
+    }
+    if (plan !== undefined && !planIncludes(plan, file)) {
+      const planned = plan.files.slice(0, 10).join(', ') + (plan.files.length > 10 ? ` (+${plan.files.length - 10} more)` : '')
+      const problem = `HEPHI plan for this contract does not include ${file}; declare it with hephi_plan or report blocked. Planned: ${planned}`
+      await log('plan.outside-plan', problem)
       return decide(problem)
     }
     // C1: modifying an existing protected acceptance asset requires an authorization in the
@@ -354,6 +447,7 @@ export function mountWorkerGate(
       removePrompt()
       removeCheck()
       removeCheckGuard()
+      removePlan()
       gate.dispose()
       stages?.dispose()
     },

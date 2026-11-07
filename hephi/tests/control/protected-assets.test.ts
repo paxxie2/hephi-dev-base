@@ -155,7 +155,8 @@ describe('C1 task card / contract schema', () => {
     if (!prepared.enabled) throw new Error('not enabled')
     const loaded = await loadActivation(prepared.filePath)
     expect(loaded.version).toBe(ACTIVATION_VERSION)
-    expect(ACTIVATION_VERSION).toBe(4)
+    // Contract format versions grow as later batches add frozen fields; keep this at least v4.
+    expect(ACTIVATION_VERSION).toBeGreaterThanOrEqual(4)
     expect(loaded.task?.version).toBe(2)
     expect(loaded.task?.protectedAssets).toEqual(['tests/acceptance/**'])
     expect(protectedAssetsOf(loaded)).toEqual(['tests/acceptance/**'])

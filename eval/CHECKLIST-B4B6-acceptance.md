@@ -2,6 +2,7 @@
 
 - 基线：`main=29b127809d3389b693ca21b7e242e57086fafc99`（分支从该 commit 拉出）
 - 分支：`agent/b4b6-stats`；独立克隆：`/tmp/b4b6`
+- PR：https://github.com/paxxie2/super-agent-hephi-review/pull/48（不合并，等待评审）
 - 修改范围：仅 `eval/**`（`eval/label/`、`eval/stats/`、`eval/evidence/b4b6/`）
 - 独立性：未访问宿主、未跑正式实验、未 merge；Python 依赖全部装在 `/tmp/b4b6-venv`，仓库内无 `.venv`
 - 证据：`eval/evidence/b4b6/validation-transcript.txt`（逐命令原始输出与退出码）、

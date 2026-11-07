@@ -12,8 +12,11 @@ export type ExecutionMode = 'native' | 'staged'
 /** shadow only observes: decisions are recorded but never enforced. */
 export type EnforcementMode = 'enforce' | 'shadow'
 
-/** The one supported persisted activation format. Any other explicit version is rejected. */
-export const ACTIVATION_VERSION = 1
+/** The format this plugin writes. Older formats are read-only compatible; unknown versions are rejected. */
+export const ACTIVATION_VERSION = 2
+
+/** Contract formats written before canonical hashing. Their stored hash uses the raw JSON key order. */
+export const LEGACY_ACTIVATION_VERSION = 1
 
 export type ActivationContract = {
   /** Format version. Absent only in contracts written before versioning (legacy). */
@@ -168,12 +171,44 @@ export function parseIssueExecutionMode(title: string | undefined, explicit?: st
   return mode
 }
 
-function payload(contract: ContractHashInput): string {
+/**
+ * Recursively sort object keys (UTF-16 code unit order); arrays keep their order.
+ * JSON semantics are preserved: undefined object values are dropped, undefined
+ * array items become null, no Unicode normalization and no number formatting change.
+ */
+function canonicalize(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(item => item === undefined ? null : canonicalize(item))
+  if (value !== null && typeof value === 'object') {
+    const source = value as Record<string, unknown>
+    const out: Record<string, unknown> = {}
+    for (const key of Object.keys(source).sort()) {
+      const item = source[key]
+      if (item === undefined || typeof item === 'function' || typeof item === 'symbol') continue
+      out[key] = canonicalize(item)
+    }
+    return out
+  }
+  return value
+}
+
+/** Canonical payload for the current format (version 2): sorted keys, arrays in order, no whitespace. */
+export function canonicalPayload(contract: ContractHashInput): string {
+  return JSON.stringify(canonicalize(contract))
+}
+
+/** Historical payload for version 1 / unversioned contracts: raw JSON.stringify key order, never rewritten. */
+export function legacyPayload(contract: ContractHashInput): string {
   return JSON.stringify(contract)
 }
 
+/** Current contract hash (version 2, canonical serialization). */
 export function contractHash(contract: ContractHashInput): string {
-  return `sha256:${createHash('sha256').update(payload(contract)).digest('hex')}`
+  return `sha256:${createHash('sha256').update(canonicalPayload(contract)).digest('hex')}`
+}
+
+/** Historical contract hash for version 1 / unversioned contracts. Read-only compatibility. */
+export function legacyContractHash(contract: ContractHashInput): string {
+  return `sha256:${createHash('sha256').update(legacyPayload(contract)).digest('hex')}`
 }
 
 export function activationPath(stateDir: string, ticketId: string): string {
@@ -300,12 +335,13 @@ function rejectUnsupportedFields(parsed: Record<string, unknown>, filePath: stri
   }
 }
 
-/** A missing version means a contract written before versioning; only the current version is otherwise supported. */
+/**
+ * Current format is 2. Version 1 and contracts without a version stay readable.
+ * Anything else is rejected with an explicit migration instruction.
+ */
 function supportedVersion(value: unknown, filePath: string): void {
-  if (value === undefined) return
-  if (value !== ACTIVATION_VERSION) {
-    throw new Error(`unsupported HEPHI activation version: ${String(value)}; this plugin supports ${ACTIVATION_VERSION} (${filePath})`)
-  }
+  if (value === undefined || value === LEGACY_ACTIVATION_VERSION || value === ACTIVATION_VERSION) return
+  throw new Error(`unsupported HEPHI activation version: ${String(value)}; re-prepare a new contract with the current plugin instead of editing the stored hash (${filePath})`)
 }
 
 /**
@@ -317,7 +353,12 @@ function parseActivation(text: string, filePath: string): ActivationContract {
   const parsed: unknown = JSON.parse(text)
   if (!isContract(parsed)) throw new Error(`invalid HEPHI activation contract: ${filePath}`)
   const { contractHash: storedHash, ...base } = parsed
-  if (storedHash !== contractHash(base)) throw new Error(`HEPHI activation contract hash mismatch: ${filePath}`)
+  // Version selects the hash algorithm. Version 2 uses canonical serialization;
+  // version 1 and unversioned contracts keep the historical raw key-order hash.
+  // Unknown versions are checked with the historical algorithm first so a forged
+  // hash still reports as a hash mismatch rather than a supported-but-wrong version.
+  const expectedHash = base.version === ACTIVATION_VERSION ? contractHash(base) : legacyContractHash(base)
+  if (storedHash !== expectedHash) throw new Error(`HEPHI activation contract hash mismatch: ${filePath}`)
   supportedVersion(base.version, filePath)
   rejectUnsupportedFields(parsed as Record<string, unknown>, filePath)
   // Validate persisted optional fields only after the original hash matches.

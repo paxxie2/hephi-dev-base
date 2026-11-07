@@ -9,7 +9,7 @@
 | --- | --- |
 | 部署前状态 | `paused=false`、`running=0`、`queued=0`、runtime `ready` |
 | 暂停 | `POST /orchestrator/api/executor/pause {"paused":true}` → `{"paused":true}`，负载保持 0/0 |
-| 构建 | `pnpm install --frozen-lockfile && pnpm check`（插件目录 `<instance>/hephi-review/hephi`）→ 175 tests 通过、tsdown 构建完成 |
+| 构建 | `pnpm install --frozen-lockfile && pnpm check`（插件目录 `<instance>/hephi-review/hephi`）→ 175 tests 通过、tsdown 构建完成（**该轮时点**；当前为 20 文件 / 202 tests） |
 | 重启 | 终止旧 host.pid → 调用 `start.sh` → 新 pid `95434` |
 | 实载回读 | 状态 API `ready`；**插件版本回读仍无入口**（`docs/g1-host-probe.md` 已记录“不具备”） |
 | 部署记录 | `repoHead=185f5e96f4762284ef0a163ac563051c6f5a2146`；before/after 均为 `running=0, queued=0, paused=true, runtime=ready` |
@@ -36,9 +36,79 @@
 
 实测（B 实例暂停状态下）：存在 3 个进行中 Ticket → 不带 flag 输出“仍有 3 个进行中的 Ticket，禁止升级”；带 `--allow-open-tickets` → dry-run 检查通过；随后恢复实例，health 全 ready。
 
+## 全量健康门禁缺口（历史事实保留，R4 追记）
+
+`logs/deploy-20261107T054720.json`（`at = 2026-11-06T21:47:20Z`，release `fba676e89ee19b2cbcf685cdb8b2a350504021fc`，用于 P11 smoke 重启）的 `after.health` 中 **`github.state = "starting"`**（其余 9 项 ready）。当时脚本只以 `health.runtime.state == ready` 判成功，因此该次部署仍按成功结束——这是**原始事实，保留不改**，也正是独立复核 F1.3 指出的健康门禁缺口。
+
+| 项 | 值（原始记录） |
+| --- | --- |
+| 记录文件 | `/Users/zm/dsh-instances/experiment/logs/deploy-20261107T054720.json`（评审副本：`external-review/evidence/logs/`） |
+| `github.state` | `starting`（detail 为空） |
+| 其余 health | runtime/relay/notice/launch/delivery/assessment/reply/evals/models 均 `ready` |
+| 脚本判定 | 成功（旧脚本只看 `runtime`） |
+
+## R3：不可变部署、自动回滚与全量健康门禁
+
+### 假宿主验证（原实现时点通过，提交 `0d58bc3`；**独立复核判定不通过**）
+
+`scripts/host/deploy-hephi.sh` 已由 R3 重写：`--host-version` 必填（单行非空）、`git archive <sha>` 到独立临时目录构建、`releases/<sha>/` 不可变（`.incoming-<sha>-<pid>` + 校验 + 原子 `mv`）、`$hephi/lib` 用同文件系统临时 symlink 原子 rename 切换、10 项全量健康门禁（`runtime relay notice launch delivery assessment reply evals models github`，`starting`／`error`／缺失均失败）、切换后失败自动恢复 previous 并再次全量健康检查、失败两次保持 `paused=true`、`--allow-open-tickets` 作为未知参数拒绝、drain 字段缺失按 `unverified` 拒绝。
+
+| 项 | 结果 | 证据 |
+| --- | --- | --- |
+| 假宿主 R3-T01–T17（含清单外 R3-T07b） | 原实现时点 **PASS: 44 assertions**，退出 0；`real 50.22s`（实现者）／`49.55s`（R4 复核）。**该结果不能证明 R3 通过**：独立复核新增 5 组负例全部复现缺陷 | `scripts/host/test-deploy-hephi.mjs`；44 条断言原文见 `docs/remediation-r3-validation.md` §5 |
+| vitest 入口 | 1 passed，约 `50s` | `hephi/tests/control/deploy-script.test.ts` |
+| 指定的全量测试 | **20 文件 / 202 tests passed**（Node `v22.19.0`、pnpm `11.7.0`） | 本轮复跑；时点链见 `docs/implementation-index.md` §6.1 |
+| 独立复核 | **Request changes**：R3 不通过（R3-F1–F6）；PR #20 不批准合并，不得进入 R3.7 | `external-review/PR20-independent-review.md`（仓库外） |
+| 返修后套件（含 N1／N1b／N2／N3／N4／N5，提交 `2409613`） | **`PASS: 69 assertions`，FAIL 0，exit 0**；`real 84.23s`（Lead 复跑；实现者 `83.15s`／`83.35s`）；Node `v22.19.0`／pnpm `11.7.0`。构成：主套 46 + 负例 23 | `scripts/host/test-deploy-hephi.mjs`；登记见 `docs/remediation-r3-validation.md` §9 |
+| 返修后全量测试 | **20 文件 / 202 tests passed**；`deploy-script.test.ts` 1 test 约 `85.7s`（假宿主门禁等待变长，属预期；不新增测试文件） | `cd hephi && pnpm test`（Node `v22.19.0`／pnpm `11.7.0`）；`pnpm check` 构建段待干净树复跑 |
+| 旧提交对照（新套件 × `17d3827`，独立克隆 `/tmp/pr20-verify-old`） | **exit 1；PASS 50 / FAIL 19**；复跑 FAIL 集合逐条一致 → **negative direction 成立**（旧实现不能通过新负例） | `external-review/evidence/pr20-fix/`（仓库外：`old-commit-negative-fails.log`、`.run2.log`、`fail-list.txt`、`README-phase1.md`、`artifact-hashes.txt`）；逐组 FAIL 见返修登记 §3.2 |
+
+### 复核发现与返修（2026-11-07，提交 `2409613`）
+
+独立复核发现原脚本 6 个缺陷，已按条返修（逐条根因、负例与行为差异见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9）：
+
+| 复核缺陷 | 原行为（旧脚本） | 返修后行为 | 对应负例 |
+| --- | --- | --- | --- |
+| **F1 普通 `lib` 目录首迁 EISDIR** | 旧 `$hephi/lib` 是普通目录时，`set_pointer()` 直接 `renameSync` symlink → `EISDIR`，exit 1，部署无法完成 | **普通目录迁移事务**：先把旧目录原子 `mv` 到 `$hephi/.migration-<UTC>-<pid>`，再 rename 新 symlink；第二步失败则把旧目录 `mv` 回原位、删临时 symlink、非零退出并写 `failed-pointer` 记录（带 `migration` 备份路径） | N1（成功 + 备份保留旧内容）、N1b（第二步失败恢复旧目录） |
+| **F2 rollback 隐式 HEAD** | `target` 先被默认成 `git rev-parse HEAD`，再做 rollback 参数检查 → 缺 `--target` 也 exit 0 并切到 HEAD | `target_set`／`previous_set` 标记；**任何 HEAD 默认值之前**校验：rollback 必须有显式 `--target` 且为完整 40 位 SHA，`--previous` 若给出也须完整 SHA；否则非零退出且指针/进程/记录零副作用 | N2（缺参、空值、非法 SHA 均拒绝并无副作用） |
+| **F3 无恢复却记 restored** | 无论是否执行恢复都写 `failed-restored-previous` 并输出 `previous build restored`；rollback 恢复用 `current` 而非显式 `previous`，记录 `previous` 常为空 | 拆成 `failed-no-previous`／`failed-restored-previous`／`failed-twice`；**rollback 显式 target 语义**：恢复目标 = 显式 `--previous`（已 `release_validate`）否则通过校验的 `current`，两者皆无只记 `failed-no-previous`；只有指针真恢复 + 全量健康通过才写 `failed-restored-previous` | N3 |
+| **F4 恢复 rename 失败绕过双失败** | 恢复 `set_pointer` 无错误捕获，`set -e` 下 rename 失败直接以原始码（负例 42）退出，零记录、指针停在失败目标 | 所有 `set_pointer` 调用 `if ! set_pointer ...` 捕获；恢复失败写 `failed-twice`（含 `targetFailure` + `restoreFailure` 真实错误）后非零退出 | N4（注入第 2 次 rename 失败） |
+| **F5 paused 硬编码 true、健康证据缺失** | `record()` 无条件 `paused:true`；双失败写 `health:"not-checked"` | **真实 paused 回读**：`record()` 写盘前 `read_state`，保存真实 `paused`（读不到为 `unverified`）、`load`、`healthReadback`；成功/回滚成功后 `paused_now()` 复核，非 `true` 写 `failed-not-paused` 并非零退出 | N5（假宿主真实返回 `paused=false`）；主套 T17/T08 记录真实性断言 |
+| **F6 current 校验被忽略** | `[ -n "$current" ] && release_validate ... || true` 吞掉失败，校验不过的 current 仍可能被当恢复目标 | 单独计算 `current_valid`；恢复 current 必须 `current_valid=yes`，显式 `--previous` 先校验 | **无专属动态负例**（静态保证，标 unverified-by-test） |
+
+**双失败证据字段**（返修后记录中用于“保留现场”的字段，`record()` 统一写入）：
+
+| 字段 | 含义 |
+| --- | --- |
+| `targetFailure` | 目标阶段（切换/重启/健康）最后一次可读宿主状态或错误摘要 |
+| `restoreFailure` | 恢复阶段真实失败原因（如 `pointer restore to <path> failed`） |
+| `restoreHealth` | 恢复阶段全量健康结果（成功恢复时为 `all-required-ready`） |
+| `paused` / `load` / `healthReadback` | 写记录时的真实宿主回读；不可读为 `unverified`（不再硬编码 `true`） |
+| `pointerBefore` / `pointerAfter` / `migration` | 切换前后指针与普通目录迁移备份路径，便于人工接管 |
+
+> 返修改 3 文件（提交 **`240961395ce0fb323683bab21830fbdc123257d8`**，父提交 `17d3827`）：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`（wrapper 断言 44→69），**未在真实宿主执行任何部署/回滚**。双向均已实测：修复提交上 69 断言全绿 + 全量 `pnpm test` 20 文件 / 202 tests；旧提交上 `PASS 50 / FAIL 19`。**`pnpm check` 的 typecheck+test+build 最终输出`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）。**
+>
+> 旧提交实测的重要细节（不得省略）：N1 复现 `EISDIR`（与复核一致）；N4 在旧提交上是 **`exit 0` + 写 `result:"ok"`**（不是静态推演的裸 42，恢复分支未被走到）；N5 旧脚本在假宿主真实 `paused=false` 时仍 exit 0 并输出 `deploy complete`、记录硬编码 `paused:true`。
+>
+> **本次只关闭复核 R3-F1–F6 与 N1–N5 自动化**：R3.7 真实宿主（A→B→A、实载 commit 回读、真实故障注入、真实 drain 语义）仍未验证；**P8 仍为部分**；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准。
+
+### 真实宿主验收（仍未验证）
+
+| 项 | 状态 | 说明 |
+| --- | --- | --- |
+| A→B→A 真实切换 + 实载 commit 回读 | **未验证** | 宿主无版本查询入口；脚本成功记录已明确标 `loadedCommitReadback: unverified`，磁盘 sha256 不得替代实载 |
+| 受控健康故障注入与自动回滚 | **未验证** | 假宿主 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制 |
+| 暂停期受控 Issue smoke、恢复后完整健康/load | **未验证** | R3.7 第 6 项未执行 |
+| drain 真实 API 字段语义 | **未验证** | `startupReservations`/`effects`/`jobs`/`subagents`/`unknown` 仅在假宿主按字段存在性验证；真实 API 缺失即拒绝，不按 0 |
+| 真实 `hostVersion` 取值来源 | **未验证** | 本轮未做真实部署，仅验证必填/单行校验 |
+| 真实宿主上的普通 `lib/` 目录迁移 | **未验证** | 返修 N1/N1b 只用临时目录夹具；真实实例早已是 symlink 布局 |
+
+> 本文件上方全部真实部署记录（`03:57`、`04:29`–`04:31`、`05:47`）均为 **R3 之前的旧脚本**行为，不代表 R3 结论。P8 真实验收在 R3.7 完成并保存原始输出前保持**未通过**；R3 返修（假宿主 N1–N5 待验证）**不改变 P8 仍为部分**。
+
 ## 已证明 / 未证明
 
-- 已证明：暂停→构建→重启→状态恢复的真实链路；构建产物时间 `03:57`；实例以新进程运行且监听正常。
-- 未证明：**实载插件 commit**（无回读入口，只能确认进程/构建产物时间与 live lib 入口 sha256，不能确证加载了哪个 commit）；**竞态 Trigger**（未创建新 Issue 测试）；**故障注入下的自动恢复**（脚本有回滚备份逻辑，但本轮只验证成功路径）。
-- 已知限制：重启窗口内服务不可用；`lib` 切换在停机状态下用 `mv` 完成，非热切换；`meta.json` 只有 sha256，没有签名。
+- 已证明：暂停→构建→重启→状态恢复的真实链路；构建产物时间 `03:57`；实例以新进程运行且监听正常。R3 的**脚本机制**只由假宿主证明（原 44 断言 + 返修后 69 断言全绿，全量测试 20 文件 / 202 tests）；**这不等于真实宿主验收**。
+- 未证明：**实载插件 commit**（无回读入口，只能确认进程/构建产物时间与 live lib 入口 sha256，不能确证加载了哪个 commit）；**竞态 Trigger**（本记录未创建新 Issue 测试；后由 `docs/p8-race-record.md` 单独验证，结论 partial）；**故障注入下的自动恢复**（假宿主原 T08–T10 与返修 N1b/N3/N4/N5 只证明脚本机制，**真实宿主未验证**）；**全量健康门禁**（假宿主覆盖，**真实宿主未验证**；旧脚本只看 `runtime`，`deploy-20261107T054720.json` 已记录 `github=starting` 仍判成功）；**普通 `lib/` 目录首迁事务**（返修 N1/N1b 仅在临时夹具验证，真实宿主未迁移）。
+- 已知限制：重启窗口内服务不可用；本记录中的 `lib` 切换在停机状态下用 `mv` 完成，非热切换（R3 改为 release 目录 + 版本指针，尚未验收）；`meta.json` 只有 sha256，没有签名；R3 原实现被独立复核判定不通过（F1–F6），返修提交 `2409613` 已关闭 F1–F6 并补 N1–N5，但**仍需二次独立复核**才能重新送审。
+- 状态口径：**P8 仍为部分（未通过）**。假宿主套件（含返修负例）即使全绿也不等于 R3.7 真实宿主验收。
 - 备注：脚本新增 `--hephi`/`--repo` 以适配本机 `<instance>/hephi-review` 布局（提交 `185f5e9`）。

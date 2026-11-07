@@ -6,9 +6,9 @@
 
 | 节 | 主题 | 当前状态 |
 | --- | --- | --- |
-| §1 | C4.6 检查环境固定 | **约定**；`check-task` 的 environment 校验**已实现（本轮，任务级）**；插件/prepare 侧强制**待实现** |
+| §1 | C4.6 检查环境固定 | **约定**；`check-task` 的 environment 校验**已实现（任务级）**；插件/prepare 侧离线命令+lockfile 校验**已实现（机制级，2026-11-07）**；运行时网络隔离仍待实现 |
 | §2 | C4.8 聚焦检查 | **约定**；`lint-task` 聚焦提示规则**已实现（本轮，仅提示）**；阈值可配置/调优 |
-| §3 | C1 受保护验收资产 | **提议，待实现（C1）** |
+| §3 | C1 受保护验收资产 | **已实现（合同 v4/任务卡 v2，机制级，2026-11-07）**；未做真实宿主 E2E |
 | §4 | C2 未覆盖改动提示 | **约定 + 项目侧示例**（赫菲不解析覆盖率；集成待实现） |
 | §5 | 覆盖提示输出格式 | 示例脚本已按此格式输出；赫菲消费/展示待实现 |
 
@@ -34,8 +34,7 @@
 
 `eval/check-task.mjs` 当前校验（含本轮扩展）：任务结构、base 上隐藏测试失败、参考修复通过（3 次一致）、
 参考修复不越 allowedFiles；**可选 `environment` 块**在声明 `offline:true` 时校验锁文件与离线命令
-（本轮已实现，见 §1.3）；未声明 `environment` 时行为不变（不拦截）。**插件/prepare 侧仍不强制**
-离线环境，该部分待实现。约定字段：
+（本轮已实现，见 §1.3）；未声明 `environment` 时行为不变（不拦截）。**插件/prepare 侧已强制**（`environment.offline===true` 时做 lockfile 存在性与联网命令扫描，见 §1.4）；任务级校验在 `check-task` 实现；**运行时网络隔离仍待实现**。约定字段：
 
 - 在 `task.json` 增加可选 `environment` 块（提议字段）：
   ```json
@@ -46,7 +45,7 @@
     "install": "pnpm install --frozen-lockfile --offline"
   }
   ```
-- `check-task` 扩展校验（待实现）：
+- `check-task` 扩展校验（已实现，任务级）：
   1. `offline=true` 时检查 `install` 命令含离线标志，且不含网络命令；
   2. 锁文件存在且与 base 一致（不得在复核中被更新）；
   3. 工具链版本可被验证（至少记录）；不满足则任务无效（exit 1）。
@@ -75,8 +74,17 @@
   `--frozen-lockfile` **且** `--offline`、`yarn install`/`pip install` 需对应离线参数）；
 - `--self-test` 覆盖：合法 offline 通过、缺 lockfile 完整模式失败、联网命令失败、未声明不拦截。
 
-**未实现/未验证**：插件/prepare 侧强制离线环境；真实项目任务上的环境校验；`check-task` 的
-`environment` 字段尚未进入 `eval/tasks/README.md` 的正式字段表（若需要需同步该文档）。
+### 1.4 插件侧 prepare 强制（已实现，机制级，2026-11-07）
+
+- `verification.environment?: {offline?: boolean; lockfile?: string}`（verification 格式仍 version 1，additive）；
+  `offline:true` 时 `lockfile` 必填且必须为 workspace-relative。
+- `prepareActivation` 在 `offline:true` 时：检查 workspace 下 lockfile 存在；扫描每个 `checks[].command/args` 的联网
+  安装/网络命令（npm 非 ci、pnpm 缺 frozen/offline、mvn 缺 -o、gradle 缺 --offline、yarn/pip、git clone/curl/wget）；
+  命中即失败并列出全部命中项，不写合同。未声明/`offline:false` 行为不变。
+- `environment` 随 `verification` 冻结进合同并纳入合同哈希；合同版本仍为 5（additive，不影响 ready 判定）。
+- **限制**：只做 prepare 时命令白名单 + lockfile 存在性；不阻止运行期联网；`sh -c`/变量封装可绕过扫描；
+  lockfile 内容/base 一致性未校验；`npm ci` 在插件侧视为离线（与本文建议 `npm ci --offline` 有口径差异，待负责人确认）；
+  真实项目离线执行未验证。
 
 ## 2. C4.8 聚焦检查（约定）
 
@@ -267,12 +275,12 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
 
 | 项 | 状态 | 需要谁 |
 | --- | --- | --- |
-| C4.6 离线/锁版本校验（`check-task` environment） | **已实现（本轮，任务级）**；插件/prepare 侧强制、真实项目验证待实现 | 负责人确认字段与阈值 |
-| C4.8 聚焦检查提示规则（`lint-task` focus） | **已实现（本轮，仅提示，exit 不变）**；阈值/规则调优与真实任务验证待做 | 负责人确认规则与阈值 |
-| C1 `protectedAssets` / `authorizes` / 优先级 | **待实现（C1）** | 负责人批准字段与任务卡版本升版（建议 v2） |
-| C1 决策日志新规则登记 | 待实现 | 与 `decisions-format.md` 同步 |
+| C4.6 离线/锁版本校验 | **已实现**：`check-task` 任务级 + 插件 prepare（`environment.offline` 时 lockfile 存在性 + 联网命令扫描）；运行时隔离与真实项目验证待做 | 负责人确认字段/白名单口径（`npm ci` 是否算离线） |
+| C4.8 聚焦检查提示规则（`lint-task` focus） | **已实现（仅提示，exit 不变）**；阈值/规则调优与真实任务验证待做 | 负责人确认规则与阈值 |
+| C1 `protectedAssets` / `authorizes` / 优先级 | **已实现**（合同 v4/任务卡 v2；P1-5 优先级） | 负责人确认字段命名与启用判据（C 线需 B5 数据） |
+| C1 决策日志新规则登记 | **已实现**（`asset.authorized`/`asset.modified`/`asset.unauthorized-*`） | 与 `decisions-format.md` 已同步 |
 | C2 赫菲侧提示附件展示 | 待实现（可选） | 负责人确认展示位置与是否只记录 |
 | 示例脚本生产化（大型报告、source map、多模块） | 项目侧 | 各项目自行集成 |
 
-> 本文所有 C1/C2 及 C4.6/C4.8 的“扩展/提示”均为**提议或待实现**；当前插件行为仍以
+> C1/C4.6/C4.8 的机制级实现已落地（见上表）；C2 与运行时网络隔离仍为提议/待实现。当前插件行为仍以
 > `hephi/README.md` 与 `hephi/src/` 为准，不得把本文当已实现规则使用。

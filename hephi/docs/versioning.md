@@ -66,7 +66,7 @@
   - `run-unblock`：`runId`（不得带 `checkId`）；`retry-reset`：`checkId`（不得带 `runId`）。
 - 语义：解除/重置只恢复“可以重新检查/重试”的资格，**不修改** `run.json`/`output.log`，也不把旧执行变成通过证据；
   跨 ticket/合同不生效；重复提交同目标且同 evidence 视为幂等重复（不重复生效），不一致视为损坏。
-- 默认关闭：仅宿主配置/操作者配置文件启用（当前临时开关 `HEPHI_ALLOW_OPERATOR_RESOLUTIONS=1`，不是安全边界）；
+- 默认关闭：仅宿主配置 `apply(config)` 或操作者 `--operator-config`（mode 0600 JSON）启用；进程环境变量**不是**启用通道（`HEPHI_ALLOW_OPERATOR_RESOLUTIONS` 已无效）。
   Worker 不能通过自身环境启用/调用（A3 信任边界，G1#9 未验证）。
 - 损坏处理：任何非法行/未知 kind/字段不匹配 fail-closed（该日志可影响重试/解除判定，不能静默丢弃）。
 - 版本判定：当前字段集合固定、只追加；**新增 `kind` 属于扩展但不升版**——必须随新插件版本发布并在本文登记；

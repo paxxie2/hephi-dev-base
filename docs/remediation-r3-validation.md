@@ -2,14 +2,14 @@
 
 对应 `HEPHI-R2-remediation-checklist.md` R3（不可变部署、自动回滚、全量健康门禁）与 R4.3 的文档要求：逐条登记命令、退出码、证据路径、复核者和局限。**假宿主测试通过 ≠ 真实宿主验收通过**；R3.7 真实宿主项全部保持未验证。
 
-> **结论变更（2026-11-07 追加，原文不改）**：PR #20 独立复核判定 **R3 不通过**——原实现 44 断言全过，但 5 组独立负例复现 R3-F1–F6 缺陷（`PR20-independent-review.md` §3）。因此 §2–§5 的“44 断言 PASS / R3 机制已覆盖”只保留为**原实现时点事实**，**不再作为 R3 完成或允许进入 R3.7 的依据**。当前状态：「原实现被独立复核判定不通过 → 已返修（提交 `240961395ce0fb323683bab21830fbdc123257d8`）并补负例 N1–N5」。**双向均已实测**：修复提交上 `PASS: 69 assertions`、FAIL 0、exit 0（`real 84.23s`）；旧提交 `17d3827` 上扩展套件 exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 R3-F1–F6 与 N1–N5 自动化；R3.7 真实宿主（A→B→A、实载回读、故障注入、真实 drain 语义）仍未验证，PR #20 截至本文件提交为 OPEN（合并后以 `main` merge commit 为准）。** 逐条登记见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。**R3.7 与 P8 真实验收仍未通过。**
+> **结论变更（2026-11-07 追加，原文不改）**：PR #20 独立复核判定 **R3 不通过**——原实现 44 断言全过，但 5 组独立负例复现 R3-F1–F6 缺陷（`PR20-independent-review.md` §3）。因此 §2–§5 的“44 断言 PASS / R3 机制已覆盖”只保留为**原实现时点事实**，**不再作为 R3 完成或允许进入 R3.7 的依据**。当前状态：「原实现被独立复核判定不通过 → 已返修（提交 `240961395ce0fb323683bab21830fbdc123257d8`）并补负例 N1–N5」。**双向均已实测**：修复提交上 `PASS: 69 assertions`、FAIL 0、exit 0（`real 84.23s`）；旧提交 `17d3827` 上扩展套件 exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 R3-F1–F6 与 N1–N5 自动化；R3.7 真实宿主（A→B→A、实载回读、故障注入、真实 drain 语义）仍未验证；PR #20 已合并为 `main@bc3386c`。** 逐条登记见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。**R3.7 与 P8 真实验收仍未通过。**
 
 ## 1. 基线与提交
 
 | 项 | 值 |
 | --- | --- |
 | 起始基线 | `5efd7084e75c5bfbb77fcdd5e6adb1443f834ff1`（`main`，PR #19 合并） |
-| 修复分支 | `agent/hephi-r2-remediation`（**已推送 origin；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准**） |
+| 修复分支 | `agent/hephi-r2-remediation`（**已推送 origin；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）**） |
 | R1 提交 | `9e874f85c995b945f8408be46f51fb34661ebaa2` |
 | R2 提交 | `0d7c031e24ec9aed16cf296a99336e501d3c1fac` |
 | R3 提交（原实现，复核判定不通过） | `0d58bc39ed246c6c9084766c6b495ce2300795d4`（parent `0d7c031`；`R3: immutable releases, atomic pointer switch, full health gate with auto-rollback`） |
@@ -156,7 +156,7 @@ PASS: 44 assertions (R3 fake-host suite)
 | 返修文档登记 | `r3-docs` 执行 Agent | 2026-11-07 07:37 |
 | 返修二次独立复核 | **未做** | 需独立会话按 §6 门槛复跑 |
 
-> 结论（返修后时点）：R3 原实现被独立复核判定**不通过**（R3-F1–F6）；返修提交 `2409613` 已把 N1–N5 纳入自动化，**假宿主套件 69 断言全绿、旧提交 20 条 FAIL（双向实测）**。但**假宿主通过 ≠ 真实宿主验收**：R3.7（A→B→A 切换、实载 commit 回读、真实故障注入、真实 drain 语义）仍未验证，P8 仍为部分；`docs/p8-deploy-record.md` 与本文件均保留该边界。**本次只关闭 F1–F6 与 N1–N5 自动化，不代表 R3 整体通过，也不代表 PR #20 可合并。**
+> 结论（返修后时点）：R3 原实现被独立复核判定**不通过**（R3-F1–F6）；返修提交 `2409613` 已把 N1–N5 纳入自动化，**假宿主套件 69 断言全绿、旧提交 PASS 50 / FAIL 19（双向实测）**。但**假宿主通过 ≠ 真实宿主验收**：R3.7（A→B→A 切换、实载 commit 回读、真实故障注入、真实 drain 语义）仍未验证，P8 仍为部分；`docs/p8-deploy-record.md` 与本文件均保留该边界。**本次只关闭 F1–F6 与 N1–N5 自动化，不代表 R3 整体通过，也不代表 PR #20 可合并。**
 
 ## 8. 独立复核结论与返修登记（2026-11-07 追加）
 
@@ -164,7 +164,7 @@ PASS: 44 assertions (R3 fake-host suite)
 - 结论：**R1／R2 代码层通过；R3 不通过**；PR #20 **不批准合并**，不得进入 R3.7。
 - R3 被列出的缺陷与返修登记：R3-F1（普通 `lib` 目录迁移 EISDIR，阻断）、R3-F2（rollback 隐式 HEAD）、R3-F3（无恢复却记 restored）、R3-F4（恢复 rename 失败绕过双失败路径）、R3-F5（paused 硬编码 `true`）、R3-F6（current 校验结果被忽略）。逐条根因／修复／负例／行为差异见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。
 - 复核提出的负面用例 N1–N5（含返修补充的 N1b 迁移第二步失败）已纳入仓库自动化 `scripts/host/test-deploy-hephi.mjs` 的 `runNegativeSuite()`；最终套件 **69 条断言全绿**（exit 0，`real 84.23s`），旧提交上 **PASS 50 / FAIL 19**。
-- 返修提交：**`240961395ce0fb323683bab21830fbdc123257d8`**（3 文件：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`；wrapper 断言 44→69）；父提交为复核审查提交 `17d3827`。全量 `pnpm test` → **20 文件 / 202 tests**（`deploy-script.test.ts` 约 85.7s）；`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）。**本次只关闭 R3-F1–F6 与 N1–N5 自动化；R3.7 真实宿主仍未验证；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准。**
+- 返修提交：**`240961395ce0fb323683bab21830fbdc123257d8`**（3 文件：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`；wrapper 断言 44→69）；父提交为复核审查提交 `17d3827`。全量 `pnpm test` → **20 文件 / 202 tests**（`deploy-script.test.ts` 约 85.7s）；`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）。**本次只关闭 R3-F1–F6 与 N1–N5 自动化；R3.7 真实宿主仍未验证；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）。**
 - **negative direction 已实测**（r3-verify 阶段 1）：独立克隆 `17d3827` + 新套件 → `exit 1`、`PASS 50 / FAIL 19`、复跑 FAIL 集合逐条一致；其中 N1 复现 `EISDIR`（与复核一致），N4 在旧提交上表现为 `code=0` 写 `result:ok`（非静态推演的裸 42），N5 旧脚本在 `paused=false` 时仍 exit 0 且记录硬编码 `paused:true`。原始日志在 `external-review/evidence/pr20-fix/`（仓库外）。
 - 复核 §6 的 7 条重新送审门槛中，仍有多条未完全满足（previous 非法 SHA 负例、状态/健康读取失败注入、`failed-no-previous` 字段校验、完整 `pnpm check` 最终输出、二次独立复核），如实记录见返修登记 §3.1，不得在重新送审前写成满足。
 - 不变项：R1／R2 代码层结论不变；P2、P5 仍为部分；**P8 仍为部分**；人类负责人签收未做。
@@ -177,7 +177,7 @@ PASS: 44 assertions (R3 fake-host suite)
 
 > **状态（2026-11-07，返修提交 `2409613` 后更新）**
 >
-> - 提交：返修**已提交**为 **`240961395ce0fb323683bab21830fbdc123257d8`**（`R3 remediation: fix F1-F6 from PR #20 independent review`，父提交 `17d3827`；改动 3 文件：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`（wrapper 断言 `44` → `69`）；`git show --stat 2409613`：3 files changed, +376/−101）。分支 `agent/hephi-r2-remediation` 已推送 `origin`（`17d3827`），**PR #20 已创建（截至本文件提交为 OPEN；合并后以 `main` merge commit 为准）**；返修提交 `2409613` 已推送并追加到 PR #20。本文件等文档改动随本文件所在提交（docs）提交。
+> - 提交：返修**已提交**为 **`240961395ce0fb323683bab21830fbdc123257d8`**（`R3 remediation: fix F1-F6 from PR #20 independent review`，父提交 `17d3827`；改动 3 文件：`scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`（wrapper 断言 `44` → `69`）；`git show --stat 2409613`：3 files changed, +376/−101）。分支 `agent/hephi-r2-remediation` 已推送 `origin`（`17d3827`），**PR #20 已创建（已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20））**；返修提交 `2409613` 已推送并追加到 PR #20。本文件等文档改动随本文件所在提交（docs）提交。
 > - 验证：**旧提交方向（negative）已由独立验证者 r3-verify 实测**——扩展套件在 `17d3827` 上 exit 1、PASS 50 / FAIL 19（见 §3.2）；**修复提交方向（positive）已全绿**——`node scripts/host/test-deploy-hephi.mjs` → **`PASS: 69 assertions`，FAIL 0，exit 0**；Lead 独立复跑 `real 84.23s`（实现者两次 `83.15s`/`83.35s`），构成：主套件 46（原 44 + 2 条真实回读）+ 负例 23。全量 `pnpm test` → **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`）；`pnpm check` 的 typecheck+test+build 最终输出：`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）。
 > - **假宿主修复通过 ≠ R3.7 真实宿主验收**。本文任何结论都不改变：R3.7 真实宿主 A→B→A、实载 commit 回读、真实健康故障注入、真实 drain 字段语义全部 **unverified**；P8 真实验收 **仍为部分（未通过）**。
 > - R1／R2 复核结论不变：代码层通过（见复核报告 §5），不因 R3 返修重新开启。
@@ -189,17 +189,17 @@ PASS: 44 assertions (R3 fake-host suite)
 | R1 activation v2 哈希 | 代码层通过（30 用例） | 未改动 |
 | R2 dirty 构建拒绝与 commit 身份 | 代码层及独立真实路径通过 | 未改动 |
 | R3 不可变部署与自动回滚 | **不通过**：F1–F6；原 44 断言全过但 5 组独立负例全部复现缺陷 | 修复 F1–F6；N1–N5（含 N1b）纳入仓库自动化；重新验证命令见 §4 |
-| 合并状态 | PR #20 **不批准合并**，不得进入 R3.7 | PR #20 截至本文件提交为 **OPEN**；合并后以 `main` merge commit 为准；返修提交 `2409613` 追加到同一 PR |
+| 合并状态 | PR #20 **不批准合并**，不得进入 R3.7 | PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）；返修提交 `2409613` 追加到同一 PR |
 
 范围声明：本轮只改 `scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs` 与 `hephi/tests/control/deploy-script.test.ts`（wrapper 断言计数 44→69；Lead 实现，提交 `2409613`），本文件及其余 `docs/` 记录为只读登记；**未改产品源码、未在真实宿主执行任何部署/回滚**。
 
-**本次返修关闭的范围（不得扩大解释）**：只关闭复核报告列出的 **R3-F1–F6** 并把 **N1–N5（含 N1b）** 纳入仓库自动化。**R3.7 真实宿主验收（A→B→A 切换、实载 commit 回读、真实健康故障注入、真实 drain 字段语义）仍未验证**；PR #20 截至本文件提交为 **OPEN**（分支已推送 `origin/agent/hephi-r2-remediation`），合并后以 `main` merge commit 为准。
+**本次返修关闭的范围（不得扩大解释）**：只关闭复核报告列出的 **R3-F1–F6** 并把 **N1–N5（含 N1b）** 纳入仓库自动化。**R3.7 真实宿主验收（A→B→A 切换、实载 commit 回读、真实健康故障注入、真实 drain 字段语义）仍未验证**；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）。
 
 **因果链（本文件的核心事实，不得颠倒）**：
 
 1. **原实现 44 断言全绿**（`0d58bc3`，2026-11-07 06:51 实测），但**独立复核在同一审查提交 `17d3827` 上用 5 组独立负例 5/5 复现缺陷**（N1 普通目录首迁 EISDIR 直接阻断部署 → F1；隐式 HEAD → F2；未恢复却记 restored → F3；恢复 rename 失败绕过双失败 → F4；`paused` 硬编码 → F5；另有静态确认的 F6）。**“原套件全绿”因此不构成 R3 通过**，这正是本次返修的直接触发原因。
-2. **返修后必须双向可判**：同一扩展套件在**旧提交**上应失败（negative direction，阶段 1 已实测 20 条 FAIL，r3-verify 正用最终套件补强重跑）、在**修复提交**上应通过（positive direction，`PASS: 69 assertions` / exit 0，Lead 复跑并留档；**阶段 2：Lead 已在隔离克隆（`/tmp/hephi-lead-check` @ `2409613`）复跑 `pnpm check` → exit 0、`PASS: 69 assertions`；独立验证者 r3-verify 的独立克隆复跑见 PR 讨论，不以其结果替代机制结论**）。
-3. 即使双向都成立，**只证明脚本机制**，R3.7 真实宿主仍 **unverified**、P8 仍为部分、PR #20 状态以 `main` merge commit 为准。
+2. **返修后必须双向可判**：同一扩展套件在**旧提交**上应失败（negative direction，阶段 1 最终套件已实测 **PASS 50 / FAIL 19**（改前快照为 20 条），r3-verify 已完成补强重跑）、在**修复提交**上应通过（positive direction，`PASS: 69 assertions` / exit 0，Lead 复跑并留档；**阶段 2：Lead 已在隔离克隆（`/tmp/hephi-lead-check` @ `2409613`）复跑 `pnpm check` → exit 0、`PASS: 69 assertions`；独立验证者 r3-verify 的独立克隆复跑见 PR 讨论，不以其结果替代机制结论**）。
+3. 即使双向都成立，**只证明脚本机制**，R3.7 真实宿主仍 **unverified**、P8 仍为部分、PR #20 已合并（`bc3386c`）。
 
 ### 2. R3-F1–F6 逐条登记
 
@@ -320,7 +320,7 @@ FAIL 分组（20 条，全部由新断言捕获）：
 
 | 项 | 值 |
 | --- | --- |
-| 返修分支 | `agent/hephi-r2-remediation`（已推送 origin；PR #20 截至本文件提交为 OPEN，合并后以 `main` merge commit 为准） |
+| 返修分支 | `agent/hephi-r2-remediation`（已推送 origin；PR #20 已于 2026-11-07 合并为 `main@bc3386cd65fee16b1777294929389db5a710bb29`（PR #20）） |
 | 返修提交 | **`240961395ce0fb323683bab21830fbdc123257d8`**（父提交 `17d3827d3a73d3afb7a3b8de130d1615bd351769`；提交信息 `R3 remediation: fix F1-F6 from PR #20 independent review`） |
 | 改动文件 | `scripts/host/deploy-hephi.sh`、`scripts/host/test-deploy-hephi.mjs`、`hephi/tests/control/deploy-script.test.ts`（wrapper 断言 44→69）；`git show --stat 2409613`：3 files changed，+376/−101 |
 | 扩展假宿主套件 | `node scripts/host/test-deploy-hephi.mjs` → **`PASS: 69 assertions`，FAIL 0，exit 0**；`real 84.23s`（Lead 复跑；实现者 `83.15s`／`83.35s`）；Node `v22.19.0`、pnpm `11.7.0` |

@@ -14,9 +14,9 @@
   "stagedSuitable": false,
   "contamination": {
     "mergedAfterTrainingCutoff": false,
-    "private": false,
+    "private": true,
     "cutoff": null,
-    "notes": "Training cutoff / contamination unknown; no decontamination claim; fixture only."
+    "notes": "Training cutoff / contamination unknown; no decontamination claim; fixture only. 来源仓库 paxxie2/site-pnl-diagnosis 为 GitHub 私有仓库，计入 B2 的“私有来源”比例。"
   },
   "checks": {
     "baseMustFail": true,

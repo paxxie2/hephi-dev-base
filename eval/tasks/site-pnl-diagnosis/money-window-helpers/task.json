@@ -15,9 +15,9 @@
   "stagedSuitable": false,
   "contamination": {
     "mergedAfterTrainingCutoff": false,
-    "private": false,
+    "private": true,
     "cutoff": null,
-    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。 来源仓库 paxxie2/site-pnl-diagnosis 为 GitHub 私有仓库，计入 B2 的“私有来源”比例。"
   },
   "checks": {
     "baseMustFail": true,

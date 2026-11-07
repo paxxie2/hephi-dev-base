@@ -1,0 +1,35 @@
+# native 配对只读核验（paxxie2/b5-native-site-pnl）
+generatedAt: 2026-11-08 07:08:09 CST
+
+$ gh repo view paxxie2/b5-native-site-pnl --json name,visibility,defaultBranchRef
+{"defaultBranchRef":{"name":"main"},"name":"b5-native-site-pnl","visibility":"PRIVATE"}
+
+$ gh issue list --repo paxxie2/b5-native-site-pnl --state all
+[{"labels":[{"id":"LA_kwDOVmn7ic8AAAADBr0u_A","name":"hephi/delivery","description":"Enable HEPHI contract and delivery verification","color":"0E8A16"}],"number":7,"state":"OPEN","title":"[native][B5-native] previous-window-order run3"},{"labels":[{"id":"LA_kwDOVmn7ic8AAAADBr0u_A","name":"hephi/delivery","description":"Enable HEPHI contract and delivery verification","color":"0E8A16"}],"number":6,"state":"OPEN","title":"[native][B5-native] previous-window-order run2"},{"labels":[{"id":"LA_kwDOVmn7ic8AAAADBr0u_A","name":"hephi/delivery","description":"Enable HEPHI contract and delivery verification","color":"0E8A16"}],"number":4,"state":"OPEN","title":"[native][B5-native] previous-window-order run1-retry"},{"labels":[{"id":"LA_kwDOVmn7ic8AAAADBr0u_A","name":"hephi/delivery","description":"Enable HEPHI contract and delivery verification","color":"0E8A16"}],"number":2,"state":"OPEN","title":"[native][B5-native] previous-window-order run1"},{"labels":[{"id":"LA_kwDOVmn7ic8AAAADBr0u_A","name":"hephi/delivery","description":"Enable HEPHI contract and delivery verification","color":"0E8A16"}],"number":1,"state":"OPEN","title":"[native][B5-native] previous-window-order"}]
+
+$ gh pr list --repo paxxie2/b5-native-site-pnl --state all
+[{"baseRefName":"main","headRefName":"agent/previous-window-run3-ba9cbe09e068","isDraft":false,"number":9,"state":"OPEN","title":"fix: reject reversed windows in previous_window"},{"baseRefName":"main","headRefName":"agent/previous-window-run2-078370bcf6d7","isDraft":false,"number":8,"state":"OPEN","title":"fix: reject reversed windows in previous_window"},{"baseRefName":"main","headRefName":"agent/previous-window-order-2801319d520b","isDraft":false,"number":5,"state":"OPEN","title":"fix: reject reversed windows in previous_window"},{"baseRefName":"main","headRefName":"agent/previous-window-order-0824a46875ff","isDraft":true,"number":3,"state":"OPEN","title":"fix: reject reversed windows in previous_window"}]
+
+$ gh pr view 3 --json number,state,isDraft,headRefOid,baseRefOid
+{"baseRefOid":"1e166fbe2217ac378e5bb7062cd34a2da1e75e6f","headRefOid":"534480062a0282b773f0fb65e580524bc085fc5b","isDraft":true,"number":3,"state":"OPEN"}
+
+$ gh pr view 5 --json number,state,isDraft,headRefOid,baseRefOid
+{"baseRefOid":"1e166fbe2217ac378e5bb7062cd34a2da1e75e6f","headRefOid":"b152f8e2c4e52906cfc730bd6c9979d7b69cd073","isDraft":false,"number":5,"state":"OPEN"}
+
+$ gh pr view 8 --json number,state,isDraft,headRefOid,baseRefOid
+{"baseRefOid":"1e166fbe2217ac378e5bb7062cd34a2da1e75e6f","headRefOid":"c28e6ee68e3f7032f055ade98a42f5e78f25f002","isDraft":false,"number":8,"state":"OPEN"}
+
+$ gh pr view 9 --json number,state,isDraft,headRefOid,baseRefOid
+{"baseRefOid":"1e166fbe2217ac378e5bb7062cd34a2da1e75e6f","headRefOid":"a85034ce67fea77cbc739a92d3eac90d88ffdb66","isDraft":false,"number":9,"state":"OPEN"}
+
+$ gh issue view 2 --json number,state,title,labels (body sha256)
+{"number": 2, "state": "OPEN", "title": "[native][B5-native] previous-window-order run1", "labels": ["hephi/delivery"], "bodyBytes": 1336, "bodySha256": "47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772"}
+$ gh issue view 4 --json number,state,title,labels (body sha256)
+{"number": 4, "state": "OPEN", "title": "[native][B5-native] previous-window-order run1-retry", "labels": ["hephi/delivery"], "bodyBytes": 1336, "bodySha256": "47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772"}
+$ gh issue view 6 --json number,state,title,labels (body sha256)
+{"number": 6, "state": "OPEN", "title": "[native][B5-native] previous-window-order run2", "labels": ["hephi/delivery"], "bodyBytes": 1336, "bodySha256": "47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772"}
+$ gh issue view 7 --json number,state,title,labels (body sha256)
+{"number": 7, "state": "OPEN", "title": "[native][B5-native] previous-window-order run3", "labels": ["hephi/delivery"], "bodyBytes": 1336, "bodySha256": "47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772"}
+
+# 任务卡原文 sha256（eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md）
+f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497  eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md

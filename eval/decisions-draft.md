@@ -70,12 +70,13 @@
 
 ## D-7 首轮仓库与模型范围
 
-- status: `pending-approval`
+- status: `approved-by-owner`
 - 当前状态：PREREG §10 未定，RUNBOOK §2 先做 Q1 off/native。
 - 选项：一个仓库一个模型；一个仓库多个模型；多仓库分层。
 - 对样本量、成本和可比性的影响：范围越大配对需求和费用越高；跨仓库结论不能由单仓库外推。
 - 推荐及依据：推荐首轮单仓库单模型，完成后另行决定 B7；具体名称仍待负责人选择。
-- 批准人：实验负责人（用户）；尚无本项批准记录。
+- 负责人选择（2026-11-08）：首轮开发试跑 = `hephi` + `site-pnl-diagnosis` × `deepseek-flash`（off/native 两组）；核心配对任务 = `previous-window-order`（site-pnl，配对仓库 `paxxie2/b5-native-site-pnl`），hephi 任务只作工具/流程验证；B7 多仓库/多模型正式范围另行决定。
+- 批准人：实验负责人（用户）；2026-11-08 B5 试跑授权（Lead 转述），记录见 `eval/approvals/2026-11-08-b5-trial-authorization.md`。仅覆盖本轮开发试跑，正式实验前仍须随 PREREG 锁定。
 - 批准后需同步：eval/PREREG.md 范围及§6/§9；eval/RUNBOOK.md；任务清单。
 
 ## D-8 P4 shadow 可用性
@@ -90,12 +91,13 @@
 
 ## D-9 off 任务卡投递
 
-- status: `pending-approval`
+- status: `approved-by-owner`
 - 当前状态：RUNBOOK §4 固定 Trigger 文本注入是待批准方案。
 - 选项：批准现有固定注入模板；选择已验证原生投递入口；能力不足则暂缓正式实验。
 - 对样本量、成本和可比性的影响：额外 off 专属指令会混淆分组；任务卡字节和 sha256 必须一致。
 - 推荐及依据：推荐现有固定模板作为候选，批准后真实检查两组 sha256；禁止本次调整宿主或运行时。
-- 批准人：实验负责人（用户）；尚无本项批准记录。
+- 负责人选择（2026-11-08）：off 组使用独立 off profile 实例（本地端口 3093，不挂载赫菲、不打 `hephi/delivery`）投递同一任务卡；native 组在宿主执行。
+- 批准人：实验负责人（用户）；2026-11-08 B5 试跑授权（Lead 转述），记录见 `eval/approvals/2026-11-08-b5-trial-authorization.md`。方案选择已批准，但投递一致性（两组 sha256、off 无赫菲状态）仍需真实校验，正式实验前随 PREREG 锁定。
 - 批准后需同步：eval/PREREG.md §10；eval/RUNBOOK.md §4；任务卡投递证据。
 
 ## D-10 机械指标中的估算字段
@@ -115,8 +117,9 @@
 ## 2026-11-08 负责人口头批准（更新）
 
 - 负责人原话：“乙包的，我全部批准”（2026-11-08 06:36 Asia/Shanghai，经 Lead 转述；完整范围与边界见 `eval/approvals/2026-11-08-owner-approval.md`）。
-- 本文件 status 变更：D-1、D-2、D-6、D-10 → `approved-by-owner`；D-3、D-4 → `pending-trial`；D-5、D-7、D-8、D-9 保持 `pending-approval`。
-- 仍未决：成本上限七项数值、样本量 N、环境不可用停止阈值、首轮仓库/模型具体名称、P4 shadow 可用性、off 投递真实入口、资源/预算、两名盲评标注者（见批准记录 §4）。
+- 本文件 status 变更：D-1、D-2、D-6、D-10 → `approved-by-owner`；D-3、D-4 → `pending-trial`；D-5、D-8 保持 `pending-approval`。
+- 同日稍后：负责人选择 A（单人+agent）并授权搭 off profile 试跑，D-7、D-9 改为 `approved-by-owner`（仅限本轮开发试跑范围，见 `eval/approvals/2026-11-08-b5-trial-authorization.md`）。
+- 仍未决：成本上限七项数值（D-3）、样本量 N（D-4）、环境不可用停止阈值（D-5）、P4 shadow 可用性（D-8）、off 投递一致性真实校验（D-9 选择已批、校验未做）、资源/预算、真人评审者为 1 人+agent 降级（见批准记录 §4）。
 - 本节不改变 `eval/PREREG.md` 的任何数值/占位；PREREG 仍未锁定，`prereg-lock --check` 仍应失败。
 
 D-8/D-9 的真实可用性及任务卡投递仍需实际入口证据；当前真实端到端未验证通过。上述推荐不是实验结论，也不能代替试跑结果。

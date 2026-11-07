@@ -1,0 +1,33 @@
+# B5 试跑授权/计划命令日志（2026-11-08）
+generatedAt: 2026-11-08 07:08:20 CST
+git HEAD (生成时): 2db6c77ca153687a63edff0faaef96e680327e00
+base main: 2db6c77ca153687a63edff0faaef96e680327e00
+node: v26.1.0
+git: git version 2.54.0 (Apple Git-157)
+
+$ node eval/b5-plan.mjs --tasks eval/tasks/b5-trial-tasks.json --seed 20261107 --groups off,native --repeat-fraction 0.2 --out /tmp/b5-trial-plan-2.json
+plan written: /tmp/b5-trial-plan-2.json (4 runs, seed=20261107, repeats=0)
+[exit=0]
+→ plan 副本: eval/evidence/b5trial/b5-trial-plan-2.json
+
+$ node eval/prereg-lock.mjs --check
+→ 输出全文见 eval/evidence/b5trial/prereg-lock-check.txt；exit 1（拒绝锁定，未写 eval/PREREG.lock）
+
+$ ls eval/PREREG.lock
+ls: eval/PREREG.lock: No such file or directory
+[exit=1]（未生成 lock 符合预期）
+
+$ gh issue/pr view（只读核验 native 配对）
+→ 输出全文见 eval/evidence/b5trial/native-pairing-evidence.txt；未修改任何 Issue/PR/代码
+
+$ git status --short
+ M eval/B5-trial-plan.md
+ M eval/decisions-draft.md
+?? eval/approvals/2026-11-08-b5-trial-authorization.md
+?? eval/evidence/b5trial/
+?? eval/tasks/b5-trial-tasks.json
+[exit=0]
+
+# 本轮未执行：任何 run、模型调用、宿主/off 实例访问、盲评、样本量计算。
+# plan 中 seed/repeatFraction 仅为试跑参数，未锁定 PREREG。
+# native 4 次运行来自另一线，标记“待核验”；off 4 次运行标记“待执行”。

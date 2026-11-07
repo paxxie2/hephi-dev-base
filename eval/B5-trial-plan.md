@@ -1,148 +1,185 @@
 # B5 开发试跑计划（2026-11-08，**本轮未执行**）
 
-> 状态：**计划/数据 only，未执行任何运行、未调用模型、未访问宿主。**
-> 本文件是运行输入的准备材料，不是实验记录、不是结果、也不能证明任何对照效应。
-> 批准依据：2026-11-08 负责人口头批准“乙包的，我全部批准”（见 `eval/approvals/2026-11-08-owner-approval.md`）；
-> 该批准**不**授权真的开跑，也**不**锁定 PREREG。
+> 状态：**计划/数据/只读核验 only。本轮未执行任何 run、未调用模型、未访问宿主/off 实例。**
+> 本文件是运行输入与配对记录的准备材料，不是实验记录、不是结果，也不能证明任何对照效应。
+>
+> 授权依据：`eval/approvals/2026-11-08-b5-trial-authorization.md`（负责人选择 A=单人+agent 降级、
+> 批准“搭 off profile 并试跑”，范围 `hephi` + `site-pnl-diagnosis` × `deepseek-flash` × off/native）。
+> 该授权只覆盖**开发试跑**，不锁 PREREG、不授权正式实验、不授权声称效应结论。
 
 ## 1. 计划生成（本轮真实执行）
 
 ```sh
-node eval/b5-plan.mjs --tasks eval/tasks/b5-tasks.json --seed 20261107 \
-     --repeat-fraction 0.2 --out /tmp/b5-trial-plan.json
-# exit 0；stdout: plan written: /tmp/b5-trial-plan.json (4 runs, seed=20261107, repeats=0)
+node eval/b5-plan.mjs --tasks eval/tasks/b5-trial-tasks.json \
+     --seed 20261107 --groups off,native --repeat-fraction 0.2 \
+     --out /tmp/b5-trial-plan-2.json
+# exit 0；stderr: plan written: /tmp/b5-trial-plan-2.json (4 runs, seed=20261107, repeats=0)
 ```
 
 | 项 | 值 | 证据 |
 | --- | --- | --- |
-| plan JSON | `eval/evidence/b5prep/b5-trial-plan.json`（`/tmp/b5-trial-plan.json` 的副本） | sha256 见 `eval/evidence/b5prep/SHA256SUMS` |
+| plan JSON | `eval/evidence/b5trial/b5-trial-plan-2.json`（`/tmp/b5-trial-plan-2.json` 的副本） | sha256 见 `eval/evidence/b5trial/SHA256SUMS` |
 | 生成器 | `eval/b5-plan.mjs`（plan schemaVersion 1） | plan `generatedBy` |
-| `generatedAt` | `2026-11-07T22:40:23.814Z`（UTC） | plan 字段 |
-| seed | `20261107` | plan 字段；**仅本次准备参数，未锁定 PREREG**（PREREG §9 `seed` 仍 TODO） |
+| `generatedAt` | 以证据文件 `eval/evidence/b5trial/b5-trial-plan-2.json` 的 `generatedAt` 字段为准（UTC） | plan 字段/证据 |
+| seed | `20261107` | 试跑参数，**未锁定 PREREG**（PREREG §9 `seed` 仍 TODO） |
 | groups | `off,native` | plan `groups` |
-| repeatFraction | `0.2` | plan 字段；仅准备参数，未锁定 |
+| repeatFraction | `0.2` | 试跑参数，**未锁定 PREREG** |
+| 任务子集 | `eval/tasks/b5-trial-tasks.json`（2 个任务：1 个核心配对 + 1 个流程验证） | 见 §2 |
 
-## 2. 任务集现状（只有 2 个任务）
+## 2. 任务选择（与真实配对一致）
 
-`eval/tasks/b5-tasks.json` 当前只有 **2 个任务**（均为 `new-feature`），均来自 `eval/tasks/B5-preparation.md` 的**边界增强 fixture**，
-不是历史故障宣称、不是已准入正式样本、也不是模型实际交付：
+本轮**核心配对任务只有 1 个**：`previous-window-order`（site-pnl，base `1e166fbe2217ac378e5bb7062cd34a2da1e75e6f`）。
+native 侧已有 4 次真实运行（另一线执行，**待核验**）；off 侧在同一配对仓库 `paxxie2/b5-native-site-pnl`
+创建独立 off Issue 执行（**待执行**）。
 
-| taskId | repo | base（真实 Git 提交） | 本轮准备状态 |
-| --- | --- | --- | --- |
-| `b5-task-key-whitelist` | `hephi` | `9fa8598f2beabe179b28733e484275c3775279d3` | `eval/tasks/B5-preparation.md` 记录：目标断言失败 3 次 → 参考补丁通过 3 次；fixture only |
-| `previous-window-order` | `site-pnl-diagnosis` | `1e166fbe2217ac378e5bb7062cd34a2da1e75e6f` | 同上 |
+| taskId | repo | category | base | 角色 | 现有数据 |
+| --- | --- | --- | --- | --- | --- |
+| `previous-window-order` | `site-pnl-diagnosis`（配对仓库 `paxxie2/b5-native-site-pnl`） | new-feature | `1e166fbe2217ac378e5bb7062cd34a2da1e75e6f` | **核心配对任务**（off/native） | native：4 次真实运行（Issues #2/#4/#6/#7 → PRs #3/#5/#8/#9，OPEN，**待核验**）；off：4 次待执行 |
+| `b5-task-key-whitelist` | `hephi` | new-feature | `9fa8598f2beabe179b28733e484275c3775279d3` | **仅工具/流程验证**（off/native 计划条目为流程演练占位） | **没有 native 数据，不声称、不纳入配对/效应** |
 
-## 3. 计划 run 数、分组与重复（本轮计划口径）
+- 两个任务均通过 `eval/B2-audit.md` §2 的 `check-task --repeats 3` full-mode（exit 0，base=[1,1,1]，ref=[0,0,0]，`outside=[]`）。
+- 未选 `money-window-helpers` / `prereg-lock-gate` 等任务进入本轮配对：**没有对应 native 真实运行**，避免“假装已有 native 配对数据”。
+- hephi 任务只用于验证投放/记录/工具链路；其 native/off plan 条目在本轮**不执行、不声称已执行**。
+
+## 3. 计划生成器产物（4 runs；off/native 各 2）
 
 | 指标 | 值 | 说明 |
 | --- | --- | --- |
 | 总 runs | **4** | `summary.runs` |
-| primary runs | 4 | 每个任务 off/native 各 1 次（`repetition=1`） |
-| repeat runs | **0** | `round(2 任务 × 0.2) = round(0.4) = 0` → 没有重复任务 |
+| primary runs | 4 | 2 任务 × off/native 各 1 次（`repetition=1`） |
+| repeat runs | **0** | `round(2 任务 × 0.2) = round(0.4) = 0`，无重复任务 |
 | 每组 runs | off=2 / native=2 | `summary.perGroup` |
-| 重复一致性 | **无法评估** | 0 个 repeat run，不能报告重复一致性；这不是完整 B5 实验 |
-| 交错安排 | 同一任务内 off/native 相邻；任务间由 seed 排序；组顺序由 seed 决定 | 满足 RUNBOOK §5 约束 |
+| 交错安排 | 同一任务内分组相邻；任务间由 seed 排序；组顺序由 seed 决定 | 满足 RUNBOOK §5 |
 
-计划运行顺序（逐条来自 plan 的 `order`）：
+| order | runId | taskId | group | repetition | repeat | 本轮状态 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | `b5-20261107-0001-b5-task-key-whitelist-native-r1` | b5-task-key-whitelist | native | 1 | false | **流程验证占位，不执行/不声称** |
+| 2 | `b5-20261107-0002-b5-task-key-whitelist-off-r1` | b5-task-key-whitelist | off | 1 | false | **流程验证占位，不执行/不声称** |
+| 3 | `b5-20261107-0003-previous-window-order-native-r1` | previous-window-order | native | 1 | false | **已由另一线执行（4 次真实运行，待核验）** |
+| 4 | `b5-20261107-0004-previous-window-order-off-r1` | previous-window-order | off | 1 | false | **待执行**（off team；按 §4 配对表创建 4 个独立 off Issue） |
 
-| order | runId | taskId | group | repetition | repeat |
-| --- | --- | --- | --- | --- | --- |
-| 1 | `b5-20261107-0001-b5-task-key-whitelist-native-r1` | b5-task-key-whitelist | native | 1 | false |
-| 2 | `b5-20261107-0002-b5-task-key-whitelist-off-r1` | b5-task-key-whitelist | off | 1 | false |
-| 3 | `b5-20261107-0003-previous-window-order-native-r1` | previous-window-order | native | 1 | false |
-| 4 | `b5-20261107-0004-previous-window-order-off-r1` | previous-window-order | off | 1 | false |
+> 说明：`b5-plan` 每个任务只生成 1 组 primary（+可选 repeat），**无法表达** native 侧已有的 4 次运行。
+> 因此 §4 的配对表是本轮实际执行口径；§3 的 plan 产物只用于证明任务子集/seed/交错结构可复现。
 
-> 2 个任务即 `round(0.4)=0`，所以本计划只能验证“计划生成/交错/记录链路”，**不能**用于估计模型波动、重复一致性或样本量。
-> 正式 B5 需要更多任务与分层（D-4 未定），不得由本计划外推。
+## 4. 真实配对与 native 现有证据（核心）
 
-## 4. 前置清单（任一不满足则不得开跑）
+配对仓库：`paxxie2/b5-native-site-pnl`（PRIVATE；base/main = `1e166fbe2217ac378e5bb7062cd34a2da1e75e6f`，
+与任务 base 一致）。下表 native 列已用**只读** `gh issue/pr view` 核验（未改 Issue/PR/代码）：
 
-| # | 前置 | 要求 | 当前现状（证据） | 是否满足 |
-| --- | --- | --- | --- | --- |
-| P1 | **甲真实 off/native 入口** | 干净 off 环境 + 同一任务卡两种投递（RUNBOOK §4） | `hephi/docs/validation/2026-11-07-s4-acceptance.md`：**E1-off = PARTIAL**（前置/provenance 无法核验）；E1-on = PASS 但为**等价清理、非缺陷修复**；E-PR1 依赖同一 run。**不能把 A5 场景当作 B5 的 off/native 入口已验证** | ❌ 未满足 |
-| P2 | off 组投递方案 | 固定 Trigger 模板或同文 Issue 经负责人 review（RUNBOOK §4.3） | 方案 B 固定模板仍是**候选**（`decisions-draft.md` D-9 = `pending-approval`）；未做真实 sha256 一致性检查 | ❌ 未满足 |
-| P3 | PREREG 锁定 | 数值、版本、seed、requirements、任务清单哈希锁定（PREREG §9） | **未锁定**；`node eval/prereg-lock.mjs --check` exit 1（见 §6）；`seed=20261107` 仅是准备参数 | ❌ 未满足 |
-| P4 | 任务集 | 足量任务、B2 双向 3 次一致、分层覆盖 | 仅 **2 个任务**（fixture），离正式样本量/分层很远；D-4 `N_TODO` | ❌ 未满足（规模不足） |
-| P5 | 统计环境 | 固定版本依赖可用（`eval/stats/requirements.txt`） | 依赖清单存在（numpy 2.3.4 / scipy 1.16.2 / statsmodels 0.14.5）；本计划准备**未**安装 venv、未跑统计 | ⚠️ 待安装（本轮不需要） |
-| P6 | 盲评准备 | 两名标注者 + rubric 校准（开发集 kappa ≥ 0.7） | 未指定标注者、未校准、无真人 kappa（B4 仅工具自测） | ❌ 未满足 |
-| P7 | 模型资源 | 固定 provider/model/parameters；宿主不支持的参数如实写 `uncontrolled` | 未固定；且宿主实载版本回读（R3.7/P8）未解阻 | ❌ 未满足 |
-| P8 | 费用/预算 | 成本上限（D-3）与外部预算批准 | D-3 = `pending-trial`（七项上限占位），预算未批 | ❌ 未满足 |
-| P9 | 宿主/E5/E9 | A5 非 blocked 场景 + E5/E9；真实宿主探针 | **E5/E9 blocked**（H0 停机已做、H3 真实宿主探针 manual） | ❌ 未满足 |
-| P10 | 环境隔离 | 全新检出 + 全新 Session；构建只在隔离克隆 | 运行纪律已写入 RUNBOOK §6；本轮无运行 | ⚠️ 待执行时保证 |
-| P11 | 记录工具 | `eval/record-run.mjs`（B3）、`eval/repro-manifest.mjs`（乙5 复现包）可用 | 两工具已在仓库（可自测），但**没有真实 run 记录**（B3 未验证项） | ⚠️ 工具在、真实记录无 |
-| P12 | 计划评审 | 负责人确认本计划与 seed/重复比例 | 本计划**未提交负责人 review**；seed/重复比例未锁定 | ❌ 未满足 |
+| 配对 | native Issue | native PR | native HEAD（headRefOid） | base | native 状态 | off Issue（待创建） | off 状态 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| run1 | [#2](https://github.com/paxxie2/b5-native-site-pnl/issues/2) `[native][B5-native] previous-window-order run1` | [#3](https://github.com/paxxie2/b5-native-site-pnl/pull/3)（draft） | `534480062a0282b773f0fb65e580524bc085fc5b` | `1e166fb…` | OPEN；Lead 报告 ticket 已被 human 停止、PR ready（ticket 未独立核验）→ **待核验** | `[off][B5-off] previous-window-order run1` | **待执行** |
+| run1-retry | [#4](https://github.com/paxxie2/b5-native-site-pnl/issues/4) `… run1-retry` | [#5](https://github.com/paxxie2/b5-native-site-pnl/pull/5) | `b152f8e2c4e52906cfc730bd6c9979d7b69cd073` | 同上 | OPEN；同上 → **待核验** | `[off][B5-off] previous-window-order run1-retry` | **待执行** |
+| run2 | [#6](https://github.com/paxxie2/b5-native-site-pnl/issues/6) `… run2` | [#8](https://github.com/paxxie2/b5-native-site-pnl/pull/8) | `c28e6ee68e3f7032f055ade98a42f5e78f25f002` | 同上 | OPEN；同上 → **待核验** | `[off][B5-off] previous-window-order run2` | **待执行** |
+| run3 | [#7](https://github.com/paxxie2/b5-native-site-pnl/issues/7) `… run3` | [#9](https://github.com/paxxie2/b5-native-site-pnl/pull/9) | `a85034ce67fea77cbc739a92d3eac90d88ffdb66` | 同上 | OPEN；同上 → **待核验** | `[off][B5-off] previous-window-order run3` | **待执行** |
 
-## 5. 开发试跑拟执行命令（**本轮只写不跑**）
+离线也核验到：
 
-若 P1–P12 满足，按 PREREG §6 开发试跑口径：每个任务每组 **3 次**（2 任务 × 2 组 × 3 = **12 runs**，仅估计波动/基础发生率，不入正式结论）。
-拟执行命令如下（`<...>` 为待负责人锁定/待提供的值；本轮均未执行）：
+- 4 个 native Issue 均带 `hephi/delivery` 标签；Issue body **完全相同**，sha256 = `47eb70026a0cd4fa8f6ce1a65980d21385059e94586ff14ffdbf1c2bda02b772`（1336 bytes）。
+- **任务文本口径差异（重要，执行前必须解决）**：native Issue body = `@paxxie2 ` 前缀 +
+  `eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md`（657 bytes，sha256
+  `f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497`）+ 追加的 `hephi-task` JSON 合同块（fenced code block，含 goal/outOfScope/acceptance）
+  （goal / outOfScope / acceptance）。**native 实际任务文本 ≠ 仓库 task card 原文**。因此：
+  - 现在**不能**把 4 次 native 运行与 off 运行直接当作“同任务配对”；
+  - off 侧发送什么文本必须先由负责人/Lead 决定口径：沿用 native body（含合同块），或统一剥离合同块并重跑 native；
+  - 在口径决定前，本计划只记录差异，不宣称 paired。
+- Issue #1（`previous-window-order`）body 与上述相同，但 Lead 未列入本轮 4 次配对，本计划不计入。
+- native 运行记录（`run.json`/runs.json）、ticket 停止原因、PR ready 的逐条证据：**本任务未取得/未核验**，保持“待核验”。
 
-```sh
-# 0) 任务接入自检（对真实本地 clone；本轮未执行）
-node eval/check-task.mjs eval/tasks/hephi/b5-task-key-whitelist \
-     --repo <本地 hephi clone> --json
-node eval/check-task.mjs eval/tasks/site-pnl-diagnosis/previous-window-order \
-     --repo <本地 site-pnl-diagnosis clone> --json
+**off 侧执行口径**（待 off team 执行）：
 
-# 1) 试跑计划（3 次重复需要按 RUNBOOK §5 的试跑方式生成/分批；本轮未执行）
-node eval/b5-plan.mjs --tasks <试跑任务集.json> --seed <锁定 seed> \
-     --groups off,native --repeat-fraction 0.2 --out <batch>/plan.json
+1. 在 `paxxie2/b5-native-site-pnl` 创建 **独立 off Issue**：标题 `[off][B5-off] previous-window-order <run>`；**无** `hephi/delivery` 标签；**不复用** native Issue。
+2. 由**无赫菲插件的 off profile 实例**（约定本地端口 **3093**）处理，走原生 Issue → Ticket → Worker；无合同/无赫菲 state。
+3. 同一配对 = 同一 taskId + 同一 base `1e166fb…` + 同一任务文本口径（待定）；off Issue 与 native Issue 一一对应。
+4. 每个 off run 记录 native/off 双边的 Issue、PR、HEAD、时间戳、token、decisionLog、ticket/PR 状态，构成结对证据。
 
-# 2) 每条 run：按 RUNBOOK §4 投递任务卡，运行后校验并落盘记录（本轮未执行）
-node eval/record-run.mjs --input <batch>/candidates/<runId>.json \
-     --out <batch>/runs/<runId>.json
+## 5. 每 run 执行步骤
 
-# 3) 复现包清单（只读元数据，不运行任务；本轮未执行）
-node eval/repro-manifest.mjs --plan <batch>/plan.json \
-     --tasks <试跑任务集.json> --out <batch>/repro-manifest.json
+### 5.1 native 现有 4 次运行：只核验，不重跑
 
-# 4) 机械指标（只提取机械字段；本轮未执行）
-node eval/ab-metrics.mjs <batch>/runs.json
+> 状态：**已由另一线执行，待核验**。本任务不执行、不改动。
 
-# 5) 试跑完成后用 prereg-sample 计算正式样本量（先写 pilot 汇总，再计算；本轮未执行）
-node eval/prereg-sample.mjs --pilot <batch>/pilot-summary.json
+1. 逐 run 核对：Issue #2/#4/#6/#7 的 body sha256 与标签、PR #3/#5/#8/#9 的 base/headRefOid/状态（已部分核验，见 §4）。
+2. 取得运行记录（`run.json`/批次 runs.json）并核对 runId、taskId、repetition、base、taskCard.sha256、model=`deepseek-flash`、宿主/插件版本、token/耗时、decisionLog、PR 编号。
+3. 核对 ticket 状态“已被 human 停止”的原始记录与原因；核对 PR ready 状态。
+4. 判定任务文本口径（§4）并记录：native 实际收到的文本到底是什么。
 
-# 6) 盲评（两名真人；本轮未执行，也没有真人数据）
-node eval/label/export.mjs --manifest <batch>/export-manifest.json \
-     --out <batch>/blind --mapping <private>/<batch>.mapping.json --seed <锁定 seed>
-#   两名标注者按 eval/label/RUBRIC.md 标注后：
-node eval/label/import.mjs --manifest <batch>/blind/manifest.json --labels <labels-rater-a.json>
-node eval/stats/kappa.py --scores <rater-pair.json> --min 0.7   # 需 /tmp venv 安装固定依赖
+### 5.2 off 4 次运行：待执行（off team）
 
-# 7) 统计报告（只在试跑数据齐全后；本轮未执行）
-python eval/stats/report.py --input <batch>/runs.json \
-     --seed <锁定 seed> --noninferiority-margin -0.05 --min-pairs <PREREG N> \
-     --out <batch>/report.md
-```
+每个 off run（run1 / run1-retry / run2 / run3）步骤：
 
-## 6. 记录格式与存档
+1. 全新检出目录（base `1e166fbe…`）+ 全新 Session；不得复用 native 或上一次的会话/工作区。
+2. 启动/确认 **off profile 实例 3093**：不挂载赫菲、无 `hephi/delivery`、无合同/state；记录实例版本/端口。
+3. 创建独立 off Issue（标题 `[off][B5-off] …`，无 hephi 标签），按已决定口径写入与 native 相同的任务文本；计算并记录 body sha256。
+4. 走原生 Issue → Ticket → Worker 路径；记录 issue URL、ticket/run 状态、startedAt/endedAt、wallClockSeconds、tokens（读不到 `null`）、timeout、decisionLog、人工介入。
+5. 记录 Worker 产出的 PR（OPEN、不合并）：PR 编号/URL、base/head SHA、ready 状态。
+6. 写候选记录 → `node eval/record-run.mjs --input <candidate>.json --out <batch>/runs/<runId>.json`；断言与 §4 配对表一致。
+7. 与对应 native 运行组成 pair 记录（native/off 两侧都不得缺失或伪造）。
 
-- 每 run 记录：`eval/schema/run.schema.json`（B3 字段；token 读不到写 `null`，不补 0；实载 SHA 不可回读写 `unverified`）；
-- 批次目录：`<batch>/plan.json`、`<batch>/runs/<runId>.json`、`<batch>/runs.json`（汇总）、`<batch>/repro-manifest.json`；
-- 盲评：`blind/` 材料 + 私有 mapping（不得放材料目录）+ 两名标注者的 `labels-*.json` + 裁决记录；
-- 分析：`report.md`/`report.json` 与 `kappa` 输出；`plan.json` 与 PREREG 锁定版本、seed 一并归档（RUNBOOK §10）；
-- 本仓库只提交准备材料与工具证据；**生产运行数据按 P14 不入公开仓库**。
+### 5.3 hephi 流程验证任务（不执行）
 
-## 7. 样本量（不提前编造）
+`b5-task-key-whitelist` 只用于链路演练；本轮**不执行**。若日后演练，也必须声明“无 native 配对数据、不入效应分析”。
 
-- PREREG §6：试跑后按主指标最小有意义绝对改善 + 检验效能（power 0.8、双侧 α=0.05）计算，主要用配对 McNemar / 配对 bootstrap 模拟；
-- 当前 `N_TODO` / `min_pairs=5` 仅为占位（D-4 `pending-trial`）；
-- 样本量计算工具 `eval/prereg-sample.mjs` 已存在，但**本轮没有试跑输入，未执行**；任何 N 值都不得在试跑前填写。
+## 6. 采集字段（每 run 必记）
 
-## 8. 本轮未执行 / 未验证（如实声明）
+按 `eval/schema/run.schema.json`（B3 记录项）+ 本轮补充：
 
-1. **未执行任何 run**：没有开发试跑、没有正式实验、没有调用任何模型、没有访问宿主。
-2. **未安装/未运行统计或盲评环境**（本轮只生成计划；B4/B6 工具证据见各自记录）。
-3. **未锁定 PREREG、未生成 `eval/PREREG.lock`**；`prereg-lock --check` 仍 exit 1（未决项见 §4/§6 证据）。
-4. **未指定/未培训两名真人盲评者**，无真人 kappa，无裁决记录。
-5. **未固定模型/provider/参数与预算**；无真实 off/native 入口证据（E1-off partial、E5/E9 blocked）。
-6. **未计算样本量**；`seed=20261107`、`repeatFraction=0.2` 只是本次计划生成参数，未锁定。
-7. 本计划只覆盖 2 个 fixture 任务、4 个 primary runs、0 个 repeat；**不能**用于重复一致性、模型波动或效应结论。
+| 类别 | 字段 |
+| --- | --- |
+| 身份/分组/配对 | `runId`、`batch`、`taskId`、`repo`、`category`、`arm`（off/native）、`repetition`、`seed`、`pairId`、`pairRole`（native/off） |
+| 模型 | `model.id=deepseek-flash`、`provider`、`parameters` 实际值（不可控写 `uncontrolled`） |
+| 宿主/插件 | `host.version`+`versionSource`、插件候选/基线/实载 SHA、`loadedShaReadback`（无回读即 `unverified`）、off 实例版本/端口 |
+| 任务卡/投递 | `taskCard.sha256`、`deliveryMechanism`、`verifiedEqual`、native/off 两侧 Issue URL 与 body sha256、任务文本口径版本 |
+| 时间/成本 | `startedAt`/`endedAt`/`wallClockSeconds`/`timeout`、`tokens.input/output/total`（读不到 `null`）、`humanIntervention.count` |
+| 交付/决策 | Issue 编号/URL、PR 编号/URL、`delivery`、`decisionLog.path`+`sha256`、ticket 状态（含 human 停止原因）、ready/契约结果 |
+| 有效性 | `validationEnvironment.status`（available/unavailable+reason）、`outOfScopeChanges`、范围外文件、任务卡一致性、off 组是否出现赫菲状态 |
 
-## 盲评阶段：单人评审降级（2026-11-08）
+## 7. 单人 + agent 盲评流程（**human–agent agreement**，不是双人 kappa）
 
-负责人选择单人+独立 agent 模式（`eval/approvals/2026-11-08-single-human-eval-mode.md`）：
-- 试跑/正式实验的盲评阶段由 **1 名真人（负责人）+ 1 个独立 agent** 完成；
-- 一致性写 `human–agent agreement`，不得写双人 kappa；
-- B5 结果标签 `single-rater`，不得作为双人盲评最终结论；
-- 若日后有第二名真人，按原计划补双人盲评并升级结论。
+依据 `eval/approvals/2026-11-08-single-human-eval-mode.md`：
+
+1. 批次结束后导出盲评材料（去组别/痕迹、映射写材料目录之外）：
+   `node eval/label/export.mjs --manifest <batch>/export-manifest.json --out <batch>/blind --mapping <private>/<batch>.mapping.json --seed 20261107`
+2. **agent 先独立标注**（看不到真人标签）：按 `eval/label/RUBRIC.md` 生成 agent 标注文件，文件名/内容明确标 `rater=agent`。
+3. **真人（负责人）后标注**：对同一批材料独立填写 `labels-human.json`；agent 在真人完成前不得展示其标签。
+4. 读回校验两份标注：`node eval/label/import.mjs --manifest <batch>/blind/manifest.json --labels <labels-agent.json>`（human 同）。
+5. 计算一致性（需 Python venv + 固定依赖）：
+   `python eval/stats/kappa.py --scores <rater-pair.json> --min 0.7`
+   **报告必须写 `human–agent agreement`**（数值、n、门槛），不得写“inter-rater kappa / 两名真人 kappa”。
+6. 状态标记：B5 结论 **partial（single-human mode）**；不得声称双人盲评或 B4 正式一致性达标；分歧由负责人（真人）裁决并记录理由。
+7. 私有映射只在盲评结束后用于还原 runId/arm，不得进入材料目录。
+
+## 8. 停止条件（任一触发即停跑、保留现场并报告负责人）
+
+1. **配对口径未定**：native/off 任务文本口径未由负责人决定、或两组任务卡 sha256 不一致 → **不得开始 off 运行**。
+2. **投递不一致**：off Issue 出现赫菲标签/合同/state、复用了 native Issue、注入文本不唯一 → 该 run 无效并停止排查。
+3. **费用/资源异常**：单 run token/耗时明显超预期、预算失控 → 停止新增运行。
+4. **不可接受故障**：错误交付被放行、不安全恢复、守护指标明显劣化等（PREREG §8 V1–V3）→ 立即暂停并报告。
+5. **环境不可用**：off 实例无法启动、宿主报错、连续不可用（D-5 `ENV_TODO` 未定，试跑阶段由负责人现场裁定）→ 停跑修环境。
+6. **版本漂移**：模型/宿主/插件 SHA 在批次内变化且未记录 → 该批作废。
+7. **记录/工具失败**：`record-run` 校验失败、关键字段不可得且无法如实标注 → 停跑，不得手写补数。
+8. **核验失败**：native 运行记录/ticket 状态/任务文本口径无法核实 → 不进入配对，不下任何结论。
+
+## 9. 清理步骤（试跑结束后）
+
+1. 停止 off profile 实例（3093）与所有 Worker/Session；确认无残留进程。
+2. 清理临时检出目录与 Session 工作区（保留 `<batch>/runs`、`plan.json`、`repro-manifest.json`、盲评材料与私有 mapping、日志原文、配对表）。
+3. 恢复宿主到试跑前状态（若曾暂停/改动配置，按 RUNBOOK §4.5 流程恢复并留证）；**不得**在宿主实载插件工作树构建。
+4. 不删除失败/无效 run 的原始证据；不把生产数据提交到公开仓库（P14）；off Issue/PR 保留 OPEN、不合并，作为证据。
+5. 汇总试跑数据（runs.json → ab-metrics；human–agent agreement）并写**试跑报告**（状态 partial / single-human mode；不得声称正式结论）。
+
+## 10. 试跑后动作（不提前编造）
+
+- 用试跑数据估计主指标基础发生率与波动，形成 D-3（成本上限）与 D-4（样本量）的**输入**；正式 `N` 由 `eval/prereg-sample.mjs` 计算后由负责人另行批准（当前 `N_TODO`/`min_pairs=5` 仍为占位）。
+- 试跑结论只写“流程/链路/波动估计”；**不得**写“赫菲有效/无效、达到/未达到预注册、非劣效成立”等正式判定；4 个配对运行远不足以估计效应。
+- 正式实验仍需 D-3/D-4/D-5/D-7/D-8/D-9 锁定 + PREREG 锁定（`prereg-lock --check` 目前 exit 1）。
+
+## 11. 本轮未执行 / 未验证（如实声明）
+
+1. **未执行任何 run**：没有 off/native 真实运行、没有模型调用、没有访问宿主/off 实例；native 4 次运行是另一线既有数据，**待核验**。
+2. **未核验** native 的运行记录、ticket 停止证据、PR ready 逐条证据；只做了 Issue/PR 的只读状态与 HEAD 查询。
+3. **任务文本口径未决**：native Issue body ≠ 仓库 task card 原文（见 §4），off 侧发送口径待负责人决定，配对**尚不能成立**。
+4. **未启动/未验证 off profile 3093 实例**；E1-off 仍 partial、E5/E9 仍 blocked。
+5. **未安装/未运行统计或盲评环境**，无 human–agent agreement 数值。
+6. **未锁定 PREREG、未生成 `eval/PREREG.lock`**（`prereg-lock --check` 仍 exit 1）；未计算样本量/成本上限（D-3/D-4 仍 `pending-trial`）。
+7. hephi 流程验证任务未执行；不声称任何 hephi 配对数据。

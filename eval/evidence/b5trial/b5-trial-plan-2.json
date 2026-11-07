@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "eval/b5-plan.mjs",
+  "generatedAt": "2026-11-07T23:08:20.342Z",
+  "seed": 20261107,
+  "groups": [
+    "off",
+    "native"
+  ],
+  "repeatFraction": 0.2,
+  "source": "eval/tasks/b5-trial-tasks.json",
+  "taskSet": {
+    "taskCount": 2,
+    "taskIds": [
+      "b5-task-key-whitelist",
+      "previous-window-order"
+    ],
+    "repos": [
+      "hephi",
+      "site-pnl-diagnosis"
+    ],
+    "categoryCounts": {
+      "new-feature": 2
+    }
+  },
+  "repeats": [],
+  "order": [
+    {
+      "order": 1,
+      "runId": "b5-20261107-0001-b5-task-key-whitelist-native-r1",
+      "taskId": "b5-task-key-whitelist",
+      "repo": "hephi",
+      "category": "new-feature",
+      "group": "native",
+      "arm": "native",
+      "repeat": false,
+      "repetition": 1,
+      "seed": 20261107
+    },
+    {
+      "order": 2,
+      "runId": "b5-20261107-0002-b5-task-key-whitelist-off-r1",
+      "taskId": "b5-task-key-whitelist",
+      "repo": "hephi",
+      "category": "new-feature",
+      "group": "off",
+      "arm": "off",
+      "repeat": false,
+      "repetition": 1,
+      "seed": 20261107
+    },
+    {
+      "order": 3,
+      "runId": "b5-20261107-0003-previous-window-order-native-r1",
+      "taskId": "previous-window-order",
+      "repo": "site-pnl-diagnosis",
+      "category": "new-feature",
+      "group": "native",
+      "arm": "native",
+      "repeat": false,
+      "repetition": 1,
+      "seed": 20261107
+    },
+    {
+      "order": 4,
+      "runId": "b5-20261107-0004-previous-window-order-off-r1",
+      "taskId": "previous-window-order",
+      "repo": "site-pnl-diagnosis",
+      "category": "new-feature",
+      "group": "off",
+      "arm": "off",
+      "repeat": false,
+      "repetition": 1,
+      "seed": 20261107
+    }
+  ],
+  "summary": {
+    "runs": 4,
+    "primaryRuns": 4,
+    "repeatRuns": 0,
+    "perGroup": {
+      "off": 2,
+      "native": 2
+    },
+    "repeatTasks": 0
+  }
+}

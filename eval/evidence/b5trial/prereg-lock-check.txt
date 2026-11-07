@@ -1,0 +1,25 @@
+$ node eval/prereg-lock.mjs --check
+[prereg-lock] scanned: eval/PREREG.md, eval/decisions-draft.md
+[prereg-lock] FAIL: 存在未决项，拒绝锁定（不写文件）
+[prereg-lock]   UNRESOLVED eval/PREREG.md:4:30 [TODO] 锁定后任何数值/口径变化都必须升版本并说明理由。所有 **TODO/PLACEHOLDER** 必须由负责人决定。
+[prereg-lock]   UNRESOLVED eval/PREREG.md:4:35 [PLACEHOLDER] 锁定后任何数值/口径变化都必须升版本并说明理由。所有 **TODO/PLACEHOLDER** 必须由负责人决定。
+[prereg-lock]   UNRESOLVED eval/PREREG.md:40:3 [PLACEHOLDER] > PLACEHOLDER：−5pp 是 ROADMAP 建议值，**待负责人确认**（可改，但必须在试跑后、正式实验前锁定）。
+[prereg-lock]   UNRESOLVED eval/PREREG.md:57:3 [PLACEHOLDER] > PLACEHOLDER：第 1 条的“至少 2 项”与“显著”口径待负责人确认；实现见
+[prereg-lock]   UNRESOLVED eval/PREREG.md:60:21 [PLACEHOLDER] ## 5. 成本指标与上限（判断 D4；PLACEHOLDER 数值待确认）
+[prereg-lock]   UNRESOLVED eval/PREREG.md:73:3 [TODO] **TODO（负责人）**：确认/替换全部上限；确认成本是否作为硬门槛还是辅助结论（本版按硬门槛写入联合判定）。
+[prereg-lock]   UNRESOLVED eval/PREREG.md:75:11 [TODO] ## 6. 样本量（TODO：用试跑数据计算后填写）
+[prereg-lock]   UNRESOLVED eval/PREREG.md:80:5 [PLACEHOLDER] - **PLACEHOLDER 目标**：第一轮至少 `N_TODO` 个配对任务（每仓库/模型/类别分层分别满足，
+[prereg-lock]   UNRESOLVED eval/PREREG.md:80:29 [N_TODO] - **PLACEHOLDER 目标**：第一轮至少 `N_TODO` 个配对任务（每仓库/模型/类别分层分别满足，
+[prereg-lock]   UNRESOLVED eval/PREREG.md:81:17 [TODO] 不得用总数代替各分层）。**TODO：试跑后填入具体数字与计算脚本/输出。**
+[prereg-lock]   UNRESOLVED eval/PREREG.md:106:31 [ENV_TODO] 3. **环境不可用率**：连续批次中不可用运行占比超过 `ENV_TODO`（TODO 负责人确认）→ 停止并先修环境；
+[prereg-lock]   UNRESOLVED eval/PREREG.md:106:41 [TODO] 3. **环境不可用率**：连续批次中不可用运行占比超过 `ENV_TODO`（TODO 负责人确认）→ 停止并先修环境；
+[prereg-lock]   UNRESOLVED eval/PREREG.md:116:5 [TODO] - **TODO（负责人）**：填写锁定日期、版本、批准记录与本轮 `seed`。
+[prereg-lock]   UNRESOLVED eval/PREREG.md:125:25 [N_TODO] | D-4 | 样本量（整体 + 分层） | `N_TODO` | §6 |
+[prereg-lock]   UNRESOLVED eval/PREREG.md:126:22 [ENV_TODO] | D-5 | 环境不可用停止阈值 | `ENV_TODO` | §8 |
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:3:194 [pending-approval] 基线：`9fa8598f2beabe179b28733e484275c3775279d3`。仅准备决策，不锁定参数，不启动试跑或正式实验。各项目 `status` 见条目；2026-11-08 负责人口头批准“乙包的，我全部批准”（Lead 转述）后，推荐值明确且无占位/未决的项改为 `approved-by-owner`，需要试跑或仍未决的项保持 `pending-trial`/`pending-approval`；批准记录见 `eval/approvals/2026-11-08-owner-approval.md`。现有文档、源码仅证明当前状态，不代表真实实验已通过。
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:44:8 [N_TODO] - 当前状态：N_TODO；min_pairs=5 只是脚手架占位。
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:53:12 [pending-approval] - status: `pending-approval`
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:54:20 [ENV_TODO] - 当前状态：PREREG §8 为 ENV_TODO，批次窗口口径也需确认。
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:84:12 [pending-approval] - status: `pending-approval`
+[prereg-lock]   UNRESOLVED eval/decisions-draft.md:120:94 [pending-approval] - 本文件 status 变更：D-1、D-2、D-6、D-10 → `approved-by-owner`；D-3、D-4 → `pending-trial`；D-5、D-8 保持 `pending-approval`。
+[exit=1]

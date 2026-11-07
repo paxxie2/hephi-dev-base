@@ -1,9 +1,9 @@
 # S4 验收记录（A 线，2026-11-07）
 
-> 状态：**partial（F1 由 PR38、F2–F5 由 PR40 修复并合并；E5/E9 blocked；E1-off partial；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
+> 状态：**partial（F1/F2–F5 已修复合并；**S3 真实部署已于 2026-11-08 完成**；E5/E9 blocked；E1-off partial；人类签收未做）**。E1-on 正式场景已于 2026-11-08 真实验收通过（等价清理，非缺陷修复）。本文件只记录已真实执行并有证据的事项；
 > 未执行/未验证项显式列出。**不是最终验收通过证明；人类负责人签收前不得记 A5/D5 为通过。**
 >
-> 更新（2026-11-08）：分支已 rebase 到 main **`0c0b7ac`**（PR37 五项 + PR38 F1 + PR33 B 线准备 + PR39 E1-on 记录 + PR40 F2–F5，均 fast-forward 合并）。本轮仅更新对象/状态与 S1 标注，
+> 更新（2026-11-08 02:20）：main 为 **`bc21cac`**；S3 已把该提交部署到宿主 B（见 §2b）。本轮仅更新对象/状态与 S1 标注，
 > **未对新 main 重跑 S1/A2/A5**；S4 仍为 partial。
 
 ## 1. 对象
@@ -12,9 +12,17 @@
 | --- | --- |
 | main（代码） | **`0c0b7ac069c5c424c95915e2948695f652caafa3`**（PR37 `→b1a70bd`、PR38 F1 `→d9d70b1`、PR33 `→5176df5`、PR39 `→62ea0b9`、PR40 F2–F5 `→0c0b7ac`，均 fast-forward 合并） |
 | 历史验收时点 | 证据采集于旧 main `9fa8598f2beabe179b28733e484275c3775279d3`（PR30 merge `2c603c6` + PR31 docs）；本次 rebase 未重跑验收 |
-| 实载构建 | `e490fe34dfd13117db2516d9b9c7cb0459c1d219`（activation markers pid 95240；旧 main 与其实载 tree 差异仅 2 个 docs；**尚未部署 d9d70b1**） |
+| 实载构建 | **`bc21cac`**（2026-11-08 02:16 由 S3 部署；host pid 44914；activation markers index/tools 均为 bc21cac；已保持 paused 后恢复接单） |
 | 部署记录 | `deploy-20261107T141210Z-57984.json`，sha256 `804ba302d373da5b2613d3a6a986180149715b8c35d9d76844e4c3df060d7454` |
 | 宿主 | B `http://127.0.0.1:3083`，DSH 0.2.1-rc.5，Node v26.1.0（宿主运行）/v22.19.0（本地验证工具） |
+
+## 2b. S3 真实部署（2026-11-08 02:16，PASS）
+
+- 命令：`deploy-hephi.sh --drain effects --target bc21cac --allow-legacy-rollback`（另显式 `--hephi <live plugin dir>`、`--peer-root <host peer root>`、`--node <host node>`、`--stop-command dsh-superagent stop`）。
+- 结果：`result=ok`；`activation=verified`（日志偏移 10678 后 index/tools 各 1 条，pid 44914，commit `bc21cac`）；10/10 health ready；`keptPaused=yes`；停机后 copy 查询 `total=0`；指针 `e490fe34…/lib → bc21cac…/lib`。
+- 记录：`<instance>/logs/deploy-20261107T181639Z-43593.json`，sha256 `bb2dd8b6d6c9dd240d30df261afe06c5ef949c0d8488854b22d3ab0f45dc69b5`。
+- 恢复：核对后 `POST executor/pause {paused:false}` → paused=false、10/10 ready、load 0/0。
+- 过程发现（待修脚本 UX）：① 未传 `--hephi` 时脚本默认 `$instance/hephi`（非实载路径）→ pointerBefore/current 为空、激活必然失败且回滚报 FATAL；② 旧 e490 是 legacy meta，正向部署的 previous 校验也要求 `--allow-legacy-rollback`（恢复目标语义应自动接受 legacy，或文档写清必须显式传）。这两点已造成三次失败尝试（记录保留），第 4 次带显式参数成功。
 
 ## 2. S1 预检（**旧 main@9fa8598**；新 main 待重跑）
 

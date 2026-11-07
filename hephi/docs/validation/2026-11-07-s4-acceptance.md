@@ -1,25 +1,37 @@
 # S4 验收记录（A 线，2026-11-07）
 
-> 状态：**partial（PR30 复审要求修改 F1；E5/E9 blocked；人类签收未做）**。本文件只记录已真实执行并有证据的事项；
+> 状态：**partial（F1 已由 PR38 修复；F2–F5 仍开 issue #35；E5/E9 blocked；人类签收未做）**。本文件只记录已真实执行并有证据的事项；
 > 未执行/未验证项显式列出。**不是最终验收通过证明；人类负责人签收前不得记 A5/D5 为通过。**
+>
+> 更新（2026-11-08）：分支已 rebase 到 main `d9d70b1`（PR37 五项 + PR38 F1 fast-forward 合并）。本轮仅更新对象/状态与 S1 标注，
+> **未对新 main 重跑 S1/A2/A5**；S4 仍为 partial。
 
 ## 1. 对象
 
 | 项 | 值 |
 | --- | --- |
-| main（代码） | `9fa8598f2beabe179b28733e484275c3775279d3`（PR30 merge `2c603c6` + PR31 docs） |
-| 实载构建 | `e490fe34dfd13117db2516d9b9c7cb0459c1d219`（activation markers pid 95240；main 与其实载 tree 差异仅 2 个 docs） |
+| main（代码） | **`d9d70b1151a35b2823107568953a58b661c36a96`**（PR37 五项 `…→b1a70bd` 与 PR38 F1 `f078f72→d9d70b1` 已 fast-forward 合并） |
+| 历史验收时点 | 证据采集于旧 main `9fa8598f2beabe179b28733e484275c3775279d3`（PR30 merge `2c603c6` + PR31 docs）；本次 rebase 未重跑验收 |
+| 实载构建 | `e490fe34dfd13117db2516d9b9c7cb0459c1d219`（activation markers pid 95240；旧 main 与其实载 tree 差异仅 2 个 docs；**尚未部署 d9d70b1**） |
 | 部署记录 | `deploy-20261107T141210Z-57984.json`，sha256 `804ba302d373da5b2613d3a6a986180149715b8c35d9d76844e4c3df060d7454` |
 | 宿主 | B `http://127.0.0.1:3083`，DSH 0.2.1-rc.5，Node v26.1.0（宿主运行）/v22.19.0（本地验证工具） |
 
-## 2. S1 预检（main）
+## 2. S1 预检（**旧 main@9fa8598**；新 main 待重跑）
+
+> ⚠️ 本节是**对 `9fa8598` 的 S1 预检**，不是对当前 `d9d70b1` 的复跑。合并 PR37/PR38 后代码已变化
+> （尤其 F1 修复与 host 脚本），**应在 `d9d70b1` 上重跑 S1**；重跑前不得把本节当作新 main 的预检结论。
 
 命令：`node scripts/release/preflight.mjs --source /tmp/main-s1-review --ref 9fa8598 --out /tmp/main-s1-report.json`
-结果：**PASS**。`check` exit 0（**459 tests**，36+ 文件，Build 1649ms）；假宿主套件 **174 assertions**；effects-db **41**；克隆树干净。原始报告见 `external-review/evidence/roadmap95/`（本轮落档）。
+结果：**PASS（旧 main）**。`check` exit 0（**459 tests**，36+ 文件，Build 1649ms）；假宿主套件 **174 assertions**；effects-db **41**；克隆树干净。原始报告见 `external-review/evidence/roadmap95/`（本轮落档）。
 
 ## 3. 独立代码复核（PR30 合并后）
 
 `external-review/PR30-post-merge-review.md`：verdict **request changes**——0 blocker / **1 major（F1：激活门禁可被 legacy 降级绕过）** / 5 minor / 6 nit。F1 未修复前，activation fail-closed 门禁不能作为 issue #26 关闭依据。本 S4/后续真实部署不得忽略该发现。
+
+**F1 状态（2026-11-08，d9d70b1）**：PR38 已 fast-forward 合并修复——release-meta 使用 `formatVersion=2`；
+legacy 元数据只在显式 `--allow-legacy-rollback` 的回滚/恢复目标上接受；默认激活门禁拒绝 legacy 降级
+（`test-deploy-hephi.mjs` 覆盖 F1-A..G 负例，且 `d9d70b1` 把 F1 套件接入默认 full fake-host run）。
+**F2–F5 仍开（issue #35）**。F1 修复不等于 S3/S4 通过；新 main 仍需重跑 S1，真实部署前仍需满足 Z1/D1–D5 等。
 
 ## 4. A2 证据链（定案）
 
@@ -42,7 +54,7 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 
 ## 6. P8 / D1 / D2 / P2 / P5 现状
 
-- P8：部分（部署机制与实载回读已验证，但真实 S3/S4 完整链路与 F1 修复未完成）。
+- P8：部分（部署机制与实载回读已验证；真实 S3/S4 完整链路未完成；F1 已由 PR38 修复（`d9d70b1`），F2–F5 仍开 issue #35）。
 - D1：不通过（A1-BIND 未启用；H6 fail；绑定关闭）。
 - D2：hostVersion 语义有正式记录（PR31），但“实载源码可证明”仍不成立。
 - P2/P5：不变（本文件不重评；以原记录为准）。
@@ -53,27 +65,29 @@ H1 pass(path-B)、H2 fail、H3 pass（disposable profile）、H4 pass、H5 pass�
 - 真实 supervisor 自动重启行为、非零 effect 等待、运行期网络隔离。
 - C3 review→Trigger、C4.2 真实工具可见性、C1 真实 E2E。
 - E5/E9、E1-on 正式场景、E10（执行中）。
-- F1 修复与 PR30 其余 minor。
+- F2–F5 仍开（issue #35）；F1 已由 PR38 修复，但**新 main `d9d70b1` 的 S1/S3/S4 复跑未做**。
 - B 线实验（B5/B7/B8）未开始。
 
 ## 8. 结论
 
 A 线本轮完成了：main S1 PASS、PR30 独立复核（request changes）、A2 定案、E4/E1-off 真实验收、E10 执行中。
-**S4 仍为 partial**：F1 未修复、E10 未完成、E1-on/E-PR1/E5/E9 未完成/blocked。不得将本记录当作 A5/D5 通过或 S4 验收通过。
+**S4 仍为 partial**：F1 已修复（PR38/d9d70b1），但 F2–F5 仍开、E10 未完成、E1-on/E-PR1/E5/E9 未完成/blocked，
+且新 main 的 S1 未重跑。不得将本记录当作 A5/D5 通过或 S4 验收通过。
 
 ## 9. 更新（E10 完成后）
 
 - A5 非 blocked 场景均已有记录：E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1；其中 **E4/E10/E2/E3/E6/E7/E8 为 pass**，**E1-off/E1-on/E-PR1 为 partial**（前置或任务类型限制）。
 - E5/E9 保持 blocked；E1-on/E-PR1 为 SMOKE_ONLY 流程证据、E1-off 前置/provenance 无法核验、E2/E3/E6/E7 为外部模型执行（决策日志已由 Lead 核对）——因此 A5 **未达到“全部应执行场景 pass + 人工复核通过”**，需补正式场景与负责人签收。
-- PR30 复审 F1（activation legacy 降级绕过）**未修复**，S3 真实部署门禁仍需该修复或明确书面降级。
+- PR30 复审 F1（activation legacy 降级绕过）**已由 PR38 修复**（`formatVersion=2` + legacy 仅 `--allow-legacy-rollback`，F1-A..G 负例）；
+  F2–F5 仍开（issue #35）。S3 真实部署门禁仍需 F2–F5 处置或明确书面降级；新 main 的 S1 重跑未做。
 
 ## 10. 证据索引
 
 | 证据 | 位置 | 说明 |
 | --- | --- | --- |
-| S1 预检报告/日志 | `external-review/evidence/roadmap95/main-s1/main-s1-report.json`、`main-s1.log` | main@9fa8598，verdict PASS（459 tests / 174 / 41） |
+| S1 预检报告/日志 | `external-review/evidence/roadmap95/main-s1/main-s1-report.json`、`main-s1.log` | **旧 main@9fa8598**，verdict PASS（459 tests / 174 / 41）；**d9d70b1 待重跑** |
 | PR30 独立复核 | `external-review/PR30-post-merge-review.md`；`external-review/evidence/pr30-review/` | request changes（F1 major） |
-| F1 修复跟踪 | GitHub issue `paxxie2/super-agent-hephi-review#35`；清单 2 任务 2.7 | 未修复前不得依赖 activation fail-closed |
+| F1 修复 | PR #38（merge `d9d70b1`，`f078f72` + `d9d70b1`）；`test-deploy-hephi.mjs` F1-A..G | **已修复**；F2–F5 跟踪 issue #35（仍开） |
 | A2 定案 | `hephi/docs/validation/2026-11-07-a2-final.md` | H1–H6 + 哈希核对 + F4 口径风险 |
 | E4 记录 | `hephi/docs/validation/e2e/2026-11-07-E4.md`；stateDir `…/state/hephi/c231654e…`、`13af322b…`；PR #58 | blocked→passed 两阶段 |
 | E10 记录 | `hephi/docs/validation/e2e/2026-11-07-E10.md`；stateDir `…/state/hephi/1612ffac…`；PR #61 | passed，2 文件 |

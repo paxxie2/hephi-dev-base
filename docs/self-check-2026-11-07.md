@@ -3,7 +3,7 @@
 范围：本仓库相对 `718087c` 的全部新增/修改（39 个源/测试/脚本/文档文件，约 +1.8k 行），对照资料包
 `implementation-checklist.md`、`validation-matrix.md` 与 `task-tree.yaml`。
 
-> **状态指针（R4 同步，2026-11-07 06:54，R3 提交后；07:37 追加 R3 复核返修）**：本文是**初次自检时点**的记录；其中 L6、L7 已在后续提交修复（`bc95bf3`、`e862cf7`），L4 的不可变发布/自动回滚/全量健康门禁已由 R3 提交 `0d58bc3` 实现，但**原实现已被 PR #20 独立复核判定 R3 不通过（R3-F1–F6）**，返修已提交为 `2409613`（07:57 更新）（父 `17d3827`），补 N1–N5 负例后假宿主套件 **69 断言全绿**（旧提交上 20 条 FAIL，双向实测）；假宿主验证通过也**不等于**真实宿主验收（R3.7 与实载回读仍未验证）。改后 `pnpm test` 实测 **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`，因假宿主门禁等待变长属预期；不新增测试文件）；`pnpm check` 的构建段须在 docs 提交后的干净树复跑（`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`））。历史 176→202 的时点链保留。当前状态以 [`docs/implementation-index.md`](implementation-index.md) §6 的修复索引为准（本轮修复分支**尚未合并**，合并后以 index 中的最终合并段为准）；逐条命令与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-review-fix.md`](remediation-r3-review-fix.md)。历史数字保留原时点，不回改。
+> **状态指针（R4 同步，2026-11-07 06:54，R3 提交后；07:37 追加 R3 复核返修）**：本文是**初次自检时点**的记录；其中 L6、L7 已在后续提交修复（`bc95bf3`、`e862cf7`），L4 的不可变发布/自动回滚/全量健康门禁已由 R3 提交 `0d58bc3` 实现，但**原实现已被 PR #20 独立复核判定 R3 不通过（R3-F1–F6）**，返修已提交为 `2409613`（07:57 更新）（父 `17d3827`），补 N1–N5 负例后假宿主套件 **69 断言全绿**（旧提交上 PASS 50 / FAIL 19，双向实测）；假宿主验证通过也**不等于**真实宿主验收（R3.7 与实载回读仍未验证）。改后 `pnpm test` 实测 **20 文件 / 202 tests**（`deploy-script.test.ts` 约 `85.7s`，因假宿主门禁等待变长属预期；不新增测试文件）；`pnpm check` 的构建段须在 docs 提交后的干净树复跑（`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`））。历史 176→202 的时点链保留。当前状态以 [`docs/implementation-index.md`](implementation-index.md) §6 的修复索引为准（本轮修复分支**尚未合并**，合并后以 index 中的最终合并段为准）；逐条命令与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。历史数字保留原时点，不回改。
 
 方法：静态审阅、`pnpm check`（typecheck + 176 tests + 构建）、`test:unit`/`test:integration` 分层运行、
 脚本正反例实跑、与验收矩阵逐条对照。所有结论附可复核命令。
@@ -135,7 +135,7 @@
 
 - R1–R3 属于 P5／P2／P8 的实现层修复，不改变 §2 的验收口径：P2 仍为部分、P5 仍为部分、**P8 仍为部分**（R3 只完成假宿主验证，R3.7 真实宿主与实载回读未做，不得记 done）。**R3 返修也不改变该口径**。
 - G1、G2 人类独立审查、P3、P4、P6–P15 与 GATE-B5 状态不变，仍按原门槛阻塞。
-- 详细命令、退出码与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-review-fix.md`](remediation-r3-review-fix.md)。
+- 详细命令、退出码与未验证项见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。
 
 ### 6.3 R3 独立复核不通过与返修（2026-11-07 追加）
 

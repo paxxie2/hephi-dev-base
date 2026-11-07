@@ -44,7 +44,7 @@ site-pnl-diagnosis：#29（MERGED）、#42（MERGED）。
 | activation v2 规范化哈希 / dirty 构建规则 | `hephi/docs/versioning.md` §2.1、§3（R1 `9e874f8`、R2 `0d7c031`） |
 | R1/R2 修复验收记录（命令、退出码、局限） | `docs/remediation-r1-validation.md`（本轮新增） |
 | R3 部署/回滚/健康门禁验证记录 | `docs/remediation-r3-validation.md`（本轮新增；§8 追加复核不通过与返修登记） |
-| R3 复核返修登记（R3-F1–F6 / N1–N5） | `docs/remediation-r3-review-fix.md`（2026-11-07 新增） |
+| R3 复核返修登记（R3-F1–F6 / N1–N5） | `docs/remediation-r3-validation.md` §9（2026-11-07 新增） |
 | 实例检查配置快照 | `docs/instance-config/site-pnl-checks.json` |
 
 ## 4. 不在 git 中的运行产物（评审时可复核路径，不提交）
@@ -70,7 +70,7 @@ site-pnl-diagnosis：#29（MERGED）、#42（MERGED）。
 4. 复核测试：`cd hephi && pnpm test` + `node ../scripts/host/test-deploy-hephi.mjs`（返修后：**20 文件 / 202 tests passed**，其中 `deploy-script.test.ts` 约 `85.7s`；**69 假宿主断言全绿**，exit 0，`real 84.23s`，Node `v22.19.0`／pnpm `11.7.0`）；`pnpm check` 含构建，必须在**已提交干净工作树**上运行（R2 起 dirty 树直接拒绝构建）；**返修后的 `pnpm check` 真实输出`cd hephi && pnpm check` → **exit 0**：`tsc --noEmit` 通过、`vitest run` **20 文件 / 202 tests passed**、`tsdown` 构建成功（`Build complete in 2943ms`）；Node `v22.19.0`、pnpm `11.7.0`，在隔离克隆 `/tmp/hephi-lead-check` @ `2409613` 上执行（原始输出：`external-review/evidence/pr20-fix/lead-clean-tree-pnpm-check.log`）**
 5. 本轮修复 diff：`git diff 5efd708..0d58bc3 -- hephi/ scripts/`（R1+R2+R3；尚未合并）
 6. 本轮修复证据：`docs/remediation-r1-validation.md`、`docs/remediation-r3-validation.md`
-7. **R3 复核返修**：`docs/remediation-r3-review-fix.md`（F1–F6 逐条 + N1–N5 负例登记 + 复核 §6 门槛现状）；复核报告原件在仓库外 `external-review/PR20-independent-review.md`
+7. **R3 复核返修**：`docs/remediation-r3-validation.md` §9（F1–F6 逐条 + N1–N5 负例登记 + 复核 §6 门槛现状）；复核报告原件在仓库外 `external-review/PR20-independent-review.md`
 
 ## 6. R1／R2／R3 修复与验证索引（分支 `agent/hephi-r2-remediation`，未合并）
 

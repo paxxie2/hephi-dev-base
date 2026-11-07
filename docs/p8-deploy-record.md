@@ -59,13 +59,13 @@
 | vitest 入口 | 1 passed，约 `50s` | `hephi/tests/control/deploy-script.test.ts` |
 | 指定的全量测试 | **20 文件 / 202 tests passed**（Node `v22.19.0`、pnpm `11.7.0`） | 本轮复跑；时点链见 `docs/implementation-index.md` §6.1 |
 | 独立复核 | **Request changes**：R3 不通过（R3-F1–F6）；PR #20 不批准合并，不得进入 R3.7 | `external-review/PR20-independent-review.md`（仓库外） |
-| 返修后套件（含 N1／N1b／N2／N3／N4／N5，提交 `2409613`） | **`PASS: 69 assertions`，FAIL 0，exit 0**；`real 84.23s`（Lead 复跑；实现者 `83.15s`／`83.35s`）；Node `v22.19.0`／pnpm `11.7.0`。构成：主套 46 + 负例 23 | `scripts/host/test-deploy-hephi.mjs`；登记见 `docs/remediation-r3-review-fix.md` |
+| 返修后套件（含 N1／N1b／N2／N3／N4／N5，提交 `2409613`） | **`PASS: 69 assertions`，FAIL 0，exit 0**；`real 84.23s`（Lead 复跑；实现者 `83.15s`／`83.35s`）；Node `v22.19.0`／pnpm `11.7.0`。构成：主套 46 + 负例 23 | `scripts/host/test-deploy-hephi.mjs`；登记见 `docs/remediation-r3-validation.md` §9 |
 | 返修后全量测试 | **20 文件 / 202 tests passed**；`deploy-script.test.ts` 1 test 约 `85.7s`（假宿主门禁等待变长，属预期；不新增测试文件） | `cd hephi && pnpm test`（Node `v22.19.0`／pnpm `11.7.0`）；`pnpm check` 构建段待干净树复跑 |
 | 旧提交对照（新套件 × `17d3827`，独立克隆 `/tmp/pr20-verify-old`） | **exit 1；PASS 50 / FAIL 19**；复跑 FAIL 集合逐条一致 → **negative direction 成立**（旧实现不能通过新负例） | `external-review/evidence/pr20-fix/`（仓库外：`old-commit-negative-fails.log`、`.run2.log`、`fail-list.txt`、`README-phase1.md`、`artifact-hashes.txt`）；逐组 FAIL 见返修登记 §3.2 |
 
 ### 复核发现与返修（2026-11-07，提交 `2409613`）
 
-独立复核发现原脚本 6 个缺陷，已按条返修（逐条根因、负例与行为差异见 [`docs/remediation-r3-review-fix.md`](remediation-r3-review-fix.md)）：
+独立复核发现原脚本 6 个缺陷，已按条返修（逐条根因、负例与行为差异见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9）：
 
 | 复核缺陷 | 原行为（旧脚本） | 返修后行为 | 对应负例 |
 | --- | --- | --- | --- |

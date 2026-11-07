@@ -37,7 +37,7 @@
 
 - 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。#8（状态记录）、#9（部署脚本 + P8 记录）、#10（P11 smoke + A 实例）随后合并；#11–#19 已合入当前 `main@5efd708`。
 - 本轮修复提交（未合并）：R1 `9e874f8`（activation v2 规范化哈希）、R2 `0d7c031`（dirty 构建拒绝）、R3 `0d58bc3`（不可变部署/自动回滚/全量健康门禁）、R4 `17d3827`（文档同步）；分支 `agent/hephi-r2-remediation` 已推送 origin，PR #20 OPEN、未合并。验收记录见 [`docs/remediation-r1-validation.md`](remediation-r1-validation.md)、[`docs/remediation-r3-validation.md`](remediation-r3-validation.md)。
-- **R3 复核返修（提交 `2409613`）**：PR #20 独立复核判定 R3 不通过（R3-F1–F6），已修复六项并新增负例 N1／N1b／N2／N3／N4／N5 到 `scripts/host/test-deploy-hephi.mjs`，提交 **`2409613`**；**双向实测**：修复提交 → `PASS: 69 assertions`、FAIL 0、exit 0（`84.23s`）；旧提交 `17d3827` → exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 F1–F6 与 N1–N5 自动化；R3.7 真实宿主未验证；PR 未合并。**登记见 [`docs/remediation-r3-review-fix.md`](remediation-r3-review-fix.md)。假宿主通过 ≠ 真实宿主验收，R3.7 仍 unverified。
+- **R3 复核返修（提交 `2409613`）**：PR #20 独立复核判定 R3 不通过（R3-F1–F6），已修复六项并新增负例 N1／N1b／N2／N3／N4／N5 到 `scripts/host/test-deploy-hephi.mjs`，提交 **`2409613`**；**双向实测**：修复提交 → `PASS: 69 assertions`、FAIL 0、exit 0（`84.23s`）；旧提交 `17d3827` → exit 1、PASS 50 / FAIL 19（复跑一致）。**本次只关闭 F1–F6 与 N1–N5 自动化；R3.7 真实宿主未验证；PR 未合并。**登记见 [`docs/remediation-r3-validation.md`](remediation-r3-validation.md) §9。假宿主通过 ≠ 真实宿主验收，R3.7 仍 unverified。
 - 基线标签 **`hephi-baseline-1`**（annotated，tag object `1e93e4b`）指向合并后的 `main` commit `3f276a5`，已推送远端。
 - 审查记录见 `docs/g2-baseline-review.md`：按用户 2026-11-07 授权由 Agent 代办，**不是人类独立审查**。
 

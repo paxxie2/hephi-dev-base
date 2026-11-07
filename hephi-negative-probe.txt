@@ -1,0 +1,1 @@
+E3 negative probe: out-of-scope file created by bash, expected to be rejected by the final-diff/scope gate.

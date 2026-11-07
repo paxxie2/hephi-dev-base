@@ -1,0 +1,534 @@
+#!/usr/bin/env node
+// B1 PREREG lock gate (ROADMAP-95 §4 工作线 B / 乙4 准备).
+//
+// 目的：在“未决标记”全部消失之前，机械地**拒绝**生成 PREREG 锁；只有扫描通过才允许
+// 写出 `eval/PREREG.lock`（输入文件的 sha256 与规范化拼接 hash）。本工具 fail-closed：
+// 任何未决标记都会导致 exit 1，且不写 lock。
+//
+//   node eval/prereg-lock.mjs --check
+//   node eval/prereg-lock.mjs --out eval/PREREG.lock [--dry-run] [--force]
+//   node eval/prereg-lock.mjs --self-test
+//
+// 扫描输入（逻辑路径固定，不随检出位置变化）：
+//   eval/PREREG.md、eval/decisions-draft.md
+//
+// 未决标记（区分大小写，字面匹配）：
+//   pending-approval、N_TODO、ENV_TODO、PLACEHOLDER、TODO
+//
+// 说明性文字里提到这些标记同样会命中（fail-closed）。要锁定，必须由负责人先把所有
+// 占位/待批准项改成确定值，并保留书面批准记录；本工具**不**验证批准本身，只验证标记消失。
+//
+// decisions 摘要：扫描 decisions-draft.md 的 `## D-*` 条目及块内 `- status:` 行。
+// 没有任何 D-* 条目、或任一 D 条目缺少 status 行，都拒绝锁定（结构不完整即视为未决）。
+//
+// 规范化 hash 口径（preregSha256）：
+//   1. 去掉 UTF-8 BOM；CRLF/CR 统一为 LF；
+//   2. 逐行去掉行尾空格/Tab；文件末尾连续空行折叠为恰好一个 LF；
+//   3. 按固定顺序拼接 `逻辑路径 + "\n" + 规范化内容`，各部分之间用一个 NUL 字符（\u0000）分隔；
+//   4. 对上述 UTF-8 字节做 sha256。
+//   `createdAt` 不参与 hash，所以同一内容在任何机器/时间得到同一 preregSha256。
+//
+// 退出码：
+//   0  无未决标记（--check 通过）；--out 已写入（或 --dry-run 已打印）
+//   1  存在未决标记 / 决策结构不完整 / 拒绝覆盖已有 lock（策略性失败，均不写文件）
+//   2  参数错误、输入文件缺失、IO 错误
+//
+// 边界：本工具不运行实验、不访问网络、不修改输入文件；`--out` 只写目标文件（tmp+rename）。
+import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdtempSync, readFileSync, renameSync, rmSync, statSync, unlinkSync, writeFileSync } from 'node:fs'
+import { basename, dirname, join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
+import { fileURLToPath } from 'node:url'
+
+export const SCHEMA_VERSION = 1
+export const TOOL_NAME = 'eval/prereg-lock.mjs'
+export const TOOL_VERSION = '1.0.0'
+export const LOGICAL_INPUTS = ['eval/PREREG.md', 'eval/decisions-draft.md']
+export const UNRESOLVED_TOKENS = ['N_TODO', 'ENV_TODO', 'pending-approval', 'PLACEHOLDER', 'TODO']
+
+export class UsageError extends Error {}
+
+const INPUT_BASENAMES = LOGICAL_INPUTS.map(name => name.slice('eval/'.length))
+const TOKEN_PATTERN = new RegExp(`\\b(?:${UNRESOLVED_TOKENS.map(escapeRegExp).join('|')})\\b`, 'g')
+
+function escapeRegExp(text) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function sha256Hex(text) {
+  return createHash('sha256').update(text, 'utf8').digest('hex')
+}
+
+/** Canonical text used for the combined prereg hash. */
+export function normalizeText(text) {
+  let out = String(text)
+  if (out.charCodeAt(0) === 0xfeff) out = out.slice(1)
+  out = out.replace(/\r\n?/g, '\n')
+  out = out.split('\n').map(line => line.replace(/[ \t]+$/u, '')).join('\n')
+  return out.replace(/\n+$/u, '\n')
+}
+
+function filePathFor(evalDir, index) {
+  return join(evalDir, INPUT_BASENAMES[index])
+}
+
+/** Scan one input; returns hits with 1-based line/column. */
+export function scanText(logicalName, text) {
+  const hits = []
+  const lines = String(text).split(/\r\n?|\n/)
+  lines.forEach((line, index) => {
+    TOKEN_PATTERN.lastIndex = 0
+    let match
+    while ((match = TOKEN_PATTERN.exec(line)) !== null) {
+      hits.push({
+        file: logicalName,
+        line: index + 1,
+        column: match.index + 1,
+        token: match[0],
+        text: line.trim(),
+      })
+    }
+  })
+  return hits
+}
+
+/** Parse `## D-*` sections of decisions-draft.md into a deterministic summary. */
+export function parseDecisions(text) {
+  const decisions = []
+  let current = null
+  for (const rawLine of String(text).split(/\r\n?|\n/)) {
+    const line = rawLine.replace(/[ \t]+$/u, '')
+    const heading = /^##\s+(D-\d+)\s+(.+?)\s*$/.exec(line)
+    if (heading) {
+      current = { decisionId: heading[1], title: heading[2], status: null, statusLines: [] }
+      decisions.push(current)
+      continue
+    }
+    if (/^##\s+\S/.test(line)) {
+      // A different level-2 heading ends the previous decision block.
+      current = null
+      continue
+    }
+    if (current === null) continue
+    const status = /^\s*[-*]\s*status:\s*`?([A-Za-z0-9_.-]+)`?/.exec(line)
+    if (status) {
+      current.status = status[1]
+      current.statusLines.push(line.trim())
+    }
+  }
+  return decisions
+}
+
+/** Read inputs, scan markers, derive the decision summary, decide lockability. */
+export function checkPrereg({ evalDir }) {
+  const texts = LOGICAL_INPUTS.map((logicalName, index) => {
+    const filePath = filePathFor(evalDir, index)
+    try {
+      return { path: logicalName, filePath, text: readFileSync(filePath, 'utf8') }
+    } catch (error) {
+      throw new UsageError(`cannot read required input ${logicalName} at ${filePath}: ${error instanceof Error ? error.message : String(error)}`)
+    }
+  })
+
+  const hits = texts.flatMap(input => scanText(input.path, input.text))
+  const decisions = parseDecisions(texts[1].text)
+  const problems = []
+
+  if (decisions.length === 0) {
+    problems.push('eval/decisions-draft.md 中没有找到任何 `## D-*` 决策条目；无法生成 decisions 摘要，拒绝锁定')
+  }
+  for (const decision of decisions) {
+    if (decision.status === null) {
+      problems.push(`${decision.decisionId} 缺少 \`- status:\` 行；无法确认决策状态，拒绝锁定`)
+    }
+  }
+
+  const inputs = texts.map(input => {
+    const normalized = normalizeText(input.text)
+    return {
+      path: input.path,
+      filePath: input.filePath,
+      normalized,
+      sha256: sha256Hex(Buffer.from(input.text, 'utf8')),
+      bytes: Buffer.byteLength(input.text, 'utf8'),
+    }
+  })
+  const preregSha256 = sha256Hex(inputs.map(input => `${input.path}\n${input.normalized}`).join('\u0000'))
+  const warnings = []
+  if (inputs[0].normalized.trim() === '') warnings.push('eval/PREREG.md 内容为空')
+  const nonApproved = decisions.filter(decision => decision.status !== null && decision.status !== 'approved')
+  if (nonApproved.length > 0) {
+    warnings.push(`非 \`approved\` 的 decisions 状态：${nonApproved.map(d => `${d.decisionId}=${d.status}`).join(', ')}（本工具不验证其含义，只记录）`)
+  }
+
+  return {
+    evalDir,
+    ok: hits.length === 0 && problems.length === 0,
+    inputs: inputs.map(input => ({ path: input.path, sha256: input.sha256, bytes: input.bytes })),
+    hits,
+    problems,
+    decisions,
+    preregSha256,
+    markerScan: {
+      tokens: [...UNRESOLVED_TOKENS],
+      unresolvedCount: hits.length,
+      filesScanned: [...LOGICAL_INPUTS],
+    },
+    warnings,
+  }
+}
+
+/** Build the lock object. `createdAt` is injectable so tests can compare byte-for-byte. */
+export function buildLock(check, { now = new Date().toISOString(), force = false } = {}) {
+  if (!check.ok) throw new Error('buildLock called without a passing check')
+  return {
+    schemaVersion: SCHEMA_VERSION,
+    kind: 'b1-prereg-lock',
+    generator: TOOL_NAME,
+    generatorVersion: TOOL_VERSION,
+    createdAt: now,
+    lockStatus: 'markers-cleared',
+    ownerApproval: 'not-verified-by-tool',
+    note: '本锁只证明扫描时未发现未决标记；负责人书面批准仍以 eval/decisions-draft.md 与 PREREG §9 的记录为准。',
+    inputOrder: [...LOGICAL_INPUTS],
+    inputs: check.inputs,
+    preregSha256: check.preregSha256,
+    markerScan: check.markerScan,
+    decisions: {
+      source: 'eval/decisions-draft.md',
+      count: check.decisions.length,
+      pendingApprovalCount: check.decisions.filter(decision => decision.status === 'pending-approval').length,
+      entries: check.decisions.map(decision => ({ decisionId: decision.decisionId, title: decision.title, status: decision.status })),
+    },
+    warnings: check.warnings,
+    ...(force ? { forcedOverwrite: true } : {}),
+  }
+}
+
+/** Write the lock atomically; caller has already handled the overwrite policy. */
+export function writeLockFile(outPath, lock) {
+  const absolute = resolve(outPath)
+  const directory = dirname(absolute)
+  if (!existsSync(directory) || !statSync(directory).isDirectory()) {
+    throw new UsageError(`--out directory does not exist: ${directory}`)
+  }
+  const temp = join(directory, `.${basename(absolute)}.tmp-${process.pid}-${Date.now()}`)
+  try {
+    writeFileSync(temp, `${JSON.stringify(lock, null, 2)}\n`)
+    renameSync(temp, absolute)
+  } finally {
+    if (existsSync(temp)) unlinkSync(temp)
+  }
+  return absolute
+}
+
+export function parseArgs(argv) {
+  const options = {
+    evalDir: dirname(fileURLToPath(import.meta.url)),
+    mode: null,
+    out: null,
+    dryRun: false,
+    force: false,
+    selfTest: false,
+    help: false,
+  }
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (arg === '--self-test') { options.selfTest = true; continue }
+    if (arg === '--check') {
+      if (options.mode === 'out') throw new UsageError('--check and --out are mutually exclusive')
+      options.mode = 'check'
+      continue
+    }
+    if (arg === '--dry-run') { options.dryRun = true; continue }
+    if (arg === '--force') { options.force = true; continue }
+    if (arg === '--help' || arg === '-h') { options.help = true; continue }
+    if (!['--out', '--eval-dir'].includes(arg)) throw new UsageError(`unknown argument: ${arg}`)
+    const value = argv[index + 1]
+    if (value === undefined) throw new UsageError(`missing value for ${arg}`)
+    index += 1
+    if (arg === '--out') {
+      if (options.mode === 'check') throw new UsageError('--check and --out are mutually exclusive')
+      options.mode = 'out'
+      options.out = value
+    }
+    if (arg === '--eval-dir') options.evalDir = resolve(value)
+  }
+  if (options.selfTest || options.help) return options
+  if (options.mode === null) options.mode = 'check'
+  return options
+}
+
+function usage() {
+  return [
+    'usage: node eval/prereg-lock.mjs --check',
+    '       node eval/prereg-lock.mjs --out eval/PREREG.lock [--dry-run] [--force]',
+    '       node eval/prereg-lock.mjs --self-test',
+    '',
+    '--check            扫描未决标记；存在任一未决 exit 1，全部消失 exit 0（不写文件）',
+    '--out <file>       扫描通过后写 lock（已存在则拒绝；--force 显式覆盖并记录 forcedOverwrite）',
+    '--dry-run          配合 --out：只打印将写入的 lock JSON，不写文件',
+    '--force            允许覆盖已存在的 lock（会在 lock 中记录 forcedOverwrite）',
+    '--eval-dir <dir>   测试/其他检出用：指定包含 PREREG.md 与 decisions-draft.md 的 eval 目录',
+    '--self-test        合成临时目录自测，不读取真实 PREREG 内容',
+  ].join('\n')
+}
+
+function printCheckResult(check) {
+  for (const input of check.inputs) console.log(`[prereg-lock]   ${input.path} sha256=${input.sha256} bytes=${input.bytes}`)
+  console.log(`[prereg-lock] preregSha256=${check.preregSha256}`)
+  console.log(`[prereg-lock] decisions: ${check.decisions.map(decision => `${decision.decisionId}=${decision.status}`).join(', ') || '(none)'}`)
+  for (const warning of check.warnings) console.log(`[prereg-lock] WARN ${warning}`)
+  console.log('[prereg-lock] 注意：通过只表示“无未决标记”；负责人批准不由本工具验证。')
+}
+
+function runCheckMode(options) {
+  const check = checkPrereg({ evalDir: options.evalDir })
+  console.log(`[prereg-lock] scanned: ${LOGICAL_INPUTS.join(', ')}`)
+  if (!check.ok) {
+    console.error('[prereg-lock] FAIL: 存在未决项，拒绝锁定（不写文件）')
+    for (const problem of check.problems) console.error(`[prereg-lock]   PROBLEM ${problem}`)
+    for (const hit of check.hits) {
+      console.error(`[prereg-lock]   UNRESOLVED ${hit.file}:${hit.line}:${hit.column} [${hit.token}] ${hit.text}`)
+    }
+    if (check.hits.length === 0 && check.problems.length === 0) console.error('[prereg-lock]   (no detail produced)')
+    return { exitCode: 1, check }
+  }
+  printCheckResult(check)
+  console.log('[prereg-lock] OK: no unresolved marker; --check passed')
+  return { exitCode: 0, check }
+}
+
+function runOutMode(options) {
+  const run = runCheckMode(options)
+  if (run.exitCode !== 0) return run.exitCode
+  const check = run.check
+  const outPath = resolve(options.out)
+  const exists = existsSync(outPath)
+  if (exists && !options.force) {
+    console.error(`[prereg-lock] REFUSED: lock already exists: ${outPath}`)
+    console.error('[prereg-lock] 不覆盖既有 lock；如确需重写，使用 --force（会在 lock 中记录 forcedOverwrite=true）')
+    return 1
+  }
+  if (exists && options.force) {
+    console.error(`[prereg-lock] WARNING: --force 覆盖既有 lock: ${outPath}（请在 PR/记录中说明原因）`)
+  }
+  const lock = buildLock(check, { force: options.force })
+  if (options.dryRun) {
+    console.log(JSON.stringify(lock, null, 2))
+    console.log(`[prereg-lock] DRY-RUN: would write ${outPath}; nothing written`)
+    return 0
+  }
+  const written = writeLockFile(outPath, lock)
+  console.log(`[prereg-lock] WROTE ${written}`)
+  console.log(`[prereg-lock] lock sha256=${sha256Hex(`${JSON.stringify(lock, null, 2)}\n`)}`)
+  return 0
+}
+
+// ---------------------------------------------------------------------------
+// Self-test: synthetic directories only; never reads the real PREREG content.
+// ---------------------------------------------------------------------------
+function pass(results, name, condition, detail = '') {
+  if (condition) { results.push(`PASS ${name}`); return }
+  results.push(`FAIL ${name}${detail ? ` :: ${detail}` : ''}`)
+}
+
+function spawnCli(args) {
+  const scriptPath = fileURLToPath(import.meta.url)
+  const result = spawnSync(process.execPath, [scriptPath, ...args], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
+  return { status: typeof result.status === 'number' ? result.status : null, stdout: result.stdout ?? '', stderr: result.stderr ?? '' }
+}
+
+const DECIDED_DECISIONS = [
+  '# B 线决策草案（测试合成夹具，不是真实批准记录）',
+  '',
+  '## D-1 非劣效界值',
+  '',
+  '- status: `approved`',
+  '- 批准人：测试夹具',
+  '',
+  '## D-2 主指标联合规则',
+  '',
+  '- status: `approved`',
+  '- 批准人：测试夹具',
+  '',
+].join('\n')
+
+const DECIDED_PREREG = [
+  '# B1 预注册（测试合成夹具）',
+  '',
+  '状态：已决（测试夹具，不含未决标记）。',
+  '',
+  '- 非劣效界值：-0.05（测试夹具值）',
+  '- 样本量：测试夹具值',
+  '',
+].join('\n')
+
+function writeSynthetic(root, { prereg = DECIDED_PREREG, decisions = DECIDED_DECISIONS } = {}) {
+  if (prereg !== null) writeFileSync(join(root, 'PREREG.md'), prereg)
+  if (decisions !== null) writeFileSync(join(root, 'decisions-draft.md'), decisions)
+}
+
+function realInputSnapshot() {
+  const evalDir = dirname(fileURLToPath(import.meta.url))
+  const snapshot = {}
+  for (const name of INPUT_BASENAMES) {
+    const filePath = join(evalDir, name)
+    try {
+      const info = statSync(filePath)
+      snapshot[name] = { mtimeMs: info.mtimeMs, size: info.size, sha256: sha256Hex(readFileSync(filePath, 'utf8')) }
+    } catch {
+      snapshot[name] = null
+    }
+  }
+  return snapshot
+}
+
+export function selfTest() {
+  const results = []
+  const root = mkdtempSync(join(tmpdir(), 'prereg-lock-self-'))
+  const realBefore = realInputSnapshot()
+  try {
+    // --- marker detection -------------------------------------------------
+    for (const token of UNRESOLVED_TOKENS) {
+      const dir = mkdtempSync(join(root, 'marker-'))
+      writeSynthetic(dir, { prereg: `${DECIDED_PREREG}\n- 未决项：${token}（测试）\n` })
+      const check = checkPrereg({ evalDir: dir })
+      pass(results, `marker ${token} is detected and blocks the lock`, !check.ok && check.hits.length === 1 && check.hits[0].token === token, JSON.stringify(check.hits))
+    }
+
+    // --- clean inputs pass and produce a stable hash ----------------------
+    const cleanA = mkdtempSync(join(root, 'clean-a-'))
+    const cleanB = mkdtempSync(join(root, 'clean-b-'))
+    writeSynthetic(cleanA)
+    writeSynthetic(cleanB)
+    const checkA = checkPrereg({ evalDir: cleanA })
+    const checkB = checkPrereg({ evalDir: cleanB })
+    pass(results, 'decided inputs pass --check (ok=true)', checkA.ok && checkB.ok)
+    pass(results, 'preregSha256 is stable across identical content in different dirs', checkA.preregSha256 === checkB.preregSha256)
+    pass(results, 'inputs record sha256/bytes for both files', checkA.inputs.length === 2 && checkA.inputs.every(input => /^[0-9a-f]{64}$/.test(input.sha256) && input.bytes > 0))
+    pass(results, 'decisions summary parsed from decisions-draft', checkA.decisions.length === 2 && checkA.decisions[0].decisionId === 'D-1' && checkA.decisions[0].status === 'approved')
+
+    // --- hash normalization: CRLF/BOM/trailing spaces do not change it ----
+    const variant = `${DECIDED_PREREG.replace(/\n/g, '\r\n').replace('# B1', '\uFEFF# B1')}   \r\n`
+    const variantDir = mkdtempSync(join(root, 'variant-'))
+    writeSynthetic(variantDir, { prereg: variant, decisions: DECIDED_DECISIONS.replace(/\n/g, '\r\n') })
+    const checkVariant = checkPrereg({ evalDir: variantDir })
+    pass(results, 'canonical hash ignores line endings/BOM/trailing spaces', checkVariant.preregSha256 === checkA.preregSha256, `${checkVariant.preregSha256} != ${checkA.preregSha256}`)
+    const changedDir = mkdtempSync(join(root, 'changed-'))
+    writeSynthetic(changedDir, { prereg: `${DECIDED_PREREG}- 变更值：1\n` })
+    const checkChanged = checkPrereg({ evalDir: changedDir })
+    pass(results, 'canonical hash changes when content changes', checkChanged.preregSha256 !== checkA.preregSha256)
+
+    // --- structural fail-closed: no D-* decisions -------------------------
+    const noDecisionsDir = mkdtempSync(join(root, 'nodec-'))
+    writeSynthetic(noDecisionsDir, { decisions: '# 决策\n\n没有任何 D 编号条目。\n' })
+    const noDecisions = checkPrereg({ evalDir: noDecisionsDir })
+    pass(results, 'decisions-draft without D-* entries fails closed', !noDecisions.ok && noDecisions.problems.some(problem => problem.includes('D-*')))
+
+    const missingStatusDir = mkdtempSync(join(root, 'nostatus-'))
+    writeSynthetic(missingStatusDir, { decisions: '# 决策\n\n## D-1 事项\n\n- 没有 status 行\n' })
+    const missingStatus = checkPrereg({ evalDir: missingStatusDir })
+    pass(results, 'decision without status line fails closed', !missingStatus.ok && missingStatus.problems.some(problem => problem.includes('status')))
+
+    const pendingDecisionDir = mkdtempSync(join(root, 'pending-dec-'))
+    writeSynthetic(pendingDecisionDir, { decisions: '# 决策\n\n## D-1 事项\n\n- status: `pending-approval`\n' })
+    pass(results, 'pending-approval in decisions blocks the lock', !checkPrereg({ evalDir: pendingDecisionDir }).ok)
+
+    // --- lock content and determinism ------------------------------------
+    const fixedNow = '2026-11-07T00:00:00.000Z'
+    const lockA = buildLock(checkA, { now: fixedNow })
+    const lockB = buildLock(checkB, { now: fixedNow })
+    pass(results, 'lock contains schemaVersion/createdAt/input sha256/preregSha256/decisions', lockA.schemaVersion === 1 && lockA.createdAt === fixedNow && lockA.inputs.length === 2 && /^[0-9a-f]{64}$/.test(lockA.preregSha256) && lockA.decisions.count === 2)
+    pass(results, 'lock is byte-identical for identical inputs (createdAt fixed)', JSON.stringify(lockA) === JSON.stringify(lockB))
+    pass(results, 'lock does not claim owner approval', lockA.ownerApproval === 'not-verified-by-tool' && lockA.markerScan.unresolvedCount === 0)
+
+    // --- CLI --check / --out / --dry-run / refusal / --force -------------
+    const cliClean = mkdtempSync(join(root, 'cli-clean-'))
+    writeSynthetic(cliClean)
+    const checkRun = spawnCli(['--check', '--eval-dir', cliClean])
+    pass(results, 'CLI --check passes on decided synthetic inputs (exit 0)', checkRun.status === 0 && checkRun.stdout.includes('preregSha256='), `status=${checkRun.status} stdout=${checkRun.stdout} stderr=${checkRun.stderr}`)
+
+    const cliPending = mkdtempSync(join(root, 'cli-pending-'))
+    writeSynthetic(cliPending, { prereg: `${DECIDED_PREREG}\n- PLACEHOLDER 待负责人决定\n` })
+    const pendingRun = spawnCli(['--check', '--eval-dir', cliPending])
+    pass(results, 'CLI --check fails on pending input (exit 1)', pendingRun.status === 1, `status=${pendingRun.status}`)
+    const pendingOut = join(cliPending, 'PREREG.lock')
+    const pendingOutRun = spawnCli(['--out', pendingOut, '--eval-dir', cliPending])
+    pass(results, 'CLI --out writes nothing when markers remain', pendingOutRun.status === 1 && !existsSync(pendingOut))
+
+    const lockPath = join(cliClean, 'PREREG.lock')
+    const outRun = spawnCli(['--out', lockPath, '--eval-dir', cliClean])
+    const written = existsSync(lockPath) ? JSON.parse(readFileSync(lockPath, 'utf8')) : null
+    pass(results, 'CLI --out writes a parseable lock', outRun.status === 0 && written !== null && written.schemaVersion === 1 && typeof written.createdAt === 'string' && !Number.isNaN(Date.parse(written.createdAt)), `status=${outRun.status} stderr=${outRun.stderr}`)
+    pass(results, 'CLI lock has 2 input hashes and a 64-hex preregSha256', written !== null && written.inputs.length === 2 && written.inputs.every(input => /^[0-9a-f]{64}$/.test(input.sha256)) && /^[0-9a-f]{64}$/.test(written.preregSha256))
+
+    const beforeRefusal = readFileSync(lockPath, 'utf8')
+    const refusalRun = spawnCli(['--out', lockPath, '--eval-dir', cliClean])
+    pass(results, 'CLI --out refuses to overwrite an existing lock (exit 1)', refusalRun.status === 1 && readFileSync(lockPath, 'utf8') === beforeRefusal)
+
+    writeSynthetic(cliClean, { prereg: `${DECIDED_PREREG}- 变更值：2\n` })
+    const current = checkPrereg({ evalDir: cliClean })
+    const forceRun = spawnCli(['--out', lockPath, '--force', '--eval-dir', cliClean])
+    const afterForce = existsSync(lockPath) ? JSON.parse(readFileSync(lockPath, 'utf8')) : null
+    pass(results, 'CLI --force overwrites and records forcedOverwrite', forceRun.status === 0 && afterForce !== null && afterForce.forcedOverwrite === true && afterForce.preregSha256 === current.preregSha256, `status=${forceRun.status}`)
+
+    const dryPath = join(cliClean, 'dry.lock')
+    const dryRun = spawnCli(['--out', dryPath, '--dry-run', '--eval-dir', cliClean])
+    pass(results, 'CLI --dry-run prints the lock and writes nothing', dryRun.status === 0 && !existsSync(dryPath) && dryRun.stdout.includes('"schemaVersion": 1'))
+
+    // --- IO/usage failures exit 2 ----------------------------------------
+    const missingDir = mkdtempSync(join(root, 'missing-'))
+    pass(results, 'missing PREREG.md exits 2', spawnCli(['--check', '--eval-dir', missingDir]).status === 2)
+    const missingDecisionsDir = mkdtempSync(join(root, 'missing-dec-'))
+    writeSynthetic(missingDecisionsDir, { decisions: null })
+    pass(results, 'missing decisions-draft.md exits 2', spawnCli(['--check', '--eval-dir', missingDecisionsDir]).status === 2)
+    pass(results, 'unknown argument exits 2', spawnCli(['--bogus']).status === 2)
+    pass(results, 'missing --out value exits 2', spawnCli(['--out']).status === 2)
+    pass(results, '--check with --out is rejected (exit 2)', spawnCli(['--check', '--out', join(root, 'x.lock')]).status === 2)
+
+    // --- self-test must not read/modify the real inputs -------------------
+    const realAfter = realInputSnapshot()
+    pass(results, 'self-test does not modify the real eval inputs', JSON.stringify(realBefore) === JSON.stringify(realAfter), JSON.stringify({ realBefore, realAfter }))
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+  for (const line of results) console.log(line)
+  const failed = results.filter(line => line.startsWith('FAIL')).length
+  if (failed > 0) {
+    console.log(`\nFAILED: ${failed} assertion(s)`)
+    return 1
+  }
+  console.log(`\nPASS: ${results.length} assertions (prereg-lock self-test; synthetic fixtures only)`)
+  return 0
+}
+
+// ---------------------------------------------------------------------------
+// CLI entry point.
+// ---------------------------------------------------------------------------
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  let options = null
+  try {
+    options = parseArgs(process.argv.slice(2))
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : String(error))
+    console.error(usage())
+    process.exitCode = 2
+  }
+  if (options) {
+    if (options.help) {
+      console.log(usage())
+      process.exitCode = 0
+    } else if (options.selfTest) {
+      process.exitCode = selfTest()
+    } else {
+      try {
+        process.exitCode = options.mode === 'out' ? runOutMode(options) : runCheckMode(options).exitCode
+      } catch (error) {
+        console.error(`[prereg-lock] ERROR: ${error instanceof Error ? error.message : String(error)}`)
+        process.exitCode = error instanceof UsageError ? 2 : 1
+      }
+    }
+  }
+}

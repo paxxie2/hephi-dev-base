@@ -161,16 +161,30 @@ R37 独立复核（审查 `8fd199d`）在 69 断言之外动态复现 3 个失�
   **fail-closed**（拒绝，不静默退回 health-only）。
 - meta 新增 `entries{index,tools}`、`activation`、`dependencies{lockfileSha256,nodeModulesSha256,resolved,peers}`、
   `node{command,version}`；`release-meta.mjs check` 重新计算入口/依赖树哈希与 peer 目标可用性。
+- **依赖元数据完整性（F2）**：`dependencies.nodeModulesSha256` 对完整 v2 meta **必需**（缺失/`null`
+  即拒绝，不再跳过树校验）；`resolved` 与 `peers` 必须与随包 `package.json` 的
+  `dependencies`/`peerDependencies` **双向全集一致**（截断或多余条目都拒绝），防止部分改写元数据绕过校验。
+- **peer 根稳定性前置（F3）**：peer 链接记录的是宿主 `--peer-root` **绝对路径**，且 readlink 字符串
+  进入依赖树哈希。部署/回滚前置：**宿主 peer 根路径与 peer 版本必须保持不变**；宿主迁移/重装 peer 根后，
+  旧 release 的 `check` 会失败（fail-closed，但会阻断回滚），必须在目标宿主重新构建 release 再回滚。
+  `release-meta.mjs check` 对含 peer 的 release 输出该告警（`peerRootStability=required`），这是已知设计限制，
+  不是待修 bug；本批次未改为“仅记录 peer 名+相对布局”。
 
 ### 自测（假宿主，聚焦）
 
-`scripts/host/test-deploy-hephi.mjs` 扩展为 **262 断言全绿**（当前 188 基数 + F1 74），套件明确标注为假宿主；
+`scripts/host/test-deploy-hephi.mjs` 扩展为 **281 断言全绿**（188 基数 + F1 74 + F2 15 + F5 4），套件明确标注为假宿主；
 `hephi/tests/control/deploy-script.test.ts` 同步断言 262 并把超时提高到 900s。新增场景：
 
 - T1-A/T1-B：健康 10 项 ready 但缺任一激活标识 → 目标失败、恢复旧版本、记录 `targetFailureKind=activation-missing`；
 - T1-C：纯历史 v1 release 在显式 `--allow-legacy-rollback` 下回滚成功并记录 `unverified-legacy`；
 - F1：v2 三段缺失/未知版本/降级 v1/降级后篡改均拒绝正向部署且不触碰宿主/指针；legacy 仅显式回滚/恢复授权，
   三段齐全的旧 v1 仍校验原字段并要求 required 双入口，部分残缺 v1 一律拒绝；
+- F2：依赖树哈希为 `null` + node_modules 新增文件、截断 `resolved`、随包 package.json 删依赖、
+  未被 package.json 声明的 peer 条目 → `release-meta check` 必须失败（正向部署同样停机前拒绝），
+  正常 release 仍通过并要求双入口激活；
+- F5：假宿主 start.sh 的激活标识由真实 `activationMarker()` 生成（模板派生，不再手写字符串），
+  部署脚本真正执行的解析正则从 `deploy-hephi.sh` 源码取出后自检；真实生成器输出/假宿主模板必须被该正则接受，
+  6 种格式漂移（缺 entry、commit 非 40hex、pid 非数字、plugin 含空格、前缀漂移、多余字段）必须被拒绝；
 - T1-D：release 导入时缺运行依赖 → 停机前拒绝，宿主/指针不变、无发布；
 - T1-E：package.json 声明未写入冻结 lockfile 的依赖 → 构建阶段拒绝；
 - T1-F：声明 peerDependencies 但无 `--peer-root` → 停机前拒绝；

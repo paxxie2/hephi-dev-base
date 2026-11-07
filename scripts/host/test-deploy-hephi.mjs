@@ -7,6 +7,7 @@ import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { createServer } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 
 const repoRoot = resolve(new URL('../..', import.meta.url).pathname)
@@ -67,6 +68,72 @@ function healthPayload() {
   return health
 }
 
+// ---- F5：假宿主 marker 必须来自真实 activationMarker()，不能手写字符串对齐部署正则 ----
+// hephi 的 engines 要求 Node >= 22.19，可直接导入 TypeScript 源（原生 type stripping）；
+// 若真实构建产物存在则优先用 lib，二者生成的都是同一个 activationMarker()。
+async function loadRealActivationMarker() {
+  const built = join(repoRoot, 'hephi', 'lib', 'version.mjs')
+  const source = join(repoRoot, 'hephi', 'src', 'version.ts')
+  const file = existsSync(built) ? built : source
+  const loaded = await import(pathToFileURL(file).href)
+  if (typeof loaded.activationMarker !== 'function') throw new Error(`the real activationMarker() was not found in ${file}`)
+  return loaded.activationMarker
+}
+const realActivationMarker = await loadRealActivationMarker()
+// 直接复用 deploy-hephi.sh 里真正执行的 marker 解析正则（F5“同一解析函数”）：
+// 不复制第二份手写正则，部署脚本一旦漂移，本套件的格式断言会跟着失败。
+function deployActivationMarkerPattern() {
+  const source = readFileSync(join(repoRoot, 'scripts', 'host', 'deploy-hephi.sh'), 'utf8')
+  const found = /const match = \/(.+)\/\.exec\(raw\.trim\(\)\)/.exec(source)
+  if (!found) throw new Error('cannot find the activation marker parser in deploy-hephi.sh')
+  return new RegExp(found[1])
+}
+const ACTIVATION_MARKER_PATTERN = deployActivationMarkerPattern()
+
+// 用真实生成器产出的行做模板：只把两个运行时字段（commit/pid）替换成 shell 展开，
+// 字段顺序、前缀、插件名与分隔符全部来自真实 activationMarker()，格式漂移会自动反映到假宿主。
+// 源码运行（未构建）时 pluginCommit() 需要 HEPHI_BUILD_COMMIT 才能产出 40hex；真实 release
+// 构建由 tsdown 注入 __HEPHI_COMMIT__，此处用哨兵 40hex 模拟“已构建的生成器”。
+const MARKER_SENTINEL_COMMIT = FULL('0')
+function realMarkerSample(entry) {
+  const previous = process.env.HEPHI_BUILD_COMMIT
+  process.env.HEPHI_BUILD_COMMIT = MARKER_SENTINEL_COMMIT
+  try { return realActivationMarker(entry) } finally {
+    if (previous === undefined) delete process.env.HEPHI_BUILD_COMMIT
+    else process.env.HEPHI_BUILD_COMMIT = previous
+  }
+}
+function markerShellTemplate(entry, sample) {
+  const fields = ACTIVATION_MARKER_PATTERN.exec(sample)
+  if (!fields) throw new Error(`the real activationMarker(${entry}) output does not match the deploy parser: ${sample}`)
+  // 用 split/join 而不是 String.replace（替换串里的 $$ 会被当成特殊模式，变成单个 $）。
+  return sample.split(`commit=${fields[3]}`).join('commit=$sha').split(`pid=${fields[4]}`).join('pid=$$')
+}
+const realIndexMarkerSample = realMarkerSample('index')
+const realToolsMarkerSample = realMarkerSample('tools')
+const indexMarkerTemplate = markerShellTemplate('index', realIndexMarkerSample)
+const toolsMarkerTemplate = markerShellTemplate('tools', realToolsMarkerSample)
+
+// 格式漂移负例：真实生成器/解析器一旦偏离部署脚本口径，这些断言必须失败（新增负例可反向验证）。
+function checkActivationMarkerContract() {
+  const real = realIndexMarkerSample
+  const concreteIndex = indexMarkerTemplate.replace('$sha', FULL('a')).replace('$$', '4242')
+  const concreteTools = toolsMarkerTemplate.replace('$sha', FULL('a')).replace('$$', '4242')
+  check('F5 real activationMarker output matches the deploy parser', ACTIVATION_MARKER_PATTERN.test(real), real)
+  check('F5 fake-host index marker derived from the real generator matches the deploy parser', ACTIVATION_MARKER_PATTERN.test(concreteIndex), concreteIndex)
+  check('F5 fake-host tools marker derived from the real generator matches the deploy parser', ACTIVATION_MARKER_PATTERN.test(concreteTools), concreteTools)
+  // 格式漂移负例（测试内构造）：部署脚本必须拒绝这些形状；正例通过而负例不通过才算对齐。
+  const drifted = [
+    concreteIndex.replace('entry=index', 'entry='), // 缺 entry
+    concreteIndex.replace(/commit=[0-9a-f]{40}/, 'commit=unknown'), // commit 非 40hex
+    concreteIndex.replace('pid=', 'pid=x'), // pid 非数字
+    concreteIndex.replace('plugin=', 'plugin=bad name '), // 插件名含空格
+    concreteIndex.replace('[hephi-activation]', '[hephi-activation-x]'), // 前缀漂移
+    `${concreteIndex} extra=1`, // 多余字段
+  ]
+  check('F5 deploy parser rejects every drifted marker format', drifted.every((line) => !ACTIVATION_MARKER_PATTERN.test(line)), JSON.stringify(drifted))
+}
+
 function writeStart(scriptBody) {
   const file = join(instance, 'start.sh')
   writeFileSync(file, `#!/bin/sh\n${scriptBody}\n`)
@@ -77,13 +144,13 @@ function normalStart() {
   writeStart(`echo started >> "${instance}/start.log"\n${activationMarkers()}\n: > "${instance}/started.marker"${resume}\nexec sleep 3600`)
 }
 
-// 假宿主激活标识：真实插件由 lib 内两个 entry 在注册后写同样格式的行；
-// 这里由假 start 脚本按当前指针 SHA 与自身 pid 写出，用于验证部署门禁（明确是聚焦假宿主）。
+// 假宿主激活标识：行内容由真实 activationMarker() 模板生成（F5），start.sh 只负责在运行时
+// 填入当前指针 SHA 与自身 pid；不再手写任何 marker 字符串。
 function activationMarkers() {
   return [
     `sha=$(basename "$(dirname "$(readlink "${instance}/hephi/lib")")")`,
-    `echo "[hephi-activation] entry=index plugin=stub-hephi commit=$sha pid=$$"`,
-    `echo "[hephi-activation] entry=tools plugin=stub-hephi commit=$sha pid=$$"`,
+    `echo "${indexMarkerTemplate}"`,
+    `echo "${toolsMarkerTemplate}"`,
   ].join('\n')
 }
 
@@ -335,6 +402,7 @@ function treeHash(dir) {
 }
 
 async function runMainSuite() {
+  checkActivationMarkerContract()
   await initWorld()
   try {
     // R3-T01 首次发布
@@ -1511,6 +1579,100 @@ async function runF1Suite() {
   }
 }
 
+// ---- F2：release-meta 依赖元数据完整性（tree 哈希必需 + package.json 交叉核对） ----
+function f2Meta(dir) {
+  return JSON.parse(readFileSync(join(dir, 'meta.json'), 'utf8'))
+}
+
+async function runF2Suite() {
+  // 正例：正常发布包的 check/activation 全过，且 meta 记录非 null 依赖树哈希。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F2 setup deploys A', setup.code === 0, setup.out)
+    const meta = f2Meta(releaseDir(A))
+    const info = inspectRelease(A)
+    check('F2 normal release records the dependency tree hash', typeof meta.dependencies.nodeModulesSha256 === 'string' && /^[0-9a-f]{64}$/.test(meta.dependencies.nodeModulesSha256), JSON.stringify(meta.dependencies.nodeModulesSha256))
+    check('F2 normal release passes the release check', info.check.code === 0, `code=${info.check.code} ${info.check.out}`)
+    check('F2 normal release requires both activation entries', info.activation.code === 0 && info.activation.out.trim() === 'required:index,tools', info.activation.out)
+    check('F2 package.json cross-check covers every packaged production dependency', JSON.stringify(Object.keys(meta.dependencies.resolved)) === JSON.stringify(['stub-dep']), JSON.stringify(meta.dependencies.resolved))
+  } finally {
+    await closeWorld()
+  }
+
+  // 负例 1：tree 哈希 null + node_modules 新增文件（旧实现直接跳过树校验）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F2-A setup deploys A', setup.code === 0, setup.out)
+    const sha = FULL('d')
+    copyRelease(A, sha, (meta, dir) => {
+      meta.dependencies.nodeModulesSha256 = null
+      writeFileSync(join(dir, 'node_modules', 'f2-extra.txt'), 'extra\n')
+    })
+    const info = inspectRelease(sha)
+    check('F2-A null dependency tree hash is rejected (no tree-validation skip)',
+      info.check.code !== 0 && /nodeModulesSha256/.test(info.check.out), `code=${info.check.code} ${info.check.out}`)
+    check('F2-A activation reports invalid for the incomplete meta', info.activation.code === 0 && info.activation.out.trim() === 'invalid', info.activation.out)
+    const before = snapshotGateState()
+    const r = await deploy(['--target', sha, '--previous', A])
+    check('F2-A forward deploy is rejected before any host change', r.code !== 0 && gateUntouched(before), `code=${r.code} ${r.out}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // 负例 2：截断 dependencies.resolved（删 stub-dep，node_modules 与 package.json 不动）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F2-B setup deploys A', setup.code === 0, setup.out)
+    const sha = FULL('c')
+    copyRelease(A, sha, (meta) => {
+      delete meta.dependencies.resolved['stub-dep']
+    })
+    const info = inspectRelease(sha)
+    check('F2-B truncated resolved metadata is rejected by the package.json cross-check',
+      info.check.code !== 0 && /missing the resolved entry for declared dependency/.test(info.check.out), `code=${info.check.code} ${info.check.out}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // 负例 3：随包 package.json 删依赖，但 meta 仍记录该 resolved 条目（反向交叉核对）。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F2-C setup deploys A', setup.code === 0, setup.out)
+    const sha = FULL('b')
+    copyRelease(A, sha, (meta, dir) => {
+      const pkgFile = join(dir, 'package.json')
+      const pkg = JSON.parse(readFileSync(pkgFile, 'utf8'))
+      delete pkg.dependencies['stub-dep']
+      writeFileSync(pkgFile, JSON.stringify(pkg, null, 2))
+    })
+    const info = inspectRelease(sha)
+    check('F2-C a resolved entry not declared by package.json is rejected',
+      info.check.code !== 0 && /records a resolved dependency that package.json does not declare/.test(info.check.out), `code=${info.check.code} ${info.check.out}`)
+  } finally {
+    await closeWorld()
+  }
+
+  // 负例 4：peers 记录未被随包 package.json 声明的 peer。
+  await initWorld()
+  try {
+    const setup = await deploy(['--target', A])
+    check('F2-D setup deploys A', setup.code === 0, setup.out)
+    const sha = FULL('a')
+    copyRelease(A, sha, (meta) => {
+      meta.dependencies.peers['ghost-peer'] = 'optional-missing'
+    })
+    const info = inspectRelease(sha)
+    check('F2-D a peer entry not declared by package.json is rejected',
+      info.check.code !== 0 && /records a peer that package.json does not declare/.test(info.check.out), `code=${info.check.code} ${info.check.out}`)
+  } finally {
+    await closeWorld()
+  }
+}
+
 // 双向证据：同一批负例对旧 main（无修复）与修复分支各跑一次；旧代码必须因“未拒绝”而失败。
 async function runF1BidirectionalSuite() {
   const cases = [
@@ -1546,6 +1708,7 @@ if (selectors.has('--f1-bidirectional-only')) {
   await runT1Suite()
   await runN1Suite()
   await runF1Suite()
+  await runF2Suite()
 }
 
 for (const line of results) console.log(line)

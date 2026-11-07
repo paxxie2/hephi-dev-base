@@ -166,7 +166,11 @@ function prepare(options) {
     if (!existsSync(file)) fail(`the build produced no lib/${name}.mjs for ${sha}`)
     entries[name] = sha256File(file)
   }
+  // F2: the dependency-tree hash is required for the immutable meta; a release without a
+  // packaged node_modules tree cannot be validated later, so prepare must fail here instead
+  // of writing a null hash that later skips the tree comparison.
   const nodeModulesSha256 = treeHash(join(incoming, 'node_modules'))
+  if (nodeModulesSha256 === null) fail(`the incoming release has no node_modules tree to hash: ${join(incoming, 'node_modules')}`)
   const meta = {
     formatVersion: META_FORMAT_VERSION,
     pluginCommit: sha,
@@ -214,7 +218,9 @@ function v2Problems(meta) {
     problems.push('missing dependencies')
   } else {
     if (!isSha256(meta.dependencies.lockfileSha256)) problems.push('invalid dependencies.lockfileSha256')
-    if (meta.dependencies.nodeModulesSha256 !== null && !isSha256(meta.dependencies.nodeModulesSha256)) problems.push('invalid dependencies.nodeModulesSha256')
+    // F2: a complete meta must carry the dependency-tree hash; null/absent can no longer be
+    // used to skip the tree comparison.
+    if (!isSha256(meta.dependencies.nodeModulesSha256)) problems.push('invalid dependencies.nodeModulesSha256 (a complete release must record the dependency-tree hash)')
     if (!isObject(meta.dependencies.resolved)) problems.push('missing dependencies.resolved')
     if (!isObject(meta.dependencies.peers)) problems.push('missing dependencies.peers')
     if (!Array.isArray(meta.dependencies.peersReplaced)) problems.push('missing dependencies.peersReplaced')
@@ -271,6 +277,36 @@ function verifyCompleteMeta(meta, dir) {
     const actual = treeHash(join(dir, 'node_modules'))
     if (actual !== deps.nodeModulesSha256) fail(`release dependency tree hash mismatch: ${join(dir, 'node_modules')}`)
   }
+  // F2: cross-check the dependency metadata against the release's own package.json. A
+  // truncated/partial `resolved`/`peers` map must not be able to hide a packaged dependency
+  // or peer, and extra entries not declared by package.json are equally suspicious.
+  const packageJsonFile = join(dir, 'package.json')
+  if (!existsSync(packageJsonFile)) fail(`release package.json is missing: ${packageJsonFile}`)
+  const packaged = readJson(packageJsonFile)
+  const declaredDependencies = Object.keys(packaged.dependencies ?? {}).sort()
+  const recordedDependencies = Object.keys(deps.resolved).sort()
+  for (const name of declaredDependencies) {
+    if (!Object.prototype.hasOwnProperty.call(deps.resolved, name)) {
+      fail(`release meta is missing the resolved entry for declared dependency: ${name}`)
+    }
+  }
+  for (const name of recordedDependencies) {
+    if (!declaredDependencies.includes(name)) {
+      fail(`release meta records a resolved dependency that package.json does not declare: ${name}`)
+    }
+  }
+  const declaredPeers = Object.keys(packaged.peerDependencies ?? {}).sort()
+  const recordedPeers = Object.keys(deps.peers).sort()
+  for (const name of declaredPeers) {
+    if (!Object.prototype.hasOwnProperty.call(deps.peers, name)) {
+      fail(`release meta is missing the peer entry for declared peerDependency: ${name}`)
+    }
+  }
+  for (const name of recordedPeers) {
+    if (!declaredPeers.includes(name)) {
+      fail(`release meta records a peer that package.json does not declare: ${name}`)
+    }
+  }
   for (const [name, version] of Object.entries(deps.resolved)) {
     const file = join(dir, 'node_modules', name, 'package.json')
     if (!existsSync(file)) fail(`release is missing production dependency: ${name}`)
@@ -319,7 +355,16 @@ function check(options) {
   } else {
     fail(`unsupported release meta format: ${String(meta.formatVersion)}`)
   }
-  process.stdout.write(JSON.stringify({ ok: true, pluginCommit: meta.pluginCommit, formatVersion: meta.formatVersion, activation: meta.activation ?? null }))
+  // F3: peer links in the meta are recorded as absolute --peer-root targets and their
+  // readlink strings are inside the dependency-tree hash, so a host peer-root move/reinstall
+  // invalidates this release's `check` (fail-closed, but it blocks rollback). Surface the
+  // prerequisite explicitly instead of leaving it implicit.
+  const peerNames = isObject(meta.dependencies?.peers) ? Object.keys(meta.dependencies.peers) : []
+  const warnings = peerNames.length > 0
+    ? [`this release links ${peerNames.length} peer package(s) through absolute --peer-root paths; keep the host peer root path and versions stable, or rebuild the release before rollback (moving/reinstalling the peer root makes this release fail check)`]
+    : []
+  for (const warning of warnings) console.error(`warning: ${warning}`)
+  process.stdout.write(JSON.stringify({ ok: true, pluginCommit: meta.pluginCommit, formatVersion: meta.formatVersion, activation: meta.activation ?? null, peerRootStability: peerNames.length > 0 ? 'required' : 'not-applicable', warnings }))
 }
 
 function activation(options) {

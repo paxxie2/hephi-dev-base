@@ -538,8 +538,22 @@ function h1Ring(sessionAnalysis, record, redact) {
       workdirMatchesRecordCwd: Boolean(args.parsed && record.cwd && args.parsed.workdir === record.cwd),
     }
     evidence.innerCallFound = Boolean(call)
-    // path A 优先：只要内部 tool/call 存在，就只按 path A 的既有判据判定，不回落 path B。
     if (call) {
+      // F4: align the probe with the runtime verifier. evidence-verifier treats the two
+      // shapes (path A tool/call+tool/result value, path B job/registered+job/settled) as
+      // mutually exclusive and REFUSES the ambiguous dual-shape snapshot. The probe must not
+      // report a path-A pass when path-B evidence for the same inner call is also present.
+      const pathBForInner = [
+        ...sessionAnalysis.jobs.filter((event) => event.data?.toolCall?.callId === inner),
+        ...sessionAnalysis.settled.filter((event) => event.data?.toolCall?.callId === inner),
+      ]
+      if (pathBForInner.length > 0) {
+        evidence.encoding = 'ambiguous'
+        evidence.ambiguous = true
+        evidence.pathBJobEventCount = pathBForInner.length
+        evidence.notes = '双形状共存：同一 innerCallId 同时存在内部 tool/call 与 job/registered|job/settled 事件；运行时 evidence-verifier 对双形状按 ambiguous 拒绝，A2 探针不得据此报 H1 pass。请人工核对宿主编码或只保留一种形状后复跑。'
+        return ring('H1', 'fail', evidence, evidence.notes)
+      }
       evidence.encoding = 'path-A'
       const ok = evidence.inner.toolCallFound && evidence.inner.toolCallName === 'bash'
         && evidence.inner.commandMatches && evidence.inner.workdirMatchesRecordCwd
@@ -960,7 +974,7 @@ function selfTest(asJson) {
   }
   const makeSession = (options = {}) => {
     const {
-      innerCall = true, value = true, includeJob = true,
+      innerCall = true, value = true, includeJob = false,
       owner = sessionId, label = command, status = 'completed', detail = 'exit code: 0',
     } = options
     const jobData = {
@@ -999,7 +1013,7 @@ function selfTest(asJson) {
   record('合成快照：H4 pass（sessionId 相等）', h4.status === 'pass', JSON.stringify(h4.evidence))
 
   // path B：真实宿主历史编码——没有内部 tool/call/tool/result，只有 job/registered + job/settled。
-  const pathBSession = makeSession({ innerCall: false, value: false })
+  const pathBSession = makeSession({ innerCall: false, value: false, includeJob: true })
   const pathBAnalysis = analyzeSession(pathBSession)
   const h1B = h1Ring(pathBAnalysis, baseRecord, redact)
   record('合成快照 path B：根调用 + job registered/settled 完整 → H1 pass（encoding=path-B）',
@@ -1007,17 +1021,23 @@ function selfTest(asJson) {
       && h1B.evidence?.labelMatchesCommand === true && h1B.evidence?.exitCode === 0,
     JSON.stringify({ status: h1B.status, encoding: h1B.evidence?.encoding, missing: h1B.evidence?.missing }))
 
-  const ownerMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, owner: 'worker-other-000000000002' })), baseRecord, redact)
+  // F4 负例：双形状共存必须 fail(ambiguous)，与运行时 evidence-verifier 的拒绝对齐。
+  const ambiguous = h1Ring(analyzeSession(makeSession({ innerCall: true, includeJob: true })), baseRecord, redact)
+  record('负例 F4：path A 与 path B 证据同时存在 → H1 fail（encoding=ambiguous）',
+    ambiguous.status === 'fail' && ambiguous.evidence?.encoding === 'ambiguous' && ambiguous.evidence?.ambiguous === true,
+    JSON.stringify({ status: ambiguous.status, encoding: ambiguous.evidence?.encoding, pathBJobEventCount: ambiguous.evidence?.pathBJobEventCount }))
+
+  const ownerMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, includeJob: true, owner: 'worker-other-000000000002' })), baseRecord, redact)
   record('负例 path B：job owner 不是本 Session → H1 fail', ownerMismatch.status === 'fail' && ownerMismatch.evidence?.ownerMatchesSession === false, ownerMismatch.notes)
 
-  const labelMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, label: `${command} --extra` })), baseRecord, redact)
+  const labelMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, includeJob: true, label: `${command} --extra` })), baseRecord, redact)
   record('负例 path B：job label 与期望命令不逐字符相等 → H1 fail', labelMismatch.status === 'fail' && labelMismatch.evidence?.labelMatchesCommand === false, labelMismatch.notes)
 
-  const labelTruncated = h1Ring(analyzeSession(makeSession({ innerCall: false, label: command.slice(0, 60) })), baseRecord, redact)
+  const labelTruncated = h1Ring(analyzeSession(makeSession({ innerCall: false, includeJob: true, label: command.slice(0, 60) })), baseRecord, redact)
   record('负例 path B：job label 被截断 → H1 fail（不作为 pass）',
     labelTruncated.status === 'fail' && String(labelTruncated.evidence?.notes ?? '').includes('截断'), labelTruncated.notes)
 
-  const exitMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, detail: 'exit code: 2' })), baseRecord, redact)
+  const exitMismatch = h1Ring(analyzeSession(makeSession({ innerCall: false, includeJob: true, detail: 'exit code: 2' })), baseRecord, redact)
   record('负例 path B：job/settled exit code 与记录不一致 → H1 fail',
     exitMismatch.status === 'fail' && exitMismatch.evidence?.exitCode === 2, exitMismatch.notes)
 

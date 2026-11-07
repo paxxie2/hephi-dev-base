@@ -46,7 +46,9 @@ function makeSession(options: SessionOptions = {}) {
   const {
     innerCall = true,
     value = true,
-    job = true,
+    // F4: the two encodings are mutually exclusive. Default fixtures are path A only;
+    // path-B tests opt in with job: true, and the ambiguous coexistence case sets both.
+    job = false,
     owner = SESSION,
     label = COMMAND,
     detail = 'exit code: 0',
@@ -123,16 +125,25 @@ describe('check-binding-host path A (focused fixtures)', () => {
     expect(ring.evidence.inner.workdirMatchesRecordCwd).toBe(true)
   })
 
-  it('path A wins even when the job events disagree', () => {
-    const ring = h1(makeSession({ innerCall: true, owner: OTHER_SESSION, label: `${COMMAND} --extra` }))
-    expect(ring.status).toBe('pass')
-    expect(ring.evidence.encoding).toBe('path-A')
+  it('reports ambiguous/fail when path A and path B evidence coexist (runtime verifier refuses both shapes)', () => {
+    const ring = h1(makeSession({ innerCall: true, value: true, job: true }))
+    expect(ring.status).toBe('fail')
+    expect(ring.evidence.encoding).toBe('ambiguous')
+    expect(ring.evidence.ambiguous).toBe(true)
+    expect(ring.evidence.pathBJobEventCount).toBeGreaterThan(0)
+    expect(String(ring.evidence.notes)).toContain('双形状')
+  })
+
+  it('does not let disagreeing path B events downgrade an ambiguous snapshot to a path-A pass', () => {
+    const ring = h1(makeSession({ innerCall: true, value: true, job: true, owner: OTHER_SESSION, label: `${COMMAND} --extra` }))
+    expect(ring.status).toBe('fail')
+    expect(ring.evidence.encoding).toBe('ambiguous')
   })
 })
 
 describe('check-binding-host path B (focused fixtures)', () => {
   it('passes on root call + job/registered + job/settled with owner, command and exit code', () => {
-    const ring = h1(makeSession({ innerCall: false }))
+    const ring = h1(makeSession({ innerCall: false, job: true }))
     expect(ring.status).toBe('pass')
     expect(ring.evidence.encoding).toBe('path-B')
     expect(ring.evidence.jobId).toBe('bash-f…0001') // masked form of JOB_ID
@@ -147,32 +158,32 @@ describe('check-binding-host path B (focused fixtures)', () => {
   })
 
   it('fails when the job owner is another Session', () => {
-    const ring = h1(makeSession({ innerCall: false, owner: OTHER_SESSION }))
+    const ring = h1(makeSession({ innerCall: false, job: true, owner: OTHER_SESSION }))
     expect(ring.status).toBe('fail')
     expect(ring.evidence.ownerMatchesSession).toBe(false)
   })
 
   it('fails when the job label differs from the rebuilt command', () => {
-    const ring = h1(makeSession({ innerCall: false, label: `${COMMAND} --extra` }))
+    const ring = h1(makeSession({ innerCall: false, job: true, label: `${COMMAND} --extra` }))
     expect(ring.status).toBe('fail')
     expect(ring.evidence.labelMatchesCommand).toBe(false)
   })
 
   it('fails on a truncated label instead of accepting a prefix', () => {
-    const ring = h1(makeSession({ innerCall: false, label: COMMAND.slice(0, 50) }))
+    const ring = h1(makeSession({ innerCall: false, job: true, label: COMMAND.slice(0, 50) }))
     expect(ring.status).toBe('fail')
     expect(ring.evidence.labelMatchesCommand).toBe(false)
     expect(String(ring.evidence.notes)).toContain('截断')
   })
 
   it('fails when the settled exit code disagrees with record.exitCode', () => {
-    const ring = h1(makeSession({ innerCall: false, detail: 'exit code: 1' }))
+    const ring = h1(makeSession({ innerCall: false, job: true, detail: 'exit code: 1' }))
     expect(ring.status).toBe('fail')
     expect(ring.evidence.exitCode).toBe(1)
   })
 
   it('fails when the session header id differs from record.sessionId', () => {
-    const ring = h1(makeSession({ innerCall: false }), { ...record, sessionId: OTHER_SESSION })
+    const ring = h1(makeSession({ innerCall: false, job: true }), { ...record, sessionId: OTHER_SESSION })
     expect(ring.status).toBe('fail')
   })
 

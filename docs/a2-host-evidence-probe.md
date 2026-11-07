@@ -13,8 +13,14 @@ H1 的判定边界，以及 `--job-evidence` 运行时证据的作用与限制�
 | **path A** | 内部 bash 的 `tool/call`（`callId=record.innerCallId`、`name=bash`、`arguments` 为原始 JSON 字符串）+ 对应 `tool/result` | 既有判据不变：call 存在、name=bash、`arguments.command` 与 `record.argv + record.before.baseCommit` 重建的命令逐字符相等、`arguments.workdir` 与 `record.cwd` 相等 → H1 pass |
 | **path B** | 根调用 `tool/call`（`callId=record.callId`、`name=hephi_check`）+ 内部 dispatch 的 `job/registered` 与 `job/settled`；**没有**内部 `tool/call`/`tool/result` | 见 §2，全部条件成立 → H1 pass；否则 fail |
 
-识别顺序：**path A 优先**。只要内部 `tool/call` 存在，探针只按 path A 判据判定，不会因为
-path B 事件看起来更完整而改判；path A 存在但字段不匹配时也是 fail，不回落 path B。
+识别顺序（F4 已与运行时对齐）：**双形状共存 = ambiguous/fail，不得报 pass**。
+- 仅 path A（内部 `tool/call`/`tool/result`，没有同一 `innerCallId` 的 Job 事件）：按 path A 判据判定；
+  path A 存在但字段不匹配时是 fail，不回落 path B。
+- 仅 path B（没有内部 `tool/call`，只有 `job/registered`+`job/settled`）：按 path B 判据判定。
+- **双形状共存**（同一 `innerCallId` 同时存在内部 `tool/call` 与 `job/registered|job/settled`）：
+  运行时 `evidence-verifier` 对两种证据形状按 **ambiguous 拒绝选择**；探针同样输出
+  `encoding=ambiguous`、`ambiguous=true`、H1 **fail**，并在 notes 说明原因。A2 记录不得把这种快照
+  当作单一 path-A/path-B pass。
 
 真实宿主历史快照（本机只读核对，id 已脱敏）就是 path B：
 
@@ -43,7 +49,8 @@ path B 事件看起来更完整而改判；path A 存在但字段不匹配时也
 5. **终态与退出码**：`job/settled.status ∈ {completed, killed, failed}`；
    `detail` 可解析为 `exit code: <n>`；`record.exitCode` 是数字时必须相等。
 
-H1 证据新增字段：`encoding`（`path-A`/`path-B`/`null`）、`jobId`、`ownerMatchesSession`、
+H1 证据新增字段：`encoding`（`path-A`/`path-B`/`ambiguous`/`null`）、`ambiguous`（双形状共存时 true）、
+`pathBJobEventCount`（共存时同一 `innerCallId` 的 Job 事件数）、`jobId`、`ownerMatchesSession`、
 `rootCallFound`、`innerCallFound`（是否发现 path A 的内部 `tool/call`）、`jobRegisteredFound`、
 `jobSettledFound`、`labelMatchesCommand`、`exitCode`、`status`、`notes`、`missing`。
 `innerCallFound=false` + `encoding=path-B` 是真实宿主的正常形态，不是失败。
@@ -105,7 +112,7 @@ cd hephi && npx --no-install vitest run tests/probes/check-binding-host.test.ts
 ```
 
 `--self-test` 与 `hephi/tests/probes/check-binding-host.test.ts` 使用合成 Session 覆盖：
-path A pass、path B pass、owner 不匹配、label 不匹配/截断、exit code 不匹配、
+path A pass、path B pass、双形状共存 ambiguous/fail、owner 不匹配、label 不匹配/截断、exit code 不匹配、
 path A/B 均缺失，以及 job-evidence 的 H3 pass/manual/fail 与 H5 pass/fail。
 这些是**夹具测试**，不是真实宿主证据。
 

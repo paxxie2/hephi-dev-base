@@ -10,7 +10,7 @@
 | DSH | `0.2.1-rc.5`，`/Users/zm/dsh-instances/runtime/node_modules/@deepseek-ai/dsh/lib/bin.js`（与实验宿主 B `start.sh` 同一安装） |
 | Node | `v26.1.0`（`/Users/zm/.nvm/versions/node/v26.1.0/bin/node`，与宿主进程一致） |
 | 一次性 profile | `DSH_HOME=/tmp/hephi-host-probe/home`，profile `probe`（headless 模板 + 仅本机 `/tmp` patch） |
-| 认证 | 由主助手放置的**仅两条** DeepSeek account 记录（`deepseek-account-platform/device`、`default`），`0600`；无其他服务密钥。运行后已删除该临时凭据文件；任何产物不含凭据 |
+| 认证 | 由主助手放置的**仅两条** DeepSeek account 记录（`deepseek-account-platform/device`、`default`），`0600`；无其他服务密钥。运行后已删除该临时凭据文件；任何产物不含凭据。`20261107T2200Z-native-bash-lossy` 补充运行使用从宿主 credentials 文件**仅抽取同两条记录**的等价副本（不复制其他服务密钥，运行后立即删除） |
 | provider/model | `deepseek-account` / `deepseek-flash`（与宿主 B 相同） |
 | 业务源 | 无；工作目录 `/tmp/hephi-host-probe/workspace`，一次性可销毁 |
 | 沙箱/权限 | `DSH_PERMISSION_MODE=danger-full-access`（与当前 Worker 的文件策略一致；仅该一次性 profile） |

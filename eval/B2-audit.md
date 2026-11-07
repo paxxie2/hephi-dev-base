@@ -82,6 +82,17 @@ git diff --check
 - full-mode 原始输出：`eval/evidence/b2expand/hephi/*.json`、`eval/evidence/b2expand/site-pnl-diagnosis/*.json`，校验和见 `eval/evidence/b2expand/SHA256SUMS`。
 - 本机环境：Node v26.1.0、Python 3.14.2、git；无网络调用（hidden-test 只用仓库内 Node/Python 工具链与 git，无安装）。
 
+### 验收命令与退出码（本轮最终状态，2026-11-08）
+
+| 检查 | 命令 | 结果 |
+| --- | --- | --- |
+| 工具自测 | `node eval/check-task.mjs --self-test` | `SELF-TEST: PASS`，exit 0 |
+| 每任务结构校验 | 22 个任务逐个 `node eval/check-task.mjs <taskDir> --dry-run` | 22/22 exit 0 |
+| B5 计划 dry-run | `node eval/b5-plan.mjs --tasks eval/tasks/b5-tasks.json --seed 20261107 --dry-run` | exit 0（22 个任务，五类均入计划） |
+| 空白检查 | `git diff --check` 与 `git diff --check 93bfd06..HEAD` | 均 exit 0（`eval/.gitattributes` 仅豁免 `reference.patch` diff 工件的 blank-at-eol） |
+| 每任务 full-mode | 见 §2 | 20 个新任务全 exit 0；原 2 个任务复核 exit 0 |
+| 工作树 | `git status --porcelain` | 空（干净） |
+
 ## 6. 缺口与未验证项（不得写成已完成）
 
 1. **人类双评审缺失**：只有 agent 辅助评审，非两名熟悉仓库的人类评审者（见 §4）。

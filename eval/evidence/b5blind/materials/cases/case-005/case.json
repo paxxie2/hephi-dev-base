@@ -1,0 +1,11 @@
+{
+  "blindId": "case-005",
+  "changedFiles": [
+    "backend/app/domain/money.py"
+  ],
+  "binaryFiles": [],
+  "patchSha256": "267d88b80fe319e81f34df22d39a460e629ad388cbd4a0c292e4c295237d3798",
+  "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+  "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+  "instructions": "按 eval/label/RUBRIC.md 以整次运行为单位标注；不得推测分组。"
+}

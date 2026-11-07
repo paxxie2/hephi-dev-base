@@ -1,0 +1,6 @@
+# 盲评材料中的 `.patch` 是 runs 的逐字节 git diff（被评测对象），不是本仓库手写代码。
+# unified diff 的 context 行天然以单个空格开头，`git diff --check` 会把它当成行尾空白；
+# 为了保持材料原样（不得改写 diff，否则 manifest 里的 SHA 失效），仅对这些生成物关闭
+# whitespace 检查。仓库其余文件仍受 `git diff --check` 约束。
+*.patch -whitespace
+*.diff -whitespace

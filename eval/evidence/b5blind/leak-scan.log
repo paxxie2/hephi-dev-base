@@ -1,0 +1,14 @@
+# B5 blind materials independent leak scan
+materials=eval/evidence/b5blind/materials
+files=34
+hardFindings=0
+notes=8 (shared task artifacts; identical across all cases, not group-discriminating)
+NOTE eval/evidence/b5blind/materials/cases/case-001/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-002/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-003/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-004/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-005/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-006/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-007/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+NOTE eval/evidence/b5blind/materials/cases/case-008/allowed-scope.md:13 [task-base-sha-in-approved-scope]
+RESULT: PASS (no group-revealing trace)

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "batch": "b5-blind-20261108",
+  "seed": 20261108,
+  "caseCount": 8,
+  "cases": [
+    {
+      "blindId": "case-001",
+      "diffSha256": "534d2636e6ece4cfdda7e343d415b897301d635354ea14c85c01e4643dea1978",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-002",
+      "diffSha256": "756fccb80f3796294fd4f60f6249eab0a70baa08bad5ce8d987c91e5483eaaaf",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-003",
+      "diffSha256": "4317d103f27f2bf1118fd3632fa2eca37d714826c544ccddf82da02343907090",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-004",
+      "diffSha256": "37bfd2d9d4c863cb1ba51e95972b15c525d586216dc63576fc1c090f97ae95bc",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-005",
+      "diffSha256": "267d88b80fe319e81f34df22d39a460e629ad388cbd4a0c292e4c295237d3798",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-006",
+      "diffSha256": "756fccb80f3796294fd4f60f6249eab0a70baa08bad5ce8d987c91e5483eaaaf",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-007",
+      "diffSha256": "b7ed1d8cb1e243ec30486fa3cdcffeb58842c5411895ceb942879b678cdc97ab",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    },
+    {
+      "blindId": "case-008",
+      "diffSha256": "4317d103f27f2bf1118fd3632fa2eca37d714826c544ccddf82da02343907090",
+      "requirementSha256": "f91d1b6afb6e1d97c6132c7537afd06b548c058886248b01405e0e095b0d3497",
+      "allowedScopeSha256": "ceacc4b9bae1638228d7e4e24b86123f736f824ef293d8df0b1c9f485bb2d70f",
+      "changedFiles": 1
+    }
+  ],
+  "scan": {
+    "hardFindings": 0,
+    "weakWarnings": []
+  },
+  "rubric": "eval/label/RUBRIC.md",
+  "note": "本清单不含组别、taskId、runId；盲评结束后用私有映射还原。"
+}

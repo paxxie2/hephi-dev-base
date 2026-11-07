@@ -1,0 +1,11 @@
+{
+  "exitCode": 0,
+  "out": "/private/tmp/b5blind/eval/evidence/b5blind/materials",
+  "mapping": "/private/tmp/b5blind/eval/evidence/b5blind/private-mapping.json",
+  "cases": 8,
+  "scan": {
+    "hard": [],
+    "weak": []
+  },
+  "wrote": true
+}

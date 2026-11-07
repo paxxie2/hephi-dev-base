@@ -1,0 +1,150 @@
+{
+  "batch": "b5-blind-20261108",
+  "labeler": null,
+  "cases": {
+    "case-001": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-002": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-003": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-004": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-005": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-006": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-007": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    },
+    "case-008": {
+      "objectiveChanged": null,
+      "requiredFunctionImplemented": null,
+      "implementationDefect": {
+        "verdict": null,
+        "notes": null
+      },
+      "unrelatedChanges": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      },
+      "testWeakening": {
+        "has": null,
+        "notes": null,
+        "positions": []
+      }
+    }
+  }
+}

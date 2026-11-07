@@ -1,0 +1,42 @@
+# B5 blind materials export + agent labeling — command audit
+# generatedAt: 2026-11-07T23:53:26.935Z (UTC)
+# 只读操作：gh api / git clone+fetch / export / leak scan / import 校验；未写被测仓库、未运行模型、未运行隐藏测试。
+# 说明：时间戳为生成审计日志时间；命令与退出码/结果均为本次实际执行观测。
+
+## 1) PR/base/head 只读核验（gh api，8 个 PR）
+gh api repos/paxxie2/b5-native-site-pnl/pulls/3   -> 200; base=1e166fbe2217ac378e5bb7062cd34a2da1e75e6f head=534480062a0282b773f0fb65e580524bc085fc5b state=open
+gh api repos/paxxie2/b5-native-site-pnl/pulls/5   -> 200; base=1e166fbe... head=b152f8e2c4e52906cfc730bd6c9979d7b69cd073
+gh api repos/paxxie2/b5-native-site-pnl/pulls/8   -> 200; base=1e166fbe... head=c28e6ee68e3f7032f055ade98a42f5e78f25f002
+gh api repos/paxxie2/b5-native-site-pnl/pulls/9   -> 200; base=1e166fbe... head=a85034ce67fea77cbc739a92d3eac90d88ffdb66
+gh api repos/paxxie2/b5-off-site-pnl/pulls/8      -> 200; base=1e166fbe... head=87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a
+gh api repos/paxxie2/b5-off-site-pnl/pulls/10     -> 200; base=1e166fbe... head=e301bae9c53f30d11e05cad924184d7369f09b2a
+gh api repos/paxxie2/b5-off-site-pnl/pulls/12     -> 200; base=1e166fbe... head=9c9c664ced361a0436d5281c0abc867c816f3358
+gh api repos/paxxie2/b5-off-site-pnl/pulls/14     -> 200; base=1e166fbe... head=78c44180bf946c08cc2445c29aabe16ff335f94a
+# 结果：8/8 base 相同（任务基线）；见 source-evidence.json
+
+## 2) 只读克隆 + 抓取 PR ref（临时目录，不修改仓库）
+git clone https://github.com/paxxie2/b5-native-site-pnl.git /tmp/b5blind-work/repos/native   -> exit 0
+git clone https://github.com/paxxie2/b5-off-site-pnl.git /tmp/b5blind-work/repos/off         -> exit 0
+git -C <repo> fetch origin refs/pull/<n>/head:refs/remotes/origin/pr/<n>  (n=3,5,8,9 / 8,10,12,14) -> exit 0
+# 结果：8/8 fetch 到的 ref 与 PR head SHA 一致（source-evidence.json verification.headMatchesFetchedRef=true）
+
+## 3) 盲评材料导出（export.mjs，含其自身泄漏扫描）
+node eval/label/export.mjs --manifest /tmp/b5blind-work/manifest.json \
+  --out eval/evidence/b5blind/materials \
+  --mapping eval/evidence/b5blind/private-mapping.json --seed 20261108 --json
+# exit 0; cases=8; scan.hard=[]; scan.weak=[]; wrote=true (见 export.log)
+
+## 4) 独立泄漏扫描（材料目录，export 扫描之外的第二道检查）
+node eval/evidence/b5blind/leak-scan.mjs eval/evidence/b5blind/materials
+# exit 0; files=34; hardFindings=0; notes=8（任务卡中的同一 base SHA，8 个 case 完全相同，不区分组别）(见 leak-scan.log)
+
+## 5) agent 标注完整性校验（不给 mapping）
+node eval/label/import.mjs --manifest eval/evidence/b5blind/materials/manifest.json \
+  --labels eval/evidence/b5blind/agent-labels.json --json
+# exit 0; ok=true; summary={expected:8,labeled:8,missing:[],complete:true} (见 import-validation.log)
+
+## 6) 私有映射自检（标注封存后核对，仅确认 4 native + 4 off 与 head 对应）
+# mapping-audit.txt: entries=8, arm=native x4, arm=off x4, 每 case head 与 PR head 一致
+
+## 7) 未执行（如实）
+# - 未运行模型/隐藏测试；未跑 B5 效果统计；未做第二人 human 标注；未合并任何 PR。

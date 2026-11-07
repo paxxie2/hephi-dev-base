@@ -1,0 +1,9 @@
+mapping entries=8
+  case-001 -> runId=b5-trial-r01 arm=native repo=paxxie2/b5-native-site-pnl pr=#3 head=53448006
+  case-002 -> runId=b5-trial-r06 arm=off repo=paxxie2/b5-off-site-pnl pr=#10 head=e301bae9
+  case-003 -> runId=b5-trial-r04 arm=native repo=paxxie2/b5-native-site-pnl pr=#9 head=a85034ce
+  case-004 -> runId=b5-trial-r02 arm=native repo=paxxie2/b5-native-site-pnl pr=#5 head=b152f8e2
+  case-005 -> runId=b5-trial-r08 arm=off repo=paxxie2/b5-off-site-pnl pr=#14 head=78c44180
+  case-006 -> runId=b5-trial-r05 arm=off repo=paxxie2/b5-off-site-pnl pr=#8 head=87b12ae1
+  case-007 -> runId=b5-trial-r07 arm=off repo=paxxie2/b5-off-site-pnl pr=#12 head=9c9c664c
+  case-008 -> runId=b5-trial-r03 arm=native repo=paxxie2/b5-native-site-pnl pr=#8 head=c28e6ee6

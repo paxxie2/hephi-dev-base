@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-07T23:52:53.496Z",
+  "note": "构建私有映射所用的 PR/仓库只读证据（含组别，属私有证据，不随盲评材料分发）。",
+  "task": {
+    "taskId": "previous-window-order",
+    "taskCard": "eval/tasks/site-pnl-diagnosis/previous-window-order/issue.md",
+    "taskBase": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f"
+  },
+  "verification": {
+    "cases": 8,
+    "headMatchesFetchedRef": true,
+    "baseUniform": [
+      "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f"
+    ],
+    "onlyMoneyPy": true
+  },
+  "cases": [
+    {
+      "runId": "b5-trial-r01",
+      "arm": "native",
+      "repository": "paxxie2/b5-native-site-pnl",
+      "pullRequest": 3,
+      "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/3",
+      "state": "open",
+      "draft": true,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "534480062a0282b773f0fb65e580524bc085fc5b",
+      "fetchedPrRef": "534480062a0282b773f0fb65e580524bc085fc5b",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "534d2636e6ece4cfdda7e343d415b897301d635354ea14c85c01e4643dea1978"
+    },
+    {
+      "runId": "b5-trial-r02",
+      "arm": "native",
+      "repository": "paxxie2/b5-native-site-pnl",
+      "pullRequest": 5,
+      "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/5",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "b152f8e2c4e52906cfc730bd6c9979d7b69cd073",
+      "fetchedPrRef": "b152f8e2c4e52906cfc730bd6c9979d7b69cd073",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "37bfd2d9d4c863cb1ba51e95972b15c525d586216dc63576fc1c090f97ae95bc"
+    },
+    {
+      "runId": "b5-trial-r03",
+      "arm": "native",
+      "repository": "paxxie2/b5-native-site-pnl",
+      "pullRequest": 8,
+      "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/8",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "c28e6ee68e3f7032f055ade98a42f5e78f25f002",
+      "fetchedPrRef": "c28e6ee68e3f7032f055ade98a42f5e78f25f002",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "4317d103f27f2bf1118fd3632fa2eca37d714826c544ccddf82da02343907090"
+    },
+    {
+      "runId": "b5-trial-r04",
+      "arm": "native",
+      "repository": "paxxie2/b5-native-site-pnl",
+      "pullRequest": 9,
+      "url": "https://github.com/paxxie2/b5-native-site-pnl/pull/9",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "a85034ce67fea77cbc739a92d3eac90d88ffdb66",
+      "fetchedPrRef": "a85034ce67fea77cbc739a92d3eac90d88ffdb66",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "4317d103f27f2bf1118fd3632fa2eca37d714826c544ccddf82da02343907090"
+    },
+    {
+      "runId": "b5-trial-r05",
+      "arm": "off",
+      "repository": "paxxie2/b5-off-site-pnl",
+      "pullRequest": 8,
+      "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/8",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a",
+      "fetchedPrRef": "87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "756fccb80f3796294fd4f60f6249eab0a70baa08bad5ce8d987c91e5483eaaaf"
+    },
+    {
+      "runId": "b5-trial-r06",
+      "arm": "off",
+      "repository": "paxxie2/b5-off-site-pnl",
+      "pullRequest": 10,
+      "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/10",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "e301bae9c53f30d11e05cad924184d7369f09b2a",
+      "fetchedPrRef": "e301bae9c53f30d11e05cad924184d7369f09b2a",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "756fccb80f3796294fd4f60f6249eab0a70baa08bad5ce8d987c91e5483eaaaf"
+    },
+    {
+      "runId": "b5-trial-r07",
+      "arm": "off",
+      "repository": "paxxie2/b5-off-site-pnl",
+      "pullRequest": 12,
+      "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/12",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "9c9c664ced361a0436d5281c0abc867c816f3358",
+      "fetchedPrRef": "9c9c664ced361a0436d5281c0abc867c816f3358",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "b7ed1d8cb1e243ec30486fa3cdcffeb58842c5411895ceb942879b678cdc97ab"
+    },
+    {
+      "runId": "b5-trial-r08",
+      "arm": "off",
+      "repository": "paxxie2/b5-off-site-pnl",
+      "pullRequest": 14,
+      "url": "https://github.com/paxxie2/b5-off-site-pnl/pull/14",
+      "state": "open",
+      "draft": false,
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "78c44180bf946c08cc2445c29aabe16ff335f94a",
+      "fetchedPrRef": "78c44180bf946c08cc2445c29aabe16ff335f94a",
+      "headMatchesFetchedRef": true,
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "diffSha256": "267d88b80fe319e81f34df22d39a460e629ad388cbd4a0c292e4c295237d3798"
+    }
+  ]
+}

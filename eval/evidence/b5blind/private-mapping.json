@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "batch": "b5-blind-20261108",
+  "seed": 20261108,
+  "note": "私有映射：只在盲评结束后打开；不得与材料一起分发。",
+  "mapping": {
+    "case-001": {
+      "runId": "b5-trial-r01",
+      "taskId": "previous-window-order",
+      "arm": "native",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/native",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "534480062a0282b773f0fb65e580524bc085fc5b"
+    },
+    "case-002": {
+      "runId": "b5-trial-r06",
+      "taskId": "previous-window-order",
+      "arm": "off",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/off",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "e301bae9c53f30d11e05cad924184d7369f09b2a"
+    },
+    "case-003": {
+      "runId": "b5-trial-r04",
+      "taskId": "previous-window-order",
+      "arm": "native",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/native",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "a85034ce67fea77cbc739a92d3eac90d88ffdb66"
+    },
+    "case-004": {
+      "runId": "b5-trial-r02",
+      "taskId": "previous-window-order",
+      "arm": "native",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/native",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "b152f8e2c4e52906cfc730bd6c9979d7b69cd073"
+    },
+    "case-005": {
+      "runId": "b5-trial-r08",
+      "taskId": "previous-window-order",
+      "arm": "off",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/off",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "78c44180bf946c08cc2445c29aabe16ff335f94a"
+    },
+    "case-006": {
+      "runId": "b5-trial-r05",
+      "taskId": "previous-window-order",
+      "arm": "off",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/off",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "87b12ae1e9fb217a4d4cfc0a554af2afbaa0c34a"
+    },
+    "case-007": {
+      "runId": "b5-trial-r07",
+      "taskId": "previous-window-order",
+      "arm": "off",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/off",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "9c9c664ced361a0436d5281c0abc867c816f3358"
+    },
+    "case-008": {
+      "runId": "b5-trial-r03",
+      "taskId": "previous-window-order",
+      "arm": "native",
+      "repetition": 1,
+      "repo": "/tmp/b5blind-work/repos/native",
+      "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+      "head": "c28e6ee68e3f7032f055ade98a42f5e78f25f002"
+    }
+  }
+}

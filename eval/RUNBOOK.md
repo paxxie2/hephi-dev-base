@@ -242,3 +242,47 @@ node eval/label/import.mjs --self-test
 ```
 
 以上自测只使用合成夹具/临时 git 仓库，**不访问真实宿主、不代表任何真实实验结论**。
+
+## 13. B6 机械指标与 B5 计划生成器（2026-11-07 追加）
+
+> 本节为**追加引用**，不修改 §1–§12 的既有约束与数值。对应 B6（ab-metrics 清理）与 B5
+> （运行计划生成器）；D-4/D-6 仍待负责人 review（见 §11 / `eval/PREREG.md` §10）。
+
+### 13.1 `eval/ab-metrics.mjs` 只提取机械指标
+
+- 用法：`node eval/ab-metrics.mjs <runs.json>`；自测：`node eval/ab-metrics.mjs --self-test`。
+- 只输出机械指标：变更文件数/行数、`outsideFiles`/`outsideLines`/`outsideShare`、`deletedTests`、
+  `hiddenPass`（任务配置了 `hiddenTest` 时），以及运行记录里的 `minutes`/`tokens`/`readyDenials`/
+  `humanDriftScore` 按 arm 的均值。
+- **已删除**（不再输出）：`formatOnlyFiles`、`renames`、`unrelatedRefactor`、`verdict`（含
+  `verdict.effective`）。理由：格式化/重命名/无关重构不能机械判定，且"是否有效"不是本脚本的结论。
+- 无关改动、目标被改变、测试削弱、效果结论一律由 **B4 blind-review rubric + `eval/stats/report.py`**
+  依据 `eval/schema/run.schema.json` 记录判定（同时关闭 PREREG D-6 中"是否删除"的实施项，
+  仍待负责人确认）。
+- 本脚本不访问真实宿主、不替代真实对照实验；`--self-test` 只在临时 git 仓库上验证机械口径。
+- B8 日常使用统计的工单范围/去重键/状态映射仍以 B8 章节与预注册为准（计划审查 P2-6 的计数口径待负责人），
+  本脚本只做单次运行的机械 diff 提取，不参与工单计数或效果判定。
+
+### 13.2 `eval/b5-plan.mjs` 运行计划生成器
+
+```sh
+node eval/b5-plan.mjs --tasks <tasks.json> --seed <int> [--groups off,native] \
+     [--repeat-fraction 0.2] (--out <plan.json> | --dry-run)
+node eval/b5-plan.mjs --self-test
+```
+
+- `tasks.json` 格式（数组或 `{"tasks": [...]}`）：
+  `{ "taskId": "dubbo-t01", "repo": "dubbo", "category": "defect-fix" }`；
+  `taskId` 需匹配 `^[a-z0-9][a-z0-9._-]{1,63}$` 且唯一；`repo` 非空；`category` 取
+  `defect-fix` / `new-feature` / `behavior-preserving-refactor` / `cross-module` / `staged-suitable`。
+- 生成规则（B5 §5）：固定 `seed` 可复现（除 `generatedAt` 外逐字节一致）；任务按 taskId 排序后
+  由 seed 随机排序；**同一任务的各分组运行相邻**、组顺序由 seed 随机决定（禁止整组批量先跑）；
+  按 `round(repeatFraction × 任务数)` 抽取重复任务，每个重复任务**每组各多跑一次**
+  （`repetition=2`、`repeat=true`），并与原运行相邻；默认 `repeatFraction=0.2`。
+- 输出 `plan.json` 字段：`schemaVersion`/`generatedBy`/`generatedAt`/`seed`/`groups`/
+  `repeatFraction`/`taskSet`/`repeats`/`order`/`summary`；`order` 每条含 `order`、`runId`、
+  `taskId`、`repo`、`category`、`group`（同时给出 `arm`）、`repeat`、`repetition`、`seed`。
+- 参数约束：未知参数/未知组/重复 taskId/非法 seed/非法 fraction/缺 `--out` 且非 `--dry-run` 均
+  exit 2；`staged` 只用于 Q3 的 `native,staged` 单独实验，禁止与 `off` 混合。
+- **本计划只是运行输入，不代表任何运行已完成**；seed、重复比例与样本量最终仍由 PREREG 锁定
+  （`eval/PREREG.md` §9/§12，D-4 待负责人）；`plan.json` 随批次存档（§10）。

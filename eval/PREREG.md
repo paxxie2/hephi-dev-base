@@ -145,3 +145,18 @@ node eval/kappa.mjs --scores <labels-pair.json> --min 0.7
 ```
 
 所有分析数字必须来自 `run.schema.json` 记录；不得手工改数或选择性删除运行。
+
+## 12. 运行计划生成参数（B5，追加引用）
+
+- 正式实验的 `plan.json` 由 `eval/b5-plan.mjs` 生成并随批次存档，生成命令固定为：
+
+  ```sh
+  node eval/b5-plan.mjs --tasks <tasks.json> --seed <锁定 seed> \
+       --groups off,native --repeat-fraction 0.2 --out <batch>/plan.json
+  ```
+
+- 口径引用：`seed` 使用 §9 锁定值；两组交错（同一任务相邻、组顺序由 seed 决定）；
+  重复比例 **0.2**（按 `round(任务数 × 0.2)` 抽取，每组各多跑一次，`repetition=2`）。
+  `tasks.json` 格式与 plan 字段见 `eval/RUNBOOK.md` §13.2。
+- 本节为**追加引用**，不改变 §1–§11 的任何数值与判定（非劣效界值、成本上限、样本量、停止阈值
+  仍以 §10 决策项为准；D-4/D-6/D-10 仍待负责人锁定/确认）。

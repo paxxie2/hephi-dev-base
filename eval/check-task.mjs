@@ -45,6 +45,10 @@ const USAGE = `用法：
   --dry-run   只做结构/schema 校验，不访问 git（任务作者本地先跑）。
   完整模式    需要 --repo 或 task.json.repo 指向本机 git 仓库；校验 base 失败、参考修复通过、
               连续 --repeats 次一致、参考修复不越出 allowedFiles。
+  environment 可选块（C4.6）：offline=true 时要求 lockfile 存在（完整模式校验 base checkout/taskDir；
+              dry-run 缺仓库上下文时只警告），并扫描 hidden-test.sh/参考修复命令中的联网安装模式
+              （npm install 无 ci、pnpm install 无 frozen/offline、mvn 无 -o、gradle 无 --offline 等）。
+              commandsMustMatchOffline=true 时使用更严格的离线标志要求。未声明 environment 时不拦截。
   退出码      0=通过；1=任务无效；2=用法/环境缺失。`
 
 function usage(message) {
@@ -102,6 +106,87 @@ function gitOrNull(cwd, args) {
   } catch {
     return null
   }
+}
+
+// ---- C4.6 可选 environment 块校验 -----------------------------------------
+
+const ENVIRONMENT_KEYS = new Set(['offline', 'lockfile', 'commandsMustMatchOffline'])
+const OFFLINE_HINT = 'environment.offline=true 要求锁文件与离线命令；未声明 environment 时不拦截'
+
+function commandLines(text) {
+  return text.split('\n').map(line => line.trim()).filter(line => line.length > 0 && !line.startsWith('#'))
+}
+
+/** 从 hidden-test/参考补丁/可选的 task.commands 中找出疑似联网安装命令。返回 [{source, command}]。 */
+function onlineCommands(sources, strict) {
+  const found = []
+  const add = (source, command) => found.push({ source, command })
+  for (const { source, text } of sources) {
+    for (const line of commandLines(text)) {
+      // 统一 diff 里只检查新增行（+ 开头），其余文本按 shell 行检查。
+      const command = source.endsWith('.patch') && line.startsWith('+') ? line.slice(1).trim() : line
+      if (command.length === 0) continue
+      if (/\bnpm\s+(install|i|add)\b/.test(command) && !/\bnpm\s+ci\b/.test(command)) {
+        if (!/--offline|--prefer-offline|--cache\b/.test(command)) add(source, command)
+      }
+      if (strict && /\bnpm\s+ci\b/.test(command) && !/--offline|--prefer-offline/.test(command)) add(source, command)
+      if (/\bpnpm\s+(install|i|add)\b/.test(command)) {
+        const frozen = /--frozen-lockfile/.test(command)
+        const offline = /--offline/.test(command)
+        if (strict ? !(frozen && offline) : !(frozen || offline)) add(source, command)
+      }
+      if (/\bmvn\b/.test(command) && !/-o\b|--offline/.test(command)) add(source, command)
+      if (/\bgradle(w)?\b/.test(command) && !/--offline/.test(command)) add(source, command)
+      if (strict && /\byarn\s+install\b/.test(command) && !/--offline|--frozen-lockfile/.test(command)) add(source, command)
+      if (strict && /\bpip3?\s+install\b/.test(command) && !/--no-index|--find-links/.test(command)) add(source, command)
+      if (/\bgit\s+clone\b|\bcurl\s|\bwget\s/.test(command)) add(source, command)
+    }
+  }
+  return found
+}
+
+function environmentProblems(task, dir, paths) {
+  const errors = []
+  const warnings = []
+  if (task.environment === undefined) return { errors, warnings, environment: null }
+  const environment = task.environment
+  if (environment === null || typeof environment !== 'object' || Array.isArray(environment)) {
+    errors.push('environment 必须是对象')
+    return { errors, warnings, environment: null }
+  }
+  for (const key of Object.keys(environment)) {
+    if (!ENVIRONMENT_KEYS.has(key)) warnings.push(`environment 未知字段将被忽略：${key}`)
+  }
+  if (typeof environment.offline !== 'boolean') errors.push('environment.offline 必须是 boolean')
+  if (environment.commandsMustMatchOffline !== undefined && typeof environment.commandsMustMatchOffline !== 'boolean') {
+    errors.push('environment.commandsMustMatchOffline 必须是 boolean（可选）')
+  }
+  if (environment.offline !== true) return { errors, warnings, environment }
+  if (typeof environment.lockfile !== 'string' || environment.lockfile.trim().length === 0) {
+    errors.push('environment.offline=true 时 environment.lockfile 必填（仓库相对路径）')
+    return { errors, warnings, environment }
+  }
+  const lockfile = environment.lockfile.trim()
+  const candidates = [join(dir, lockfile)]
+  if (typeof task.repo === 'string' && isAbsolute(task.repo) && existsSync(task.repo)) candidates.push(join(task.repo, lockfile))
+  const found = candidates.find(candidate => fileExists(candidate))
+  if (!found) {
+    if (paths.repoRoot) errors.push(`environment.offline=true 但 lockfile 不存在于仓库基线或任务目录：${lockfile}`)
+    else warnings.push(`environment.offline=true：lockfile 未在任务目录/本地仓库找到（${lockfile}）；完整模式会强制校验，dry-run 无法确认仓库锁文件`)
+  }
+  const sources = []
+  if (fileExists(paths.hiddenPath)) sources.push({ source: 'hidden-test.sh', text: readFileSync(paths.hiddenPath, 'utf8') })
+  if (fileExists(paths.referencePath)) sources.push({ source: 'reference.patch', text: readFileSync(paths.referencePath, 'utf8') })
+  if (Array.isArray(task.commands)) {
+    for (const command of task.commands) {
+      if (typeof command === 'string') sources.push({ source: 'task.json commands', text: command })
+    }
+  }
+  const strict = environment.commandsMustMatchOffline === true
+  for (const hit of onlineCommands(sources, strict)) {
+    errors.push(`environment.offline=true 但发现疑似联网命令（${hit.source}）：${hit.command}`)
+  }
+  return { errors, warnings, environment }
 }
 
 // ---- 结构校验 -------------------------------------------------------------
@@ -205,11 +290,16 @@ export function validateStructure(taskDir) {
     warnings.push('reference.patch 看起来不是 git 生成的 unified diff（缺少 diff --git 头）')
   }
 
+  const environment = environmentProblems(task, dir, { hiddenPath, referencePath })
+  errors.push(...environment.errors)
+  warnings.push(...environment.warnings)
+
   return {
     ok: errors.length === 0,
     errors,
     warnings,
     task,
+    environment: environment.environment,
     files: { issuePath, hiddenPath, reviewPath, referencePath },
     taskFile,
     issueSha256: fileExists(issuePath) ? sha256(readFileSync(issuePath)) : null,
@@ -289,6 +379,19 @@ export function validateTask(options) {
   }
 
   try {
+    if (structure.environment?.offline === true) {
+      const lockfile = structure.environment.lockfile
+      const candidates = [join(worktree, lockfile), join(taskDir, lockfile)]
+      const found = candidates.find(candidate => fileExists(candidate))
+      report.checks.environment = { offline: true, lockfile, found: Boolean(found), ok: Boolean(found) }
+      if (!found) {
+        report.error = `environment.offline=true 但 lockfile 不存在于 base checkout 或任务目录：${lockfile}`
+        return report
+      }
+    } else {
+      // 未声明 environment 或 offline=false：保持旧行为（不拦截），在报告中标记声明状态。
+      report.checks.environment = { offline: false, declared: structure.environment !== null, ok: true }
+    }
     const baseRuns = repeatRuns(worktree, hiddenPath, repeats, timeoutMs)
     report.checks.base = {
       expected: 'fail',
@@ -345,7 +448,8 @@ export function validateTask(options) {
     report.ok = Boolean(
       report.checks.base?.ok
       && report.checks.reference?.ok
-      && report.checks.scope?.ok,
+      && report.checks.scope?.ok
+      && (report.checks.environment?.ok ?? true),
     )
     return report
   } finally {
@@ -432,6 +536,47 @@ function selfTest(asJson) {
       JSON.stringify(badScope.checks.scope ?? badScope.error),
     )
 
+    // C4.6 environment 块自测（复制合成夹具，避免修改仓库内 example）。
+    const makeEnvTask = (name, mutate) => {
+      const dir = join(root, name)
+      cpSync(exampleDir, dir, { recursive: true })
+      const task = JSON.parse(readFileSync(join(dir, 'task.json'), 'utf8'))
+      task.environment = { offline: true, lockfile: 'package-lock.json', commandsMustMatchOffline: false }
+      mutate?.(dir, task)
+      writeFileSync(join(dir, 'task.json'), `${JSON.stringify(task, null, 2)}\n`, 'utf8')
+      return dir
+    }
+    const offlineTask = makeEnvTask('task-offline-valid', (dir) => { writeFileSync(join(dir, 'package-lock.json'), '{}\n', 'utf8') })
+    const offlineStructure = validateStructure(offlineTask)
+    const offlineFull = validateTask({ taskDir: offlineTask, repo, base: baseSha, repeats: 3 })
+    record(
+      'environment 合法 offline：结构通过且完整校验通过',
+      offlineStructure.ok === true && offlineFull.ok === true && offlineFull.checks.environment?.ok === true,
+      JSON.stringify(offlineStructure.errors) + ' ' + JSON.stringify(offlineFull.checks.environment ?? offlineFull.error),
+    )
+    const missingLock = makeEnvTask('task-offline-missing-lock')
+    const missingLockFull = validateTask({ taskDir: missingLock, repo, base: baseSha, repeats: 3 })
+    record(
+      'environment offline 但缺 lockfile → 完整校验 FAIL',
+      missingLockFull.ok === false && missingLockFull.checks.environment?.ok === false,
+      JSON.stringify(missingLockFull.checks.environment ?? missingLockFull.error),
+    )
+    const onlineTask = makeEnvTask('task-online-command', (dir) => {
+      writeFileSync(join(dir, 'package-lock.json'), '{}\n', 'utf8')
+      writeFileSync(join(dir, 'hidden-test.sh'), '#!/bin/sh\nnpm install lodash\nexit 1\n', 'utf8')
+    })
+    const onlineStructure = validateStructure(onlineTask)
+    record(
+      'environment offline 但 hidden-test 含 npm install → 结构校验 FAIL 并列出命令',
+      onlineStructure.ok === false && onlineStructure.errors.some(error => error.includes('npm install lodash')),
+      JSON.stringify(onlineStructure.errors),
+    )
+    record(
+      '未声明 environment → 不拦截（行为不变）',
+      dry.ok === true && dry.environment === null && pass.ok === true,
+      `dry.environment=${JSON.stringify(dry.environment)} full=${pass.ok}`,
+    )
+
     const ok = steps.every((step) => step.ok)
     if (asJson) {
       console.log(JSON.stringify({ selfTest: ok, steps }, null, 2))
@@ -454,6 +599,9 @@ function printHuman(report) {
     if (report.repo) lines.push(`[check-task] repo=${report.repo} base=${report.baseSha} repeats=${report.repeats}`)
     const structureOk = report.structure?.ok
     lines.push(`${structureOk ? 'PASS' : 'FAIL'} structure :: ${structureOk ? 'ok' : (report.structure?.errors ?? []).join('; ')}`)
+    if (report.checks.environment) {
+      lines.push(`${report.checks.environment.ok ? 'PASS' : 'FAIL'} environment :: offline=${report.checks.environment.offline}${report.checks.environment.lockfile ? ` lockfile=${report.checks.environment.lockfile}` : ''}${report.checks.environment.found === false ? '（lockfile 缺失）' : ''}`)
+    }
     for (const warning of report.structure?.warnings ?? []) lines.push(`WARN ${warning}`)
     if (report.checks.base) {
       lines.push(`${report.checks.base.ok ? 'PASS' : 'FAIL'} base-hidden-test :: codes=${JSON.stringify(report.checks.base.codes)} expected fail, consistent=${report.checks.base.consistent}`)

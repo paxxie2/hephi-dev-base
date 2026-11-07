@@ -489,7 +489,7 @@ const LINT_TASK_USAGE = `usage: hephi lint-task <task.json> [--json]
 输入是任务 bundle（JSON）：task（hephi-task 任务卡）、ticketId、allowedPaths、
 checks（或 verification.checks）。也可以把任务卡字段平铺在顶层，与 ticketId/allowedPaths/checks 并列。`
 
-const TASK_CARD_KEYS = ['version', 'goal', 'outOfScope', 'acceptance', 'budget', 'protect'] as const
+const TASK_CARD_KEYS = ['version', 'goal', 'outOfScope', 'acceptance', 'budget', 'protect', 'protectedAssets'] as const
 const LINT_BUNDLE_KEYS = new Set([
   ...TASK_CARD_KEYS, 'task', 'ticketId', 'allowedPaths', 'checks', 'verification',
 ])
@@ -621,6 +621,53 @@ async function lintTaskCommand(args: string[], io: CliIo): Promise<number> {
     if (card.acceptance.length > 8) warnings.push(`task card has ${card.acceptance.length} acceptance items (>8): consider splitting the Issue`)
   }
 
+  // C4.8 聚焦提示：只提示、不失败，不改变 exit 语义。
+  const focus: Array<{ rule: string; message: string }> = []
+  const acceptedChecks = new Set<string>()
+  const acceptanceRefCounts = new Map<string, number>()
+  if (card !== null && verification !== null) {
+    const byId = new Map(verification.checks.map(check => [check.id, check]))
+    const required = verification.checks.filter(check => check.required)
+    if (required.length > 5) {
+      focus.push({ rule: 'focus.required-too-many', message: `${required.length} required checks (>5); consider marking only the essential checks required` })
+    }
+    const notRequired = new Set<string>()
+    for (const item of card.acceptance) {
+      acceptedChecks.add(item.check)
+      acceptanceRefCounts.set(item.check, (acceptanceRefCounts.get(item.check) ?? 0) + 1)
+      const check = byId.get(item.check)
+      if (check !== undefined && !check.required) notRequired.add(check.id)
+    }
+    if (notRequired.size > 0) {
+      focus.push({ rule: 'focus.check-not-required', message: `acceptance references non-required checks: ${[...notRequired].sort().join(', ')}; mark them required or expect ready to verify them anyway` })
+    }
+    const shared = [...acceptanceRefCounts.entries()].filter(([, count]) => count > 5).sort((a, b) => a[0].localeCompare(b[0]))
+    for (const [checkId, count] of shared) {
+      focus.push({ rule: 'focus.acceptance-check-not-test', message: `check ${checkId} is shared by ${count} acceptance items (>5); add focused checks or split acceptance` })
+    }
+    const regressionPattern = /(full|regression|all[-_ ]?tests?|whole|suite|全套|回归)/i
+    const regressionChecks = required.filter(check => check.kind === 'test' && regressionPattern.test(
+      [check.id, check.purpose, check.command, ...check.args].join(' '),
+    ))
+    if (regressionChecks.length === 0) {
+      focus.push({ rule: 'focus.no-regression', message: 'no required test check looks like the full regression suite (heuristic on id/purpose/command); confirm the whole suite is run once before ready' })
+    }
+    const unused = verification.checks.filter(check => !check.required && !acceptedChecks.has(check.id)).map(check => check.id).sort()
+    if (unused.length > 0) {
+      focus.push({ rule: 'focus.unused-check', message: `checks neither required nor referenced by acceptance: ${unused.join(', ')}` })
+    }
+  }
+  if (Array.isArray(allowedPaths)) {
+    const broad = allowedPaths.filter(path => typeof path === 'string'
+      && (path === '**' || path === '*' || path === '**/*' || path.startsWith('**/')))
+    if (broad.length > 0 || allowedPaths.length > 50) {
+      const parts = []
+      if (broad.length > 0) parts.push(`broad globs: ${broad.slice(0, 5).join(', ')}`)
+      if (allowedPaths.length > 50) parts.push(`${allowedPaths.length} entries (>50)`)
+      focus.push({ rule: 'focus.broad-scope', message: `allowedPaths may be too wide (${parts.join('; ')}); narrow it where possible` })
+    }
+  }
+
   const summary = {
     acceptance: card?.acceptance.length ?? 0,
     checks: verification?.checks.length ?? 0,
@@ -629,7 +676,7 @@ async function lintTaskCommand(args: string[], io: CliIo): Promise<number> {
   if (options.json) {
     io.out(JSON.stringify({
       schemaVersion: 1, ok: errors.length === 0, file: options.file,
-      errors, warnings, summary,
+      errors, warnings, focus, summary,
     }, null, 2))
     return errors.length === 0 ? 0 : 1
   }
@@ -640,6 +687,7 @@ async function lintTaskCommand(args: string[], io: CliIo): Promise<number> {
     return 1
   }
   io.out(`HEPHI task lint: PASS ${options.file} (acceptance=${summary.acceptance} checks=${summary.checks} allowedPaths=${summary.allowedPaths})`)
+  for (const item of focus) io.out(`focus: ${item.rule} ${item.message}`)
   for (const warning of warnings) io.err(`HEPHI task lint: WARN ${warning}`)
   return 0
 }

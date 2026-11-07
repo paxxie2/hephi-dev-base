@@ -6,8 +6,8 @@
 
 | 节 | 主题 | 当前状态 |
 | --- | --- | --- |
-| §1 | C4.6 检查环境固定 | **约定**（项目侧执行；check-task 校验扩展待实现） |
-| §2 | C4.8 聚焦检查 | **约定**（lint-task 已有基础校验；聚焦提示规则待实现） |
+| §1 | C4.6 检查环境固定 | **约定**；`check-task` 的 environment 校验**已实现（本轮，任务级）**；插件/prepare 侧强制**待实现** |
+| §2 | C4.8 聚焦检查 | **约定**；`lint-task` 聚焦提示规则**已实现（本轮，仅提示）**；阈值可配置/调优 |
 | §3 | C1 受保护验收资产 | **提议，待实现（C1）** |
 | §4 | C2 未覆盖改动提示 | **约定 + 项目侧示例**（赫菲不解析覆盖率；集成待实现） |
 | §5 | 覆盖提示输出格式 | 示例脚本已按此格式输出；赫菲消费/展示待实现 |
@@ -32,8 +32,10 @@
 
 ### 1.2 与 `check-task` 的关系（B2）
 
-`eval/check-task.mjs` 当前校验：任务结构、base 上隐藏测试失败、参考修复通过（3 次一致）、
-参考修复不越 allowedFiles；**不校验离线/锁版本**。约定为后续扩展：
+`eval/check-task.mjs` 当前校验（含本轮扩展）：任务结构、base 上隐藏测试失败、参考修复通过（3 次一致）、
+参考修复不越 allowedFiles；**可选 `environment` 块**在声明 `offline:true` 时校验锁文件与离线命令
+（本轮已实现，见 §1.3）；未声明 `environment` 时行为不变（不拦截）。**插件/prepare 侧仍不强制**
+离线环境，该部分待实现。约定字段：
 
 - 在 `task.json` 增加可选 `environment` 块（提议字段）：
   ```json
@@ -48,7 +50,33 @@
   1. `offline=true` 时检查 `install` 命令含离线标志，且不含网络命令；
   2. 锁文件存在且与 base 一致（不得在复核中被更新）；
   3. 工具链版本可被验证（至少记录）；不满足则任务无效（exit 1）。
-- 在这些扩展实现前，C4.6 只能作为**项目自检约定**，不能声称 `check-task` 已强制。
+### 1.3 已实现（本轮，任务级 `check-task`）
+
+`eval/check-task.mjs` 已支持 task.json 的可选 `environment` 块（未声明时不拦截）：
+
+```jsonc
+"environment": {
+  "offline": true,
+  "lockfile": "package-lock.json",
+  "commandsMustMatchOffline": false
+}
+```
+
+校验规则（仅任务校验；插件运行时/prepare 不强制）：
+
+- `environment` 必须是对象；`offline` 必填 boolean；`lockfile` 在 `offline:true` 时必填（仓库相对路径）；
+  `commandsMustMatchOffline` 可选 boolean；未知字段仅警告；
+- `offline:true` 时要求 lockfile 存在：完整模式检查 base checkout 或任务目录；`--dry-run` 缺仓库上下文时
+  只警告（无法确认仓库锁文件），完整模式缺失即判任务无效（exit 1）；
+- 扫描 `hidden-test.sh`、`reference.patch`（新增行）与可选 `task.commands`：命中疑似联网安装命令即失败并列出命令，
+  例如 `npm install`（非 ci）、`pnpm install` 缺 frozen/offline、`mvn` 缺 `-o`、`gradle` 缺 `--offline`、
+  `git clone`/`curl`/`wget`；
+- `commandsMustMatchOffline:true` 使用更严格的离线标志要求（如 `npm ci` 需 offline、`pnpm install` 需
+  `--frozen-lockfile` **且** `--offline`、`yarn install`/`pip install` 需对应离线参数）；
+- `--self-test` 覆盖：合法 offline 通过、缺 lockfile 完整模式失败、联网命令失败、未声明不拦截。
+
+**未实现/未验证**：插件/prepare 侧强制离线环境；真实项目任务上的环境校验；`check-task` 的
+`environment` 字段尚未进入 `eval/tasks/README.md` 的正式字段表（若需要需同步该文档）。
 
 ## 2. C4.8 聚焦检查（约定）
 
@@ -68,25 +96,33 @@
 
 ### 2.2 `lint-task` 提示规则
 
-`hephi lint-task`（C5，已实现）当前校验：任务卡 schema、ticketId、allowedPaths 相对路径、
-checks 结构、验收项引用存在的 **test** check、重复 id；并对 acceptance>8、allowedPaths>50 给提示。
-以下为**待实现**的聚焦检查提示（只提示，不拦截）：
+`hephi lint-task`（C5）当前硬校验：任务卡 schema、ticketId、allowedPaths 相对路径、
+checks 结构、验收项引用存在的 **test** check、重复 id；`acceptance>8`、`allowedPaths>50` 仍输出 warning。
+本轮新增 **focus 提示**（只提示、不失败，exit 语义不变；输出到 stdout，JSON 字段 `focus`）：
 
-| 规则 id | 触发 | 级别 |
+| 规则 id | 触发（实现） | 级别 |
 | --- | --- | --- |
-| `focus.no-test-check` | 验收项引用的检查 `kind != test`；或任务卡没有任何 test check | 提示 |
-| `focus.too-many-required` | required 检查数 > 5（项目可自定义阈值） | 提示 |
-| `focus.no-regression` | 没有任何名为/标注为整套回归的 required check（项目可声明豁免） | 提示 |
-| `focus.regression-per-item` | 多个验收项引用同一个“整套回归”检查（应只在集成后跑一次） | 提示 |
-| `focus.too-many-acceptance` | acceptance > 8（现有 lint-task 已提示） | 提示 |
-| `focus.wide-scope` | allowedPaths > 50（现有 lint-task 已提示） | 提示 |
+| `focus.required-too-many` | required 检查数 > 5 | 提示 |
+| `focus.check-not-required` | 验收项引用了非 required 的检查 | 提示 |
+| `focus.acceptance-check-not-test` | 同一 check 被 >5 个验收项共享（该 id 名称沿用任务口径；补充共享计数） | 提示 |
+| `focus.broad-scope` | allowedPaths 含 `**`/`*`/`**/*`/`**/...` 过宽，或 >50 条 | 提示 |
+| `focus.no-regression` | 没有任何 required `kind=test` 检查在 id/purpose/command/args 上像整套回归（启发式） | 提示 |
+| `focus.unused-check` | checks 中既非 required、也未被 acceptance 引用的检查 | 提示 |
 
-> 注意：`lint-task` 是**离线提示工具**，不替代 prepare/ready；提示不改变合同或拦截行为。
+输出示例：`HEPHI task lint: PASS <file> (...)`, 随后每行 `focus: <rule> <message>`；
+`--json` 输出 `{schemaVersion,ok,file,errors,warnings,focus:[{rule,message}],summary}`。
 
-## 3. C1 受保护验收资产（提议，待实现）
+> 注意：`lint-task` 是**离线提示工具**，不替代 prepare/ready；提示不改变合同或拦截行为，
+> 也不构成“已验证”。规则阈值为建议值，可在项目侧调整；`focus.no-regression` 只是启发式，
+> 可能误报/漏报。
 
-> **本节是字段与优先级提议，插件当前未实现。** 在实现并登记版本前，现行行为不变：
-> 已有测试默认受 `protect` 保护（常见测试路径），删除被拒；受保护资产清单未生效。
+## 3. C1 受保护验收资产（已实现 2026-11-07，机制级；未真实验收）
+
+> **状态：已实现（合同 v4 / 任务卡 v2 / 项目配置可选字段；默认兼容旧 v1 任务卡）。**
+> 实现在 `contracts/task.ts`、`contracts/checks.ts`、`control/discipline.ts`、`control/worker-mount.ts`、
+> `control/activation.ts`，测试在 `tests/control/protected-assets.test.ts`（15 用例）。**未做真实宿主 E2E**，
+> 不能据此声称 C1 已达到启用判据；`migrate` 的“替代文件”判断与 pre-execute 的 TOCTOU 窗口是已知限制。
+> 本节其余内容是已实现规则的说明（不是提议）。
 
 ### 3.1 目标（ROADMAP §4.10 C1）
 
@@ -95,9 +131,9 @@ checks 结构、验收项引用存在的 **test** check、重复 id；并对 acc
 - 清单外的已有测试：**删除仍按现有规则拒绝**；修改只记录、不拦截；
 - 项目可扩大清单到所有已有测试，但必须测误拦率与副作用（Worker 反复申请扩大范围、或新增重复测试绕开限制）。
 
-### 3.2 提议字段
+### 3.2 字段
 
-任务卡（`task`，Issue 内的 `hephi-task` JSON）新增**可选**字段；项目配置可提供默认清单：
+任务卡（`task`，Issue 内的 `hephi-task` JSON）使用以下字段；项目配置可提供默认清单（additive）：
 
 ```jsonc
 {
@@ -231,8 +267,8 @@ checks 结构、验收项引用存在的 **test** check、重复 id；并对 acc
 
 | 项 | 状态 | 需要谁 |
 | --- | --- | --- |
-| C4.6 离线/锁版本校验（check-task 扩展） | 待实现 | 负责人确认字段与阈值 |
-| C4.8 聚焦检查提示规则（lint-task 扩展） | 待实现 | 负责人确认规则与阈值 |
+| C4.6 离线/锁版本校验（`check-task` environment） | **已实现（本轮，任务级）**；插件/prepare 侧强制、真实项目验证待实现 | 负责人确认字段与阈值 |
+| C4.8 聚焦检查提示规则（`lint-task` focus） | **已实现（本轮，仅提示，exit 不变）**；阈值/规则调优与真实任务验证待做 | 负责人确认规则与阈值 |
 | C1 `protectedAssets` / `authorizes` / 优先级 | **待实现（C1）** | 负责人批准字段与任务卡版本升版（建议 v2） |
 | C1 决策日志新规则登记 | 待实现 | 与 `decisions-format.md` 同步 |
 | C2 赫菲侧提示附件展示 | 待实现（可选） | 负责人确认展示位置与是否只记录 |

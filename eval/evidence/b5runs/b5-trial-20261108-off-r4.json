@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "batch": "b5-trial-20261108",
+  "taskId": "previous-window-order",
+  "category": "new-feature",
+  "repo": "site-pnl-diagnosis",
+  "base": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+  "executionMode": "normal",
+  "seed": 20261107,
+  "runId": "b5-trial-20261108-off-r4",
+  "arm": "off",
+  "repetition": 4,
+  "head": "78c44180bf946c08cc2445c29aabe16ff335f94a",
+  "startedAt": "2026-11-07T23:32:33.289Z",
+  "endedAt": "2026-11-07T23:34:47.974Z",
+  "wallClockSeconds": 134.685,
+  "timeout": false,
+  "model": {
+    "id": "deepseek-flash",
+    "provider": "deepseek-account",
+    "parameters": {
+      "temperature": "uncontrolled"
+    },
+    "parametersSource": "unavailable"
+  },
+  "host": {
+    "version": "dsh@0.2.1-rc.5",
+    "versionSource": "experimental",
+    "instance": "off-profile:3093"
+  },
+  "tokens": {
+    "input": null,
+    "output": null,
+    "total": null
+  },
+  "objectiveChanged": null,
+  "requiredFunctionImplemented": null,
+  "implementationDefect": {
+    "verdict": "unlabeled",
+    "notes": null
+  },
+  "validationEnvironment": {
+    "status": "available",
+    "reason": null
+  },
+  "delivery": "ready-pr-created",
+  "outOfScopeChanges": {
+    "has": false,
+    "files": []
+  },
+  "unrelatedChanges": {
+    "has": null,
+    "notes": null
+  },
+  "testWeakening": {
+    "has": null,
+    "notes": null,
+    "evidence": []
+  },
+  "humanIntervention": {
+    "count": 0,
+    "reasons": []
+  },
+  "taskCard": {
+    "sha256": "a54c17e945e6543ea40170c8bbc766c6dfba1571216f896db0d292fce356ed15",
+    "deliveryMechanism": "trigger-text",
+    "verifiedEqual": true
+  },
+  "notes": "off 组 run3（repetition=4，按实际 4 次运行时间序编号）：真实处理 Issue #13 并创建 PR #14。 PR #14；Issue #13；ticket 10b8b5256d303017ded3187ea1c0ae11；off Profile 无 hephi 插件（plugin 全 null、decisionLog=null）；无盲评数据与 tokens 不可得，按 null/unlabeled 记录。",
+  "plugin": {
+    "candidateSha": null,
+    "baselineSha": null,
+    "loadedSha": null,
+    "loadedShaReadback": "unavailable"
+  },
+  "decisionLog": null
+}

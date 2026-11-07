@@ -1,0 +1,92 @@
+# B5 run 记录校验日志（2026-11-08T07:52:53+08:00）
+# 1) 逐条重跑 record-run（写入 /tmp 临时目录，证明候选仍可校验且输出确定）
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-native-r1.json --out /tmp/b5runs-revalidate/b5-trial-20261108-native-r1.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-native-r1.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=d77476bfc3d4f9825648c0fd115def3fbe3247db758856e3ea8edbf50f89604f
+SHA256 committed=d77476bfc3d4f9825648c0fd115def3fbe3247db758856e3ea8edbf50f89604f
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-native-r2.json --out /tmp/b5runs-revalidate/b5-trial-20261108-native-r2.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-native-r2.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=8705c18f7e54b81f1058d6164b0144fecd15c4b61299dc07f15f11f4111a65c4
+SHA256 committed=8705c18f7e54b81f1058d6164b0144fecd15c4b61299dc07f15f11f4111a65c4
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-native-r3.json --out /tmp/b5runs-revalidate/b5-trial-20261108-native-r3.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-native-r3.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=7df6ac81e77eb678afd89a5dfccd6196f138c5329b56a16e465aa4bd38e0851d
+SHA256 committed=7df6ac81e77eb678afd89a5dfccd6196f138c5329b56a16e465aa4bd38e0851d
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-native-r4.json --out /tmp/b5runs-revalidate/b5-trial-20261108-native-r4.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-native-r4.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=37aa9cd3bb58c835ce5b9906a6b71129b51f9ee71c373cd6363b955ff9d66b23
+SHA256 committed=37aa9cd3bb58c835ce5b9906a6b71129b51f9ee71c373cd6363b955ff9d66b23
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-off-r1.json --out /tmp/b5runs-revalidate/b5-trial-20261108-off-r1.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-off-r1.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=caa9a73e0602db6f31e7157d73598af8e8479e7dca41e6bce680dfe1c12781f8
+SHA256 committed=caa9a73e0602db6f31e7157d73598af8e8479e7dca41e6bce680dfe1c12781f8
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-off-r2.json --out /tmp/b5runs-revalidate/b5-trial-20261108-off-r2.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-off-r2.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=7c7c0c0947ff9aeb276be6d5dd88d312e385dd15e9c1a975e515ec250e2cb6fa
+SHA256 committed=7c7c0c0947ff9aeb276be6d5dd88d312e385dd15e9c1a975e515ec250e2cb6fa
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-off-r3.json --out /tmp/b5runs-revalidate/b5-trial-20261108-off-r3.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-off-r3.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=37fef135447b52265c024e5f054a537d2b9458e7c847c39f911127bf7968be5f
+SHA256 committed=37fef135447b52265c024e5f054a537d2b9458e7c847c39f911127bf7968be5f
+MATCH: yes
+
+$ node eval/record-run.mjs --input /tmp/b5runs-candidates/b5-trial-20261108-off-r4.json --out /tmp/b5runs-revalidate/b5-trial-20261108-off-r4.json
+[record-run] OK 已写入 /tmp/b5runs-revalidate/b5-trial-20261108-off-r4.json（schema=eval/schema/run.schema.json，顶层字段 32 个）
+EXIT:0
+SHA256 revalidate=611fcd889c80fcea4f3047e4b1bdafe6be5c097e0e2ff8e1a06c5a147fab1c0d
+SHA256 committed=611fcd889c80fcea4f3047e4b1bdafe6be5c097e0e2ff8e1a06c5a147fab1c0d
+MATCH: yes
+
+# 2) record-run --self-test
+PASS B3-01 前置：schema 可加载且关键字/format 全部被校验器覆盖
+PASS B3-01 完整合法记录 → exit 0 且写出记录
+PASS B3-01 输出与输入逐字段一致（不补默认值、不重写字段）
+PASS B3-01 原子写：目录内无 tmp/半成品残留
+PASS B3-02 逐项删除 required（30 项）→ exit 1 且指出字段、不产生输出
+PASS B3-02 非法枚举/非 40hex/负值/嵌套必填/条件约束/未知字段等（49 例）→ exit 1 且指出路径、不产生输出
+PASS B3-02 输入不是合法 JSON → exit 1、不产生输出
+PASS B3-03 nullable 记录合法 → exit 0 且写出
+PASS B3-03 不可得 token 保持 null，不伪造 0（input/output/total 均为 null）
+PASS B3-03 不补默认值：省略的可选字段（label/faults/tokens.cacheRead）不被写回
+PASS B3-03 未标注字段保持 null（decisionLog/category/objectiveChanged/host.version）
+PASS B3-03 输出与输入逐字段一致（nullable 原样保留）
+PASS B3-03 非法 nullable（短 SHA/类型/条件约束，7 例）→ exit 1 且指出路径
+PASS B3-04 输出已存在 → exit 2、拒绝覆盖且既有内容不变
+PASS B3-04 输出路径是目录 → exit 2、不写文件
+PASS B3-04 输出父目录缺失 → exit 2、不创建目录、不留文件
+PASS B3-04 输出父路径是文件（模拟 IO 错误）→ exit 2、清理临时文件、目录无半成品
+PASS B3-04 只读目录（模拟 IO 错误）→ exit 2、目录内无临时文件
+PASS B3-04 参数/IO 错误（6 例：缺参/未知参数/输入不可读）→ exit 2
+PASS B3-05 派生夹具前置：真实产物存在（eval/tasks + eval/evidence）
+PASS B3-05 派生夹具可通过校验并写出（派生夹具/未验证，不是正式实验记录）
+PASS B3-05 可回溯字段 taskCard.sha256 与真实 issue.md 重新哈希一致
+PASS B3-05 可回溯字段 decisionLog.path/sha256 与真实证据日志重新哈希一致
+PASS B3-05 base/head 来自真实 task.json 的 40hex SHA（head=base 为夹具假设）
+PASS B3-05 不可得 token 保持 null（不伪造 0）
+PASS B3-05 夹具标注：notes 含“派生夹具”“不是正式实验记录”，且输出与派生输入一致
+
+SELF-TEST: PASS（26 条断言；B3-05 为派生夹具/未验证，不是正式实验记录）
+EXIT:0
+
+# 3) 覆盖保护负例：对已存在输出重跑 → 应 exit 2 且不改文件
+[record-run] 输出已存在，拒绝覆盖：eval/evidence/b5runs/b5-trial-20261108-native-r1.json
+EXIT:2

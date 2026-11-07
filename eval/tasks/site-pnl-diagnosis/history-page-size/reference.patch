@@ -1,0 +1,551 @@
+diff --git a/INTERFACES.md b/INTERFACES.md
+index 7315080..000c67d 100644
+--- a/INTERFACES.md
++++ b/INTERFACES.md
+@@ -256,7 +256,7 @@ def list_messages(db_path: str, diagnosis_id: str, limit: int, offset: int) -> t
+ | GET | `/api/health` | - | `Health`；DB 不可用 → 503 |
+ | GET | `/api/sites` | - | `list[Site]` |
+ | POST | `/api/diagnoses` | `CreateDiagnosisRequest` + 头 `Idempotency-Key` | 201 `Diagnosis` |
+-| GET | `/api/diagnoses` | `limit`(默认20,1..100) `offset` | `DiagnosisPage` |
++| GET | `/api/diagnoses` | `limit`(默认10,1..100) `offset` | `DiagnosisPage` |
+ | GET | `/api/diagnoses/{id}` | - | `Diagnosis` |
+ | GET | `/api/diagnoses/{id}/evidence` | `limit` `offset` | `EvidencePage` |
+ | GET | `/api/diagnoses/{id}/evidence/{evidenceId}/records` | `limit` `offset` | `SourceRecordPage` |
+@@ -282,7 +282,7 @@ def list_messages(db_path: str, diagnosis_id: str, limit: int, offset: int) -> t
+ 
+ - `acceptance/expected-values.json`：独立手算预期（不调用 `app.domain.*` 生成），含推导注释；覆盖 T2/T4 指定样例及月份边界。
+ - `acceptance/test_business_http.py`：黑盒 HTTP 断言利润、规则、证据、测算、历史；故意让断言对 1 分偏差敏感（自检用，不冒充反向验收）。
+-- `web/e2e/*.spec.ts`：7 条真实浏览器旅程（设计 11.2），使用真实后端（`E2E_BASE_URL`），禁止 `page.route` 伪造业务接口响应；每步保留截图/日志/记录 ID。
++- `web/e2e/*.spec.ts`：8 条真实浏览器旅程（设计 11.2 的 7 条 + 历史分页 1 条），使用真实后端（`E2E_BASE_URL`），禁止 `page.route` 伪造业务接口响应；每步保留截图/日志/记录 ID。
+ - README：安装、配置、初始化、启动、停止、显式重置、数据与规则版本说明；含命令工作目录。
+ 
+ ## 6. 测试约定
+@@ -297,7 +297,7 @@ def list_messages(db_path: str, diagnosis_id: str, limit: int, offset: int) -> t
+ 
+ ## 7. E2E 测试定位契约（data-testid，canonical 清单，frontend 必须提供）
+ 
+-以下 `data-testid` 是 7 条真实浏览器旅程的唯一定位契约，不得改名（可额外添加，但 canonical 必须存在）：
++以下 `data-testid` 是 8 条真实浏览器旅程的唯一定位契约，不得改名（可额外添加，但 canonical 必须存在）：
+ 
+ - 顶部/导航：`topbar`、`nav-workbench`、`nav-history`
+ - 表单与状态：`site-select`（`<select>`，option value=S01..S10）、`date-start`、`date-end`、`start-diagnosis`（诊断按钮）、`loading-diagnosis`、`error-banner`、`field-error-<field>`（字段级错误，如 `field-error-startDate`）、`stale-notice`
+@@ -306,7 +306,7 @@ def list_messages(db_path: str, diagnosis_id: str, limit: int, offset: int) -> t
+ - 规则与建议：`findings-list`、`finding-<ruleId>`（元素上带 `data-status="hit|clear|unknown"`）、`finding-status-<ruleId>`、`suggestions-list`
+ - 证据：`evidence-list`、`evidence-toggle-<evidenceId>`、`evidence-records`、`record-list`、`record-item`、`record-total`、`record-prev`、`record-next`、`evidence-page-info`
+ - 测算：`scenario-panel`、`scenario-tab-rent|share|recovery`、`scenario-form-<kind>`、`rent-input`、`rent-submit`、`share-input`、`share-submit`、`recovery-kind-offline`、`recovery-kind-slot`、`recovery-bps`、`repair-cost`、`recovery-submit`、`scenario-result`、`scenario-delta`、`scenario-unavailable`、`scenario-status`、`scenario-list`
+-- 历史：`history-list`、`history-item-<diagnosisId>`
++- 历史：`history-list`、`history-item-<diagnosisId>`、`history-prev`、`history-next`、`history-page-indicator`（“第 1 / 2 页 · 共 N 条”）
+ - 对话：`chat-panel`、`chat-messages`、`message-<messageId>`、`chat-input`、`chat-send`、`chat-not-configured`、`chat-error`
+ 
+ 约定：`<key>` = payment/refund/netRevenue/share/rent/depreciation/maintenance/paymentFee/profit；
+diff --git a/README.md b/README.md
+index 401b27b..efc8f52 100644
+--- a/README.md
++++ b/README.md
+@@ -108,7 +108,7 @@ uv run uvicorn --app-dir backend app.main:app --host 127.0.0.1 --port 8000
+ | `npm --prefix web run build` | 仓库根目录 | 前端生产构建 |
+ | `scripts/check.sh` | 仓库根目录 | 累计检查：后端测试 + 前端类型/组件测试/构建 |
+ | `uv run pytest acceptance/test_business_http.py -q` | 仓库根目录 | **黑盒 HTTP 验收**：需先启动真实服务；`BASE_URL` 默认 `http://127.0.0.1:8000`；服务未运行时**跳过并标注“未运行”**；可用 `ACCEPTANCE_DB_PATH` 指定源库以复核独立预期 |
+-| `npm --prefix web run e2e` | 仓库根目录（脚本在 `web/` 下执行） | **真实浏览器验收**（Playwright，7 条旅程）：使用真实后端，`E2E_BASE_URL` 默认 `http://127.0.0.1:8000`；默认 `channel=chrome`（本机 Google Chrome），可 `PW_CHANNEL=chromium` 使用 Playwright 自带 Chromium；禁止 mock 业务接口 |
++| `npm --prefix web run e2e` | 仓库根目录（脚本在 `web/` 下执行） | **真实浏览器验收**（Playwright，8 条旅程）：使用真实后端，`E2E_BASE_URL` 默认 `http://127.0.0.1:8000`；默认 `channel=chrome`（本机 Google Chrome），可 `PW_CHANNEL=chromium` 使用 Playwright 自带 Chromium；禁止 mock 业务接口 |
+ 
+ E2E 证据：每一步截图与 API 日志写入 `docs/acceptance/evidence/<journey>/`（`log.jsonl` 含真实
+ 请求路径/状态、诊断/测算/消息记录 ID）。失败时 Playwright 额外把 trace/截图保存到
+@@ -161,7 +161,7 @@ backend/app/          FastAPI 应用（api/ 路由、services/ 业务、domain/
+ backend/migrations/   SQLite schema（001_initial.sql）
+ backend/tests/        后端单元、数据库、接口测试
+ web/src/              React + TypeScript 前端（工作台/证据/测算/对话/历史）
+-web/e2e/              Playwright 7 条真实浏览器旅程（真实后端，禁止 mock 业务接口）
++web/e2e/              Playwright 8 条真实浏览器旅程（真实后端，禁止 mock 业务接口）
+ acceptance/           独立手算预期（expected-values.json、independent_calc.py）
+                       与黑盒 HTTP 验收（test_business_http.py）
+ contracts/            OpenAPI 契约导出（scripts/export_openapi.py）
+@@ -173,7 +173,8 @@ scripts/              启动、累计检查、显式重置、OpenAPI 导出
+ ## 10. 验证范围与限制（必须与结论一起引用）
+ 
+ **本版本验证的是**（模拟数据）：软件功能与操作闭环、确定性损益/规则/测算公式与边界、
+-证据可展开到源记录分页、历史快照不可变、请求幂等、真实浏览器 7 条旅程、
++证据可展开到源记录分页、历史快照不可变、请求幂等、历史默认每页 10 条与翻页边界、
++真实浏览器 8 条旅程（设计 7 条 + 历史分页 1 条）、
+ 真实 DeepSeek 对话与受控工具（当服务端配置密钥时）。
+ 
+ **未验证 / 不声称**：
+diff --git a/acceptance/test_business_http.py b/acceptance/test_business_http.py
+index 36f6f9b..1c4f88c 100644
+--- a/acceptance/test_business_http.py
++++ b/acceptance/test_business_http.py
+@@ -580,6 +580,20 @@ def test_diagnosis_list_pagination(client: httpx.Client) -> None:
+         assert item["pnl"] and item["findings"], "历史列表项应含完整快照摘要"
+ 
+ 
++def test_diagnosis_list_default_page_size_is_ten(client: httpx.Client) -> None:
++    """Issue #16：历史默认每页 10 条（不传 limit 时后端默认 10，首页最多 10 条）。"""
++    response = client.get("/api/diagnoses")
++    assert response.status_code == 200, response.text
++    page = response.json()
++    assert page["limit"] == 10, f"默认 limit 应为 10，实际 {page['limit']}"
++    assert page["offset"] == 0
++    assert len(page["items"]) <= 10, f"默认首页条数应 ≤10，实际 {len(page['items'])}"
++    # 默认请求与显式 limit=10 的第一页完全一致。
++    explicit = client.get("/api/diagnoses", params={"limit": 10, "offset": 0}).json()
++    assert [item["id"] for item in page["items"]] == [item["id"] for item in explicit["items"]]
++    assert page["total"] == explicit["total"]
++
++
+ # ---------------------------------------------------------------- 幂等与错误
+ 
+ 
+diff --git a/backend/app/api/diagnoses.py b/backend/app/api/diagnoses.py
+index 90f02bf..8e7daa6 100644
+--- a/backend/app/api/diagnoses.py
++++ b/backend/app/api/diagnoses.py
+@@ -34,7 +34,8 @@ def create_diagnosis(
+ @router.get("/diagnoses", response_model=DiagnosisPage)
+ def list_diagnoses(
+     request: Request,
+-    limit: int = Query(20, ge=1, le=100),
++    # 需求（Issue #16）：诊断历史默认每页 10 条（前端历史页显式传 limit=10，这里保持同一默认值）。
++    limit: int = Query(10, ge=1, le=100),
+     offset: int = Query(0, ge=0),
+ ) -> DiagnosisPage:
+     return diagnosis_service.get_diagnosis_page(
+diff --git a/backend/tests/test_diagnosis_api.py b/backend/tests/test_diagnosis_api.py
+index 3a38d1a..b94e070 100644
+--- a/backend/tests/test_diagnosis_api.py
++++ b/backend/tests/test_diagnosis_api.py
+@@ -169,6 +169,49 @@ def test_history_pagination_no_loss_or_duplicates(client):
+     assert set(bad.json()) >= {"code", "message", "fieldErrors", "requestId"}
+ 
+ 
++def test_history_default_page_size_is_ten(client):
++    """Issue #16：诊断历史默认每页 10 条（不传 limit 时默认 10，首页最多 10 条）。"""
++    created_ids: list[str] = []
++    for index in range(10):
++        created_ids.append(
++            _diagnosis(
++                client,
++                site_id=f"S{index + 1:02d}",
++                start=FULL_START,
++                end=FULL_END,
++                key=f"default-page-{index}",
++            )["id"]
++        )
++    created_ids.append(
++        _diagnosis(client, site_id="S01", start="2026-07-01", end="2026-07-30", key="default-page-10")["id"]
++    )
++    created_ids.append(
++        _diagnosis(client, site_id="S02", start="2026-08-01", end="2026-08-30", key="default-page-11")["id"]
++    )
++    assert len(set(created_ids)) == 12
++
++    # 不传 limit：默认 limit=10，首页恰好 10 条，与显式 limit=10 完全一致。
++    default_response = client.get("/api/diagnoses")
++    assert default_response.status_code == 200, default_response.text
++    page = default_response.json()
++    assert page["limit"] == 10, f"默认 limit 应为 10，实际 {page['limit']}"
++    assert page["offset"] == 0
++    assert page["total"] == 12
++    assert len(page["items"]) == 10
++    explicit = client.get("/api/diagnoses", params={"limit": 10, "offset": 0}).json()
++    assert [item["id"] for item in page["items"]] == [item["id"] for item in explicit["items"]]
++
++    # 默认 limit 也用于 offset 分页：第 2 页 2 条，两页合并无重复、无遗漏。
++    second = client.get("/api/diagnoses", params={"offset": 10}).json()
++    assert second["limit"] == 10
++    assert second["offset"] == 10
++    assert len(second["items"]) == 2
++    combined = [item["id"] for item in page["items"] + second["items"]]
++    assert len(combined) == 12
++    assert len(set(combined)) == 12, "默认分页出现重复诊断"
++    assert set(combined) == set(created_ids), "默认分页出现遗漏诊断"
++
++
+ # --------------------------------------------------------------------------- 证据
+ 
+ 
+diff --git a/contracts/openapi.json b/contracts/openapi.json
+index cfae207..6f36f2f 100644
+--- a/contracts/openapi.json
++++ b/contracts/openapi.json
+@@ -1370,7 +1370,7 @@
+             "name": "limit",
+             "required": false,
+             "schema": {
+-              "default": 20,
++              "default": 10,
+               "maximum": 100,
+               "minimum": 1,
+               "title": "Limit",
+diff --git a/web/e2e/08-history-pagination.spec.ts b/web/e2e/08-history-pagination.spec.ts
+new file mode 100644
+index 0000000..210e962
+--- /dev/null
++++ b/web/e2e/08-history-pagination.spec.ts
+@@ -0,0 +1,230 @@
++/**
++ * 旅程 8（Issue #16）：诊断历史默认每页 10 条与翻页体验。
++ *
++ * 真实浏览器（Playwright）+ 真实后端；**禁止** `page.route` / `route.fulfill` 伪造业务接口响应。
++ * 历史诊断通过真实公开 API `POST /api/diagnoses`（唯一 Idempotency-Key）创建，真实落库。
++ * 证据写入 `docs/acceptance/evidence/<E2E_EVIDENCE_LABEL>/`：E2E_EVIDENCE_LABEL 用于区分
++ * 基线（main）与改动后（本分支）的同场景对照运行。
++ *
++ * 空历史用例只对全新数据库有意义：服务已有历史时 skip（不把共享 DB 当空库，也不伪造空库）。
++ * 证据截图 step 名称使用 ASCII，避免生成非 ASCII 文件名。
++ */
++import { expect, test } from "@playwright/test";
++import type { Page, Response } from "@playwright/test";
++import { apiGet, apiPost, createJourneyLog, expectPnlMatchesDiagnosis } from "./helpers";
++
++const EVIDENCE_LABEL = process.env.E2E_EVIDENCE_LABEL ?? "history-pagination-10-r3";
++
++/**
++ * 页码提示定位：改动后元素带 `history-page-indicator` testid；基线（main）还没有该 testid，
++ * 但同一 `.pager > span` 文本已在基线存在，因此基线/改动后可用同一断言做同场景对照。
++ */
++function pageIndicator(page: Page) {
++  return page.locator('[data-testid="history-page-indicator"], .pager > span').first();
++}
++
++/** 当前历史列表里真实渲染的诊断 ID（来自真实 API 返回的记录）。 */
++async function visibleHistoryIds(page: Page): Promise<string[]> {
++  return page.locator('[data-testid^="history-item-"]').evaluateAll((elements) =>
++    elements.map((element) => (element.getAttribute("data-testid") ?? "").replace("history-item-", "")),
++  );
++}
++
++interface BrowserHealth {
++  consoleErrors: string[];
++  pageErrors: string[];
++  apiResponses: Array<{ url: string; status: number }>;
++}
++
++/** 记录浏览器控制台错误、页面异常与 /api 响应状态，供最终断言（非 mock，仅观测）。 */
++function trackBrowserHealth(page: Page): BrowserHealth {
++  const health: BrowserHealth = { consoleErrors: [], pageErrors: [], apiResponses: [] };
++  page.on("console", (message) => {
++    if (message.type() === "error") health.consoleErrors.push(message.text());
++  });
++  page.on("pageerror", (error) => health.pageErrors.push(String(error)));
++  page.on("response", (response: Response) => {
++    if (response.url().includes("/api/")) {
++      health.apiResponses.push({ url: response.url(), status: response.status() });
++    }
++  });
++  return health;
++}
++
++function expectBrowserHealth(health: BrowserHealth): void {
++  expect(health.consoleErrors, `存在浏览器 console error：${health.consoleErrors.join(" | ")}`).toHaveLength(0);
++  expect(health.pageErrors, `存在页面异常：${health.pageErrors.join(" | ")}`).toHaveLength(0);
++  const failed = health.apiResponses.filter((call) => call.status < 200 || call.status >= 300);
++  expect(failed, `存在非 2xx 的 /api 响应：${JSON.stringify(failed)}`).toHaveLength(0);
++}
++
++// 12 条真实诊断（10 个点位 + 2 个不同窗口），保证历史超过 10 条、需要 2 页。
++const CASES = [
++  ...Array.from({ length: 10 }, (_, index) => ({
++    siteId: `S${String(index + 1).padStart(2, "0")}`,
++    startDate: "2026-08-30",
++    endDate: "2026-09-28",
++  })),
++  { siteId: "S01", startDate: "2026-07-01", endDate: "2026-07-30" },
++  { siteId: "S02", startDate: "2026-08-01", endDate: "2026-08-30" },
++];
++
++test.describe("Journey 8: history pagination (10 items per page)", () => {
++  test("empty history shows clear hint and disables prev/next (fresh database)", async ({ page }) => {
++    const log = createJourneyLog(`${EVIDENCE_LABEL}/empty-history`);
++    log.attach(page);
++    const health = trackBrowserHealth(page);
++    try {
++      await page.goto("/");
++      const existing = (await apiGet(page, "/api/diagnoses?limit=1")).body as {
++        items: Array<{ id: string }>;
++        total: number;
++      };
++      test.skip(
++        existing.total > 0,
++        `服务已有 ${existing.total} 条历史诊断，空历史只能在全新数据库上验证`,
++      );
++
++      await page.getByTestId("nav-history").click();
++      // 空列表的 <ul> 尺寸为 0，Playwright 视为 hidden；这里断言元素存在（attached）而不是可见。
++      await expect(page.getByTestId("history-list")).toBeAttached();
++      await expect(page.getByText("还没有历史诊断")).toBeVisible();
++      await expect(pageIndicator(page)).toHaveText("第 1 / 1 页 · 共 0 条");
++      await expect(page.getByTestId("history-prev")).toBeDisabled();
++      await expect(page.getByTestId("history-next")).toBeDisabled();
++      log.record("empty-history", { total: existing.total });
++      await log.shot(page, "empty-history-hint", `total=${existing.total}`);
++      expectBrowserHealth(health);
++    } finally {
++      log.flush();
++    }
++  });
++
++  test("more than 10 histories: 10 per page, no duplicate/omission, boundaries and snapshot reopen", async ({
++    page,
++  }) => {
++    test.setTimeout(300_000);
++    const log = createJourneyLog(`${EVIDENCE_LABEL}/paging`);
++    log.attach(page);
++    const health = trackBrowserHealth(page);
++    try {
++      await page.goto("/");
++
++      // 1) 通过真实公开 API 创建 12 条诊断（真实落库，唯一 Idempotency-Key）。
++      const createdIds: string[] = [];
++      for (const [index, item] of CASES.entries()) {
++        const created = await apiPost(
++          page,
++          "/api/diagnoses",
++          { siteId: item.siteId, startDate: item.startDate, endDate: item.endDate },
++          { "Idempotency-Key": `e2e-history-${EVIDENCE_LABEL}-${Date.now()}-${index}` },
++        );
++        expect(created.status, `创建第 ${index + 1} 条诊断失败: ${JSON.stringify(created.body)}`).toBe(201);
++        createdIds.push((created.body as { id: string }).id);
++      }
++      log.record("create-real-histories", { count: createdIds.length, createdIds });
++
++      // 2) 打开历史页；以真实 API 列表作为“无重复/无遗漏”的对照。
++      await page.getByTestId("nav-history").click();
++      await expect(page.getByTestId("history-list")).toBeVisible();
++      const apiPage = (await apiGet(page, "/api/diagnoses?limit=100")).body as {
++        items: Array<{ id: string }>;
++        total: number;
++        limit: number;
++        offset: number;
++      };
++      expect(apiPage.total, "本用例要求全新数据库（应有恰好 12 条真实历史）").toBe(12);
++      expect(apiPage.items.length, "API limit=100 应返回全部 12 条历史").toBe(12);
++      expect(apiPage.limit).toBe(100);
++      const pageCount = Math.ceil(apiPage.total / 10);
++      expect(pageCount, "12 条历史在每页 10 条下应为 2 页").toBe(2);
++      log.record("api-list-baseline", {
++        total: apiPage.total,
++        limit: apiPage.limit,
++        offset: apiPage.offset,
++        ids: apiPage.items.map((item) => item.id),
++      });
++
++      // 首页截图先落盘：基线（每页 20 条）会在这里展示全部 12 条、页码提示“第 1 / 1 页”，作为缺陷证据。
++      await expect(pageIndicator(page)).toBeVisible();
++      await log.shot(
++        page,
++        "first-page-default",
++        `total=${apiPage.total} UI显示条数=${(await visibleHistoryIds(page)).length}`,
++      );
++
++      // 2.1) 先把同场景实际观测写入证据日志（基线=12 条/单页；改动后=10 条/第 1 页·共 2 页）。
++      //      随后同一断言在基线上会真实失败，这正是 Before/After 对照的缺陷证据。
++      const observedCount = (await visibleHistoryIds(page)).length;
++      const observedIndicator = (await pageIndicator(page).innerText()).replace(/\s+/g, " ").trim();
++      log.record("first-page-observation", {
++        renderedCount: observedCount,
++        indicator: observedIndicator,
++        prevDisabled: await page.getByTestId("history-prev").isDisabled(),
++        nextDisabled: await page.getByTestId("history-next").isDisabled(),
++        historyListRequests: health.apiResponses.filter((call) => /\/api\/diagnoses\?/.test(call.url)),
++      });
++
++      // 3) 首页恰好 10 条；上/下一页边界与页码提示正确。
++      await expect(page.locator('[data-testid^="history-item-"]')).toHaveCount(10);
++      await expect(pageIndicator(page)).toHaveText("第 1 / 2 页 · 共 12 条");
++      await expect(page.getByTestId("history-prev")).toBeDisabled();
++      await expect(page.getByTestId("history-next")).toBeEnabled();
++      const idsPage1 = await visibleHistoryIds(page);
++      expect(idsPage1, "第 1 页应有 10 条").toHaveLength(10);
++      log.record("page-1", { count: idsPage1.length, ids: idsPage1 });
++      await log.shot(page, "first-page-boundary", `items=${idsPage1.length} prev=disabled next=enabled`);
++
++      // 4) 末页恰好 2 条；不能继续向后翻页，可以向前翻页。
++      await page.getByTestId("history-next").click();
++      await expect(pageIndicator(page)).toHaveText("第 2 / 2 页 · 共 12 条");
++      await expect(page.locator('[data-testid^="history-item-"]')).toHaveCount(2);
++      await expect(page.getByTestId("history-next")).toBeDisabled();
++      await expect(page.getByTestId("history-prev")).toBeEnabled();
++      const idsPage2 = await visibleHistoryIds(page);
++      expect(idsPage2, "第 2 页应有 2 条").toHaveLength(2);
++      log.record("page-2", { count: idsPage2.length, ids: idsPage2 });
++      await log.shot(page, "last-page-boundary", `items=${idsPage2.length} prev=enabled next=disabled`);
++
++      // 5) 两页合并后与真实 API 列表顺序完全一致：无重复、无遗漏。
++      const merged = [...idsPage1, ...idsPage2];
++      expect(new Set(merged).size, "翻页出现重复诊断").toBe(merged.length);
++      expect(merged, "翻页结果与 API 列表不一致（有遗漏或重复）").toEqual(apiPage.items.map((item) => item.id));
++      for (const createdId of createdIds) {
++        expect(merged, `通过 API 创建的诊断 ${createdId} 未出现在历史翻页中`).toContain(createdId);
++      }
++      log.record("paging-consistency", { mergedCount: merged.length, apiCount: apiPage.items.length });
++
++      // 6) 从末页点开诊断：诊断 ID 与 API 一致，P&L 与该诊断快照完全一致（快照不受分页影响）。
++      const openedId = idsPage2[idsPage2.length - 1];
++      const snapshot = (await apiGet(page, `/api/diagnoses/${openedId}`)).body as Record<string, any>;
++      expect(snapshot.id, "单条诊断 API 的 id 应与列表一致").toBe(openedId);
++      await page.getByTestId(`history-item-${openedId}`).click();
++      await expect(page.getByTestId("diagnosis-id")).toHaveText(openedId);
++      await expect(page.getByTestId("diagnosis-panel")).toContainText(snapshot.siteName as string);
++      await expectPnlMatchesDiagnosis(page, snapshot);
++      log.record("reopen-snapshot-from-last-page", {
++        diagnosisId: openedId,
++        siteId: snapshot.siteId,
++        siteName: snapshot.siteName,
++        window: snapshot.window,
++      });
++      await log.shot(page, "reopen-snapshot-from-last-page", `diagnosisId=${openedId}`);
++
++      // 7) 回到历史（仍停在第 2 页）并向前翻到首页：向前翻页可用，到首页后禁用。
++      await page.getByTestId("nav-history").click();
++      await expect(pageIndicator(page)).toHaveText("第 2 / 2 页 · 共 12 条");
++      await page.getByTestId("history-prev").click();
++      await expect(pageIndicator(page)).toHaveText("第 1 / 2 页 · 共 12 条");
++      await expect(page.getByTestId("history-prev")).toBeDisabled();
++      await expect(page.getByTestId("history-next")).toBeEnabled();
++      await expect(page.locator('[data-testid^="history-item-"]')).toHaveCount(10);
++      await log.shot(page, "back-to-first-page", "page=1 prev=disabled next=enabled");
++
++      // 8) 全程无 console/page error，/api 响应均 2xx。
++      expectBrowserHealth(health);
++    } finally {
++      log.flush();
++    }
++  });
++});
+diff --git a/web/src/App.test.tsx b/web/src/App.test.tsx
+index 651b41b..1532e44 100644
+--- a/web/src/App.test.tsx
++++ b/web/src/App.test.tsx
+@@ -193,6 +193,95 @@ describe("App 诊断工作台（开发夹具，非真实后端）", () => {
+     expect(screen.queryByTestId("stale-notice")).not.toBeInTheDocument();
+   });
+ 
++  it("历史默认每页 10 条：翻页无重复/遗漏、首页与末页边界正确，且可从末页重开正确快照", async () => {
++    const diagnoses = Array.from({ length: 12 }, (_, index) =>
++      devDiagnosis({
++        id: `diag-page-${String(index + 1).padStart(2, "0")}`,
++        siteId: `S${String((index % 10) + 1).padStart(2, "0")}`,
++        siteName: `翻页测试站点-${index + 1}`,
++        window: { startDate: "2026-07-01", endDate: "2026-07-30" },
++      }),
++    );
++    const ids = diagnoses.map((diagnosis) => diagnosis.id);
++    const api = new FakeApiClient({ diagnoses });
++    await renderWorkbench(api);
++    const user = userEvent.setup();
++
++    await user.click(screen.getByTestId("nav-history"));
++    await screen.findByTestId("history-list");
++
++    // 默认请求每页 10 条（需求：历史默认每页展示 10 条）。
++    const listCalls = api.calls.filter((call) => call.method === "listDiagnoses");
++    expect(listCalls[0]?.args[0]).toEqual({ limit: 10, offset: 0 });
++
++    const visibleIds = () =>
++      screen
++        .queryAllByTestId(/^history-item-/)
++        .map((element) => element.getAttribute("data-testid")!.replace("history-item-", ""));
++
++    // 第一页恰好 10 条，顺序稳定；首页不能向前翻页，仍有下一页。
++    await waitFor(() => expect(visibleIds()).toEqual(ids.slice(0, 10)));
++    expect(screen.getByTestId("history-page-indicator")).toHaveTextContent("第 1 / 2 页 · 共 12 条");
++    expect(screen.getByTestId("history-prev")).toBeDisabled();
++    expect(screen.getByTestId("history-next")).toBeEnabled();
++    const firstPageIds = visibleIds();
++
++    // 第二页只剩 2 条；末页不能向后翻页，可以向前翻页。
++    await user.click(screen.getByTestId("history-next"));
++    await waitFor(() => expect(visibleIds()).toEqual(ids.slice(10)));
++    expect(screen.getByTestId("history-page-indicator")).toHaveTextContent("第 2 / 2 页 · 共 12 条");
++    expect(screen.getByTestId("history-prev")).toBeEnabled();
++    expect(screen.getByTestId("history-next")).toBeDisabled();
++    const secondPageIds = visibleIds();
++
++    // 两页合并：12 条、无重复、无遗漏且顺序稳定（翻页无重复无遗漏）。
++    const combined = [...firstPageIds, ...secondPageIds];
++    expect(combined).toHaveLength(12);
++    expect(new Set(combined).size).toBe(12);
++    expect(combined).toEqual(ids);
++
++    // 从末页打开诊断：显示该诊断的 ID、站点与时间窗快照（切页后仍可打开对应快照）。
++    const target = diagnoses[11];
++    await user.click(screen.getByTestId(`history-item-${target.id}`));
++    const panel = await screen.findByTestId("diagnosis-panel");
++    expect(panel).toHaveTextContent(target.siteName);
++    expect(screen.getByTestId("diagnosis-id")).toHaveTextContent(target.id);
++    expect(screen.getByTestId("date-start")).toHaveValue(target.window.startDate);
++    expect(screen.getByTestId("date-end")).toHaveValue(target.window.endDate);
++    expect(screen.queryByTestId("stale-notice")).not.toBeInTheDocument();
++  });
++
++  it("历史不足 10 条时只有一页且上一页/下一页都不可用", async () => {
++    const api = new FakeApiClient({
++      diagnoses: [
++        devDiagnosis({ id: "diag-short-1" }),
++        devDiagnosis({ id: "diag-short-2" }),
++        devDiagnosis({ id: "diag-short-3" }),
++      ],
++    });
++    await renderWorkbench(api);
++    const user = userEvent.setup();
++
++    await user.click(screen.getByTestId("nav-history"));
++    await waitFor(() => expect(screen.queryAllByTestId(/^history-item-/)).toHaveLength(3));
++    expect(screen.getByTestId("history-page-indicator")).toHaveTextContent("第 1 / 1 页 · 共 3 条");
++    expect(screen.getByTestId("history-prev")).toBeDisabled();
++    expect(screen.getByTestId("history-next")).toBeDisabled();
++  });
++
++  it("空历史显示明确提示，且上一页/下一页都不可用", async () => {
++    const api = new FakeApiClient({ diagnoses: [] });
++    await renderWorkbench(api);
++    const user = userEvent.setup();
++
++    await user.click(screen.getByTestId("nav-history"));
++    expect(await screen.findByText(/还没有历史诊断/)).toBeInTheDocument();
++    expect(screen.getByTestId("history-page-indicator")).toHaveTextContent("第 1 / 1 页 · 共 0 条");
++    expect(screen.getByTestId("history-prev")).toBeDisabled();
++    expect(screen.getByTestId("history-next")).toBeDisabled();
++    expect(screen.queryAllByTestId(/^history-item-/)).toHaveLength(0);
++  });
++
+   it("健康检查 modelConfigured=false 时显示“对话未配置”，确定性功能仍可用", async () => {
+     const api = new FakeApiClient({
+       health: {
+diff --git a/web/src/App.tsx b/web/src/App.tsx
+index 2e575a1..ef4381b 100644
+--- a/web/src/App.tsx
++++ b/web/src/App.tsx
+@@ -32,7 +32,8 @@ import { HistoryView } from "./features/history/HistoryView";
+ 
+ type View = "workbench" | "history";
+ 
+-const HISTORY_PAGE_SIZE = 20;
++// 需求（Issue #16）：诊断历史默认每页展示 10 条（上一页/下一页/当前页提示见 HistoryView）。
++const HISTORY_PAGE_SIZE = 10;
+ 
+ function messageFromResponse(diagnosisId: string, response: ChatResponse): ChatMessage {
+   return {
+diff --git a/web/src/features/history/HistoryView.tsx b/web/src/features/history/HistoryView.tsx
+index d5bcb77..da1d78f 100644
+--- a/web/src/features/history/HistoryView.tsx
++++ b/web/src/features/history/HistoryView.tsx
+@@ -28,7 +28,8 @@ export function HistoryView({
+   onReload,
+ }: HistoryViewProps) {
+   const items = page?.items ?? [];
+-  const limit = page?.limit ?? 20;
++  // 与后端/App 的默认每页数量保持一致：需求（Issue #16）为 10 条/页。
++  const limit = page?.limit ?? 10;
+   const offset = page?.offset ?? 0;
+   const total = page?.total ?? 0;
+   const pageCount = Math.max(1, Math.ceil(total / Math.max(1, limit)));
+@@ -100,7 +101,7 @@ export function HistoryView({
+         })}
+       </ul>
+       <div className="pager">
+-        <span className="muted small">
++        <span className="muted small" data-testid="history-page-indicator">
+           第 {currentPage} / {pageCount} 页 · 共 {total} 条
+         </span>
+         <button

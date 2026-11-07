@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "taskId": "frontend-form-feedback",
+  "repo": "site-pnl-diagnosis",
+  "base": "418af9a671c30cc6e7ceaea70f53be47335c8b88",
+  "category": "staged-suitable",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    ".gitignore",
+    "INTERFACES.md",
+    "acceptance/test_business_http.py",
+    "backend/app/data/__init__.py",
+    "backend/app/data/loader.py",
+    "backend/app/data/seed.py",
+    "web/e2e/08-scenario-validation.spec.ts",
+    "web/e2e/helpers.ts",
+    "web/src/features/scenarios/ScenarioSection.test.tsx",
+    "web/src/features/scenarios/ScenarioSection.tsx",
+    "web/src/styles.css"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": true,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "uv.lock",
+    "commandsMustMatchOffline": true
+  }
+}

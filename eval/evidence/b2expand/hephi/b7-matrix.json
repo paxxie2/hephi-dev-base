@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/b7-matrix",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: b7-matrix self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-A966uP/checkout/eval/b7-matrix.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "8dfe28cc6d4d46114e543f709f41be653d979b1c688394df16f9bb32c083b5ff"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: b7-matrix self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-A966uP/checkout/eval/b7-matrix.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "8dfe28cc6d4d46114e543f709f41be653d979b1c688394df16f9bb32c083b5ff"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: b7-matrix self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-A966uP/checkout/eval/b7-matrix.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "8dfe28cc6d4d46114e543f709f41be653d979b1c688394df16f9bb32c083b5ff"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/B7.md",
+        "eval/b7-matrix.mjs"
+      ],
+      "changedFiles": [
+        "eval/B7.md",
+        "eval/b7-matrix.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: b7-matrix self-test\n",
+          "stderr": "",
+          "outputSha256": "c14abbf99137a7288302500fef1c0987d462f64fec883f5a3fa0e5a9479e20c1"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: b7-matrix self-test\n",
+          "stderr": "",
+          "outputSha256": "c14abbf99137a7288302500fef1c0987d462f64fec883f5a3fa0e5a9479e20c1"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: b7-matrix self-test\n",
+          "stderr": "",
+          "outputSha256": "c14abbf99137a7288302500fef1c0987d462f64fec883f5a3fa0e5a9479e20c1"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "858711a86009efb5ed79308c9bee4d9a7583a943",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

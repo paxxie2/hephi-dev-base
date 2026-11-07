@@ -1,0 +1,119 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/frontend-form-feedback",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\nModuleNotFoundError: No module named 'app.data'\n",
+          "outputSha256": "a22bc9f547162744c602c74bb0db9e64adab049af614d690a328399a6bd0db93"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\nModuleNotFoundError: No module named 'app.data'\n",
+          "outputSha256": "a22bc9f547162744c602c74bb0db9e64adab049af614d690a328399a6bd0db93"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\nModuleNotFoundError: No module named 'app.data'\n",
+          "outputSha256": "a22bc9f547162744c602c74bb0db9e64adab049af614d690a328399a6bd0db93"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        ".gitignore",
+        "INTERFACES.md",
+        "acceptance/test_business_http.py",
+        "backend/app/data/__init__.py",
+        "backend/app/data/loader.py",
+        "backend/app/data/seed.py",
+        "web/e2e/08-scenario-validation.spec.ts",
+        "web/e2e/helpers.ts",
+        "web/src/features/scenarios/ScenarioSection.test.tsx",
+        "web/src/features/scenarios/ScenarioSection.tsx",
+        "web/src/styles.css"
+      ],
+      "changedFiles": [
+        ".gitignore",
+        "INTERFACES.md",
+        "acceptance/test_business_http.py",
+        "web/e2e/helpers.ts",
+        "web/src/features/scenarios/ScenarioSection.test.tsx",
+        "web/src/features/scenarios/ScenarioSection.tsx",
+        "web/src/styles.css",
+        "backend/app/data/__init__.py",
+        "backend/app/data/loader.py",
+        "backend/app/data/seed.py",
+        "web/e2e/08-scenario-validation.spec.ts"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: scenario form feedback and baseline data restore\n",
+          "stderr": "",
+          "outputSha256": "3cfeeb4aa203747e6707fa4d153789c9539173226a67a07d856c1ad9f248b6e9"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: scenario form feedback and baseline data restore\n",
+          "stderr": "",
+          "outputSha256": "3cfeeb4aa203747e6707fa4d153789c9539173226a67a07d856c1ad9f248b6e9"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: scenario form feedback and baseline data restore\n",
+          "stderr": "",
+          "outputSha256": "3cfeeb4aa203747e6707fa4d153789c9539173226a67a07d856c1ad9f248b6e9"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "418af9a671c30cc6e7ceaea70f53be47335c8b88",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

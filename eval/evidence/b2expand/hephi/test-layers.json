@@ -1,0 +1,99 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/test-layers",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5\n  if (typeof scripts[name] !== 'string' || scripts[name].length === 0) throw new Error(`missing script ${name}`)\n                                                                             ^\n\nError: missing script test:unit\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5:78\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v26.1.0\n",
+          "outputSha256": "0692c7b6606cfe0b05bd9b84281039e38872f3f7cf8a0950c2e0915451a5aa2c"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5\n  if (typeof scripts[name] !== 'string' || scripts[name].length === 0) throw new Error(`missing script ${name}`)\n                                                                             ^\n\nError: missing script test:unit\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5:78\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v26.1.0\n",
+          "outputSha256": "0692c7b6606cfe0b05bd9b84281039e38872f3f7cf8a0950c2e0915451a5aa2c"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5\n  if (typeof scripts[name] !== 'string' || scripts[name].length === 0) throw new Error(`missing script ${name}`)\n                                                                             ^\n\nError: missing script test:unit\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-6UcP02/checkout/[eval1]:5:78\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async node:internal/modules/esm/loader:233:26\n    at async ModuleLoader.executeModuleJob (node:internal/modules/esm/loader:230:20)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)\n\nNode.js v26.1.0\n",
+          "outputSha256": "0692c7b6606cfe0b05bd9b84281039e38872f3f7cf8a0950c2e0915451a5aa2c"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "hephi/package.json"
+      ],
+      "changedFiles": [
+        "hephi/package.json"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: package.json unit/integration test split\n",
+          "stderr": "",
+          "outputSha256": "76cc3b96b801bcb86b819d8e4de26590b30111cb29b2133fad210c1a7e3e573b"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: package.json unit/integration test split\n",
+          "stderr": "",
+          "outputSha256": "76cc3b96b801bcb86b819d8e4de26590b30111cb29b2133fad210c1a7e3e573b"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: package.json unit/integration test split\n",
+          "stderr": "",
+          "outputSha256": "76cc3b96b801bcb86b819d8e4de26590b30111cb29b2133fad210c1a7e3e573b"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "44e888cef161fd0c30daa1dc91f362d91eb2b1e0",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

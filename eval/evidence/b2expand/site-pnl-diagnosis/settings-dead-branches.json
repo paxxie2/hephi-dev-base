@@ -1,0 +1,99 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/settings-dead-branches",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\nAssertionError: from_env still contains an if/else with identical branches\n",
+          "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\nAssertionError: from_env still contains an if/else with identical branches\n",
+          "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 9, in <module>\nAssertionError: from_env still contains an if/else with identical branches\n",
+          "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/settings.py"
+      ],
+      "changedFiles": [
+        "backend/app/settings.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: settings identical branches removed with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "cb9f7fe6eac1662de80ed5364c41b8ead0078df826731c29691fd5da21941b6d"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: settings identical branches removed with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "cb9f7fe6eac1662de80ed5364c41b8ead0078df826731c29691fd5da21941b6d"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: settings identical branches removed with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "cb9f7fe6eac1662de80ed5364c41b8ead0078df826731c29691fd5da21941b6d"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "8d2ec5858ed3071eae598e5afb30b069807ce598",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

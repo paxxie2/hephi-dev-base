@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/money-window-helpers",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: missing helper _parse_window\n",
+          "outputSha256": "557064954c1908eef6f177e5bf19d57aeb92dd45a6a54bb0e20a5fc624468a6c"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: missing helper _parse_window\n",
+          "outputSha256": "557064954c1908eef6f177e5bf19d57aeb92dd45a6a54bb0e20a5fc624468a6c"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: missing helper _parse_window\n",
+          "outputSha256": "557064954c1908eef6f177e5bf19d57aeb92dd45a6a54bb0e20a5fc624468a6c"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/domain/money.py",
+        "backend/tests/test_money.py"
+      ],
+      "changedFiles": [
+        "backend/app/domain/money.py",
+        "backend/tests/test_money.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: money window helpers extracted with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "ca8de9520bebbbc8cc3eec6c08d63c5c63ab33f69189368e124adbe9eca86d63"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: money window helpers extracted with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "ca8de9520bebbbc8cc3eec6c08d63c5c63ab33f69189368e124adbe9eca86d63"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: money window helpers extracted with preserved behavior\n",
+          "stderr": "",
+          "outputSha256": "ca8de9520bebbbc8cc3eec6c08d63c5c63ab33f69189368e124adbe9eca86d63"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "8d2ec5858ed3071eae598e5afb30b069807ce598",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

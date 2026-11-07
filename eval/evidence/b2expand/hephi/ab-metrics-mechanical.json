@@ -1,0 +1,105 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/ab-metrics-mechanical",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: ab-metrics self-test exited non-zero\nnode:fs:436\n    return binding.readFileUtf8(path, stringToFlags(options.flag));\n                   ^\n\nError: ENOENT: no such file or directory, open '--self-test'\n    at readFileSync (node:fs:436:20)\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-x4RCM9/checkout/eval/ab-metrics.mjs:96:28\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:636:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  errno: -2,\n  code: 'ENOENT',\n  syscall: 'open',\n  path: '--self-test'\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "ef7dabc3236b2af28fb2aec9d9c671e16ada24c2e47fa615b2626bca30c0cc4a"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: ab-metrics self-test exited non-zero\nnode:fs:436\n    return binding.readFileUtf8(path, stringToFlags(options.flag));\n                   ^\n\nError: ENOENT: no such file or directory, open '--self-test'\n    at readFileSync (node:fs:436:20)\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-x4RCM9/checkout/eval/ab-metrics.mjs:96:28\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:636:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  errno: -2,\n  code: 'ENOENT',\n  syscall: 'open',\n  path: '--self-test'\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "ef7dabc3236b2af28fb2aec9d9c671e16ada24c2e47fa615b2626bca30c0cc4a"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: ab-metrics self-test exited non-zero\nnode:fs:436\n    return binding.readFileUtf8(path, stringToFlags(options.flag));\n                   ^\n\nError: ENOENT: no such file or directory, open '--self-test'\n    at readFileSync (node:fs:436:20)\n    at file:///private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-x4RCM9/checkout/eval/ab-metrics.mjs:96:28\n    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)\n    at async node:internal/modules/esm/loader:636:26\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {\n  errno: -2,\n  code: 'ENOENT',\n  syscall: 'open',\n  path: '--self-test'\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "ef7dabc3236b2af28fb2aec9d9c671e16ada24c2e47fa615b2626bca30c0cc4a"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/PREREG.md",
+        "eval/RUNBOOK.md",
+        "eval/ab-metrics.mjs",
+        "eval/b5-plan.mjs"
+      ],
+      "changedFiles": [
+        "eval/PREREG.md",
+        "eval/RUNBOOK.md",
+        "eval/ab-metrics.mjs",
+        "eval/b5-plan.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: ab-metrics self-test\n",
+          "stderr": "",
+          "outputSha256": "f23d4c0c60b50ddb05f4fa8697754d947ae7ef6901cbae1ebcb35f20527f462b"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: ab-metrics self-test\n",
+          "stderr": "",
+          "outputSha256": "f23d4c0c60b50ddb05f4fa8697754d947ae7ef6901cbae1ebcb35f20527f462b"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: ab-metrics self-test\n",
+          "stderr": "",
+          "outputSha256": "f23d4c0c60b50ddb05f4fa8697754d947ae7ef6901cbae1ebcb35f20527f462b"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "7c52d33a6d5c334c4f81c3408a2222853df0711b",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

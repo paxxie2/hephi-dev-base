@@ -1,0 +1,919 @@
+diff --git a/eval/daily/APPEALS.md b/eval/daily/APPEALS.md
+new file mode 100644
+index 0000000..a0d39bf
+--- /dev/null
++++ b/eval/daily/APPEALS.md
+@@ -0,0 +1,122 @@
++# B8 误拦申诉流程（APPEALS）
++
++本文件规定工单作者认为赫菲的拒绝（ready/检查/范围/纪律等）不合理时的申诉流程。它是
++ROADMAP-95 §B8「误拦申诉：工单作者认为拒绝不合理时加标签 `hephi/appeal`，由非开发者复核」
++的落地口径，也是估计误拦率与维护成本的输入之一。
++
++> 状态：骨架（2026-11-07）。申诉的宿主侧标签/通知能力尚未在真实宿主验证；真实启用前
++> 需要宿主团队确认 `hephi/appeal` 标签的可见性与复核者通知方式。
++
++## 1. 原则
++
++1. **只读原决策**：申诉不修改决策日志、检查记录、合同或工单终态；原记录保持不可变。
++2. **非开发者复核**：复核者不得是原 Worker 的开发者、不得是本次提交作者；由负责人指定
++   （产品/测试/独立评审），并记录身份与角色。
++3. **可追溯**：每条申诉必须能关联到具体决策日志条目与检查记录（含合同哈希/插件 commit/
++   宿主版本），否则退回补充证据。
++4. **双向计数**：申诉结果同时进入误拦率（`false-block`）与维护工时（`false-block-handling`），
++   不进入 B5 实验主指标；不得用申诉结果反过来修改预注册。
++
++## 2. 触发与提交
++
++- 工单作者（或值班人）在原 Issue/Ticket 加标签 **`hephi/appeal`**，并在 Issue 追加一条
++  `appeal` 模板评论（不得编辑原决策/检查记录）。
++- 同一决策只受理一次申诉；重复申诉按“补充证据”处理，仍记在同一 `appealId` 下。
++- 提交时至少提供：被拒的决策引用（规则 id、时间、`contractHash`）、期望结果、理由。
++  缺证据时复核者可要求补充，计时暂停。
++
++申诉评论模板：
++
++```markdown
++## HEPHI appeal
++
++- appealId: <ticketId>-<yyyy-mm-dd>-<seq>
++- 被拒决策: <rule id> @ <at>（decision log seq=<n>，contractHash=<sha256:...>）
++- 原因: <为什么认为该拒绝不合理>
++- 期望: <放行 / 重新运行检查 / 修正范围>
++- 证据: <检查记录 runId、Session/commit、复现步骤；可附链接>
++```
++
++## 3. 复核流程
++
++| 步骤 | 负责人 | 产出 |
++| --- | --- | --- |
++| 1. 受理 | 值班人 | 检查标签与模板完整，分配 `appealId`、复核者 |
++| 2. 取证 | 复核者（非开发者） | 读取该工单决策日志（`decisions.jsonl`）对应 `seq`、检查记录 `run.json`/`output.log`（校验 `outputHash`）、合同 `contractHash`、插件 `pluginCommit`、宿主版本；只读，不改文件 |
++| 3. 判定 | 复核者 | `outcome = overturn`（误拦）/ `upheld`（拒绝合理）/ `inconclusive`（证据不足），给出 `rootCause` 与 `reviewNotes` |
++| 4. 处置 | 负责人/插件 owner | `overturn` 且属实现缺陷时：登记修复 + 回归测试，必要时重跑检查后放行；`upheld` 说明规则依据；`inconclusive` 列缺失证据 |
++| 5. 记录 | 值班人 | 追加 `appeal-record.jsonl`（见 §4），更新维护工时与误拦统计 |
++| 6. 归档 | 负责人 | 月度/季度汇总，公开包只放脱敏聚合结果 |
++
++时限建议（由负责人确认后写入）：受理 ≤1 个工作日；取证+判定 ≤3 个工作日；实现修复单独立项，
++不计入申诉时限但工时计入维护成本。
++
++## 4. 记录字段（`appeal-record.jsonl`，只追加）
++
++```json
++{
++  "schemaVersion": 1,
++  "appealId": "ticket-123-2026-11-07-1",
++  "ticketId": "ticket-123",
++  "issueUrl": "https://github.com/<owner>/<repo>/issues/<n>",
++  "filedAt": "2026-11-07T09:00:00Z",
++  "filedBy": "author-handle",
++  "label": "hephi/appeal",
++  "decisionRefs": [
++    {
++      "decisionLogSeq": 42,
++      "rule": "ready.evidence-missing",
++      "reason": "missing, failed or stale evidence: build",
++      "at": "2026-11-07T08:50:00Z",
++      "contractHash": "sha256:...",
++      "tool": "orchestrator_report"
++    }
++  ],
++  "checkRunIds": ["<runId>"],
++  "pluginCommit": "<40-hex>",
++  "hostVersion": "<approved value or experimental>",
++  "reviewedBy": "reviewer-handle",
++  "reviewedRole": "non-developer",
++  "raisedByNonDeveloper": true,
++  "outcome": "overturn",
++  "rootCause": "plugin-bug",
++  "reviewNotes": "检查记录 outputHash 可校验，但命令比较缺少 baseSha 前缀，判定规则实现错误。",
++  "resolvedAt": "2026-11-08T10:00:00Z",
++  "maintainHours": 1.5,
++  "fixRefs": ["commit:<sha>", "test:<path>"]
++}
++```
++
++字段约束：
++
++- `outcome` ∈ `overturn` / `upheld` / `inconclusive`；
++- `rootCause` ∈ `plugin-bug` / `contract-error` / `host-issue` / `task-flaw` /
++  `user-misunderstanding` / `inconclusive`；
++- `raisedByNonDeveloper` 恒为 `true`（B8 要求非开发者复核）；
++- `maintainHours` 与 `eval/daily/MAINTENANCE.md` §3 的 `false-block-handling` 工时一致，
++  同一事件不得重复计两处；
++- 记录只追加，不改原决策日志/检查记录/合同；`appeal-record.jsonl` 与决策日志分开存放。
++
++## 5. 统计口径（与 B8 其它计数分开报告）
++
++- **误拦率** = 窗口内 `outcome=overturn` 的申诉数 ÷ 窗口内拒绝决策总数（决策日志
++  `effectiveDecision=deny` 的去重条目；分母来源与口径必须在月报写明）。
++- 同时报告：`upheld`、`inconclusive` 数；`rootCause` 分布；每类维护工时。
++- 误拦率分母不得用“所有运行数”代替“拒绝决策数”；样本小的时候同时给次数与置信区间。
++- 申诉工单计入 `eval/daily/export.mjs` 的 `total`；不进入 B5 效果实验主指标。
++- 申诉结果用于改进规则/文档，不用于事后修改预注册或补数据。
++
++## 6. 与其它文档的关联
++
++- 决策日志格式：`hephi/src/control/decision-log.ts`、`hephi/docs/decisions-format.md`
++  （`seq`/`rule`/`reason`/`contractHash`/`pluginCommit`）。
++- 检查记录：`state/hephi/<ticketId>/checks/<runId>/run.json` + `output.log`
++  （`outputHash` 可校验）。
++- 运行记录 schema：`eval/schema/run.schema.json`；实验排除规则见 `eval/PREREG.md` §7。
++- 维护成本模板：`eval/daily/MAINTENANCE.md` §3；月度报告模板 §5。
++
++## 7. 安全与留档
++
++- 申诉记录按 P14 存本机证据目录，不提交生产数据到公开实验包；公开只放脱敏聚合。
++- 不记录密钥/token/用户隐私；复核过程只读，不修改决策日志与检查记录。
++- 该流程变更需升版本并说明是否影响已发布误拦率；已发布数据不重算（如需重算，另开版本并说明）。
+diff --git a/eval/daily/MAINTENANCE.md b/eval/daily/MAINTENANCE.md
+new file mode 100644
+index 0000000..1bc8014
+--- /dev/null
++++ b/eval/daily/MAINTENANCE.md
+@@ -0,0 +1,166 @@
++# B8 日常使用：维护成本日志与计数口径（MAINTENANCE）
++
++本文件属于 ROADMAP-95 §B8（日常使用），规定**启用后的日常观察窗口**如何记录维护成本、
++如何用机械工具复算工单计数与返工候选。它**不是**效果实验或 P8 验收证据；实验口径见
++`eval/PREREG.md` / `eval/RUNBOOK.md`。
++
++> 状态：骨架（2026-11-07）。真实推广期的数据源（orchestrator sqlite / 原生 Ticket 主表）
++> 尚未在启用后核对；本文件先固定**口径与模板**，数据可用性如实标注。
++
++## 1. 范围与窗口
++
++- 观察窗口（observation window）由负责人按季度/月定义，写入每批 `batch.json`（起止时间、
++  模型/宿主/插件实际版本、团队/任务复杂度变化）。前后对比只能作为辅助证据（B8 混杂因素）。
++- **统计范围包括所有工单**：已合并、未合并、被放弃、长期阻塞都算；被赫菲长期阻塞后放弃的
++  必须进入统计。不得只数已合并工单。
++- 误拦申诉单独走 `eval/daily/APPEALS.md`；申诉不修改原决策/检查记录。
++
++## 2. 计数口径与 P15 基线映射（对应计划审查 P2-6）
++
++### 2.1 去重键
++
++**`ticketId`**（P15 归档中的 `tickets[].id`）。同一 `ticketId` 的重复记录只保留一条；重复记录
++只能补充证据（`merged`/`dropped`/`blocked` 取 OR），不得凭空新增工单。
++P15 `summary.total` 是归档记录数（可能跨 db 重复），**`summary.uniqueIds` 才与日常导出的
++`counts.total` 同口径**；报告必须同时写出这两个数并说明差异。
++
++### 2.2 P15 → 日常导出字段映射
++
++| P15 `tickets.json` 字段 | 日常导出字段 | 说明 |
++| --- | --- | --- |
++| `id` | `ticketId` | 去重键 |
++| `ended.outcome` / `status` | `status` / `state` | `merged` / `dropped` / `stopped` / `completed` / `open` |
++| `createdAt` | `createdAt` | 原样 |
++| `ended.at` | `endedAt` | 原样 |
++| `prRefs` | `prs` | 字符串数组；对象形式 `{url,state}` 的 `state=merged` 视为合并证据 |
++| `source` | `source` | 归档 db 来源 |
++| — | `stage` | P15 无该字段时为 `null` |
++| — | `blocked` | **P15 归档没有阻塞字段** → 基线 `blocked=0`；启用后需从原生 Ticket 的
++  disposition/ended 之外的阻塞标记补录（数据源待宿主团队确认，未验证） |
++| — | `dropped` | P15 有 `dropped` outcome 时才计 `dropped`；P15 的 `stopped`/`completed` 计 `closedUnmerged`（不自动当放弃；若宿主用 stopped 表示放弃，需负责人确认后再映射） |
++| — | `sourceIssue` | P15 无 Issue 关联时为 `null` |
++
++### 2.3 计数定义（`eval/daily/export.mjs` 输出 `counts`）
++
++| 字段 | 定义 | 备注 |
++| --- | --- | --- |
++| `total` | 去重后工单数（所有状态） | = P15 `uniqueIds` |
++| `merged` | 有合并证据的工单（P15 outcome=merged / `merged*` 字段 / PR `state=merged`） | |
++| `unmerged` | `total − merged` | 未合并的**补集**，因此与 `dropped`/`blocked` 有重叠 |
++| `dropped` | 明确被放弃（P15 outcome=dropped / `dropped`/`abandoned` 标记） | 未合并子集 |
++| `blocked` | 当前仍阻塞（`blocked=true` / `blockedSince` / `blockedReason`） | 未合并子集 |
++| `closedUnmerged` | 未合并、未放弃、未阻塞，但已结束（completed/stopped/closed） | 互斥细分 |
++| `openNotBlocked` | 其余：仍开放且未阻塞 | 互斥细分 |
++
++互斥核对恒等式：`total = merged + dropped + blocked + closedUnmerged + openNotBlocked`，
++且 `unmerged = total − merged = dropped + blocked + closedUnmerged + openNotBlocked`。
++报告里必须同时给出恒等式等式两边的数（export 脚本会拒绝没有 `ticketId` 的输入）。
++
++## 3. 维护成本日志模板
++
++每个自然月（以及每次宿主升级/误拦事件后）追加一行 `maintenance.jsonl`（只追加、不改历史）：
++
++```json
++{
++  "schemaVersion": 1,
++  "batch": "daily-2026-11",
++  "at": "2026-11-30T10:00:00Z",
++  "category": "host-upgrade-adaptation",
++  "hours": 3.5,
++  "owner": "operator-name",
++  "evidence": ["docs/validation/...", "commit:<sha>", "ticket:<id>"],
++  "description": "升级宿主 0.2.2 后适配 sessionQuery 事件结构",
++  "relatedRuns": 0,
++  "notes": "按 P8/S3 流程只做只读核对，未部署"
++}
++```
++
++`category` 枚举（互斥、必填）：
++
++| category | 含义 |
++| --- | --- |
++| `host-upgrade-adaptation` | 宿主升级适配（插件/合同/事件结构变化） |
++| `false-block-handling` | 误拦处理（含复核、放行、修复、回归测试） |
++| `config-maintenance` | 配置维护（cordis.patch.yml、hostVersion、校验脚本） |
++| `documentation` | 运行手册/预注册/证据归档维护 |
++| `other` | 其他，必须在 `description` 说明 |
++
++字段约束：`hours` 为 0.25 的倍数（真实工时，不是估算模型 token）；`owner` 为人类负责人；
++`evidence` 必须可追溯（提交 SHA/文档相对路径/工单 id）；`relatedRuns` 为直接影响的 B6 运行数。
++
++月度汇总字段：按 category 合计工时、总工时、有效运行数（来自 B6 `report.py`/run records 的
++`validationEnvironment.status=available` 计数）、每运行维护工时 = 总工时 ÷ 有效运行数。
++**不要**把维护工时折算成 token 或模型费用（成本口径见 PREREG §5）。
++
++## 4. 用脚本复算（真实命令）
++
++### 4.1 工单计数（export.mjs）
++
++```sh
++# 输入：P15 归档目录（含 tickets.json/summary.json）或同形 JSON
++node eval/daily/export.mjs --input <p15-archive-dir> --out <batch>/daily-export.json
++```
++
++输出 `counts`（字段见 §2.3）。核对顺序：
++
++1. `counts.total === P15 summary.uniqueIds`（若不等，检查是否混入归档外工单/缺 `ticketId`）；
++2. 互斥恒等式 §2.3 成立；
++3. `merged` 与 P15 `byStatus.merged` 一致（若 P15 有不同来源的 merged 标记，在报告里同时列）；
++4. `blocked=0` 时必须在报告注明“基线无阻塞字段，不计入基线；启用后另采”。
++
++export 只读输入；不会修改归档，也不访问网络。
++
++### 4.2 返工候选（rework.mjs）
++
++```sh
++node eval/daily/rework.mjs --repo <repo> --since <window-start> \
++     --window-days <PREREG 锁定值> --json > <batch>/rework-candidates.json
++```
++
++- 口径：merge commit（`--merges`）后窗口内、**非 merge** 且 message 引用原 PR/Issue 编号、
++  且修改文件与 merge 引入文件有交集的提交 = 候选；每条候选 `category="pending-human"`。
++- **必须抽样人工分类**（缺陷修复 / 需求变更 / 正常演进）：样本量、抽样 seed、窗口长度写进
++  预注册；分类结果追加 `rework-labels.jsonl`（`commit`、`candidateRef`、`label`、`rater`、
++  `at`）。
++- 报告两类数：候选占比 = `summary.candidates ÷ summary.mergesReviewed`；返工率估计 =
++  抽样中 `label=defect-fix`（或预注册定义）的数量 ÷ 抽样候选数，并给出置信区间。
++- 机械候选**不能**直接当返工率；窗口/抽样变化必须一起报告。
++
++### 4.3 误拦事件
++
++误拦处理工时计入 §3 的 `false-block-handling`；返工候选与维护成本分开报告。申诉流程见
++`eval/daily/APPEALS.md`。
++
++## 5. 月度维护报告模板
++
++```markdown
++# 日常使用月报（<month>）
++
++- 观察窗口：<from> .. <to>；模型/宿主/插件实际版本：...
++- 混杂因素：模型升级、团队变化、任务复杂度变化、审查人员变化（列出并说明影响）
++
++## 工单计数（export）
++| total | merged | unmerged | dropped | blocked | closedUnmerged | openNotBlocked |
++| --- | --- | --- | --- | --- | --- | --- |
++| ... | ... | ... | ... | ... | ... | ... |
++恒等式核对：...；P15 uniqueIds=...，差异说明=...
++
++## 返工候选（rework）
++mergesReviewed=...；candidates=...；候选占比=...；
++抽样=...；人工分类=缺陷修复/需求变更/正常演进；返工率估计=...（CI=...）
++
++## 维护成本
++| category | 工时 | 说明/证据 |
++...
++总工时=...；有效运行=...；每运行维护工时=...；相关误拦事件=...
++
++## 结论与限制
++（只写机械计数＋人工分类结果；不得用月报证明 B5 实验效果；不得把 R3.7/P8 当作已通过）
++```
++
++## 6. 安全与留档
++
++- 月度记录与 export/rework 输出按 P14 存放在本机证据目录，**不提交生产数据**到公开实验包；
++  公开包只放聚合计数/脱敏分类结果。
++- 不记录 token、密钥、用户隐私；不修改归档、决策日志、检查记录（只读/只追加）。
++- 本文件的模板与口径变更需升版本并说明是否影响已发布月报。
+diff --git a/eval/daily/export.mjs b/eval/daily/export.mjs
+new file mode 100644
+index 0000000..95bfe7d
+--- /dev/null
++++ b/eval/daily/export.mjs
+@@ -0,0 +1,331 @@
++#!/usr/bin/env node
++// B8 daily-use exporter: archive ALL tickets (merged / unmerged / dropped / long-blocked).
++//
++// ROADMAP-95 §B8: 日常使用统计必须覆盖所有工单（已合并、未合并、被放弃、长期阻塞），
++// 不能只数已合并的工单。本脚本是 P15 基线归档（eval/export-baseline.mjs）的“日常导出”
++// 补充：输入可以是 P15 归档目录，也可以是任意同形 JSON；输出统一字段 + 计数。
++//
++//   node eval/daily/export.mjs --input <archive.json|dir> --out <json>
++//   node eval/daily/export.mjs --self-test
++//
++// 去重键：ticketId（P15 用 Ticket 主表 id -> 这里映射为 ticketId；P15 summary 的
++// `uniqueIds` 与本脚本的 total 同口径，见 eval/daily/MAINTENANCE.md §2）。
++//
++// 计数口径（见 MAINTENANCE.md，计划审查 P2-6 要求写清去重键与状态映射）：
++//   total    = 去重后的工单数（所有状态）
++//   merged   = 有合并证据的工单（P15 outcome=merged / merged* 字段 / PR merged 标记）
++//   unmerged = total - merged（未合并；包含 dropped/blocked/open，故与下面两个计数有重叠）
++//   dropped  = 明确被放弃的工单（P15 outcome=dropped / dropped/abandoned 标记）
++//   blocked  = 当前仍处于阻塞的工单（blocked 标记 / blockedSince；P15 open 且无阻塞字段时计 0）
++//   另外给出互斥拆分 merged/droppedOnly/blockedOnly/closedUnmerged/openNotBlocked，便于核对：
++//   total = merged + closedUnmerged + droppedOnly + blockedOnly + openNotBlocked。
++//
++// 只读输入；不访问网络、不修改归档。输出到 --out 指定的新 JSON 文件。
++import { execFileSync } from 'node:child_process'
++import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
++import { dirname, join, resolve } from 'node:path'
++import { tmpdir } from 'node:os'
++import { fileURLToPath } from 'node:url'
++
++export class UsageError extends Error {}
++
++const MERGE_EVIDENCE = new Set(['merged'])
++const DROPPED_EVIDENCE = new Set(['dropped', 'abandoned', 'cancelled', 'canceled'])
++const CLOSED_EVIDENCE = new Set(['completed', 'stopped', 'closed', 'done'])
++
++function firstDefined(...values) { return values.find(value => value !== undefined && value !== null) }
++
++function safeId(value) {
++  if (value === undefined || value === null) return null
++  const id = String(value).trim()
++  return id ? id : null
++}
++
++/** Accept P15 `prRefs` (strings), plain numbers, or objects with number/url/merged. */
++export function normalizePrRefs(raw) {
++  const list = []
++  const push = value => {
++    if (value === undefined || value === null) return
++    if (Array.isArray(value)) { for (const item of value) push(item); return }
++    if (typeof value === 'number' || typeof value === 'string') {
++      const text = String(value).trim()
++      if (!text) return
++      const number = /(\d+)\s*$/.exec(text.split('pull/').pop() ?? '')?.[1]
++      list.push({ ref: text, number: number ? Number(number) : null, merged: false })
++      return
++    }
++    if (typeof value === 'object') {
++      const number = Number.isSafeInteger(value.number) ? value.number : null
++      const ref = typeof value.url === 'string' ? value.url : (number ? `#${number}` : null)
++      if (ref === null) return
++      list.push({ ref, number, merged: value.merged === true || value.state === 'merged' })
++    }
++  }
++  push(raw)
++  const seen = new Set()
++  return list.filter(item => { if (seen.has(item.ref)) return false; seen.add(item.ref); return true })
++}
++
++/** Normalize one raw ticket. Returns null when there is no usable ticketId. */
++export function normalizeTicket(raw, source) {
++  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null
++  const ticketId = safeId(firstDefined(raw.ticketId, raw.id, raw.ticket))
++  if (!ticketId) return null
++  const ended = raw.ended && typeof raw.ended === 'object' ? raw.ended : null
++  const statusRaw = firstDefined(raw.state, raw.status, raw.stage, ended?.outcome) ?? null
++  const status = typeof statusRaw === 'string' ? statusRaw.toLowerCase() : null
++  const prs = normalizePrRefs(firstDefined(raw.prs, raw.prRefs, raw.pullRequests, raw.pullRequest, raw.pr))
++  const merged = raw.merged === true || typeof raw.mergedAt === 'string' || typeof raw.mergeCommit === 'string'
++    || (status !== null && MERGE_EVIDENCE.has(status)) || prs.some(pr => pr.merged === true)
++  const dropped = raw.dropped === true || raw.abandoned === true || (status !== null && DROPPED_EVIDENCE.has(status))
++  const closed = Boolean(ended) || typeof firstDefined(raw.endedAt, raw.closedAt, raw.finishedAt) === 'string'
++    || (status !== null && (DROPPED_EVIDENCE.has(status) || CLOSED_EVIDENCE.has(status) || MERGE_EVIDENCE.has(status)))
++  const blocked = dropped ? false : (raw.blocked === true || typeof raw.blockedSince === 'string'
++    || (typeof raw.blockedReason === 'string' && raw.blockedReason.trim() !== ''))
++  return {
++    ticketId,
++    state: typeof firstDefined(raw.state, raw.status, ended?.outcome) === 'string' ? String(firstDefined(raw.state, raw.status, ended?.outcome)) : (closed ? 'ended' : 'open'),
++    stage: firstDefined(raw.stage, raw.stageName) ?? null,
++    status: status,
++    createdAt: firstDefined(raw.createdAt, raw.created, raw.openedAt) ?? null,
++    endedAt: firstDefined(raw.endedAt, raw.closedAt, raw.finishedAt, ended?.at) ?? null,
++    updatedAt: firstDefined(raw.updatedAt, raw.updated) ?? null,
++    prs,
++    merged: Boolean(merged),
++    dropped: Boolean(dropped),
++    blocked: Boolean(blocked),
++    closed,
++    sourceIssue: firstDefined(raw.sourceIssue, raw.issue, raw.issueRef, raw.triggerIssue, raw.githubIssue) ?? null,
++    source: firstDefined(raw.source, source) ?? null,
++  }
++}
++
++/**
++ * Deduplicate by ticketId. A later duplicate can only ADD evidence (never remove it),
++ * so the merged/dropped/blocked booleans are OR-ed and other fields keep the first value.
++ */
++export function dedupeTickets(tickets) {
++  const byId = new Map()
++  for (const ticket of tickets) {
++    const previous = byId.get(ticket.ticketId)
++    if (!previous) { byId.set(ticket.ticketId, { ...ticket }); continue }
++    byId.set(ticket.ticketId, {
++      ...previous,
++      merged: previous.merged || ticket.merged,
++      dropped: previous.dropped || ticket.dropped,
++      blocked: previous.blocked || ticket.blocked,
++      closed: previous.closed || ticket.closed,
++      prs: previous.prs.length ? previous.prs : ticket.prs,
++      createdAt: previous.createdAt ?? ticket.createdAt,
++      endedAt: previous.endedAt ?? ticket.endedAt,
++      updatedAt: previous.updatedAt ?? ticket.updatedAt,
++      sourceIssue: previous.sourceIssue ?? ticket.sourceIssue,
++      stage: previous.stage ?? ticket.stage,
++      status: previous.status ?? ticket.status,
++      state: previous.state || ticket.state,
++    })
++  }
++  return [...byId.values()]
++}
++
++export function summarize(tickets) {
++  const total = tickets.length
++  const merged = tickets.filter(ticket => ticket.merged).length
++  const dropped = tickets.filter(ticket => !ticket.merged && ticket.dropped).length
++  const blocked = tickets.filter(ticket => !ticket.merged && !ticket.dropped && ticket.blocked).length
++  const closedUnmerged = tickets.filter(ticket => !ticket.merged && !ticket.dropped && !ticket.blocked && ticket.closed).length
++  const openNotBlocked = total - merged - dropped - blocked - closedUnmerged
++  return {
++    total,
++    merged,
++    unmerged: total - merged,
++    dropped,
++    blocked,
++    closedUnmerged,
++    openNotBlocked,
++    // Mutually exclusive split; identity: total === merged + dropped + blocked + closedUnmerged + openNotBlocked.
++    withMergeEvidence: merged,
++    prLinked: tickets.filter(ticket => ticket.prs.length > 0).length,
++    byStatus: tickets.reduce((acc, ticket) => {
++      const key = ticket.status ?? 'unknown'
++      acc[key] = (acc[key] ?? 0) + 1
++      return acc
++    }, {}),
++  }
++}
++
++function readJsonFile(path) {
++  let text
++  try { text = readFileSync(path, 'utf8') } catch (error) {
++    throw new UsageError(`cannot read --input file ${path}: ${error instanceof Error ? error.message : String(error)}`)
++  }
++  try { return JSON.parse(text) } catch (error) {
++    throw new UsageError(`--input file is not valid JSON: ${error instanceof Error ? error.message : String(error)}`)
++  }
++}
++
++/** Load tickets from a P15 archive directory or an archive-shaped JSON file. */
++export function loadInput(inputPath) {
++  const absolute = resolve(inputPath)
++  if (!existsSync(absolute)) throw new UsageError(`--input does not exist: ${absolute}`)
++  const isDirectory = statSync(absolute).isDirectory()
++  let source
++  let raw
++  let summary = null
++  if (isDirectory) {
++    source = `${absolute}/tickets.json`
++    raw = readJsonFile(join(absolute, 'tickets.json'))
++    if (existsSync(join(absolute, 'summary.json'))) summary = readJsonFile(join(absolute, 'summary.json'))
++  } else {
++    source = absolute
++    raw = readJsonFile(absolute)
++  }
++  const list = Array.isArray(raw) ? raw
++    : (raw && Array.isArray(raw.tickets)) ? raw.tickets
++      : (raw && raw.tickets && typeof raw.tickets === 'object' && !Array.isArray(raw.tickets)) ? Object.values(raw.tickets)
++        : null
++  if (list === null) throw new UsageError(`--input has no tickets array: ${absolute}`)
++  const normalized = []
++  let skippedInvalid = 0
++  for (const entry of list) {
++    const ticket = normalizeTicket(entry, source)
++    if (ticket === null) { skippedInvalid += 1; continue }
++    normalized.push(ticket)
++  }
++  if (normalized.length === 0) throw new UsageError(`--input contains no tickets with a ticketId: ${absolute}`)
++  return { source, summary, tickets: dedupeTickets(normalized), skippedInvalid }
++}
++
++export function exportDaily(inputPath, { now = new Date().toISOString() } = {}) {
++  const loaded = loadInput(inputPath)
++  const counts = summarize(loaded.tickets)
++  return {
++    generator: 'eval/daily/export.mjs',
++    schemaVersion: 1,
++    exportedAt: now,
++    input: loaded.source,
++    inputSummary: loaded.summary === null ? null : {
++      total: loaded.summary.total ?? null,
++      uniqueIds: loaded.summary.uniqueIds ?? null,
++      byStatus: loaded.summary.byStatus ?? null,
++    },
++    dedupKey: 'ticketId',
++    skippedInvalid: loaded.skippedInvalid,
++    counts,
++    tickets: loaded.tickets,
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Self-test: synthetic archive in a temp dir, all states + a duplicate ticket.
++// ---------------------------------------------------------------------------
++function pass(results, name, condition, detail = '') {
++  if (condition) { results.push(`PASS ${name}`); return }
++  results.push(`FAIL ${name}${detail ? ` :: ${detail}` : ''}`)
++}
++
++function spawnCli(args) {
++  const scriptPath = fileURLToPath(import.meta.url)
++  try {
++    const stdout = execFileSync(process.execPath, [scriptPath, ...args], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
++    return { status: 0, stdout }
++  } catch (error) {
++    return { status: typeof error.status === 'number' ? error.status : null, stdout: `${error.stdout ?? ''}${error.stderr ?? ''}` }
++  }
++}
++
++export function selfTest() {
++  const results = []
++  const root = mkdtempSync(join(tmpdir(), 'daily-export-self-'))
++  const archive = join(root, 'archive')
++  const outPath = join(root, 'daily.json')
++  try {
++    mkdirSync(archive, { recursive: true })
++    const tickets = [
++      { id: 't-merged', title: 'merged', createdAt: '2026-01-01T00:00:00Z', ended: { at: '2026-01-02T00:00:00Z', outcome: 'merged' }, prRefs: ['https://github.com/example/repo/pull/1'] },
++      { id: 't-open-blocked', title: 'blocked', createdAt: '2026-01-03T00:00:00Z', blockedSince: '2026-01-04T00:00:00Z', blockedReason: 'waits for upstream' },
++      { id: 't-dropped', title: 'dropped', createdAt: '2026-01-05T00:00:00Z', ended: { at: '2026-01-06T00:00:00Z', outcome: 'dropped' } },
++      { id: 't-open', title: 'open', createdAt: '2026-01-07T00:00:00Z' },
++      { id: 't-closed', title: 'completed but not merged', createdAt: '2026-01-08T00:00:00Z', ended: { at: '2026-01-09T00:00:00Z', outcome: 'completed' } },
++      { id: 't-evidence', title: 'merged flag only', createdAt: '2026-01-10T00:00:00Z', merged: true, prs: [{ url: 'https://github.com/example/repo/pull/9', state: 'merged' }] },
++      { id: 't-merged', title: 'duplicate of merged', createdAt: '2026-01-01T00:00:00Z', merged: true, ended: { at: '2026-01-02T00:00:00Z', outcome: 'merged' } },
++    ]
++    writeFileSync(join(archive, 'tickets.json'), JSON.stringify(tickets, null, 2))
++    writeFileSync(join(archive, 'summary.json'), JSON.stringify({ total: tickets.length, uniqueIds: 6, byStatus: { merged: 2, open: 2, dropped: 1, completed: 1 } }, null, 2))
++
++    const result = exportDaily(archive, { now: '2026-11-07T00:00:00.000Z' })
++    pass(results, 'self-test dedup key is ticketId', result.dedupKey === 'ticketId' && result.tickets.length === 6, `tickets=${result.tickets.length}`)
++    pass(results, 'self-test total counts unique tickets', result.counts.total === 6, `total=${result.counts.total}`)
++    pass(results, 'self-test merged count', result.counts.merged === 2, `merged=${result.counts.merged}`)
++    pass(results, 'self-test unmerged is total - merged', result.counts.unmerged === 4 && result.counts.unmerged === result.counts.total - result.counts.merged, JSON.stringify(result.counts))
++    pass(results, 'self-test dropped count', result.counts.dropped === 1, `dropped=${result.counts.dropped}`)
++    pass(results, 'self-test blocked count', result.counts.blocked === 1, `blocked=${result.counts.blocked}`)
++    pass(results, 'self-test mutually exclusive split sums to total', result.counts.merged + result.counts.dropped + result.counts.blocked + result.counts.closedUnmerged + result.counts.openNotBlocked === result.counts.total, JSON.stringify(result.counts))
++    pass(results, 'self-test duplicate ticket can only add merge evidence', result.tickets.find(ticket => ticket.ticketId === 't-merged').merged === true)
++    pass(results, 'self-test fields present per ticket', result.tickets.every(ticket => typeof ticket.ticketId === 'string' && 'state' in ticket && 'createdAt' in ticket && 'endedAt' in ticket && Array.isArray(ticket.prs) && 'merged' in ticket && 'dropped' in ticket && 'blocked' in ticket && 'sourceIssue' in ticket))
++    pass(results, 'self-test PR merged flag counts as merge evidence', result.tickets.find(ticket => ticket.ticketId === 't-evidence').merged === true)
++    pass(results, 'self-test input summary kept for P15 mapping', result.inputSummary && result.inputSummary.uniqueIds === 6)
++
++    // CLI: missing args / nonexistent input exit 2; valid dir input writes JSON; JSON file input works.
++    pass(results, 'self-test CLI rejects missing --input with exit 2', spawnCli(['--out', outPath]).status === 2)
++    pass(results, 'self-test CLI rejects missing --out with exit 2', spawnCli(['--input', archive]).status === 2)
++    pass(results, 'self-test CLI rejects nonexistent input with exit 2', spawnCli(['--input', join(root, 'missing'), '--out', outPath]).status === 2)
++    const cliRun = spawnCli(['--input', archive, '--out', outPath])
++    pass(results, 'self-test CLI exports archive directory', cliRun.status === 0 && JSON.parse(readFileSync(outPath, 'utf8')).counts.total === 6)
++    const jsonInput = join(root, 'tickets.json')
++    writeFileSync(jsonInput, JSON.stringify([{ ticketId: 'j-1', state: 'open' }, { ticketId: 'j-2', state: 'dropped', dropped: true }]))
++    const jsonOut = join(root, 'json-out.json')
++    const jsonRun = spawnCli(['--input', jsonInput, '--out', jsonOut])
++    pass(results, 'self-test CLI exports plain JSON array input', jsonRun.status === 0 && JSON.parse(readFileSync(jsonOut, 'utf8')).counts.total === 2)
++    pass(results, 'self-test CLI rejects invalid ticket input with exit 2', spawnCli(['--input', (() => { const p = join(root, 'bad.json'); writeFileSync(p, JSON.stringify([{ title: 'no id' }])); return p })(), '--out', join(root, 'x.json')]).status === 2)
++  } finally {
++    rmSync(root, { recursive: true, force: true })
++  }
++  for (const line of results) console.log(line)
++  const failed = results.filter(line => line.startsWith('FAIL')).length
++  if (failed > 0) { console.log(`\nFAILED: ${failed} assertion(s)`); return 1 }
++  console.log(`\nPASS: ${results.length} assertions (export self-test)`)
++  return 0
++}
++
++function parseArgs(argv) {
++  const options = { input: null, out: null, selfTest: false, help: false }
++  for (let index = 0; index < argv.length; index += 1) {
++    const arg = argv[index]
++    if (arg === '--self-test') { options.selfTest = true; continue }
++    if (arg === '--help' || arg === '-h') { options.help = true; continue }
++    if (!['--input', '--out'].includes(arg)) throw new UsageError(`unknown argument: ${arg}`)
++    const value = argv[index + 1]
++    if (value === undefined) throw new UsageError(`missing value for ${arg}`)
++    index += 1
++    if (arg === '--input') options.input = value
++    if (arg === '--out') options.out = value
++  }
++  if (options.selfTest || options.help) return options
++  if (options.input === null) throw new UsageError('--input is required')
++  if (options.out === null) throw new UsageError('--out is required')
++  return options
++}
++
++if (process.argv[1] === fileURLToPath(import.meta.url)) {
++  let options
++  try { options = parseArgs(process.argv.slice(2)) } catch (error) {
++    console.error(error instanceof Error ? error.message : String(error))
++    console.error('usage: node eval/daily/export.mjs --input <archive.json|dir> --out <json> | --self-test')
++    process.exitCode = 2
++  }
++  if (options && options.help) { console.log('usage: node eval/daily/export.mjs --input <archive.json|dir> --out <json> | --self-test'); process.exitCode = 0 }
++  else if (options && options.selfTest) process.exitCode = selfTest()
++  else if (options) {
++    try {
++      const result = exportDaily(options.input)
++      mkdirSync(dirname(resolve(options.out)), { recursive: true })
++      writeFileSync(options.out, `${JSON.stringify(result, null, 2)}\n`)
++      console.log(JSON.stringify({ out: options.out, dedupKey: result.dedupKey, counts: result.counts }, null, 2))
++    } catch (error) {
++      const usage = error instanceof UsageError
++      console.error(error instanceof Error ? error.message : String(error))
++      process.exitCode = usage ? 2 : 1
++    }
++  }
++}
+diff --git a/eval/daily/rework.mjs b/eval/daily/rework.mjs
+new file mode 100644
+index 0000000..7677a88
+--- /dev/null
++++ b/eval/daily/rework.mjs
+@@ -0,0 +1,276 @@
++#!/usr/bin/env node
++// B8 rework-CANDIDATE finder (ROADMAP-95 §B8).
++//
++// 只做机械候选发现：找出“合并后一定窗口内修改同一批文件、且引用了原 PR/Issue”的提交。
++// 这些只是**候选**：返工率需要抽样人工分类（缺陷修复 / 需求变更 / 正常演进），
++// 所以每条候选都带 `category: "pending-human"`，脚本不给出返工/非返工结论。
++//
++//   node eval/daily/rework.mjs --repo <dir> --since <date> --window-days <n> [--json]
++//   node eval/daily/rework.mjs --self-test
++//
++// 口径（写入 eval/daily/MAINTENANCE.md）：
++//   * “合并”= git 历史中的 merge commit（--merges）；引用 = commit message/body 中的
++//     `#<n>` 或 `pull/<n>`；原 PR/Issue 引用取自 merge commit message。
++//   * 后续提交 = merge..HEAD 范围内的非 merge commit，其 committer 时间落在
++//     [mergeAt, mergeAt + windowDays) 内。
++//   * 命中 = 后续提交 message 引用原编号 且 修改文件与 merge 引入文件有交集。
++//   * 窗口长度由 PREREG 锁定（B8）；本工具只接受该值，不自行选择。
++//   * 只读仓库（git log/show/diff），不写工作区、不访问网络。
++import { execFileSync } from 'node:child_process'
++import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
++import { join } from 'node:path'
++import { tmpdir } from 'node:os'
++import { fileURLToPath } from 'node:url'
++
++export class UsageError extends Error {}
++const DAY_MS = 24 * 60 * 60 * 1000
++
++export function git(repo, args, env = {}) {
++  return execFileSync('git', args, {
++    cwd: repo, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024,
++    env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'],
++  })
++}
++
++/** Extract referenced PR/Issue numbers from a commit message (`#42`, `pull/42`). */
++export function extractRefs(text) {
++  const refs = new Set()
++  for (const match of String(text ?? '').matchAll(/(?:#(\d+))|(?:pull\/(\d+))/g)) {
++    refs.add(Number(match[1] ?? match[2]))
++  }
++  return [...refs].sort((a, b) => a - b)
++}
++
++function splitLines(text) {
++  return String(text ?? '').split('\n').map(line => line.trim()).filter(Boolean)
++}
++
++function diffNames(repo, from, to) {
++  return splitLines(git(repo, ['diff', '--name-only', '--no-renames', from, to]))
++}
++
++function commitFiles(repo, commit) {
++  return splitLines(git(repo, ['show', '--name-only', '--format=', '--no-renames', commit]))
++}
++
++function commitMeta(repo, format, revision) {
++  const [hash, committedAt, author, subject, ...body] = git(repo, ['show', '-s', `--format=${format}`, revision]).split('\0')
++  return {
++    commit: hash,
++    committedAt,
++    author,
++    subject: subject ?? '',
++    body: body.join('\0').replace(/\n+$/, ''),
++  }
++}
++
++// Commit messages can contain newlines; use a record separator so git log output parses.
++const LOG_FORMAT = '%H%x00%cI%x00%an%x00%s%x00%b%x1e'
++
++function parseLogRows(text) {
++  return String(text ?? '').split('\x1e').map(chunk => chunk.trim()).filter(Boolean).map(chunk => {
++    const [hash, committedAt, author, subject, ...body] = chunk.split('\0')
++    return { commit: hash, committedAt, author, subject: subject ?? '', body: body.join('\0'), at: Date.parse(committedAt) }
++  })
++}
++
++/** Merge commits in `--since` range with their refs and introduced files. */
++export function findMerges(repo, since) {
++  const hashes = splitLines(git(repo, ['log', '--merges', `--since=${since}`, '--format=%H']))
++  return hashes.map(hash => {
++    const meta = commitMeta(repo, '%H%x00%cI%x00%an%x00%s%x00%b', hash)
++    const files = diffNames(repo, `${hash}^1`, hash)
++    const refs = extractRefs(`${meta.subject}\n${meta.body}`)
++    return { mergeCommit: meta.commit, mergeAt: new Date(meta.committedAt).toISOString(), mergeSubject: meta.subject, mergeAuthor: meta.author, refs, files }
++  })
++}
++
++/** Follow-up commits of one merge; only non-merge commits can be candidates. */
++function followUps(repo, merge, windowDays) {
++  const from = Date.parse(merge.mergeAt)
++  const untilMs = from + windowDays * DAY_MS
++  const until = new Date(untilMs).toISOString()
++  const rows = parseLogRows(git(repo, [
++    'log', '--no-merges', `${merge.mergeCommit}..HEAD`, `--since=${merge.mergeAt}`, `--until=${until}`,
++    `--format=${LOG_FORMAT}`,
++  ]))
++  return rows.filter(row => Number.isFinite(row.at) && row.at >= from && row.at < untilMs)
++}
++
++/**
++ * Find rework candidates. `windowDays` must be the PREREG-locked value.
++ * Returns candidates with a `pending-human` category placeholder — never a verdict.
++ */
++export function findReworkCandidates(repo, { since, windowDays }) {
++  const merges = findMerges(repo, since)
++  const candidates = []
++  for (const merge of merges) {
++    if (merge.refs.length === 0 || merge.files.length === 0) continue
++    for (const followUp of followUps(repo, merge, windowDays)) {
++      const refs = extractRefs(`${followUp.subject}\n${followUp.body}`)
++      const referenceMatches = refs.filter(number => merge.refs.includes(number))
++      if (referenceMatches.length === 0) continue
++      const files = commitFiles(repo, followUp.commit)
++      const sharedFiles = files.filter(file => merge.files.includes(file))
++      if (sharedFiles.length === 0) continue
++      candidates.push({
++        category: 'pending-human',
++        original: { refs: merge.refs, mergeCommit: merge.mergeCommit, mergeAt: merge.mergeAt, mergeSubject: merge.mergeSubject },
++        followUp: { commit: followUp.commit, committedAt: new Date(followUp.at).toISOString(), author: followUp.author, subject: followUp.subject },
++        referenceMatches,
++        sharedFiles,
++      })
++    }
++  }
++  return { repo, since, windowDays, mergesReviewed: merges.length, candidates, summary: { mergesReviewed: merges.length, candidates: candidates.length, pendingHuman: candidates.length } }
++}
++
++function pass(results, name, condition, detail = '') {
++  if (condition) { results.push(`PASS ${name}`); return }
++  results.push(`FAIL ${name}${detail ? ` :: ${detail}` : ''}`)
++}
++
++function spawnCli(args) {
++  const scriptPath = fileURLToPath(import.meta.url)
++  try {
++    const stdout = execFileSync(process.execPath, [scriptPath, ...args], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
++    return { status: 0, stdout }
++  } catch (error) {
++    return { status: typeof error.status === 'number' ? error.status : null, stdout: `${error.stdout ?? ''}${error.stderr ?? ''}` }
++  }
++}
++
++export function selfTest() {
++  const results = []
++  const root = mkdtempSync(join(tmpdir(), 'daily-rework-self-'))
++  const repo = join(root, 'repo')
++  mkdirSync(repo, { recursive: true })
++  const run = (args, env = {}) => execFileSync('git', args, { cwd: repo, encoding: 'utf8', env: { ...process.env, ...env } })
++  const at = iso => ({ GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso })
++  try {
++    run(['init', '-q', '-b', 'main'])
++    run(['config', 'user.email', 'test@example.invalid'])
++    run(['config', 'user.name', 'rework self-test'])
++    writeFileSync(join(repo, 'base.txt'), 'base\n')
++    run(['add', '.'])
++    run(['commit', '-q', '-m', 'base'], at('2020-01-01T00:00:00Z'))
++    run(['checkout', '-q', '-b', 'feature'])
++    writeFileSync(join(repo, 'shared.js'), 'export const shared = 1\n')
++    writeFileSync(join(repo, 'feature.js'), 'export const feature = 1\n')
++    run(['add', '.'])
++    run(['commit', '-q', '-m', 'feature: add shared module'], at('2020-01-02T00:00:00Z'))
++    run(['checkout', '-q', 'main'])
++    run(['merge', '--no-ff', '-m', 'Merge pull request #42 from feature', 'feature'], at('2020-01-03T00:00:00Z'))
++    const hit = (file, message, iso) => {
++      run(['checkout', '-q', '--', '.'])
++      writeFileSync(join(repo, file), `${message}\n`)
++      run(['add', '-A'])
++      run(['commit', '-q', '-m', message], at(iso))
++      return run(['rev-parse', 'HEAD']).trim()
++    }
++    const hitCommit = hit('shared.js', 'Fix regression from #42', '2020-01-05T00:00:00Z')
++    hit('shared.js', 'Improve formatting of shared helpers', '2020-01-06T00:00:00Z')
++    hit('other.js', 'Refs #42', '2020-01-06T12:00:00Z')
++    hit('shared.js', 'Related to #77', '2020-01-07T00:00:00Z')
++    hit('shared.js', 'Follow-up for #42', '2020-01-20T00:00:00Z')
++
++    const result = findReworkCandidates(repo, { since: '2019-12-01T00:00:00Z', windowDays: 7 })
++    pass(results, 'self-test finds exactly one rework candidate', result.candidates.length === 1 && result.summary.candidates === 1, JSON.stringify(result.summary))
++    const candidate = result.candidates[0]
++    pass(results, 'self-test candidate references the original PR', candidate && candidate.original.refs.includes(42) && candidate.referenceMatches.includes(42), candidate && JSON.stringify(candidate.referenceMatches))
++    pass(results, 'self-test candidate points at the follow-up commit', candidate && candidate.followUp.commit === hitCommit && candidate.followUp.subject === 'Fix regression from #42', candidate && candidate.followUp.commit)
++    pass(results, 'self-test candidate lists the shared files', candidate && JSON.stringify(candidate.sharedFiles) === JSON.stringify(['shared.js']), candidate && JSON.stringify(candidate.sharedFiles))
++    pass(results, 'self-test candidate is pending-human, not a verdict', candidate && candidate.category === 'pending-human')
++    pass(results, 'self-test ignores commits that modify a shared file without referencing the PR', !result.candidates.some(item => item.followUp.subject === 'Improve formatting of shared helpers'))
++    pass(results, 'self-test ignores commits that reference the PR but touch other files', !result.candidates.some(item => item.followUp.subject === 'Refs #42'))
++    pass(results, 'self-test ignores commits that reference another issue', !result.candidates.some(item => item.followUp.subject === 'Related to #77'))
++    pass(results, 'self-test ignores commits outside the window', !result.candidates.some(item => item.followUp.subject === 'Follow-up for #42'))
++
++    const longWindow = findReworkCandidates(repo, { since: '2019-12-01T00:00:00Z', windowDays: 30 })
++    pass(results, 'self-test later reference enters only with a wider window', longWindow.candidates.some(item => item.followUp.subject === 'Follow-up for #42'))
++
++    const jsonRun = spawnCli(['--repo', repo, '--since', '2019-12-01T00:00:00Z', '--window-days', '7', '--json'])
++    const parsed = jsonRun.status === 0 ? JSON.parse(jsonRun.stdout) : null
++    pass(results, 'self-test --json output is parseable and complete', parsed !== null && parsed.windowDays === 7 && parsed.summary.candidates === 1 && parsed.repo === repo)
++    const humanRun = spawnCli(['--repo', repo, '--since', '2019-12-01T00:00:00Z', '--window-days', '7'])
++    pass(results, 'self-test human output lists the candidate', humanRun.status === 0 && humanRun.stdout.includes('Fix regression from #42') && humanRun.stdout.includes('pending-human'))
++
++    const badCases = [
++      ['missing --repo', ['--since', '2019-12-01T00:00:00Z', '--window-days', '7']],
++      ['missing --since', ['--repo', repo, '--window-days', '7']],
++      ['missing --window-days', ['--repo', repo, '--since', '2019-12-01T00:00:00Z']],
++      ['invalid --since', ['--repo', repo, '--since', 'not-a-date', '--window-days', '7']],
++      ['invalid --window-days', ['--repo', repo, '--since', '2019-12-01T00:00:00Z', '--window-days', '0']],
++      ['non-existent repo', ['--repo', join(root, 'missing'), '--since', '2019-12-01T00:00:00Z', '--window-days', '7']],
++    ]
++    for (const [label, args] of badCases) {
++      pass(results, `self-test rejects invalid input: ${label} (exit 2)`, spawnCli(args).status === 2)
++    }
++  } finally {
++    rmSync(root, { recursive: true, force: true })
++  }
++  for (const line of results) console.log(line)
++  const failed = results.filter(line => line.startsWith('FAIL')).length
++  if (failed > 0) { console.log(`\nFAILED: ${failed} assertion(s)`); return 1 }
++  console.log(`\nPASS: ${results.length} assertions (rework self-test)`)
++  return 0
++}
++
++function parseArgs(argv) {
++  const options = { repo: null, since: null, windowDays: null, json: false, selfTest: false, help: false }
++  for (let index = 0; index < argv.length; index += 1) {
++    const arg = argv[index]
++    if (arg === '--self-test') { options.selfTest = true; continue }
++    if (arg === '--json') { options.json = true; continue }
++    if (arg === '--help' || arg === '-h') { options.help = true; continue }
++    if (!['--repo', '--since', '--window-days'].includes(arg)) throw new UsageError(`unknown argument: ${arg}`)
++    const value = argv[index + 1]
++    if (value === undefined) throw new UsageError(`missing value for ${arg}`)
++    index += 1
++    if (arg === '--repo') options.repo = value
++    if (arg === '--since') options.since = value
++    if (arg === '--window-days') options.windowDays = value
++  }
++  if (options.selfTest || options.help) return options
++  if (options.repo === null) throw new UsageError('--repo is required')
++  if (options.since === null) throw new UsageError('--since is required')
++  if (options.windowDays === null) throw new UsageError('--window-days is required')
++  if (!existsSync(options.repo)) throw new UsageError(`--repo does not exist: ${options.repo}`)
++  if (Number.isNaN(Date.parse(options.since))) throw new UsageError(`--since is not a valid date: ${options.since}`)
++  if (!/^\d+$/.test(String(options.windowDays)) || Number(options.windowDays) <= 0) throw new UsageError(`--window-days must be a positive integer, got "${options.windowDays}"`)
++  return { ...options, windowDays: Number(options.windowDays) }
++}
++
++function assertGitRepo(repo) {
++  try { execFileSync('git', ['rev-parse', '--git-dir'], { cwd: repo, stdio: 'ignore' }); return true } catch { return false }
++}
++
++if (process.argv[1] === fileURLToPath(import.meta.url)) {
++  let options
++  try { options = parseArgs(process.argv.slice(2)) } catch (error) {
++    console.error(error instanceof Error ? error.message : String(error))
++    console.error('usage: node eval/daily/rework.mjs --repo <dir> --since <date> --window-days <n> [--json] | --self-test')
++    process.exitCode = 2
++  }
++  if (options && options.help) { console.log('usage: node eval/daily/rework.mjs --repo <dir> --since <date> --window-days <n> [--json] | --self-test'); process.exitCode = 0 }
++  else if (options && options.selfTest) process.exitCode = selfTest()
++  else if (options) {
++    try {
++      if (!assertGitRepo(options.repo)) throw new UsageError(`--repo is not a git repository: ${options.repo}`)
++      const result = findReworkCandidates(options.repo, { since: options.since, windowDays: options.windowDays })
++      if (options.json) {
++        console.log(JSON.stringify(result, null, 2))
++      } else {
++        console.log(`rework candidates: ${result.candidates.length} (merges reviewed: ${result.summary.mergesReviewed}, window ${result.windowDays}d, since ${result.since})`)
++        for (const candidate of result.candidates) {
++          console.log(`- ${candidate.followUp.commit.slice(0, 10)} ${candidate.followUp.committedAt} "${candidate.followUp.subject}" refs=${candidate.referenceMatches.map(n => `#${n}`).join(',')} files=${candidate.sharedFiles.join(',')} <- merge ${candidate.original.mergeCommit.slice(0, 10)} category=${candidate.category}`)
++        }
++        console.log('note: candidates are pending-human classification (defect-fix / requirement-change / normal-evolution); this tool does not decide rework.')
++      }
++    } catch (error) {
++      const usage = error instanceof UsageError
++      console.error(error instanceof Error ? error.message : String(error))
++      process.exitCode = usage ? 2 : 1
++    }
++  }
++}

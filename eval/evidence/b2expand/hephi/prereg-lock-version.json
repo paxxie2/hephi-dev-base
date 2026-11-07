@@ -1,0 +1,99 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/prereg-lock-version",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: --check output lacks the tool version line\n[prereg-lock] scanned: eval/PREREG.md, eval/decisions-draft.md\n[prereg-lock]   eval/PREREG.md sha256=c9635210641fddfd5955d6ca7cb774b8a36ae856f5a457093e711819a75be611 bytes=176\n[prereg-lock]   eval/decisions-draft.md sha256=c9db46f5a5e81e9a455ff61251f44cdd7c264a75c4e95cc14887e72a110680da bytes=223\n[prereg-lock] preregSha256=0a62f606539ace09f48af666addf86ba2cbdeed58f52eb23be918eab17373973\n[prereg-lock] decisions: D-1=approved, D-2=approved\n[prereg-lock] 注意：通过只表示“无未决标记”；负责人批准不由本工具验证。\n[prereg-lock] OK: no unresolved marker; --check passed\n",
+          "stderr": "",
+          "outputSha256": "59e6b00577a7347518995dfb555aa1bede003538b6cf3d2edf20dcd74678afd6"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: --check output lacks the tool version line\n[prereg-lock] scanned: eval/PREREG.md, eval/decisions-draft.md\n[prereg-lock]   eval/PREREG.md sha256=c9635210641fddfd5955d6ca7cb774b8a36ae856f5a457093e711819a75be611 bytes=176\n[prereg-lock]   eval/decisions-draft.md sha256=c9db46f5a5e81e9a455ff61251f44cdd7c264a75c4e95cc14887e72a110680da bytes=223\n[prereg-lock] preregSha256=0a62f606539ace09f48af666addf86ba2cbdeed58f52eb23be918eab17373973\n[prereg-lock] decisions: D-1=approved, D-2=approved\n[prereg-lock] 注意：通过只表示“无未决标记”；负责人批准不由本工具验证。\n[prereg-lock] OK: no unresolved marker; --check passed\n",
+          "stderr": "",
+          "outputSha256": "59e6b00577a7347518995dfb555aa1bede003538b6cf3d2edf20dcd74678afd6"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: --check output lacks the tool version line\n[prereg-lock] scanned: eval/PREREG.md, eval/decisions-draft.md\n[prereg-lock]   eval/PREREG.md sha256=c9635210641fddfd5955d6ca7cb774b8a36ae856f5a457093e711819a75be611 bytes=176\n[prereg-lock]   eval/decisions-draft.md sha256=c9db46f5a5e81e9a455ff61251f44cdd7c264a75c4e95cc14887e72a110680da bytes=223\n[prereg-lock] preregSha256=0a62f606539ace09f48af666addf86ba2cbdeed58f52eb23be918eab17373973\n[prereg-lock] decisions: D-1=approved, D-2=approved\n[prereg-lock] 注意：通过只表示“无未决标记”；负责人批准不由本工具验证。\n[prereg-lock] OK: no unresolved marker; --check passed\n",
+          "stderr": "",
+          "outputSha256": "59e6b00577a7347518995dfb555aa1bede003538b6cf3d2edf20dcd74678afd6"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/prereg-lock.mjs"
+      ],
+      "changedFiles": [
+        "eval/prereg-lock.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: prereg-lock --check prints tool version\n",
+          "stderr": "",
+          "outputSha256": "c8f01077764fb30c095fd1f2fa2457879a97b4f58f6125c3d3e3f3fbbd288c13"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: prereg-lock --check prints tool version\n",
+          "stderr": "",
+          "outputSha256": "c8f01077764fb30c095fd1f2fa2457879a97b4f58f6125c3d3e3f3fbbd288c13"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: prereg-lock --check prints tool version\n",
+          "stderr": "",
+          "outputSha256": "c8f01077764fb30c095fd1f2fa2457879a97b4f58f6125c3d3e3f3fbbd288c13"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "bcb4c8c038a8272b3003bf10143ed273e43c97db",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

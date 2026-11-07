@@ -1,0 +1,15 @@
+diff --git a/hephi/package.json b/hephi/package.json
+index 3b359bb..35c133f 100644
+--- a/hephi/package.json
++++ b/hephi/package.json
+@@ -36,7 +36,9 @@
+     "build": "tsdown -c tsdown.config.ts",
+     "typecheck": "tsc --noEmit",
+     "test": "vitest run",
+-    "check": "pnpm typecheck && pnpm test && pnpm build"
++    "check": "pnpm typecheck && pnpm test && pnpm build",
++    "test:unit": "vitest run tests/contracts tests/control/activation.test.ts tests/control/decision-log.test.ts tests/control/plugin-version.test.ts tests/control/ready-gate.test.ts tests/tools",
++    "test:integration": "vitest run tests/control tests/probes tests/kb tests/verification --exclude tests/control/activation.test.ts --exclude tests/control/decision-log.test.ts --exclude tests/control/plugin-version.test.ts --exclude tests/control/ready-gate.test.ts"
+   },
+   "engines": {
+     "node": ">=22.19.0",

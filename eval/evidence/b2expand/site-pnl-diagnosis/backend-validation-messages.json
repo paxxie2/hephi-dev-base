@@ -1,0 +1,109 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/backend-validation-messages",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-S9c8LF/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "fb1bbdaf5e24151ac1df723cde240bbd27836765f3984122ca37915025f45cba"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-S9c8LF/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "fb1bbdaf5e24151ac1df723cde240bbd27836765f3984122ca37915025f45cba"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-S9c8LF/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "fb1bbdaf5e24151ac1df723cde240bbd27836765f3984122ca37915025f45cba"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/main.py",
+        "backend/app/schemas.py",
+        "backend/app/services/chat.py",
+        "backend/app/services/scenarios.py",
+        "backend/app/validation_messages.py",
+        "backend/tests/test_scenario_api.py"
+      ],
+      "changedFiles": [
+        "backend/app/main.py",
+        "backend/app/schemas.py",
+        "backend/app/services/chat.py",
+        "backend/app/services/scenarios.py",
+        "backend/tests/test_scenario_api.py",
+        "backend/app/validation_messages.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: Chinese field-level validation messages\n",
+          "stderr": "",
+          "outputSha256": "46e2c456257ef729cc1799fc5656ab7495602c4e9299768a6830fb06cdbba794"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: Chinese field-level validation messages\n",
+          "stderr": "",
+          "outputSha256": "46e2c456257ef729cc1799fc5656ab7495602c4e9299768a6830fb06cdbba794"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: Chinese field-level validation messages\n",
+          "stderr": "",
+          "outputSha256": "46e2c456257ef729cc1799fc5656ab7495602c4e9299768a6830fb06cdbba794"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "e00f338b098546adc40156dc15b4b6559e19835d",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

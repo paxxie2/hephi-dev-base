@@ -1,12 +1,112 @@
 [
   {
-    "taskId": "previous-window-order",
-    "repo": "site-pnl-diagnosis",
-    "category": "new-feature"
+    "taskId": "ab-metrics-mechanical",
+    "repo": "hephi",
+    "category": "defect-fix"
   },
   {
     "taskId": "b5-task-key-whitelist",
     "repo": "hephi",
     "category": "new-feature"
+  },
+  {
+    "taskId": "b7-matrix",
+    "repo": "hephi",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "daily-export-rework",
+    "repo": "hephi",
+    "category": "cross-module"
+  },
+  {
+    "taskId": "data-package-symlink",
+    "repo": "hephi",
+    "category": "defect-fix"
+  },
+  {
+    "taskId": "effects-db-checker",
+    "repo": "hephi",
+    "category": "cross-module"
+  },
+  {
+    "taskId": "prereg-lock-gate",
+    "repo": "hephi",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "prereg-lock-version",
+    "repo": "hephi",
+    "category": "defect-fix"
+  },
+  {
+    "taskId": "record-run",
+    "repo": "hephi",
+    "category": "staged-suitable"
+  },
+  {
+    "taskId": "repro-manifest",
+    "repo": "hephi",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "test-layers",
+    "repo": "hephi",
+    "category": "behavior-preserving-refactor"
+  },
+  {
+    "taskId": "verify-export",
+    "repo": "hephi",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "backend-input-validation",
+    "repo": "site-pnl-diagnosis",
+    "category": "cross-module"
+  },
+  {
+    "taskId": "backend-validation-messages",
+    "repo": "site-pnl-diagnosis",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "frontend-form-feedback",
+    "repo": "site-pnl-diagnosis",
+    "category": "staged-suitable"
+  },
+  {
+    "taskId": "health-service-field",
+    "repo": "site-pnl-diagnosis",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "history-page-size",
+    "repo": "site-pnl-diagnosis",
+    "category": "defect-fix"
+  },
+  {
+    "taskId": "money-window-helpers",
+    "repo": "site-pnl-diagnosis",
+    "category": "behavior-preserving-refactor"
+  },
+  {
+    "taskId": "previous-window-order",
+    "repo": "site-pnl-diagnosis",
+    "category": "new-feature"
+  },
+  {
+    "taskId": "restore-data-package",
+    "repo": "site-pnl-diagnosis",
+    "category": "defect-fix"
+  },
+  {
+    "taskId": "restore-health-service-id",
+    "repo": "site-pnl-diagnosis",
+    "category": "defect-fix"
+  },
+  {
+    "taskId": "settings-dead-branches",
+    "repo": "site-pnl-diagnosis",
+    "category": "behavior-preserving-refactor"
   }
 ]

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "taskId": "prereg-lock-version",
+  "repo": "hephi",
+  "base": "bcb4c8c038a8272b3003bf10143ed273e43c97db",
+  "category": "defect-fix",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "eval/prereg-lock.mjs"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "hephi/pnpm-lock.yaml",
+    "commandsMustMatchOffline": true
+  }
+}

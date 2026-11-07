@@ -1,0 +1,663 @@
+diff --git a/eval/B7.md b/eval/B7.md
+new file mode 100644
+index 0000000..5aecbc2
+--- /dev/null
++++ b/eval/B7.md
+@@ -0,0 +1,220 @@
++# B7 多项目、多模型与独立复现：准备矩阵（v0.1）
++
++状态：**准备工具与清单 v0.1（2026-11-07）· 未执行任何真实实验**。本文件对应 `ROADMAP-95.md` §4 工作线 B 的
++**B7**（多项目、多模型与独立复现），定义"哪些仓库 × 模型组合具备开跑条件"的盘点口径，并提供
++`eval/b7-matrix.mjs` 生成组合清单。**组合清单只是准备状态，不是实验结果，也不证明 B7 达标。**
++
++> 本文件不改变 `eval/RUNBOOK.md`、`eval/PREREG.md` 的任何既有约束：Q1 分组定义（off/native）、
++> 样本量口径（分层估计、PREREG §6 D-4 待负责人）、宿主未解阻项（RUNBOOK §3，R3.7 blocked / P8 部分）
++> 均以原文件为准。本文件只新增 B7 的盘点工具与清单。
++
++## 1. B7 的目标（引用 ROADMAP-95 §B7）
++
++| 维度 | 要求 | 来源 |
++| --- | --- | --- |
++| 仓库数 | **≥ 3**：Dubbo（Java/Maven）+ 一个 TypeScript 项目 + 一个 Python 项目 | ROADMAP-95 §B7 |
++| 环境 | 每个仓库按前置 **P10** 准备构建环境（固定版本、依赖锁定、离线构建、任务有效性复核） | §B7 + PREREQUISITES P10 |
++| 任务 | 按 **B2** 的类别构造任务，并通过 `eval/check-task.mjs` 结构校验与有效性复核 | §B7 + `eval/tasks/README.md` |
++| 模型数 | **≥ 2** | §B7 |
++| 样本量 | **每个仓库、模型组合分别按 B5 的方法估算**，不用总数代替各分层 | §B7 + PREREG §6 |
++| 独立复现 | 复现者用公开实验包随机抽子集重跑并盲评；判定"方向一致、置信区间有重叠"，不要求重新达到原门槛；复现报告由复现者撰写、原样收录 | §B7 + RUNBOOK §10 |
++| 评分用途 | B7 达标 → D2、D5 可评 L3；独立复现一致 → D5 可评 L4 | ROADMAP-95 §4「工作线 B 的评分证据」 |
++
++> 评分用途只说明"达标后可以怎么评"，**不等于当前已达标**。本文件不改变任何评分档位。
++
++## 2. 当前状态（未验证声明）
++
++| 项 | 状态 | 依据 |
++| --- | --- | --- |
++| Dubbo 构建环境（P10） | **部分**：离线编译与离线单元测试已实测通过；P10 仍 blocked（3 个候选任务、参考修复、`dubbo-checks.json` 检查配置、并发资源测量未完成） | `docs/p10-offline-build.md`（2026-11-07 记录） |
++| TypeScript 仓库接入 | **未开始 / 未验证**：无环境、无任务集 | 本仓库无对应记录 |
++| Python 仓库接入 | **未开始 / 未验证**：无环境、无任务集 | 本仓库无对应记录 |
++| 可用模型（≥2） | **未锁定**：只有占位 `model-a` / `model-b` 槽位；没有 provider 实际参数、版本或调用记录 | 本文件 §4 的合成夹具，不是真实模型清单 |
++| 正式样本量 | **未计算**：PREREG §6 `N_TODO`（D-4 待负责人），本工具不生成任何样本量数值 | `eval/PREREG.md` §6/§10 |
++| PREREG 锁定 | **未锁定**：DRAFT v0.1 | `eval/PREREG.md` 头部 |
++| 真实运行（off/native） | **0 次**：没有任何真实对照运行 | 本仓库 `eval/results/` 不存在 |
++| 独立复现 | **未安排**：无复现者、无实验包 | 本仓库无对应记录 |
++| 宿主侧解阻项（实载回读等） | **未解阻**：R3.7 blocked、P8 部分；不得把 R3.7/P8 当作已通过 | `eval/RUNBOOK.md` §3 |
++
++**结论**：当前只有 Dubbo 具备部分离线构建证据；**没有正式样本量，没有任何真实运行，也没有独立复现**。
++因此 **B7 未达标**，本文与 `eval/b7-matrix.mjs` 都不能作为达标或收益证据。
++
++## 3. 准备清单（决定一个 repo × model 组合能否开跑）
++
++### 3.1 P10 构建环境（逐仓库）
++
++| 检查项 | 要求 | 现状 |
++| --- | --- | --- |
++| 工具链版本固定 | Dubbo：固定 JDK/Maven（记录实测版本）；TS：固定 Node/pnpm；Python：固定 Python/venv 与依赖版本 | 仅 Dubbo 有实测记录（JDK 17.0.18 + Maven 3.9.9） |
++| 依赖锁定 | Dubbo 预热 `~/.m2`；TS 用 `pnpm-lock.yaml`；Python 用锁定 `requirements.txt` | Dubbo 已预热；另两个未开始 |
++| 离线构建验证 | 强制离线（Dubbo `mvn -o`）完成构建与既有测试；缺依赖必须显式失败，不回退在线 | Dubbo 已实测（`docs/p10-offline-build.md` §2/§3） |
++| 任务有效性复核 | 按 B2：`base` 上失败 → 参考修复通过，双向复核一致；任务六类覆盖 | 未完成（无候选任务） |
++| 检查配置 | 项目侧 `*-checks.json` 就绪；`baseMustFail`/`referenceMustPass` 可执行 | Dubbo 尚无检查配置（P10 记录 §4 第 3 项） |
++| 资源 | 磁盘/内存/CPU 满足计划并发；记录实测值 | 未测量 |
++
++### 3.2 检查配置与数据合规
++
++- **检查配置**：每个仓库要有项目检查配置（对应 C4.6「检查环境固定」），并纳入该仓库的任务卡
++  `checks` 约定（`eval/tasks/README.md` §2）。
++- **数据合规（P14）**：任务/仓库数据包来源与许可、脱敏、训练数据污染边界（`eval/tasks/README.md` §4）
++  必须由负责人确认；未确认前不得进入真实运行。
++
++### 3.3 预算、人员与模型
++
++- **预算（P13）**：成本上限按 PREREG §5 执行（数值待负责人确认）；组合越多，总成本按组合数线性放大。
++- **人员（P12）**：任务作者、范围评审者、两名盲评标注者 + 裁决者、**独立复现者**各自有人选。
++- **模型（≥2）**：记录 `modelId`、`provider`、版本与实际参数；宿主不支持的参数写"不可控"
++  （RUNBOOK §6），不得假装固定。
++
++### 3.4 组合就绪判定（`b7-matrix.mjs` 的口径）
++
++一个 repo × model 组合 **eligible** 当且仅当：
++
++1. **环境就绪** = `environmentReady && offlineBuild`（离线构建属于 P10 环境准备）；
++2. **检查配置就绪** = `checksConfig`。
++
++不满足的项按输入字段名写入 `blockers`：`environment-not-ready` / `offline-build-not-ready` /
++`checks-config-not-ready`。**样本量状态固定为 `pending-prereg`**——具体数值必须由 PREREG 按分层锁定，
++工具不计算、不猜测、不编造。
++
++## 4. 如何生成组合清单（`eval/b7-matrix.mjs`）
++
++### 4.1 用法
++
++```sh
++node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> \
++     (--out <matrix.json> | --dry-run)
++node eval/b7-matrix.mjs --self-test
++```
++
++- `--dry-run`：把矩阵打印到 stdout，**不写文件**；`--out`：写文件并在 stderr 打印一行摘要。
++- 退出码：`0` 成功；`1` 预期外错误；`2` **用法/校验错误**（未知参数、缺参数、非法 JSON、未知字段、
++  重复 id、空输入、非法枚举/类型）。
++- 无依赖、只用 Node 内置模块；不访问网络/宿主，不执行任何运行。
++
++### 4.2 输入 `repos.json`
++
++数组，或 `{ "repos": [...] }`（对象形式不允许额外字段）。每个仓库条目：
++
++| 字段 | 类型 | 必填 | 说明 |
++| --- | --- | --- | --- |
++| `repoId` | string | 是 | `^[a-z0-9][a-z0-9._-]{1,63}$`，唯一 |
++| `language` | enum | 是 | `java` / `typescript` / `python` |
++| `stack` | string | 否 | 非空字符串（`maven` / `pnpm` / `pip` …） |
++| `environmentReady` | boolean | 是 | P10 构建环境是否就绪（严格 true/false） |
++| `checksConfig` | boolean | 是 | 项目检查配置是否就绪 |
++| `offlineBuild` | boolean | 是 | 离线构建是否已验证 |
++| `notes` | string | 否 | 非空字符串（例如 P10 证据路径） |
++
++### 4.3 输入 `models.json`
++
++数组，或 `{ "models": [...] }`（对象形式不允许额外字段）。每个模型条目：
++
++| 字段 | 类型 | 必填 | 说明 |
++| --- | --- | --- | --- |
++| `modelId` | string | 是 | `^[a-z0-9][a-z0-9._-]{1,63}$`，唯一 |
++| `provider` | string | 是 | 非空字符串 |
++| `notes` | string | 否 | 非空字符串 |
++
++**所有未知字段一律拒绝**（不是在条目里"宽容忽略"）：拼错字段名会直接 exit 2，避免把准备状态写错却没发现。
++
++### 4.4 输出矩阵
++
++顶层字段：`schemaVersion: 1`、`generatedBy`、`generatedAt`、`preregLocked: false`、
++`notes[]`（第一条明确"不是实验结果"）、`source`（输入路径）、
++`targets`（`minRepos: 3` / `minModels: 2` 与是否满足）、`totalCombinations`、`eligibleCombinations`、
++`blockedCombinations`、`repos[]`、`models[]`、`combos[]`。
++
++每个组合行：
++
++| 字段 | 说明 |
++| --- | --- |
++| `comboId` | `b7-<repo>-<model>`，唯一且确定 |
++| `repo` / `model` | 输入 id |
++| `environmentReady` | P10 环境就绪（含离线构建） |
++| `checksReady` | 检查配置就绪 |
++| `eligible` | `environmentReady && checksReady` |
++| `blockers[]` | 未就绪项的字段名；**为空当且仅当 `eligible` 为 true** |
++| `sampleSizeStatus` | 固定 `"pending-prereg"` |
++
++生成规则：组合按 `(repo, model)` 稳定排序；同一输入重复生成，除 `generatedAt` 外逐字节一致；
++`preregLocked` 恒为 `false`（本工具不修改 PREREG）。
++
++### 4.5 例：合成夹具的真实 dry-run（**不是真实仓库清单**）
++
++2026-11-07 用临时合成夹具（3 个 repo × 2 个模型，全部是占位值；Node `v22.19.0`，仓库根目录）执行：
++
++```sh
++node eval/b7-matrix.mjs --repos /tmp/b7-fixtures/repos.json \
++     --models /tmp/b7-fixtures/models.json --dry-run
++```
++
++实测结果摘要（`exit 0`）：`totalCombinations=6`、`eligibleCombinations=0`、`blockedCombinations=6`、
++`targets.reposMet=true`、`targets.modelsMet=true`；`dubbo` 两个组合的 blocker 为
++`checks-config-not-ready`，`ts-project` / `py-project` 的组合三个 blocker 全中；所有
++`sampleSizeStatus` 均为 `pending-prereg`。该夹具刻意按现状构造（Dubbo 环境部分就绪但无检查配置，
++另两个仓库未准备），**只能证明工具行为，不代表任何真实仓库结论**。
++
++### 4.6 自测
++
++```sh
++node eval/b7-matrix.mjs --self-test
++```
++
++2026-11-07 实测（Node `v22.19.0`）：**`PASS: 36 assertions (b7-matrix self-test)`，exit 0**。覆盖：全就绪（3×2=6 组合全
++eligible）、缺环境、缺离线构建（归入环境就绪）、缺检查配置、blockers 词表、统计量一致、低于
++≥3 仓库/≥2 模型目标时 `notes` 告警、输入顺序不影响结果、排序稳定、`generatedAt` 除外确定性、
++重复/非法/未知字段/空输入拒绝（exit 2）、`--out` 写出可解析矩阵、`--dry-run` 不写文件。
++
++## 5. 与 B5 / PREREG 的关系
++
++```
++B7 准备矩阵（本工具）        ← 只盘点组合是否具备开跑条件
++   ↓ 每个 eligible 组合仍需：
++P10 / B2 / 检查配置 / 数据合规 / 预算 / 人员   全部就绪
++   ↓
++PREREG 锁定（§6 样本量按 repo/model/类别分层；§9 锁定 seed 与版本；D-4/D-7 待负责人）
++   ↓
++eval/b5-plan.mjs 按分层生成 plan.json（seed 可复现、两组交错、20% 重复）
++   ↓
++试跑（每任务每组 3 次，估计波动与样本量）→ 正式运行 → 盲评/统计 → 独立复现（B7 后半）
++```
++
++- **矩阵不替代 plan**：`b5-plan.mjs` 决定每个分层内"先跑谁、跑多少"；本工具只决定"哪些组合够格进入
++  计划"。二者输入不同，不能互相代替。
++- **样本量不来自本工具**：矩阵里 `sampleSizeStatus` 恒为 `pending-prereg`；真实数值必须由 PREREG §6
++  按分层锁定，试跑后填入（D-4）。
++- **不合并分层**：跨仓库/模型的组合不得用总数代替各分层样本量（ROADMAP §B7、PREREG §6）。
++- **范围待负责人**：第一轮是否只做单仓库、B7 多仓库何时进入，由 PREREG §10 **D-7** 决定；本文件只提供
++  盘点工具，不擅自扩大第一轮范围。
++
++## 6. 未验证声明（不得写成通过）
++
++1. **没有执行任何真实运行**：本工具与本文不包含 off/native 任一组的运行结果。
++2. **没有正式样本量**：所有 `sampleSizeStatus` 恒为 `pending-prereg`；PREREG §6 仍为 `N_TODO`。
++3. **只有 Dubbo 有部分离线环境证据**，且 P10 仍 blocked（候选任务、检查配置、资源测量未完成）。
++4. **TypeScript / Python 仓库未接入**：没有环境、没有任务集、没有检查配置。
++5. **模型未锁定**：没有真实模型清单、provider 参数、版本或调用记录。
++6. **宿主侧未解阻**：实载 commit 回读、正式 hostVersion、真实 drain 语义仍未验证（RUNBOOK §3；
++   R3.7 blocked / P8 部分），不得当作已通过。
++7. **没有独立复现**：无人选、无实验包、无复现报告。
++8. `--self-test` 与 dry-run 的夹具全部是**合成输入**，只验证工具行为，不产生任何实验结论。
++
++## 7. 环境纪律
++
++- **禁止在宿主实载插件工作树里运行 `pnpm build` / `pnpm check`**（RUNBOOK §6/§13；会改写实载
++  `lib/` 并污染宿主）。本工具的实现与验证只用 `node --check` 与 `node eval/b7-matrix.mjs --self-test`。
++- 本工具只读 `--repos`/`--models` 输入、只写 `--out`（`--dry-run` 不写）；不访问网络、宿主机或模型。
++- 自测的临时目录/夹具由脚本自己创建并清理，不落盘到仓库。
++
++## 8. 版本与后续
++
++| 项 | 值 |
++| --- | --- |
++| 版本 | v0.1（2026-11-07） |
++| 新增文件 | `eval/b7-matrix.mjs`、`eval/B7.md`（本文件） |
++| 未改动 | 其他 eval 脚本、RUNBOOK、PREREG、产品代码均未改 |
++| 后续步骤 | ① 选定 3 个 Dubbo 候选任务 + `dubbo-checks.json`，关闭 P10；② 接入 TS/Python 仓库并复用同一 P10 标准；③ 负责人确认 PREREG D-7 范围；④ 试跑后锁定 PREREG §6 样本量；⑤ 每个 eligible 组合用 `b5-plan.mjs` 生成分层计划 |
++
++> 重新生成组合清单时请重跑 `node eval/b7-matrix.mjs --self-test` 并保留 `--dry-run` 输出；任何把矩阵
++> 描述成"实验结论/收益证据/B7 已达标"的表述都是错误的。
+diff --git a/eval/b7-matrix.mjs b/eval/b7-matrix.mjs
+new file mode 100644
+index 0000000..c733278
+--- /dev/null
++++ b/eval/b7-matrix.mjs
+@@ -0,0 +1,431 @@
++#!/usr/bin/env node
++// Build the B7 preparation matrix (ROADMAP-95 §B7): every repository × model
++// combination with its P10 build environment readiness, checks-config readiness,
++// blockers and the fixed sample-size status. This is a preparation inventory
++// only: it runs nothing, reads no host, and is NOT an experiment result.
++//
++//   node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> \
++//        (--out <matrix.json> | --dry-run)
++//   node eval/b7-matrix.mjs --self-test
++//
++// repos.json (array, or `{ "repos": [...] }` with no extra fields; unknown
++// fields inside an entry are rejected):
++//   { "repoId": "dubbo", "language": "java", "stack": "maven",
++//     "environmentReady": true, "checksConfig": true, "offlineBuild": true,
++//     "notes": "optional" }
++//   repoId: ^[a-z0-9][a-z0-9._-]{1,63}$ and unique
++//   language: java | typescript | python (ROADMAP-95 §B7: Dubbo + one TS + one Python)
++//   stack: optional non-empty string (maven / pnpm / pip ...)
++//   environmentReady / checksConfig / offlineBuild: strict booleans; the three
++//     P10 preparation facts (build environment, project checks config, offline
++//     build verified)
++//   notes: optional non-empty string
++//
++// models.json (array, or `{ "models": [...] }` with no extra fields):
++//   { "modelId": "model-a", "provider": "provider-x", "notes": "optional" }
++//   modelId: same id pattern, unique; provider: non-empty string; notes: optional
++//
++// Matrix rules (ROADMAP-95 §B7, P10, PREREG §6):
++//   1. One row per repo × model, sorted by (repoId, modelId), so the same input
++//      always yields the same matrix (generatedAt aside) and can be audited.
++//   2. A row's `environmentReady` means P10 environment readiness INCLUDING the
++//      offline-build check: repo.environmentReady && repo.offlineBuild.
++//   3. `eligible` is true only when environmentReady && checksReady; every
++//      missing precondition is named in `blockers` by its input field, so
++//      `blockers` is empty exactly when `eligible` is true.
++//   4. `sampleSizeStatus` is fixed to "pending-prereg": per repo/model sample
++//      sizes must be locked in eval/PREREG.md §6 (D-4) before any run; this tool
++//      never computes, guesses or invents sample sizes.
++//   5. The B7 target is >= 3 repositories and >= 2 models (ROADMAP-95 §B7); the
++//      output records whether the supplied inventory meets it and adds a note.
++//   6. `preregLocked` is always false: this matrix is generated before PREREG is
++//      locked and does not update PREREG.
++//
++// Exit codes: 0 success, 1 unexpected error, 2 usage/validation error.
++// No dependencies, no network, no host access, no real runs.
++import { execFileSync } from 'node:child_process'
++import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
++import { tmpdir } from 'node:os'
++import { join } from 'node:path'
++import { fileURLToPath } from 'node:url'
++
++export const MATRIX_SCHEMA_VERSION = 1
++export const SAMPLE_SIZE_STATUS = 'pending-prereg'
++export const PREREG_LOCKED = false
++export const REPO_LANGUAGES = ['java', 'typescript', 'python']
++export const B7_TARGETS = { minRepos: 3, minModels: 2 }
++
++const SAFE_ID = /^[a-z0-9][a-z0-9._-]{1,63}$/
++// Exact field sets: anything else in an entry is an unknown field and rejected.
++const REPO_FIELDS = ['repoId', 'language', 'stack', 'environmentReady', 'checksConfig', 'offlineBuild', 'notes']
++const MODEL_FIELDS = ['modelId', 'provider', 'notes']
++// Blocker vocabulary (one blocker per failed input field; never invented states).
++const BLOCKERS = ['environment-not-ready', 'offline-build-not-ready', 'checks-config-not-ready']
++
++export class UsageError extends Error {}
++
++function compareIds(a, b) {
++  return a < b ? -1 : a > b ? 1 : 0
++}
++
++function readList(input, key) {
++  if (Array.isArray(input)) return input
++  if (input && typeof input === 'object') {
++    const keys = Object.keys(input)
++    if (keys.length !== 1 || keys[0] !== key) {
++      throw new UsageError(`${key} input must be an array or { "${key}": [...] } with no extra fields; got fields: ${keys.join(', ') || '(none)'}`)
++    }
++    return input[key]
++  }
++  throw new UsageError(`${key} input must be an array or { "${key}": [...] }`)
++}
++
++function requireSafeId(entry, field, label) {
++  const value = entry[field]
++  if (typeof value !== 'string' || !SAFE_ID.test(value)) throw new UsageError(`${label}: ${field} must match ^[a-z0-9][a-z0-9._-]{1,63}$, got "${String(value)}"`)
++  return value
++}
++
++function requireNonEmptyString(entry, field, label) {
++  const value = entry[field]
++  if (typeof value !== 'string' || !value.trim()) throw new UsageError(`${label}: ${field} must be a non-empty string`)
++  return value.trim()
++}
++
++function requireBoolean(entry, field, label) {
++  const value = entry[field]
++  if (typeof value !== 'boolean') throw new UsageError(`${label}: ${field} must be a boolean (true/false)`)
++  return value
++}
++
++function optionalString(entry, field, label) {
++  const value = entry[field]
++  if (value === undefined) return null
++  if (typeof value !== 'string' || !value.trim()) throw new UsageError(`${label}: ${field} must be a non-empty string when present`)
++  return value.trim()
++}
++
++function rejectUnknownFields(entry, allowed, label) {
++  for (const key of Object.keys(entry)) {
++    if (!allowed.includes(key)) throw new UsageError(`${label}: unknown field "${key}"; allowed fields: ${allowed.join(', ')}`)
++  }
++}
++
++/** Validate + normalize repositories (sorted by repoId, P10 flags echoed as given). */
++export function validateRepos(input) {
++  const raw = readList(input, 'repos')
++  if (!Array.isArray(raw) || raw.length === 0) throw new UsageError('repos must be a non-empty array (or { "repos": [...] })')
++  const repos = []
++  const seen = new Set()
++  for (const entry of raw) {
++    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new UsageError('each repo must be an object with repoId/language/environmentReady/checksConfig/offlineBuild')
++    const repoId = requireSafeId(entry, 'repoId', 'repo')
++    const label = `repo ${repoId}`
++    rejectUnknownFields(entry, REPO_FIELDS, label)
++    if (seen.has(repoId)) throw new UsageError(`duplicate repoId: ${repoId}`)
++    seen.add(repoId)
++    if (!REPO_LANGUAGES.includes(entry.language)) throw new UsageError(`${label}: language must be one of ${REPO_LANGUAGES.join(', ')}, got "${String(entry.language)}"`)
++    repos.push({
++      repoId,
++      language: entry.language,
++      stack: optionalString(entry, 'stack', label),
++      environmentReady: requireBoolean(entry, 'environmentReady', label),
++      checksConfig: requireBoolean(entry, 'checksConfig', label),
++      offlineBuild: requireBoolean(entry, 'offlineBuild', label),
++      notes: optionalString(entry, 'notes', label),
++    })
++  }
++  return repos.sort((a, b) => compareIds(a.repoId, b.repoId))
++}
++
++/** Validate + normalize models (sorted by modelId). */
++export function validateModels(input) {
++  const raw = readList(input, 'models')
++  if (!Array.isArray(raw) || raw.length === 0) throw new UsageError('models must be a non-empty array (or { "models": [...] })')
++  const models = []
++  const seen = new Set()
++  for (const entry of raw) {
++    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) throw new UsageError('each model must be an object with modelId/provider')
++    const modelId = requireSafeId(entry, 'modelId', 'model')
++    const label = `model ${modelId}`
++    rejectUnknownFields(entry, MODEL_FIELDS, label)
++    if (seen.has(modelId)) throw new UsageError(`duplicate modelId: ${modelId}`)
++    seen.add(modelId)
++    models.push({ modelId, provider: requireNonEmptyString(entry, 'provider', label), notes: optionalString(entry, 'notes', label) })
++  }
++  return models.sort((a, b) => compareIds(a.modelId, b.modelId))
++}
++
++/**
++ * Build the preparation matrix. Pure function; `generatedAt` is injectable so
++ * two runs over the same input can be compared byte-for-byte.
++ */
++export function buildMatrix({ repos, models, generatedAt = new Date().toISOString(), source = null }) {
++  const sortedRepos = validateRepos(repos)
++  const sortedModels = validateModels(models)
++  const combos = []
++  for (const repo of sortedRepos) {
++    // P10 environment readiness includes the offline-build verification.
++    const environmentReady = repo.environmentReady && repo.offlineBuild
++    for (const model of sortedModels) {
++      const blockers = []
++      if (!repo.environmentReady) blockers.push('environment-not-ready')
++      if (!repo.offlineBuild) blockers.push('offline-build-not-ready')
++      if (!repo.checksConfig) blockers.push('checks-config-not-ready')
++      combos.push({
++        comboId: `b7-${repo.repoId}-${model.modelId}`,
++        repo: repo.repoId,
++        model: model.modelId,
++        environmentReady,
++        checksReady: repo.checksConfig,
++        eligible: environmentReady && repo.checksConfig,
++        blockers,
++        sampleSizeStatus: SAMPLE_SIZE_STATUS,
++      })
++    }
++  }
++  const eligibleCombinations = combos.filter(combo => combo.eligible).length
++  const totalCombinations = combos.length
++  const reposMet = sortedRepos.length >= B7_TARGETS.minRepos
++  const modelsMet = sortedModels.length >= B7_TARGETS.minModels
++  const notes = [
++    'This file is a B7 preparation matrix, not an experiment result: no run was executed, no host was accessed and no model was called.',
++    `sampleSizeStatus is fixed to "${SAMPLE_SIZE_STATUS}": per repo/model sample sizes must be locked in eval/PREREG.md §6 (D-4) before any run. This tool does not compute or invent any sample size.`,
++  ]
++  if (!reposMet || !modelsMet) {
++    notes.push(`B7 target not met: ROADMAP-95 §B7 requires >=${B7_TARGETS.minRepos} repositories and >=${B7_TARGETS.minModels} models; the supplied inventory has ${sortedRepos.length} repositories and ${sortedModels.length} models.`)
++  }
++  if (eligibleCombinations === 0) {
++    notes.push('No eligible combination: at least one P10 environment or checks-config precondition is missing for every supplied repository.')
++  }
++  return {
++    schemaVersion: MATRIX_SCHEMA_VERSION,
++    generatedBy: 'eval/b7-matrix.mjs',
++    generatedAt,
++    preregLocked: PREREG_LOCKED,
++    notes,
++    ...(source === null ? {} : { source }),
++    targets: { minRepos: B7_TARGETS.minRepos, minModels: B7_TARGETS.minModels, reposMet, modelsMet },
++    totalCombinations,
++    eligibleCombinations,
++    blockedCombinations: totalCombinations - eligibleCombinations,
++    repos: sortedRepos,
++    models: sortedModels,
++    combos,
++  }
++}
++
++export function parseArgs(argv) {
++  const options = { repos: null, models: null, out: null, dryRun: false, selfTest: false, help: false }
++  for (let index = 0; index < argv.length; index += 1) {
++    const arg = argv[index]
++    if (arg === '--self-test') { options.selfTest = true; continue }
++    if (arg === '--dry-run') { options.dryRun = true; continue }
++    if (arg === '--help' || arg === '-h') { options.help = true; continue }
++    if (!['--repos', '--models', '--out'].includes(arg)) throw new UsageError(`unknown argument: ${arg}`)
++    const value = argv[index + 1]
++    if (value === undefined) throw new UsageError(`missing value for ${arg}`)
++    index += 1
++    if (arg === '--repos') options.repos = value
++    if (arg === '--models') options.models = value
++    if (arg === '--out') options.out = value
++  }
++  if (options.selfTest || options.help) return options
++  if (options.repos === null) throw new UsageError('--repos is required')
++  if (options.models === null) throw new UsageError('--models is required')
++  if (options.out === null && !options.dryRun) throw new UsageError('--out is required unless --dry-run is used')
++  return options
++}
++
++export function readJsonFile(path, flag) {
++  let text
++  try { text = readFileSync(path, 'utf8') } catch (error) {
++    throw new UsageError(`cannot read ${flag} file ${path}: ${error instanceof Error ? error.message : String(error)}`)
++  }
++  try { return JSON.parse(text) } catch (error) {
++    throw new UsageError(`${flag} file is not valid JSON: ${error instanceof Error ? error.message : String(error)}`)
++  }
++}
++
++// ---------------------------------------------------------------------------
++// Self-test: pure assertions plus real CLI executions on temporary fixtures.
++// ---------------------------------------------------------------------------
++function pass(list, name, condition, detail = '') {
++  if (condition) { list.push(`PASS ${name}`); return }
++  list.push(`FAIL ${name}${detail ? ` :: ${detail}` : ''}`)
++}
++
++function spawnCli(args) {
++  const scriptPath = fileURLToPath(import.meta.url)
++  const result = execFileSync(process.execPath, [scriptPath, ...args], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
++  return { status: 0, stdout: result }
++}
++
++function spawnCliExpectFailure(args) {
++  try {
++    spawnCli(args)
++    return { status: 0, stdout: '' }
++  } catch (error) {
++    const status = typeof error.status === 'number' ? error.status : null
++    return { status, stdout: `${error.stdout ?? ''}${error.stderr ?? ''}` }
++  }
++}
++
++function stripGeneratedAt(matrix) { const copy = { ...matrix }; delete copy.generatedAt; return copy }
++
++const FIXED_AT = '2026-11-07T00:00:00.000Z'
++const READY_REPOS = [
++  { repoId: 'dubbo', language: 'java', stack: 'maven', environmentReady: true, checksConfig: true, offlineBuild: true },
++  { repoId: 'ts-project', language: 'typescript', stack: 'pnpm', environmentReady: true, checksConfig: true, offlineBuild: true },
++  { repoId: 'py-project', language: 'python', stack: 'pip', environmentReady: true, checksConfig: true, offlineBuild: true },
++]
++const READY_MODELS = [
++  { modelId: 'model-a', provider: 'provider-x' },
++  { modelId: 'model-b', provider: 'provider-y' },
++]
++
++function clone(value) { return JSON.parse(JSON.stringify(value)) }
++
++function expectUsageError(list, name, fn, detail = '') {
++  try {
++    fn()
++    pass(list, name, false, `no error thrown ${detail}`)
++  } catch (error) {
++    pass(list, name, error instanceof UsageError, `threw ${error instanceof Error ? error.constructor.name : typeof error}: ${error instanceof Error ? error.message : String(error)}`)
++  }
++}
++
++export function selfTest() {
++  const results = []
++  const root = mkdtempSync(join(tmpdir(), 'b7-matrix-self-'))
++  const reposPath = join(root, 'repos.json')
++  const modelsPath = join(root, 'models.json')
++  writeFileSync(reposPath, JSON.stringify({ repos: READY_REPOS }, null, 2))
++  writeFileSync(modelsPath, JSON.stringify({ models: READY_MODELS }, null, 2))
++  try {
++    // --- matrix semantics -------------------------------------------------
++    const ready = buildMatrix({ repos: READY_REPOS, models: READY_MODELS, generatedAt: FIXED_AT })
++    pass(results, 'self-test all-ready: 3 repos x 2 models = 6 combos', ready.totalCombinations === 6 && ready.combos.length === 6, `total=${ready.totalCombinations}`)
++    pass(results, 'self-test all-ready: every combo is eligible', ready.eligibleCombinations === 6 && ready.blockedCombinations === 0 && ready.combos.every(combo => combo.eligible === true && combo.blockers.length === 0), JSON.stringify(ready.combos.map(combo => combo.eligible)))
++    pass(results, 'self-test combo rows carry the required fields', ready.combos.every(combo => typeof combo.comboId === 'string' && typeof combo.repo === 'string' && typeof combo.model === 'string' && typeof combo.environmentReady === 'boolean' && typeof combo.checksReady === 'boolean' && typeof combo.eligible === 'boolean' && Array.isArray(combo.blockers) && combo.sampleSizeStatus === 'pending-prereg'))
++    pass(results, 'self-test sampleSizeStatus is fixed to pending-prereg', ready.combos.every(combo => combo.sampleSizeStatus === SAMPLE_SIZE_STATUS))
++    pass(results, 'self-test output is not an experiment result (preregLocked=false + notes)', ready.preregLocked === false && ready.schemaVersion === 1 && ready.notes.some(note => /not an experiment result/i.test(note)) && ready.notes.some(note => /pending-prereg/.test(note)), JSON.stringify(ready.notes))
++    pass(results, 'self-test B7 target 3 repos / 2 models is met and recorded', ready.targets.reposMet === true && ready.targets.modelsMet === true && ready.notes.every(note => !/target not met/.test(note)))
++    pass(results, 'self-test comboIds are unique and deterministic', new Set(ready.combos.map(combo => combo.comboId)).size === 6 && ready.combos.every(combo => combo.comboId === `b7-${combo.repo}-${combo.model}`))
++
++    // Missing P10 environment.
++    const noEnvRepos = clone(READY_REPOS).map(repo => repo.repoId === 'dubbo' ? { ...repo, environmentReady: false } : repo)
++    const noEnv = buildMatrix({ repos: noEnvRepos, models: READY_MODELS, generatedAt: FIXED_AT })
++    const noEnvRows = noEnv.combos.filter(combo => combo.repo === 'dubbo')
++    pass(results, 'self-test missing environment: only that repo blocked', noEnvRows.length === 2 && noEnvRows.every(combo => combo.eligible === false && combo.blockers.includes('environment-not-ready')) && noEnv.eligibleCombinations === 4, JSON.stringify(noEnvRows))
++
++    // Missing offline build belongs to P10 environment readiness.
++    const noOfflineRepos = clone(READY_REPOS).map(repo => repo.repoId === 'py-project' ? { ...repo, offlineBuild: false } : repo)
++    const noOffline = buildMatrix({ repos: noOfflineRepos, models: READY_MODELS, generatedAt: FIXED_AT })
++    const noOfflineRows = noOffline.combos.filter(combo => combo.repo === 'py-project')
++    pass(results, 'self-test missing offline build: environmentReady=false + blocker', noOfflineRows.length === 2 && noOfflineRows.every(combo => combo.environmentReady === false && combo.eligible === false && combo.blockers.includes('offline-build-not-ready')), JSON.stringify(noOfflineRows))
++
++    // Missing checks config.
++    const noChecksRepos = clone(READY_REPOS).map(repo => repo.repoId === 'ts-project' ? { ...repo, checksConfig: false } : repo)
++    const noChecks = buildMatrix({ repos: noChecksRepos, models: READY_MODELS, generatedAt: FIXED_AT })
++    const noChecksRows = noChecks.combos.filter(combo => combo.repo === 'ts-project')
++    pass(results, 'self-test missing checks config: checksReady=false + blocker', noChecksRows.length === 2 && noChecksRows.every(combo => combo.checksReady === false && combo.eligible === false && combo.blockers.includes('checks-config-not-ready')) && noChecks.eligibleCombinations === 4, JSON.stringify(noChecksRows))
++
++    pass(results, 'self-test blockers use only the documented vocabulary', ready.combos.concat(noEnv.combos, noOffline.combos, noChecks.combos).every(combo => combo.blockers.every(blocker => BLOCKERS.includes(blocker))))
++    pass(results, 'self-test blockedCombinations = total - eligible', noEnv.blockedCombinations === 2 && noChecks.blockedCombinations === 2 && noOffline.blockedCombinations === 2)
++
++    // Below B7 target: 2 repos must be flagged in notes.
++    const belowTarget = buildMatrix({ repos: clone(READY_REPOS).filter(repo => repo.repoId !== 'py-project'), models: READY_MODELS, generatedAt: FIXED_AT })
++    pass(results, 'self-test below-target inventory is flagged in notes', belowTarget.targets.reposMet === false && belowTarget.targets.modelsMet === true && belowTarget.notes.some(note => /target not met/.test(note)))
++
++    // Stable ordering + deterministic output regardless of input order.
++    const reversed = buildMatrix({ repos: [...READY_REPOS].reverse(), models: [...READY_MODELS].reverse(), generatedAt: FIXED_AT })
++    pass(results, 'self-test input order does not change the matrix', JSON.stringify(ready) === JSON.stringify(reversed))
++    const sortedPairs = ready.combos.map(combo => `${combo.repo}/${combo.model}`)
++    pass(results, 'self-test combos sorted by (repo, model)', JSON.stringify(sortedPairs) === JSON.stringify([...sortedPairs].sort()))
++    pass(results, 'self-test different generatedAt only changes generatedAt', JSON.stringify({ ...ready, generatedAt: 'x' }) === JSON.stringify({ ...buildMatrix({ repos: READY_REPOS, models: READY_MODELS, generatedAt: 'x' }), generatedAt: 'x' }))
++
++    // --- validation -------------------------------------------------------
++    expectUsageError(results, 'self-test rejects duplicate repoId', () => validateRepos([...READY_REPOS, clone(READY_REPOS[0])]))
++    expectUsageError(results, 'self-test rejects duplicate modelId', () => validateModels([...READY_MODELS, clone(READY_MODELS[0])]))
++    expectUsageError(results, 'self-test rejects empty repos', () => validateRepos([]))
++    expectUsageError(results, 'self-test rejects empty models', () => validateModels({ models: [] }))
++    expectUsageError(results, 'self-test rejects unknown repo field', () => validateRepos([{ ...clone(READY_REPOS[0]), extra: true }]))
++    expectUsageError(results, 'self-test rejects unknown top-level repos field', () => validateRepos({ repos: [clone(READY_REPOS[0])], extra: 1 }))
++    expectUsageError(results, 'self-test rejects invalid language enum', () => validateRepos([{ ...clone(READY_REPOS[0]), language: 'ruby' }]))
++    expectUsageError(results, 'self-test rejects non-boolean environmentReady', () => validateRepos([{ ...clone(READY_REPOS[0]), environmentReady: 'yes' }]))
++    expectUsageError(results, 'self-test rejects unknown model field', () => validateModels([{ ...clone(READY_MODELS[0]), extra: 1 }]))
++    expectUsageError(results, 'self-test rejects invalid modelId', () => validateModels([{ modelId: 'Model A', provider: 'p' }]))
++
++    // --- CLI executions on the temporary fixtures -------------------------
++    const outA = join(root, 'matrix-a.json')
++    const outB = join(root, 'matrix-b.json')
++    spawnCli(['--repos', reposPath, '--models', modelsPath, '--out', outA])
++    spawnCli(['--repos', reposPath, '--models', modelsPath, '--out', outB])
++    const cliA = JSON.parse(readFileSync(outA, 'utf8'))
++    const cliB = JSON.parse(readFileSync(outB, 'utf8'))
++    pass(results, 'self-test CLI --out writes a parseable matrix with source paths', cliA.totalCombinations === 6 && cliA.eligibleCombinations === 6 && cliA.source.repos === reposPath && cliA.source.models === modelsPath && !Number.isNaN(Date.parse(cliA.generatedAt)))
++    pass(results, 'self-test CLI is deterministic apart from generatedAt', JSON.stringify(stripGeneratedAt(cliA)) === JSON.stringify(stripGeneratedAt(cliB)))
++
++    const dryOut = join(root, 'dry-out.json')
++    // --out is passed on purpose: --dry-run must still print and write nothing.
++    const dry = spawnCli(['--repos', reposPath, '--models', modelsPath, '--dry-run', '--out', dryOut])
++    const dryMatrix = JSON.parse(dry.stdout)
++    pass(results, 'self-test --dry-run prints the matrix and writes nothing', dryMatrix.totalCombinations === 6 && dryMatrix.schemaVersion === 1 && existsSync(dryOut) === false && dryMatrix.preregLocked === false)
++
++    const failures = [
++      ['unknown argument', ['--repos', reposPath, '--models', modelsPath, '--bogus', 'x']],
++      ['missing --repos', ['--models', modelsPath, '--out', join(root, 'x.json')]],
++      ['missing --out without --dry-run', ['--repos', reposPath, '--models', modelsPath]],
++      ['unreadable repos file', ['--repos', join(root, 'missing.json'), '--models', modelsPath, '--out', join(root, 'x.json')]],
++      ['duplicate repoId', ['--repos', (() => { const p = join(root, 'dup-repos.json'); writeFileSync(p, JSON.stringify([READY_REPOS[0], READY_REPOS[0]])); return p })(), '--models', modelsPath, '--out', join(root, 'x.json')]],
++      ['unknown repo field', ['--repos', (() => { const p = join(root, 'extra-repos.json'); writeFileSync(p, JSON.stringify([{ ...READY_REPOS[0], extra: true }])); return p })(), '--models', modelsPath, '--out', join(root, 'x.json')]],
++      ['empty models', ['--repos', reposPath, '--models', (() => { const p = join(root, 'empty-models.json'); writeFileSync(p, JSON.stringify([])); return p })(), '--out', join(root, 'x.json')]],
++    ]
++    for (const [label, args] of failures) {
++      const result = spawnCliExpectFailure(args)
++      pass(results, `self-test rejects invalid input: ${label} (exit 2)`, result.status === 2, `status=${result.status} ${result.stdout.slice(0, 300)}`)
++    }
++  } finally {
++    rmSync(root, { recursive: true, force: true })
++  }
++  for (const line of results) console.log(line)
++  const failed = results.filter(line => line.startsWith('FAIL')).length
++  if (failed > 0) { console.log(`\nFAILED: ${failed} assertion(s)`); return 1 }
++  console.log(`\nPASS: ${results.length} assertions (b7-matrix self-test)`)
++  return 0
++}
++
++function usage() {
++  return 'usage: node eval/b7-matrix.mjs --repos <repos.json> --models <models.json> (--out <matrix.json> | --dry-run)\n       node eval/b7-matrix.mjs --self-test'
++}
++
++if (process.argv[1] === fileURLToPath(import.meta.url)) {
++  let options
++  try {
++    options = parseArgs(process.argv.slice(2))
++  } catch (error) {
++    console.error(error instanceof Error ? error.message : String(error))
++    console.error(usage())
++    process.exitCode = 2
++  }
++  if (options && options.help) { console.log(usage()); process.exitCode = 0 }
++  else if (options && options.selfTest) process.exitCode = selfTest()
++  else if (options) {
++    try {
++      const matrix = buildMatrix({
++        repos: readJsonFile(options.repos, '--repos'),
++        models: readJsonFile(options.models, '--models'),
++        source: { repos: options.repos, models: options.models },
++      })
++      const text = `${JSON.stringify(matrix, null, 2)}\n`
++      if (options.dryRun) process.stdout.write(text)
++      else writeFileSync(options.out, text)
++      if (!options.dryRun) console.error(`matrix written: ${options.out} (${matrix.totalCombinations} combos, eligible=${matrix.eligibleCombinations}/${matrix.totalCombinations}, sampleSizeStatus=${SAMPLE_SIZE_STATUS})`)
++    } catch (error) {
++      const usageError = error instanceof UsageError
++      console.error(error instanceof Error ? error.message : String(error))
++      if (usageError) { console.error(usage()); process.exitCode = 2 } else process.exitCode = 1
++    }
++  }
++}

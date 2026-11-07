@@ -1,0 +1,12 @@
+diff --git a/eval/prereg-lock.mjs b/eval/prereg-lock.mjs
+index 6e88970..e3b0dbc 100644
+--- a/eval/prereg-lock.mjs
++++ b/eval/prereg-lock.mjs
+@@ -276,6 +276,7 @@ function usage() {
+ }
+ 
+ function printCheckResult(check) {
++  console.log(`[prereg-lock] version: schemaVersion=${SCHEMA_VERSION} generator=${TOOL_NAME} v${TOOL_VERSION}`)
+   for (const input of check.inputs) console.log(`[prereg-lock]   ${input.path} sha256=${input.sha256} bytes=${input.bytes}`)
+   console.log(`[prereg-lock] preregSha256=${check.preregSha256}`)
+   console.log(`[prereg-lock] decisions: ${check.decisions.map(decision => `${decision.decisionId}=${decision.status}`).join(', ') || '(none)'}`)

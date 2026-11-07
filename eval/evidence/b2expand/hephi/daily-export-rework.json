@@ -1,0 +1,105 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/daily-export-rework",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-sM3rC5/checkout/eval/daily/export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "a913c26e3c8f84fbead0684d3f5777fb6c5436dd0b05a75ed7f728eba9e627ab"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-sM3rC5/checkout/eval/daily/export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "a913c26e3c8f84fbead0684d3f5777fb6c5436dd0b05a75ed7f728eba9e627ab"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-sM3rC5/checkout/eval/daily/export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "a913c26e3c8f84fbead0684d3f5777fb6c5436dd0b05a75ed7f728eba9e627ab"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/daily/APPEALS.md",
+        "eval/daily/MAINTENANCE.md",
+        "eval/daily/export.mjs",
+        "eval/daily/rework.mjs"
+      ],
+      "changedFiles": [
+        "eval/daily/APPEALS.md",
+        "eval/daily/MAINTENANCE.md",
+        "eval/daily/export.mjs",
+        "eval/daily/rework.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: daily export and rework self-tests\n",
+          "stderr": "",
+          "outputSha256": "c82ef0fa6f12bc7e63f7d255d4a866bcdaa7e0a98fca7bb475b2163c3d752667"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: daily export and rework self-tests\n",
+          "stderr": "",
+          "outputSha256": "c82ef0fa6f12bc7e63f7d255d4a866bcdaa7e0a98fca7bb475b2163c3d752667"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: daily export and rework self-tests\n",
+          "stderr": "",
+          "outputSha256": "c82ef0fa6f12bc7e63f7d255d4a866bcdaa7e0a98fca7bb475b2163c3d752667"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "d0a84acc0436d81c314e899e93d5c26ea4c8fa7f",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

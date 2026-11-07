@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "taskId": "history-page-size",
+  "repo": "site-pnl-diagnosis",
+  "base": "bd816e9eb019b0520b98dbc1bd53bdf0c85010d4",
+  "category": "defect-fix",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "INTERFACES.md",
+    "README.md",
+    "acceptance/test_business_http.py",
+    "backend/app/api/diagnoses.py",
+    "backend/tests/test_diagnosis_api.py",
+    "contracts/openapi.json",
+    "web/e2e/08-history-pagination.spec.ts",
+    "web/src/App.test.tsx",
+    "web/src/App.tsx",
+    "web/src/features/history/HistoryView.tsx"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "uv.lock",
+    "commandsMustMatchOffline": true
+  }
+}

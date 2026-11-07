@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "taskId": "data-package-symlink",
+  "repo": "hephi",
+  "base": "0a6e2d010591a01164d1808bfeb809497e289359",
+  "category": "defect-fix",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "docs/self-check-2026-11-07.md",
+    "docs/source-consistency.md",
+    "eval/check-data-package.mjs",
+    "eval/export-baseline.mjs",
+    "hephi/docs/decisions-format.md",
+    "hephi/docs/enforcement-modes.md",
+    "hephi/docs/versioning.md",
+    "hephi/src/control/ready-gate.ts",
+    "hephi/src/control/worker-mount.ts",
+    "hephi/tests/control/worker-mount.test.ts",
+    "scripts/host/rebuild-isolated.sh"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "hephi/pnpm-lock.yaml",
+    "commandsMustMatchOffline": true
+  }
+}

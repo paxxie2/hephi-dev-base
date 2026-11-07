@@ -1,0 +1,99 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/previous-window-order",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 12, in <module>\nAssertionError: reversed date window must raise ValueError\n",
+          "outputSha256": "d9cba4ddb6ba6c4162c8353fb1e98a4af91556401352215bc77fa36cbb12ae47"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "changedFiles": [
+        "backend/app/domain/money.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "previous_window boundary checks PASS\n",
+          "stderr": "",
+          "outputSha256": "51c6ca62c1e76cf58134ac3d3c76b36c8aeb0693b64aa609fef3e4c4d4180b3a"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "1e166fbe2217ac378e5bb7062cd34a2da1e75e6f",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

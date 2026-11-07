@@ -1,0 +1,103 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/health-service-field",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: Health must expose the fixed service field\n",
+          "outputSha256": "74d766fba6e6e9bda66a6a08a9c93fdc81fb66e6e5b6eb6c4c25306089429090"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: Health must expose the fixed service field\n",
+          "outputSha256": "74d766fba6e6e9bda66a6a08a9c93fdc81fb66e6e5b6eb6c4c25306089429090"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 5, in <module>\nAssertionError: Health must expose the fixed service field\n",
+          "outputSha256": "74d766fba6e6e9bda66a6a08a9c93fdc81fb66e6e5b6eb6c4c25306089429090"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "README.md",
+        "backend/app/schemas.py",
+        "backend/tests/test_health_service.py"
+      ],
+      "changedFiles": [
+        "README.md",
+        "backend/app/schemas.py",
+        "backend/tests/test_health_service.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: fixed service field added to health responses\n",
+          "stderr": "",
+          "outputSha256": "c6c2496f5ff6dbcb1b129426bd12e4cb0c61c6dde3214a3caa013ba57b4ea406"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: fixed service field added to health responses\n",
+          "stderr": "",
+          "outputSha256": "c6c2496f5ff6dbcb1b129426bd12e4cb0c61c6dde3214a3caa013ba57b4ea406"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: fixed service field added to health responses\n",
+          "stderr": "",
+          "outputSha256": "c6c2496f5ff6dbcb1b129426bd12e4cb0c61c6dde3214a3caa013ba57b4ea406"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "e00f338b098546adc40156dc15b4b6559e19835d",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

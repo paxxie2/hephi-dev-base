@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "taskId": "backend-input-validation",
+  "repo": "site-pnl-diagnosis",
+  "base": "e00f338b098546adc40156dc15b4b6559e19835d",
+  "category": "cross-module",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "backend/app/main.py",
+    "backend/app/schemas.py",
+    "backend/app/services/chat.py",
+    "backend/app/services/scenarios.py",
+    "backend/app/validation_messages.py",
+    "backend/tests/test_scenario_schema_validation.py"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "uv.lock",
+    "commandsMustMatchOffline": true
+  }
+}

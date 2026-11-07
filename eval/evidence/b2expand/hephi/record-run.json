@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/record-run",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: record-run self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-zKGK2C/checkout/eval/record-run.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "3069ee03a834a16e6a0f6022a0e84ba7d434ebdfcce0d51c6f9b921251ed76f3"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: record-run self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-zKGK2C/checkout/eval/record-run.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "3069ee03a834a16e6a0f6022a0e84ba7d434ebdfcce0d51c6f9b921251ed76f3"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: record-run self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-zKGK2C/checkout/eval/record-run.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "3069ee03a834a16e6a0f6022a0e84ba7d434ebdfcce0d51c6f9b921251ed76f3"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/RUNBOOK.md",
+        "eval/record-run.mjs"
+      ],
+      "changedFiles": [
+        "eval/RUNBOOK.md",
+        "eval/record-run.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: record-run self-test\n",
+          "stderr": "",
+          "outputSha256": "872489304321ddf8dc1735756371b0a319f539a53f93743eccb992b007a2b653"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: record-run self-test\n",
+          "stderr": "",
+          "outputSha256": "872489304321ddf8dc1735756371b0a319f539a53f93743eccb992b007a2b653"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: record-run self-test\n",
+          "stderr": "",
+          "outputSha256": "872489304321ddf8dc1735756371b0a319f539a53f93743eccb992b007a2b653"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "bc21caca316d6032ebcc3d2bc6387c38e0a3579c",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

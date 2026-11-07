@@ -1,0 +1,379 @@
+diff --git a/backend/app/main.py b/backend/app/main.py
+index bc6cbc8..8568b9e 100644
+--- a/backend/app/main.py
++++ b/backend/app/main.py
+@@ -81,10 +81,9 @@ def create_app(settings: Settings | None = None, *, seed: bool = True) -> FastAP
+ 
+     @app.exception_handler(RequestValidationError)
+     async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+-        field_errors: dict[str, str] = {}
+-        for error in exc.errors():
+-            loc = [str(part) for part in error.get("loc", []) if part != "body"]
+-            field_errors[".".join(loc) or "body"] = error.get("msg", "invalid")
++        from app.validation_messages import chinese_field_errors
++
++        field_errors = chinese_field_errors(exc.errors()) or {"body": "请求参数不合法"}
+         return _error_response(
+             400,
+             "VALIDATION_ERROR",
+diff --git a/backend/app/schemas.py b/backend/app/schemas.py
+index e7e91dc..15059c8 100644
+--- a/backend/app/schemas.py
++++ b/backend/app/schemas.py
+@@ -9,9 +9,10 @@
+ 
+ from __future__ import annotations
+ 
++import math
+ from typing import Any, Literal
+ 
+-from pydantic import BaseModel, Field
++from pydantic import BaseModel, Field, field_validator
+ 
+ DateStr = str
+ MoneyStatus = Literal["known", "unknown"]
+@@ -212,8 +213,41 @@ class CreateDiagnosisRequest(BaseModel):
+ 
+ ScenarioKind = Literal["rent", "share", "recovery"]
+ 
++_SCENARIO_KINDS = ("rent", "share", "recovery")
++_RECOVERY_KINDS = ("offline", "slot")
++
++
++def _strict_measure_int(value: Any, label: str) -> int | None:
++    """测算数值字段：只接受整数（整数分 / 整数基点），拒绝错误类型与非有限数。
++
++    Pydantic 默认宽松模式会把布尔与数字字符串静默转成整数（``True -> 1``、
++    ``"123" -> 123``），这与“拒绝错误类型”的业务要求不符；JSON 的 ``NaN`` /
++    ``Infinity`` / ``1e400`` 会被 ``json.loads`` 解析为浮点非有限数，也必须拒绝。
++    整数值浮点（如 ``30000.0``）无精度损失，按整数接受。
++    """
++
++    if value is None:
++        return None
++    if isinstance(value, bool):
++        raise ValueError(f"{label}必须为整数，不能是布尔值")
++    if isinstance(value, float):
++        if not math.isfinite(value):
++            raise ValueError(f"{label}必须为有限数，不能是 NaN 或 Infinity")
++        if not value.is_integer():
++            raise ValueError(f"{label}必须为整数，不能是小数")
++        return int(value)
++    if isinstance(value, int):
++        return value
++    raise ValueError(f"{label}必须为整数，不能是字符串或其他类型")
++
+ 
+ class ScenarioRequest(BaseModel):
++    """三类测算请求。
++
++    字段类型、枚举取值与“非有限数”在此严格校验；kind 相关必填、负数与比例
++    取值范围由服务层 ``validate_scenario_request`` 校验并返回字段级中文错误。
++    """
++
+     kind: ScenarioKind
+     monthlyRentCents: int | None = None
+     shareBps: int | None = None
+@@ -221,6 +255,42 @@ class ScenarioRequest(BaseModel):
+     recoveryBps: int | None = None
+     repairCostCents: int | None = None
+ 
++    @field_validator("kind", mode="before")
++    @classmethod
++    def _validate_kind(cls, value: Any) -> Any:
++        if not isinstance(value, str) or value not in _SCENARIO_KINDS:
++            raise ValueError("测算类型只能是 rent / share / recovery")
++        return value
++
++    @field_validator("recoveryKind", mode="before")
++    @classmethod
++    def _validate_recovery_kind(cls, value: Any) -> Any:
++        if value is None:
++            return None
++        if not isinstance(value, str) or value not in _RECOVERY_KINDS:
++            raise ValueError("恢复对象只能是 offline 或 slot")
++        return value
++
++    @field_validator("monthlyRentCents", mode="before")
++    @classmethod
++    def _validate_monthly_rent(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "新月租金（整数分）")
++
++    @field_validator("shareBps", mode="before")
++    @classmethod
++    def _validate_share_bps(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "分成比例（整数基点）")
++
++    @field_validator("recoveryBps", mode="before")
++    @classmethod
++    def _validate_recovery_bps(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "恢复比例（整数基点）")
++
++    @field_validator("repairCostCents", mode="before")
++    @classmethod
++    def _validate_repair_cost(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "一次性维修费（整数分）")
++
+ 
+ class Scenario(BaseModel):
+     id: str
+diff --git a/backend/app/services/chat.py b/backend/app/services/chat.py
+index cd29d1c..39e322b 100644
+--- a/backend/app/services/chat.py
++++ b/backend/app/services/chat.py
+@@ -1005,10 +1005,9 @@ def _tool_create_scenario(
+     try:
+         request = ScenarioRequest(**fields)
+     except ValidationError as exc:
+-        field_errors: dict[str, str] = {}
+-        for error in exc.errors():
+-            location = ".".join(str(part) for part in error.get("loc", ())) or "arguments"
+-            field_errors[location] = str(error.get("msg") or "invalid")
++        from app.validation_messages import chinese_field_errors
++
++        field_errors = chinese_field_errors(exc.errors()) or {"arguments": "测算参数不合法"}
+         raise bad_request("测算参数不合法", field_errors, code="INVALID_TOOL_ARGUMENTS")
+ 
+     idempotency_key = f"tool:{assistant_message_id}:{call_index}"
+diff --git a/backend/app/services/scenarios.py b/backend/app/services/scenarios.py
+index 579be89..39e42d6 100644
+--- a/backend/app/services/scenarios.py
++++ b/backend/app/services/scenarios.py
+@@ -56,11 +56,11 @@ def _coerce_request(request: ScenarioRequest | dict[str, Any]) -> ScenarioReques
+     try:
+         return ScenarioRequest.model_validate(request)
+     except Exception as exc:  # pydantic.ValidationError
+-        field_errors = {
+-            str(error.get("loc", ["body"])[-1]): str(error.get("msg", "invalid"))
+-            for error in getattr(exc, "errors", lambda: [])()
+-        }
+-        raise bad_request("测算参数不合法", field_errors or {"body": "invalid"}) from exc
++        from app.validation_messages import chinese_field_errors
++
++        errors = getattr(exc, "errors", lambda: [])()
++        field_errors = chinese_field_errors(errors) or {"body": "测算参数不合法"}
++        raise bad_request("测算参数不合法", field_errors) from exc
+ 
+ 
+ def validate_scenario_request(request: ScenarioRequest) -> dict[str, Any]:
+diff --git a/backend/app/validation_messages.py b/backend/app/validation_messages.py
+new file mode 100644
+index 0000000..2cdfffb
+--- /dev/null
++++ b/backend/app/validation_messages.py
+@@ -0,0 +1,105 @@
++"""把 Pydantic 校验错误转换为面向用户的**中文字段级**提示。
++
++HTTP 请求体校验（``app.main`` 的 ``RequestValidationError`` 处理器）、测算服务
++``_coerce_request``、对话受控工具 ``create_scenario`` 共用本模块：无论从哪个入口
++提交非法测算参数，``fieldErrors`` 都是「明确字段 + 中文可操作信息」，而不是
++Pydantic 的英文默认消息。
++
++字段标签统一使用测算接口的单位（整数分 / 整数基点），与 INTERFACES 第 4.2 节
++的错误结构 ``{code, message, fieldErrors, requestId}`` 配套。
++"""
++
++from __future__ import annotations
++
++from typing import Any, Iterable
++
++# 字段名 → 中文标签（含单位）；未列出的字段回退为字段名本身。
++FIELD_LABELS: dict[str, str] = {
++    "kind": "测算类型",
++    "monthlyRentCents": "新月租金（整数分）",
++    "shareBps": "分成比例（整数基点）",
++    "recoveryKind": "恢复对象",
++    "recoveryBps": "恢复比例（整数基点）",
++    "repairCostCents": "一次性维修费（整数分）",
++    # 同格式错误响应的其它路由 / 工具参数
++    "siteId": "点位",
++    "startDate": "开始日期",
++    "endDate": "结束日期",
++    "text": "消息内容",
++    "limit": "分页大小",
++    "offset": "分页偏移",
++    "body": "请求体",
++    "arguments": "工具参数",
++}
++
++# Pydantic loc 里的“来源”前缀不是字段名。
++_LOCATION_PREFIXES = {"body", "query", "path", "header", "cookie"}
++
++# 整数概念字段的类型错误统一提示为“必须为整数”，避免英文默认消息。
++_INT_TYPE_ERRORS = (
++    "int_type",
++    "int_parsing",
++    "int_from_float",
++    "bool_type",
++    "bool_parsing",
++    "float_type",
++)
++# JSON 的 NaN/Infinity/1e400 会被 json.loads 解析为浮点非有限数。
++_NON_FINITE_ERRORS = ("finite_number", "nan", "infinity", "float_finite")
++# 请求体不是 JSON 对象（例如数组/字符串）。
++_STRUCT_TYPE_ERRORS = ("dict_type", "model_type", "model_attributes_type")
++
++
++def _leaf_field(location: Iterable[Any]) -> str:
++    """取错误位置中最末端的字段名（跳过 body/query/header 等来源前缀）。"""
++    parts = [str(part) for part in location if str(part) not in _LOCATION_PREFIXES]
++    return parts[-1] if parts else "body"
++
++
++def _message_for(error: dict[str, Any], field: str) -> str:
++    label = FIELD_LABELS.get(field, field)
++    error_type = str(error.get("type") or "")
++    context = error.get("ctx") or {}
++
++    # 自定义字段校验器抛出的 ValueError：消息本身已是中文且可操作，直接采用。
++    if error_type == "value_error":
++        detail = str(context.get("error") or "").strip()
++        return detail or f"{label}不合法"
++
++    if error_type == "missing":
++        return f"{label}为必填"
++    if error_type in _STRUCT_TYPE_ERRORS:
++        return f"{label}必须是 JSON 对象"
++    if error_type in _NON_FINITE_ERRORS:
++        return f"{label}必须为有限数，不能是 NaN 或 Infinity"
++    if error_type in _INT_TYPE_ERRORS:
++        return f"{label}必须为整数"
++    if error_type in ("literal_error", "enum"):
++        expected = context.get("expected")
++        return f"{label}只能是{expected}" if expected else f"{label}取值不合法"
++    if error_type == "extra_forbidden":
++        return f"不支持字段「{field}」：未知或与当前测算类型无关"
++    if error_type in ("greater_than_equal", "greater_than"):
++        boundary = context.get("ge", context.get("gt"))
++        return f"{label}不能小于 {boundary}"
++    if error_type in ("less_than_equal", "less_than"):
++        boundary = context.get("le", context.get("lt"))
++        return f"{label}不能大于 {boundary}"
++    if error_type == "string_too_short":
++        return f"{label}不能为空"
++    if error_type == "string_too_long":
++        return f"{label}过长"
++    return f"{label}不合法"
++
++
++def chinese_field_errors(errors: Iterable[dict[str, Any]]) -> dict[str, str]:
++    """``{字段: 中文提示}``；同一字段多个错误只保留第一条（前端按字段展示）。"""
++
++    result: dict[str, str] = {}
++    for error in errors:
++        field = _leaf_field(error.get("loc", ()))
++        result.setdefault(field, _message_for(error, field))
++    return result
++
++
++__all__ = ["FIELD_LABELS", "chinese_field_errors"]
+diff --git a/backend/tests/test_scenario_api.py b/backend/tests/test_scenario_api.py
+index 3f326d3..cfe7b23 100644
+--- a/backend/tests/test_scenario_api.py
++++ b/backend/tests/test_scenario_api.py
+@@ -66,6 +66,21 @@ def _post_scenario(
+     )
+ 
+ 
++def _post_scenario_raw(
++    client,
++    diagnosis_id: str,
++    raw_body: str,
++    *,
++    key: str = "sc-raw-1",
++):
++    """直接提交原始 JSON 文本：用于构造 json.dumps 无法表达的非有限数（NaN/Infinity）。"""
++    return client.post(
++        f"/api/diagnoses/{diagnosis_id}/scenarios",
++        content=raw_body,
++        headers={"Idempotency-Key": key, "Content-Type": "application/json"},
++    )
++
++
+ def _round_half_up_div(numerator: int, denominator: int) -> int:
+     """设计口径：整数分，ROUND_HALF_UP（.5 远离零）。测试侧独立实现。"""
+     return int(
+@@ -367,6 +382,83 @@ def test_scenario_input_validation_returns_field_level_400(client):
+     assert listing["total"] == 0
+ 
+ 
++def test_scenario_strict_types_non_finite_and_chinese_field_errors(client):
++    """绕过前端的非法参数逐类拒绝：缺失/错误类型/非有限数/负数/越界，返回中文字段级错误。"""
++    diagnosis = _new_diagnosis(client, key="strict-diag")
++    diagnosis_id = diagnosis["id"]
++    cases = [
++        (json.dumps({}), "kind", "必填"),
++        (json.dumps({"kind": "discount"}), "kind", "rent"),
++        (json.dumps({"kind": "rent", "monthlyRentCents": "100"}), "monthlyRentCents", "必须为整数"),
++        (json.dumps({"kind": "rent", "monthlyRentCents": True}), "monthlyRentCents", "布尔"),
++        (json.dumps({"kind": "rent", "monthlyRentCents": 100.5}), "monthlyRentCents", "小数"),
++        ('{"kind": "rent", "monthlyRentCents": NaN}', "monthlyRentCents", "有限数"),
++        ('{"kind": "rent", "monthlyRentCents": Infinity}', "monthlyRentCents", "有限数"),
++        ('{"kind": "rent", "monthlyRentCents": 1e400}', "monthlyRentCents", "有限数"),
++        (json.dumps({"kind": "rent", "monthlyRentCents": -1}), "monthlyRentCents", "不能为负数"),
++        (json.dumps({"kind": "share", "shareBps": "500"}), "shareBps", "必须为整数"),
++        (json.dumps({"kind": "share", "shareBps": 10001}), "shareBps", "10000"),
++        (
++            json.dumps(
++                {"kind": "recovery", "recoveryKind": "bogus", "recoveryBps": 5000, "repairCostCents": 0}
++            ),
++            "recoveryKind",
++            "offline",
++        ),
++        (
++            json.dumps(
++                {"kind": "recovery", "recoveryKind": "offline", "recoveryBps": 5000, "repairCostCents": -1}
++            ),
++            "repairCostCents",
++            "不能为负数",
++        ),
++        (
++            '{"kind": "recovery", "recoveryKind": "offline", "recoveryBps": NaN, "repairCostCents": 0}',
++            "recoveryBps",
++            "有限数",
++        ),
++        (json.dumps([]), "body", "JSON 对象"),
++    ]
++    for index, (raw_body, expected_field, expected_text) in enumerate(cases):
++        response = _post_scenario_raw(client, diagnosis_id, raw_body, key=f"strict-{index}")
++        assert response.status_code == 400, (raw_body, response.text)
++        body = response.json()
++        assert set(body) >= {"code", "message", "fieldErrors", "requestId"}, body
++        assert expected_field in body["fieldErrors"], (raw_body, body)
++        message = body["fieldErrors"][expected_field]
++        assert expected_text in message, (raw_body, message)
++        assert any("\u4e00" <= char <= "\u9fff" for char in message), (raw_body, message)
++        assert "Input should" not in message, (raw_body, message)
++
++    # 所有非法请求都不得写入测算记录。
++    listing = client.get(f"/api/diagnoses/{diagnosis_id}/scenarios").json()
++    assert listing["total"] == 0
++
++
++def test_scenario_valid_after_invalid_attempts_computes_and_persists(client):
++    """先提交非法参数被拒、再提交合法参数：正常测算并保存，且已有记录不被改写。"""
++    diagnosis = _new_diagnosis(client, key="fix-then-ok-diag")
++    diagnosis_id = diagnosis["id"]
++
++    invalid = _post_scenario(client, diagnosis_id, {"kind": "rent", "monthlyRentCents": -100}, key="fix-1")
++    assert invalid.status_code == 400
++    assert "monthlyRentCents" in invalid.json()["fieldErrors"]
++    assert client.get(f"/api/diagnoses/{diagnosis_id}/scenarios").json()["total"] == 0
++
++    valid = _post_scenario(
++        client, diagnosis_id, {"kind": "rent", "monthlyRentCents": 2000000}, key="fix-2"
++    )
++    assert valid.status_code == 201, valid.text
++    scenario = valid.json()
++    assert scenario["kind"] == "rent"
++    assert scenario["status"] == "computed"
++    assert scenario["inputs"]["monthlyRentCents"] == 2000000
++
++    listing = client.get(f"/api/diagnoses/{diagnosis_id}/scenarios").json()
++    assert listing["total"] == 1
++    assert listing["items"][0]["id"] == scenario["id"]
++
++
+ def test_scenario_missing_idempotency_key_rejected(client):
+     diagnosis = _new_diagnosis(client, key="no-key-diag")
+     response = client.post(

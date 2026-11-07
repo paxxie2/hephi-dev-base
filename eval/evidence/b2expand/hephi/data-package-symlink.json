@@ -1,0 +1,119 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/data-package-symlink",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: symlink findings missing\n\n",
+          "stderr": "",
+          "outputSha256": "0ecae119c4b7e455dd45369e2ba2c29b00a3cb55bd048448c311c19a6f7f044f"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: symlink findings missing\n\n",
+          "stderr": "",
+          "outputSha256": "0ecae119c4b7e455dd45369e2ba2c29b00a3cb55bd048448c311c19a6f7f044f"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: symlink findings missing\n\n",
+          "stderr": "",
+          "outputSha256": "0ecae119c4b7e455dd45369e2ba2c29b00a3cb55bd048448c311c19a6f7f044f"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "docs/self-check-2026-11-07.md",
+        "docs/source-consistency.md",
+        "eval/check-data-package.mjs",
+        "eval/export-baseline.mjs",
+        "hephi/docs/decisions-format.md",
+        "hephi/docs/enforcement-modes.md",
+        "hephi/docs/versioning.md",
+        "hephi/src/control/ready-gate.ts",
+        "hephi/src/control/worker-mount.ts",
+        "hephi/tests/control/worker-mount.test.ts",
+        "scripts/host/rebuild-isolated.sh"
+      ],
+      "changedFiles": [
+        "docs/source-consistency.md",
+        "eval/check-data-package.mjs",
+        "eval/export-baseline.mjs",
+        "hephi/docs/decisions-format.md",
+        "hephi/docs/enforcement-modes.md",
+        "hephi/docs/versioning.md",
+        "hephi/src/control/ready-gate.ts",
+        "hephi/src/control/worker-mount.ts",
+        "hephi/tests/control/worker-mount.test.ts",
+        "scripts/host/rebuild-isolated.sh",
+        "docs/self-check-2026-11-07.md"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: symlink scan and explicit missing-db error\n",
+          "stderr": "",
+          "outputSha256": "f317511eb72d085ebe7be7c240fd23c9536ed3cde83d2051e04592d20691a651"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: symlink scan and explicit missing-db error\n",
+          "stderr": "",
+          "outputSha256": "f317511eb72d085ebe7be7c240fd23c9536ed3cde83d2051e04592d20691a651"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: symlink scan and explicit missing-db error\n",
+          "stderr": "",
+          "outputSha256": "f317511eb72d085ebe7be7c240fd23c9536ed3cde83d2051e04592d20691a651"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "0a6e2d010591a01164d1808bfeb809497e289359",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

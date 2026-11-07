@@ -1,0 +1,1342 @@
+diff --git a/.gitignore b/.gitignore
+index 44c73a2..63a901c 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -17,7 +17,9 @@ web/playwright-report/
+ web/e2e/.auth/
+ 
+ # Local runtime data and secrets
+-data/
++# 只忽略仓库根的运行期数据目录（data/site_pnl.db 等）；不能写成 data/，
++# 否则会把源码包 backend/app/data/（播种与只读加载）一并忽略，导致 main 无法启动/播种。
++/data/
+ *.db
+ *.db-wal
+ *.db-shm
+diff --git a/INTERFACES.md b/INTERFACES.md
+index 7315080..a40c2eb 100644
+--- a/INTERFACES.md
++++ b/INTERFACES.md
+@@ -305,7 +305,8 @@ def list_messages(db_path: str, diagnosis_id: str, limit: int, offset: int) -> t
+ - 完整性与损益：`completeness-banner`、`diagnosis-panel`、`pnl-table`、`pnl-row-<key>`、`pnl-amount-<key>`（单元格文本含“元”或“无法确定”+原因）、`pnl-status-<key>`
+ - 规则与建议：`findings-list`、`finding-<ruleId>`（元素上带 `data-status="hit|clear|unknown"`）、`finding-status-<ruleId>`、`suggestions-list`
+ - 证据：`evidence-list`、`evidence-toggle-<evidenceId>`、`evidence-records`、`record-list`、`record-item`、`record-total`、`record-prev`、`record-next`、`evidence-page-info`
+-- 测算：`scenario-panel`、`scenario-tab-rent|share|recovery`、`scenario-form-<kind>`、`rent-input`、`rent-submit`、`share-input`、`share-submit`、`recovery-kind-offline`、`recovery-kind-slot`、`recovery-bps`、`repair-cost`、`recovery-submit`、`scenario-result`、`scenario-delta`、`scenario-unavailable`、`scenario-status`、`scenario-list`
++- 测算：`scenario-panel`、`scenario-tab-rent|share|recovery`、`scenario-form-<kind>`、`rent-input`、`rent-submit`、`share-input`、`share-submit`、`recovery-kind-offline`、`recovery-kind-slot`、`recovery-bps`、`repair-cost`、`recovery-submit`、`scenario-result`、`scenario-delta`、`scenario-unavailable`、`scenario-status`、`scenario-error`、`scenario-list`
++- 测算输入提示与字段错误（工单 #7 增量）：`rent-range-hint`、`share-range-hint`、`recovery-kind-hint`、`recovery-bps-range-hint`、`repair-cost-range-hint`（字段单位与合法范围）；`field-error-rent`、`field-error-share`、`field-error-recoveryBps`、`field-error-repairCost`、`field-error-recoveryKind`（相应输入框下方字段错误；后端 400 `fieldErrors` 的 `monthlyRentCents/shareBps/recoveryBps/repairCostCents/recoveryKind` 映射到这些前端字段，未映射的错误仍显示在 `scenario-error` 横幅）。
+ - 历史：`history-list`、`history-item-<diagnosisId>`
+ - 对话：`chat-panel`、`chat-messages`、`message-<messageId>`、`chat-input`、`chat-send`、`chat-not-configured`、`chat-error`
+ 
+diff --git a/acceptance/test_business_http.py b/acceptance/test_business_http.py
+index 36f6f9b..b9b1a6f 100644
+--- a/acceptance/test_business_http.py
++++ b/acceptance/test_business_http.py
+@@ -829,6 +829,54 @@ def test_scenario_validation_errors(
+     assert_error_shape(response.json())
+ 
+ 
++@pytest.mark.parametrize(
++    ("name", "raw_body", "expected_field", "expected_fragment"),
++    [
++        # 非有限数（JSON 允许 NaN/Infinity 字面量；必须按错误类型拒绝，不能进入计算）
++        ("租金NaN", '{"kind":"rent","monthlyRentCents":NaN}', "monthlyRentCents", "有限数"),
++        ("分成Infinity", '{"kind":"share","shareBps":Infinity}', "shareBps", "有限数"),
++        # 错误类型（不能被宽松转成整数后落库）
++        ("租金字符串", '{"kind":"rent","monthlyRentCents":"abc"}', "monthlyRentCents", "整数"),
++        ("分成布尔", '{"kind":"share","shareBps":true}', "shareBps", "布尔"),
++        ("租金小数", '{"kind":"rent","monthlyRentCents":1.5}', "monthlyRentCents", "小数"),
++        # 未知/缺失字段
++        ("未知字段", '{"kind":"rent","monthlyRentCents":100,"unexpected":1}', "unexpected", "不支持字段"),
++        ("缺少kind", '{"monthlyRentCents":100}', "kind", "必填"),
++    ],
++)
++def test_scenario_validation_rejects_wrong_types_with_chinese_field_errors(
++    client: httpx.Client,
++    default_diagnoses: dict[str, dict[str, Any]],
++    name: str,
++    raw_body: str,
++    expected_field: str,
++    expected_fragment: str,
++) -> None:
++    """绕过前端直接提交非法测算参数：400 字段级**中文**错误，且不写入成功测算记录。"""
++    diagnosis = default_diagnoses["S01"]
++    total_url = f"/api/diagnoses/{diagnosis['id']}/scenarios"
++    before = client.get(total_url, params={"limit": 1}).json()["total"]
++
++    response = client.post(
++        total_url,
++        content=raw_body,
++        headers={"Content-Type": "application/json", "Idempotency-Key": uuid.uuid4().hex},
++    )
++    assert response.status_code == 400, f"{name}: 期望 400，实际 {response.status_code} {response.text}"
++    body = response.json()
++    assert_error_shape(body)
++    assert body["code"] == "VALIDATION_ERROR", f"{name}: 非法类型应为 VALIDATION_ERROR，实际 {body['code']}"
++    assert expected_field in body["fieldErrors"], f"{name}: 缺少字段级错误 {expected_field}: {body['fieldErrors']}"
++    message = body["fieldErrors"][expected_field]
++    assert expected_fragment in message, f"{name}: 错误信息不可操作（应含「{expected_fragment}」）：{message}"
++    assert "Input should" not in message and "Field required" not in message, (
++        f"{name}: 不得把 Pydantic 英文默认消息透给用户：{message}"
++    )
++
++    after = client.get(total_url, params={"limit": 1}).json()["total"]
++    assert after == before, f"{name}: 非法输入不得写入成功测算记录（before={before}, after={after}）"
++
++
+ # ---------------------------------------------------------------- 对话（真实模型 / 未配置如实处理）
+ 
+ 
+diff --git a/backend/app/data/__init__.py b/backend/app/data/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/backend/app/data/loader.py b/backend/app/data/loader.py
+new file mode 100644
+index 0000000..7c931f8
+--- /dev/null
++++ b/backend/app/data/loader.py
+@@ -0,0 +1,249 @@
++"""源数据只读加载（T1）。
++
++- 只读取当前 ``data_version``（app_meta.data_version，缺省 constants.DATA_VERSION）。
++- ``load_site_data`` 除请求窗口外，额外加载紧邻前期（``previous_window``）记录，
++  供 ``evaluate_rules`` 计算客流/转化变化；``SiteData.range_start/range_end`` 仍是请求窗口。
++- 覆盖清单读取该点位全部分日期（数据版本内），使任意子窗口都能判断完整性与比较期。
++- 源记录 id 原样保留（证据需要引用）。
++"""
++
++from __future__ import annotations
++
++from app.constants import DATA_VERSION, DATASET_END_DATE, DATASET_START_DATE
++from app.db import connect, get_meta
++from app.domain.models import (
++    BusinessHour,
++    CoverageInfo,
++    Device,
++    DeviceHour,
++    MaintenanceFee,
++    Order,
++    PaymentFee,
++    Refund,
++    RentContract,
++    ShareContract,
++    SiteData,
++    SiteInfo,
++    SlotFault,
++    TrafficDay,
++)
++from app.domain.money import previous_window
++
++
++def _current_data_version(conn: object) -> str:
++    return get_meta(conn, "data_version") or DATA_VERSION  # type: ignore[arg-type]
++
++
++def _dataset_bounds(conn: object) -> tuple[str, str]:
++    start = get_meta(conn, "dataset_start") or DATASET_START_DATE  # type: ignore[arg-type]
++    end = get_meta(conn, "dataset_end") or DATASET_END_DATE  # type: ignore[arg-type]
++    return start, end
++
++
++def _site_from_row(row: object) -> SiteInfo:
++    return SiteInfo(
++        id=row["id"],  # type: ignore[index]
++        name=row["name"],  # type: ignore[index]
++        city=row["city"],  # type: ignore[index]
++        address=row["address"],  # type: ignore[index]
++        case_label=row["case_label"],  # type: ignore[index]
++        planned_capacity=row["planned_capacity"],  # type: ignore[index]
++        data_version=row["data_version"],  # type: ignore[index]
++    )
++
++
++def load_sites(db_path: str) -> list[SiteInfo]:
++    conn = connect(db_path)
++    try:
++        version = _current_data_version(conn)
++        rows = conn.execute(
++            "SELECT * FROM sites WHERE data_version = ? ORDER BY id", (version,)
++        ).fetchall()
++        return [_site_from_row(row) for row in rows]
++    finally:
++        conn.close()
++
++
++def get_site_info(site_id: str, db_path: str) -> SiteInfo | None:
++    conn = connect(db_path)
++    try:
++        version = _current_data_version(conn)
++        row = conn.execute(
++            "SELECT * FROM sites WHERE id = ? AND data_version = ?", (site_id, version)
++        ).fetchone()
++        return _site_from_row(row) if row else None
++    finally:
++        conn.close()
++
++
++def load_site_data(site_id: str, start_date: str, end_date: str, db_path: str) -> SiteData:
++    """按站点 + 窗口加载源数据；未知点位抛 ``ValueError``。"""
++    conn = connect(db_path)
++    try:
++        version = _current_data_version(conn)
++        dataset_start, dataset_end = _dataset_bounds(conn)
++        site_row = conn.execute(
++            "SELECT * FROM sites WHERE id = ? AND data_version = ?", (site_id, version)
++        ).fetchone()
++        if site_row is None:
++            raise ValueError(f"unknown site: {site_id}")
++        site = _site_from_row(site_row)
++
++        # 比较期记录也加载（客流/转化变化规则需要），但受数据集范围约束。
++        comparison_start, _ = previous_window(start_date, end_date)
++        load_start = max(comparison_start, dataset_start)
++        load_end = min(end_date, dataset_end)
++        query_start = min(load_start, load_end) if load_start <= load_end else load_start
++
++        def by_date_rows(table: str) -> list[object]:
++            if query_start > load_end:
++                return []
++            return conn.execute(
++                f"SELECT * FROM {table} WHERE site_id = ? AND data_version = ? "
++                "AND business_date BETWEEN ? AND ? ORDER BY business_date, id",
++                (site_id, version, query_start, load_end),
++            ).fetchall()
++
++        orders = [
++            Order(
++                id=row["id"], site_id=row["site_id"], business_time=row["business_time"],
++                business_date=row["business_date"], amount_cents=row["amount_cents"],
++                is_paid_rental=bool(row["is_paid_rental"]),
++            )
++            for row in by_date_rows("orders")
++        ]
++        refunds = [
++            Refund(
++                id=row["id"], site_id=row["site_id"], order_id=row["order_id"],
++                business_time=row["business_time"], business_date=row["business_date"],
++                amount_cents=row["amount_cents"],
++            )
++            for row in by_date_rows("refunds")
++        ]
++        traffic = [
++            TrafficDay(
++                id=row["id"], site_id=row["site_id"], business_date=row["business_date"],
++                visitors=row["visitors"],
++            )
++            for row in by_date_rows("traffic_daily")
++        ]
++        business_hours = [
++            BusinessHour(
++                id=row["id"], site_id=row["site_id"], business_date=row["business_date"],
++                open_minute=row["open_minute"], close_minute=row["close_minute"],
++            )
++            for row in by_date_rows("business_hours")
++        ]
++        device_hours = [
++            DeviceHour(
++                id=row["id"], site_id=row["site_id"], device_id=row["device_id"],
++                business_date=row["business_date"], hour=row["hour"], status=row["status"],
++                planned_capacity=row["planned_capacity"],
++            )
++            for row in by_date_rows("device_hours")
++        ]
++        slot_faults = [
++            SlotFault(
++                id=row["id"], site_id=row["site_id"], device_id=row["device_id"],
++                business_date=row["business_date"], hour=row["hour"],
++                faulted_slots=row["faulted_slots"],
++            )
++            for row in by_date_rows("slot_faults")
++        ]
++        maintenance = [
++            MaintenanceFee(
++                id=row["id"], site_id=row["site_id"], business_time=row["business_time"],
++                business_date=row["business_date"], amount_cents=row["amount_cents"],
++                description=row["description"],
++            )
++            for row in by_date_rows("maintenance_fees")
++        ]
++        payment_fees = [
++            PaymentFee(
++                id=row["id"], site_id=row["site_id"], order_id=row["order_id"],
++                business_date=row["business_date"], amount_cents=row["amount_cents"],
++            )
++            for row in by_date_rows("payment_fees")
++        ]
++
++        devices = [
++            Device(
++                id=row["id"], site_id=row["site_id"], name=row["name"],
++                purchase_cost_cents=row["purchase_cost_cents"],
++                depreciation_months=row["depreciation_months"],
++                in_service_date=row["in_service_date"],
++                planned_capacity=row["planned_capacity"],
++            )
++            for row in conn.execute(
++                "SELECT * FROM devices WHERE site_id = ? AND data_version = ? ORDER BY id",
++                (site_id, version),
++            ).fetchall()
++        ]
++
++        rent_contracts = [
++            RentContract(
++                id=row["id"], site_id=row["site_id"], effective_start=row["effective_start"],
++                effective_end=row["effective_end"], monthly_rent_cents=row["monthly_rent_cents"],
++                contract_version=row["contract_version"],
++            )
++            for row in conn.execute(
++                "SELECT * FROM rent_contracts WHERE site_id = ? AND data_version = ? "
++                "AND effective_end >= ? AND effective_start <= ? ORDER BY effective_start, id",
++                (site_id, version, start_date, end_date),
++            ).fetchall()
++        ]
++        share_contracts = [
++            ShareContract(
++                id=row["id"], site_id=row["site_id"], effective_start=row["effective_start"],
++                effective_end=row["effective_end"], rate_bps=row["rate_bps"],
++                contract_version=row["contract_version"],
++            )
++            for row in conn.execute(
++                "SELECT * FROM share_contracts WHERE site_id = ? AND data_version = ? "
++                "AND effective_end >= ? AND effective_start <= ? ORDER BY effective_start, id",
++                (site_id, version, start_date, end_date),
++            ).fetchall()
++        ]
++
++        expected: dict[str, set[str]] = {}
++        for row in conn.execute(
++            "SELECT source_type, business_date FROM coverage "
++            "WHERE site_id = ? AND data_version = ? AND expected = 1",
++            (site_id, version),
++        ).fetchall():
++            expected.setdefault(row["source_type"], set()).add(row["business_date"])
++        coverage = CoverageInfo(
++            dataset_start=dataset_start, dataset_end=dataset_end, expected=expected
++        )
++
++        return SiteData(
++            site=site,
++            range_start=start_date,
++            range_end=end_date,
++            orders=orders,
++            refunds=refunds,
++            traffic=traffic,
++            business_hours=business_hours,
++            devices=devices,
++            device_hours=device_hours,
++            slot_faults=slot_faults,
++            rent_contracts=rent_contracts,
++            share_contracts=share_contracts,
++            maintenance=maintenance,
++            payment_fees=payment_fees,
++            coverage=coverage,
++        )
++    finally:
++        conn.close()
++
++
++def dataset_bounds(db_path: str) -> tuple[str, str]:
++    """读取数据集自然日边界（app_meta，缺省 constants）。"""
++    conn = connect(db_path)
++    try:
++        return _dataset_bounds(conn)
++    finally:
++        conn.close()
++
++
++__all__ = ["load_sites", "get_site_info", "load_site_data", "dataset_bounds"]
+diff --git a/backend/app/data/seed.py b/backend/app/data/seed.py
+new file mode 100644
+index 0000000..1abda8d
+--- /dev/null
++++ b/backend/app/data/seed.py
+@@ -0,0 +1,400 @@
++"""模拟数据播种（T1，固定种子、固定数据版本、幂等）。
++
++设计依据：设计第 5 节、INTERFACES 3.2。
++
++- 固定随机种子 ``constants.DATASET_SEED``；数据完全由确定性规则生成，稳定 ID。
++- 只在空库播种：``sites`` 非空直接返回，绝不重置。
++- 10 个点位 S01..S10 对应 ``正常盈利/租金偏高/分成偏高/设备离线/仓位故障/客流下降/
++  转化下降/退款异常/多因素亏损/数据缺失``；``case_label`` 仅供展示，绝不参与计算或规则。
++- 2026-07-01..2026-09-28 共 90 天，写入全部源表与 coverage 清单 + app_meta。
++- 覆盖清单缺行 = 缺记录；有行但源表 0 条 = 已知为 0。
++"""
++
++from __future__ import annotations
++
++import random
++import time
++from dataclasses import dataclass
++from datetime import date
++
++from app.constants import (
++    DATA_VERSION,
++    DATASET_END_DATE,
++    DATASET_SEED,
++    DATASET_START_DATE,
++)
++from app.db import connect, init_db
++from app.domain.models import SOURCE_TYPES
++from app.domain.money import date_range, parse_date, round_half_up_div
++
++BUSINESS_OPEN_MINUTE = 600  # 10:00
++BUSINESS_CLOSE_MINUTE = 1320  # 22:00
++BUSINESS_HOURS = tuple(range(10, 22))  # [10:00, 22:00)
++PAYMENT_FEE_BPS = 60  # 0.6%
++
++# 各案例的“异常”从默认诊断窗口（2026-08-30..2026-09-28）起点开始生效。
++SWITCH_DATE = "2026-08-30"
++
++
++@dataclass(frozen=True)
++class _DeviceSpec:
++    name: str
++    purchase_cost_cents: int
++    depreciation_months: int
++    in_service_date: str
++    planned_capacity: int = 6
++
++
++@dataclass(frozen=True)
++class _SiteSpec:
++    id: str
++    name: str
++    city: str
++    address: str
++    case_label: str
++    orders_before: int
++    orders_after: int
++    visitors_before: int
++    visitors_after: int
++    refund_percent: int  # 每 100 笔订单中整单退款的笔数
++    rent_segments: tuple[tuple[str, str, int, int], ...]  # (start, end, monthly_cents, version)
++    share_segments: tuple[tuple[str, str, int, int], ...]  # (start, end, rate_bps, version)
++    devices: tuple[_DeviceSpec, ...]
++    maintenance_events: tuple[tuple[str, int, str], ...] = ()
++    offline_device_index: int | None = None
++    offline_orders: int | None = None
++    fault_devices: tuple[int, ...] = ()
++    faulted_slots: int = 0
++    fault_hours: tuple[int, ...] = BUSINESS_HOURS  # 故障发生的营业小时；其余小时保持正常
++    missing: tuple[tuple[str, tuple[str, ...]], ...] = ()  # source_type -> 缺记录日期
++
++
++_COMMON_DEVICES: tuple[_DeviceSpec, ...] = (
++    # 2024-12 起计提 36 个月；默认窗口内仍在计提。
++    _DeviceSpec("柜机A", 1_200_000, 36, "2024-11-01"),
++    # 2025-03 起计提 18 个月 -> 2026-08 为最后一个计提月；2026-09 起折旧为 0（窗口内到期）。
++    _DeviceSpec("柜机B", 1_200_000, 18, "2025-02-15"),
++    # 2025-07 起计提 24 个月。
++    _DeviceSpec("柜机C", 1_200_000, 24, "2025-06-10"),
++    # 2026-06 起计提 24 个月（投入使用日次月开始）。
++    _DeviceSpec("柜机D", 1_200_000, 24, "2026-05-05"),
++)
++
++_RENT_FULL = (("2026-07-01", "2026-12-31", 600_000, 1),)
++_SHARE_20 = (("2026-07-01", "2026-12-31", 2000, 1),)
++
++
++def _site_specs() -> tuple[_SiteSpec, ...]:
++    return (
++        _SiteSpec(
++            "S01", "静安寺地铁店", "上海", "静安区南京西路 1788 号 1F", "正常盈利",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1, rent_segments=_RENT_FULL, share_segments=_SHARE_20,
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-05", 15_000, "常规保养"), ("2026-09-20", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S02", "陆家嘴商城店", "上海", "浦东新区世纪大道 8 号 B1", "租金偏高",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1,
++            # 窗口内租金变更：2026-09-15 起 9000 元/月 -> 12000 元/月（区间不重叠）。
++            rent_segments=(
++                ("2026-07-01", "2026-09-14", 900_000, 1),
++                ("2026-09-15", "2026-12-31", 1_200_000, 2),
++            ),
++            share_segments=_SHARE_20, devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-06", 15_000, "常规保养"), ("2026-09-21", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S03", "五角场万达店", "上海", "杨浦区淞沪路 77 号 3F", "分成偏高",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1, rent_segments=_RENT_FULL,
++            # 窗口内有生效分成比例 40% > 35%。
++            share_segments=(
++                ("2026-07-01", "2026-08-19", 2000, 1),
++                ("2026-08-20", "2026-12-31", 4000, 2),
++            ),
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-07", 15_000, "常规保养"), ("2026-09-22", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S04", "徐家汇美罗城店", "上海", "徐汇区肇嘉浜路 1111 号 5F", "设备离线",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1, rent_segments=_RENT_FULL, share_segments=_SHARE_20,
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-08", 15_000, "常规保养"), ("2026-09-23", 15_000, "零件更换")),
++            offline_device_index=0, offline_orders=24,
++        ),
++        _SiteSpec(
++            "S05", "人民广场店", "上海", "黄浦区南京东路 300 号 2F", "仓位故障",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1, rent_segments=_RENT_FULL, share_segments=_SHARE_20,
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-09", 15_000, "常规保养"), ("2026-09-24", 15_000, "零件更换")),
++            # 故障只发生在营业时段的前 8 小时（10:00-18:00），18:00-22:00 保持正常，
++            # 为恢复测算提供可对齐的参考正常时段；故障比例仍 > 10%。
++            fault_devices=(0, 1), faulted_slots=2, fault_hours=tuple(range(10, 18)),
++        ),
++        _SiteSpec(
++            "S06", "虹桥天地店", "上海", "闵行区申长路 688 号 1F", "客流下降",
++            orders_before=36, orders_after=24, visitors_before=120, visitors_after=80,
++            refund_percent=1,
++            rent_segments=(("2026-07-01", "2026-12-31", 550_000, 1),),
++            share_segments=_SHARE_20, devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-10", 15_000, "常规保养"), ("2026-09-25", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S07", "中山公园龙之梦店", "上海", "长宁区长宁路 1018 号 4F", "转化下降",
++            orders_before=36, orders_after=24, visitors_before=100, visitors_after=100,
++            refund_percent=1,
++            rent_segments=(("2026-07-01", "2026-12-31", 550_000, 1),),
++            share_segments=_SHARE_20, devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-11", 15_000, "常规保养"), ("2026-09-26", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S08", "世纪公园店", "上海", "浦东新区花木路 1099 号 1F", "退款异常",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=15, rent_segments=_RENT_FULL, share_segments=_SHARE_20,
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-12", 15_000, "常规保养"), ("2026-09-27", 15_000, "零件更换")),
++        ),
++        _SiteSpec(
++            "S09", "南京西路旗舰店", "上海", "静安区南京西路 1266 号 2F", "多因素亏损",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=1,
++            rent_segments=(("2026-07-01", "2026-12-31", 1_000_000, 1),),
++            share_segments=(("2026-07-01", "2026-12-31", 4000, 1),),
++            devices=_COMMON_DEVICES,
++            # 维护费用/净收入 > 15%，与高租金/高分成叠加导致亏损。
++            maintenance_events=(
++                ("2026-09-04", 160_000, "压缩机大修"),
++                ("2026-09-14", 160_000, "电路板更换"),
++                ("2026-09-24", 160_000, "柜体结构维修"),
++            ),
++        ),
++        _SiteSpec(
++            "S10", "张江高科店", "上海", "浦东新区祖冲之路 899 号 1F", "数据缺失",
++            orders_before=30, orders_after=30, visitors_before=100, visitors_after=100,
++            refund_percent=0, rent_segments=_RENT_FULL, share_segments=_SHARE_20,
++            devices=_COMMON_DEVICES,
++            maintenance_events=(("2026-09-08", 15_000, "常规保养"), ("2026-09-15", 15_000, "零件更换")),
++            # 核心源（退款、维护）与设备小时故意缺若干日期：缺行=缺记录，不补 0。
++            missing=(
++                ("refunds", ("2026-09-11", "2026-09-12", "2026-09-13")),
++                ("maintenance_fees", ("2026-09-20", "2026-09-21")),
++                ("device_hours", ("2026-09-05", "2026-09-06")),
++            ),
++        ),
++    )
++
++
++def _missing_dates(spec: _SiteSpec) -> dict[str, set[str]]:
++    return {source: set(dates) for source, dates in spec.missing}
++
++
++def _is_offline_day(spec: _SiteSpec, day: date) -> bool:
++    if spec.offline_device_index is None:
++        return False
++    return day >= parse_date(SWITCH_DATE) and day.day % 2 == 0
++
++
++def _daily_orders(spec: _SiteSpec, day: date) -> int:
++    if day < parse_date(SWITCH_DATE):
++        return spec.orders_before
++    if _is_offline_day(spec, day) and spec.offline_orders is not None:
++        return spec.offline_orders
++    return spec.orders_after
++
++
++def _daily_visitors(spec: _SiteSpec, day: date) -> int:
++    base = spec.visitors_before if day < parse_date(SWITCH_DATE) else spec.visitors_after
++    # 小幅确定性波动（±2），不改变案例语义。
++    return base + (day.toordinal() * 11) % 5 - 2
++
++
++def _is_fault_day(day: date) -> bool:
++    return day >= parse_date(SWITCH_DATE)
++
++
++def _generate(conn: object) -> None:
++    random.Random(DATASET_SEED)  # 固定种子常量（生成规则为确定性，保留以便复现扩展）
++    specs = _site_specs()
++    days = date_range(DATASET_START_DATE, DATASET_END_DATE)
++    day_objs = [parse_date(d) for d in days]
++
++    sites_rows: list[tuple[object, ...]] = []
++    order_rows: list[tuple[object, ...]] = []
++    refund_rows: list[tuple[object, ...]] = []
++    traffic_rows: list[tuple[object, ...]] = []
++    business_hour_rows: list[tuple[object, ...]] = []
++    device_rows: list[tuple[object, ...]] = []
++    device_hour_rows: list[tuple[object, ...]] = []
++    slot_fault_rows: list[tuple[object, ...]] = []
++    maintenance_rows: list[tuple[object, ...]] = []
++    payment_fee_rows: list[tuple[object, ...]] = []
++    rent_rows: list[tuple[object, ...]] = []
++    share_rows: list[tuple[object, ...]] = []
++    coverage_rows: list[tuple[object, ...]] = []
++
++    for spec in specs:
++        missing = _missing_dates(spec)
++        sites_rows.append(
++            (spec.id, spec.name, spec.city, spec.address, spec.case_label,
++             sum(device.planned_capacity for device in spec.devices), DATA_VERSION)
++        )
++
++        for device_index, device in enumerate(spec.devices):
++            device_rows.append(
++                (f"DEV-{spec.id}-{device_index + 1:02d}", spec.id, device.name,
++                 device.purchase_cost_cents, device.depreciation_months,
++                 device.in_service_date, device.planned_capacity, DATA_VERSION)
++            )
++
++        for start, end, monthly_cents, version in spec.rent_segments:
++            rent_rows.append(
++                (f"RENT-{spec.id}-{version}", spec.id, start, end, monthly_cents, version, DATA_VERSION)
++            )
++        for start, end, rate_bps, version in spec.share_segments:
++            share_rows.append(
++                (f"SHARE-{spec.id}-{version}", spec.id, start, end, rate_bps, version, DATA_VERSION)
++            )
++
++        for event_index, (event_date, amount, description) in enumerate(spec.maintenance_events, start=1):
++            if event_date in missing.get("maintenance_fees", set()):
++                continue
++            maintenance_rows.append(
++                (f"MNT-{spec.id}-{event_index:03d}", spec.id,
++                 f"{event_date}T14:30:00+08:00", event_date, amount, description, DATA_VERSION)
++            )
++
++        order_seq = 0
++        refund_seq = 0
++        for day_str, day in zip(days, day_objs):
++            # ---- 订单 / 退款 / 手续费
++            order_count = _daily_orders(spec, day)
++            for _ in range(order_count):
++                order_seq += 1
++                amount = 3000 + ((order_seq * 37) % 7 - 3) * 100
++                hour = BUSINESS_HOURS[order_seq % len(BUSINESS_HOURS)]
++                minute = (order_seq * 17) % 60
++                business_time = f"{day_str}T{hour:02d}:{minute:02d}:00+08:00"
++                order_id = f"ORD-{spec.id}-{order_seq:05d}"
++                order_rows.append(
++                    (order_id, spec.id, business_time, day_str, amount, 1, DATA_VERSION)
++                )
++                fee_cents = round_half_up_div(amount * PAYMENT_FEE_BPS, 10000)
++                if day_str not in missing.get("payment_fees", set()):
++                    payment_fee_rows.append(
++                        (f"FEE-{spec.id}-{order_seq:05d}", spec.id, order_id, day_str, fee_cents, DATA_VERSION)
++                    )
++                if spec.refund_percent and (order_seq % 100) < spec.refund_percent:
++                    refund_date = day
++                    for _lag in range(order_seq % 3):
++                        if refund_date >= parse_date(DATASET_END_DATE):
++                            break
++                        refund_date = date.fromordinal(refund_date.toordinal() + 1)
++                    refund_date_str = refund_date.isoformat()
++                    if refund_date_str in missing.get("refunds", set()):
++                        continue
++                    refund_seq += 1
++                    refund_rows.append(
++                        (f"RFD-{spec.id}-{refund_seq:05d}", spec.id, order_id,
++                         f"{refund_date_str}T{hour:02d}:{minute:02d}:00+08:00",
++                         refund_date_str, amount, DATA_VERSION)
++                    )
++
++            # ---- 客流
++            if day_str not in missing.get("traffic_daily", set()):
++                traffic_rows.append(
++                    (f"TRF-{spec.id}-{day_str}", spec.id, day_str, _daily_visitors(spec, day), DATA_VERSION)
++                )
++
++            # ---- 营业时段
++            if day_str not in missing.get("business_hours", set()):
++                business_hour_rows.append(
++                    (f"BH-{spec.id}-{day_str}", spec.id, day_str,
++                     BUSINESS_OPEN_MINUTE, BUSINESS_CLOSE_MINUTE, DATA_VERSION)
++                )
++
++            # ---- 设备小时与仓位故障
++            if day_str not in missing.get("device_hours", set()):
++                for device_index, device in enumerate(spec.devices):
++                    offline = _is_offline_day(spec, day) and spec.offline_device_index == device_index
++                    for hour in BUSINESS_HOURS:
++                        device_hour_rows.append(
++                            (f"DH-{spec.id}-{device_index + 1:02d}-{day_str}-{hour:02d}",
++                             spec.id, f"DEV-{spec.id}-{device_index + 1:02d}", day_str, hour,
++                             "offline" if offline else "online", device.planned_capacity, DATA_VERSION)
++                        )
++            if day_str not in missing.get("slot_faults", set()) and _is_fault_day(day):
++                for device_index in spec.fault_devices:
++                    for hour in spec.fault_hours:
++                        slot_fault_rows.append(
++                            (f"SF-{spec.id}-{device_index + 1:02d}-{day_str}-{hour:02d}",
++                             spec.id, f"DEV-{spec.id}-{device_index + 1:02d}", day_str, hour,
++                             spec.faulted_slots, DATA_VERSION)
++                        )
++
++            # ---- 覆盖清单（expected=1）：缺行即缺记录
++            for source_type in SOURCE_TYPES:
++                if day_str in missing.get(source_type, set()):
++                    continue
++                coverage_rows.append((spec.id, source_type, day_str, 1, DATA_VERSION))
++
++    _insert(conn, "sites", sites_rows)
++    _insert(conn, "devices", device_rows)
++    _insert(conn, "orders", order_rows)
++    _insert(conn, "refunds", refund_rows)
++    _insert(conn, "traffic_daily", traffic_rows)
++    _insert(conn, "business_hours", business_hour_rows)
++    _insert(conn, "device_hours", device_hour_rows)
++    _insert(conn, "slot_faults", slot_fault_rows)
++    _insert(conn, "maintenance_fees", maintenance_rows)
++    _insert(conn, "payment_fees", payment_fee_rows)
++    _insert(conn, "rent_contracts", rent_rows)
++    _insert(conn, "share_contracts", share_rows)
++    _insert(conn, "coverage", coverage_rows)
++
++    meta_rows = [
++        ("data_version", DATA_VERSION),
++        ("seed", DATASET_SEED),
++        ("seeded_at", time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())),
++        ("dataset_start", DATASET_START_DATE),
++        ("dataset_end", DATASET_END_DATE),
++    ]
++    conn.executemany(  # type: ignore[attr-defined]
++        "INSERT INTO app_meta (key, value) VALUES (?, ?) "
++        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
++        meta_rows,
++    )
++
++
++def _insert(conn: object, table: str, rows: list[tuple[object, ...]]) -> None:
++    if not rows:
++        return
++    placeholders = ", ".join("?" for _ in rows[0])
++    conn.executemany(  # type: ignore[attr-defined]
++        f"INSERT INTO {table} VALUES ({placeholders})", rows
++    )
++
++
++def seed_database(db_path: str) -> None:
++    """只在空库播种固定模拟数据；已有数据时直接返回（绝不重置）。"""
++    init_db(db_path)
++    conn = connect(db_path)
++    try:
++        existing = conn.execute("SELECT COUNT(*) AS c FROM sites").fetchone()
++        if existing and existing["c"] > 0:
++            return
++        try:
++            _generate(conn)
++            conn.commit()
++        except Exception:
++            conn.rollback()
++            raise
++        try:
++            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
++        except Exception:  # pragma: no cover - checkpoint 是尽力而为
++            pass
++    finally:
++        conn.close()
+diff --git a/web/e2e/08-scenario-validation.spec.ts b/web/e2e/08-scenario-validation.spec.ts
+new file mode 100644
+index 0000000..5807893
+--- /dev/null
++++ b/web/e2e/08-scenario-validation.spec.ts
+@@ -0,0 +1,246 @@
++/**
++ * 旅程 8（工单 #7 验收）：假设测算输入校验与可操作错误提示。
++ *
++ * 真实浏览器 + 真实后端（禁止 mock 业务接口）：
++ * 非法输入 → 看到具体字段错误 → 修正 → 成功测算并保存；
++ * 同时用同源真实 HTTP 请求绕过前端提交非法参数，断言 400 且不写入成功测算记录。
++ */
++import { Buffer } from "node:buffer";
++import { expect, test } from "@playwright/test";
++import type { Page } from "@playwright/test";
++import { apiGet, createJourneyLog, startDiagnosis } from "./helpers";
++
++interface ScenarioItem {
++  id: string;
++  kind: string;
++  inputs: Record<string, unknown>;
++  status: string;
++}
++
++interface ScenarioList {
++  items: ScenarioItem[];
++  total: number;
++}
++
++async function savedScenarios(page: Page, diagnosisId: string): Promise<ScenarioList> {
++  return (await apiGet(page, `/api/diagnoses/${diagnosisId}/scenarios?limit=100`)).body as ScenarioList;
++}
++
++async function waitForNewScenario(
++  page: Page,
++  diagnosisId: string,
++  kind: string,
++  knownIds: Set<string>,
++): Promise<ScenarioItem> {
++  await expect
++    .poll(
++      async () => {
++        const list = await savedScenarios(page, diagnosisId);
++        return list.items.filter((item) => item.kind === kind && !knownIds.has(item.id)).length;
++      },
++      { timeout: 60_000, message: `等待新的 ${kind} 测算落库` },
++    )
++    .toBe(1);
++  const list = await savedScenarios(page, diagnosisId);
++  return list.items.filter((item) => item.kind === kind && !knownIds.has(item.id))[0];
++}
++
++async function idsByKind(page: Page, diagnosisId: string): Promise<Set<string>> {
++  const list = await savedScenarios(page, diagnosisId);
++  return new Set(list.items.map((item) => item.id));
++}
++
++test.describe("旅程8 假设测算输入校验与错误提示", () => {
++  test("非法输入→具体错误→修正→成功测算；绕过前端仍被拒绝", async ({ page }) => {
++    test.setTimeout(240_000);
++    const log = createJourneyLog("journey-08-scenario-validation");
++    log.attach(page);
++    try {
++      await page.goto("/");
++      const diagnosisId = await startDiagnosis(page, "S01");
++
++      // ---------------------------------------------------------------- 租金
++      await page.getByTestId("scenario-tab-rent").click();
++      await expect(page.getByTestId("scenario-form-rent")).toBeVisible();
++      // 字段单位与合法范围必须可见（工单验收：显示字段单位、合法范围）。
++      await expect(page.getByTestId("rent-range-hint")).toContainText("单位：元");
++      await expect(page.getByTestId("rent-range-hint")).toContainText("≥ 0");
++      await expect(page.getByTestId("rent-range-hint")).toContainText("两位小数");
++
++      const beforeRent = (await savedScenarios(page, diagnosisId)).total;
++      await page.getByTestId("rent-submit").click();
++      await expect(page.getByTestId("field-error-rent")).toContainText("请输入金额（元）");
++      await page.getByTestId("rent-input").fill("-5");
++      await page.getByTestId("rent-submit").click();
++      await expect(page.getByTestId("field-error-rent")).toContainText("金额必须是非负数");
++      await expect(page.getByTestId("scenario-result")).toHaveCount(0);
++      expect(
++        (await savedScenarios(page, diagnosisId)).total,
++        "前端判定非法时不得发出测算请求（不产生记录）",
++      ).toBe(beforeRent);
++      await log.shot(page, "租金非法输入显示具体字段错误", `前置已保存=${beforeRent}`);
++
++      const rentIds = await idsByKind(page, diagnosisId);
++      await page.getByTestId("rent-input").fill("9000");
++      await expect(page.getByTestId("field-error-rent")).toHaveCount(0);
++      const [rentResponse] = await Promise.all([
++        page.waitForResponse(
++          (r) => r.url().includes("/scenarios") && r.request().method() === "POST",
++          { timeout: 60_000 },
++        ),
++        page.getByTestId("rent-submit").click(),
++      ]);
++      expect(rentResponse.status(), "合法租金提交应答成功").toBe(201);
++      const rent = await waitForNewScenario(page, diagnosisId, "rent", rentIds);
++      expect(rent.inputs.monthlyRentCents).toBe(900000);
++      await expect(page.getByTestId("scenario-status").first()).toHaveText("已计算");
++      await expect(page.getByTestId("scenario-delta").first()).toBeVisible();
++      await log.shot(page, "修正后租金测算成功并保存", `scenarioId=${rent.id}`);
++
++      // ---------------------------------------------------------------- 分成
++      await page.getByTestId("scenario-tab-share").click();
++      await expect(page.getByTestId("scenario-form-share")).toBeVisible();
++      await expect(page.getByTestId("share-range-hint")).toContainText("0%—100%");
++      await expect(page.getByTestId("share-range-hint")).toContainText("0—10000 基点");
++
++      const beforeShare = (await savedScenarios(page, diagnosisId)).total;
++      await page.getByTestId("share-input").fill("101");
++      await page.getByTestId("share-submit").click();
++      await expect(page.getByTestId("field-error-share")).toContainText("比例必须在 0 到 100% 之间");
++      expect(
++        (await savedScenarios(page, diagnosisId)).total,
++        "越界分成比例不得产生测算记录",
++      ).toBe(beforeShare);
++      await log.shot(page, "分成越界输入显示字段错误", "101%");
++
++      const shareIds = await idsByKind(page, diagnosisId);
++      await page.getByTestId("share-input").fill("20");
++      const [shareResponse] = await Promise.all([
++        page.waitForResponse(
++          (r) => r.url().includes("/scenarios") && r.request().method() === "POST",
++          { timeout: 60_000 },
++        ),
++        page.getByTestId("share-submit").click(),
++      ]);
++      expect(shareResponse.status()).toBe(201);
++      const share = await waitForNewScenario(page, diagnosisId, "share", shareIds);
++      expect(share.inputs.shareBps).toBe(2000);
++      await expect(page.getByTestId("scenario-status").first()).toHaveText("已计算");
++      await log.shot(page, "修正后分成测算成功并保存", `scenarioId=${share.id}`);
++
++      // ---------------------------------------------------------------- 故障恢复
++      await page.getByTestId("scenario-tab-recovery").click();
++      await expect(page.getByTestId("scenario-form-recovery")).toBeVisible();
++      await expect(page.getByTestId("recovery-bps-range-hint")).toContainText("0%—100%");
++      await expect(page.getByTestId("repair-cost-range-hint")).toContainText("≥ 0");
++
++      const beforeRecovery = (await savedScenarios(page, diagnosisId)).total;
++      await page.getByTestId("recovery-bps").fill("150");
++      await page.getByTestId("repair-cost").fill("-1");
++      await page.getByTestId("recovery-submit").click();
++      await expect(page.getByTestId("field-error-recoveryBps")).toContainText("比例必须在 0 到 100% 之间");
++      await expect(page.getByTestId("field-error-repairCost")).toContainText("金额必须是非负数");
++      expect(
++        (await savedScenarios(page, diagnosisId)).total,
++        "恢复测算非法输入不得产生测算记录",
++      ).toBe(beforeRecovery);
++      await log.shot(page, "恢复比例与负维修费同时显示字段错误", "150% / -1 元");
++
++      const recoveryIds = await idsByKind(page, diagnosisId);
++      await page.getByTestId("recovery-bps").fill("50");
++      await page.getByTestId("repair-cost").fill("10");
++      const [recoveryResponse] = await Promise.all([
++        page.waitForResponse(
++          (r) => r.url().includes("/scenarios") && r.request().method() === "POST",
++          { timeout: 60_000 },
++        ),
++        page.getByTestId("recovery-submit").click(),
++      ]);
++      expect(recoveryResponse.status()).toBe(201);
++      const recovery = await waitForNewScenario(page, diagnosisId, "recovery", recoveryIds);
++      expect(["computed", "unavailable"]).toContain(recovery.status);
++      await expect(page.getByTestId("scenario-status").first()).toHaveText(
++        recovery.status === "computed" ? "已计算" : "不可测算",
++      );
++      await log.shot(page, "修正后恢复测算成功保存", `scenarioId=${recovery.id} status=${recovery.status}`);
++
++      // ---------------------------------------------------------------- 绕过前端（真实 HTTP）
++      const beforeBypass = (await savedScenarios(page, diagnosisId)).total;
++      const bypassCases: Array<{ name: string; raw: string; field: string; fragment: string }> = [
++        {
++          name: "租金负数",
++          raw: '{"kind":"rent","monthlyRentCents":-1}',
++          field: "monthlyRentCents",
++          fragment: "负数",
++        },
++        {
++          name: "分成越界",
++          raw: '{"kind":"share","shareBps":10001}',
++          field: "shareBps",
++          fragment: "0 到 10000",
++        },
++        {
++          name: "租金非有限数",
++          raw: '{"kind":"rent","monthlyRentCents":NaN}',
++          field: "monthlyRentCents",
++          fragment: "有限数",
++        },
++        {
++          name: "分成错误类型",
++          raw: '{"kind":"share","shareBps":"abc"}',
++          field: "shareBps",
++          fragment: "整数",
++        },
++        {
++          name: "租金布尔类型",
++          raw: '{"kind":"rent","monthlyRentCents":true}',
++          field: "monthlyRentCents",
++          fragment: "布尔",
++        },
++        {
++          name: "未知字段",
++          raw: '{"kind":"rent","monthlyRentCents":100,"unexpected":1}',
++          field: "unexpected",
++          fragment: "不支持字段",
++        },
++      ];
++      const bypassResults: Array<Record<string, unknown>> = [];
++      for (const [index, item] of bypassCases.entries()) {
++        const response = await page.request.post(`/api/diagnoses/${diagnosisId}/scenarios`, {
++          // 用原始字节发送，确保 NaN/Infinity 等 JSON 字面量原样到达后端（Playwright 的字符串 data 会被编码）。
++          data: Buffer.from(item.raw, "utf8"),
++          headers: {
++            "Content-Type": "application/json",
++            // HTTP 头必须是 ASCII；用例名只用于日志，不放进 header。
++            "Idempotency-Key": `e2e-bypass-${index}`,
++          },
++        });
++        expect(response.status(), `${item.name} 绕过前端也必须被拒绝`).toBe(400);
++        const body = (await response.json()) as { code: string; fieldErrors: Record<string, string> };
++        expect(
++          body.fieldErrors[item.field],
++          `${item.name} 应返回字段级错误: ${JSON.stringify(body)}`,
++        ).toContain(item.fragment);
++        expect(body.fieldErrors[item.field], "字段错误必须是中文，不得透出 Pydantic 英文").not.toContain(
++          "Input should",
++        );
++        bypassResults.push({ name: item.name, status: response.status(), fieldErrors: body.fieldErrors });
++      }
++      const afterBypass = (await savedScenarios(page, diagnosisId)).total;
++      expect(afterBypass, "绕过前端的非法提交不得写入成功测算记录").toBe(beforeBypass);
++
++      // 合法输入仍被接受（证明拒绝的是非法参数，而不是接口整体失败）。
++      const validBypass = await page.request.post(`/api/diagnoses/${diagnosisId}/scenarios`, {
++        data: { kind: "rent", monthlyRentCents: 800000 },
++        headers: { "Idempotency-Key": "e2e-bypass-valid" },
++      });
++      expect(validBypass.status(), "合法参数必须继续可用").toBe(201);
++      expect((await savedScenarios(page, diagnosisId)).total).toBe(afterBypass + 1);
++
++      log.record("绕过前端非法提交", { bypassResults, beforeBypass, afterBypass });
++      await log.shot(page, "绕过前端非法提交全部 400 且未落库", `已保存=${afterBypass}`);
++    } finally {
++      log.flush();
++    }
++  });
++});
+diff --git a/web/e2e/helpers.ts b/web/e2e/helpers.ts
+index 7202c1e..db6b2a0 100644
+--- a/web/e2e/helpers.ts
++++ b/web/e2e/helpers.ts
+@@ -66,7 +66,10 @@ function findRepoRoot(): string {
+ }
+ 
+ export const REPO_ROOT = findRepoRoot();
+-export const EVIDENCE_ROOT = path.join(REPO_ROOT, "docs", "acceptance", "evidence");
++// 默认写入仓库 docs 证据目录；HEPHI staged 检查会覆盖为临时目录，避免检查期间改动仓库源码指纹。
++export const EVIDENCE_ROOT = process.env.E2E_EVIDENCE_DIR
++  ? path.resolve(process.env.E2E_EVIDENCE_DIR)
++  : path.join(REPO_ROOT, "docs", "acceptance", "evidence");
+ 
+ /** 每个旅程一个证据目录：截图（步骤序号+名称）、log.jsonl（含真实 API 调用记录）。 */
+ export function createJourneyLog(journey: string): JourneyLog {
+diff --git a/web/src/features/scenarios/ScenarioSection.test.tsx b/web/src/features/scenarios/ScenarioSection.test.tsx
+index d1c190f..05d5a31 100644
+--- a/web/src/features/scenarios/ScenarioSection.test.tsx
++++ b/web/src/features/scenarios/ScenarioSection.test.tsx
+@@ -246,4 +246,106 @@ describe("ScenarioSection（开发夹具数据）", () => {
+     expect(screen.getByTestId("recovery-submit")).toBeInTheDocument();
+     expect(screen.getByTestId("scenario-submit-recovery")).toBeInTheDocument();
+   });
++
++  it("每个测算表单都显示字段单位与合法范围", async () => {
++    renderScenarios({});
++    const user = userEvent.setup();
++
++    // 租金
++    expect(screen.getByTestId("rent-range-hint")).toHaveTextContent("单位：元");
++    expect(screen.getByTestId("rent-range-hint")).toHaveTextContent("≥ 0");
++    expect(screen.getByTestId("rent-range-hint")).toHaveTextContent("最多两位小数");
++
++    // 分成
++    await user.click(screen.getByTestId("scenario-tab-share"));
++    expect(screen.getByTestId("share-range-hint")).toHaveTextContent("单位：%");
++    expect(screen.getByTestId("share-range-hint")).toHaveTextContent("0%—100%");
++    expect(screen.getByTestId("share-range-hint")).toHaveTextContent("0—10000 基点");
++
++    // 故障恢复：对象/比例/维修费
++    await user.click(screen.getByTestId("scenario-tab-recovery"));
++    expect(screen.getByTestId("recovery-kind-hint")).toHaveTextContent("设备离线（offline）");
++    expect(screen.getByTestId("recovery-kind-hint")).toHaveTextContent("仓位故障（slot）");
++    expect(screen.getByTestId("recovery-bps-range-hint")).toHaveTextContent("0%—100%");
++    expect(screen.getByTestId("recovery-bps-range-hint")).toHaveTextContent("0—10000 基点");
++    expect(screen.getByTestId("repair-cost-range-hint")).toHaveTextContent("≥ 0");
++  });
++
++  it("后端字段级错误映射到对应输入框，且不显示成功结果", async () => {
++    renderScenarios({
++      onCreate: async () => {
++        throw new ApiClientError(400, {
++          code: "VALIDATION_ERROR",
++          message: "请求参数不合法",
++          fieldErrors: {
++            shareBps: "分成比例必须在 0 到 10000 基点之间（0%—100%）",
++          },
++          requestId: "req-backend-field",
++        });
++      },
++    });
++    const user = userEvent.setup();
++    await user.click(screen.getByTestId("scenario-tab-share"));
++    await user.type(screen.getByTestId("share-input"), "20");
++    await user.click(screen.getByTestId("share-submit"));
++
++    // 字段错误显示在该字段下方，输入框标记 aria-invalid；横幅保留整体错误。
++    expect(await screen.findByTestId("field-error-share")).toHaveTextContent(
++      "分成比例必须在 0 到 10000 基点之间",
++    );
++    expect(screen.getByTestId("share-input")).toHaveAttribute("aria-invalid", "true");
++    expect(screen.getByTestId("scenario-error")).toHaveTextContent("请求参数不合法");
++    expect(screen.queryByTestId("scenario-result")).not.toBeInTheDocument();
++  });
++
++  it("修正后端字段错误后可以重新测算，并使用新的幂等 key", async () => {
++    let attempt = 0;
++    const { calls } = renderScenarios({
++      onCreate: async () => {
++        attempt += 1;
++        if (attempt === 1) {
++          throw new ApiClientError(400, {
++            code: "VALIDATION_ERROR",
++            message: "请求参数不合法",
++            fieldErrors: { shareBps: "分成比例必须在 0 到 10000 基点之间（0%—100%）" },
++            requestId: "",
++          });
++        }
++        return devScenario({ kind: "share" });
++      },
++    });
++    const user = userEvent.setup();
++    await user.click(screen.getByTestId("scenario-tab-share"));
++    await user.type(screen.getByTestId("share-input"), "20");
++    await user.click(screen.getByTestId("share-submit"));
++    expect(await screen.findByTestId("field-error-share")).toBeInTheDocument();
++
++    // 用户修正输入：字段错误清除，重新提交成功并生成新的 Idempotency-Key。
++    const input = screen.getByTestId("share-input");
++    await user.clear(input);
++    await user.type(input, "30");
++    expect(screen.queryByTestId("field-error-share")).not.toBeInTheDocument();
++    expect(screen.queryByTestId("scenario-error")).not.toBeInTheDocument();
++
++    await user.click(screen.getByTestId("share-submit"));
++    expect(await screen.findByTestId("scenario-result")).toBeInTheDocument();
++    expect(calls).toHaveLength(2);
++    expect(calls[0].request).not.toEqual(calls[1].request);
++    expect(calls[0].key).not.toBe(calls[1].key);
++  });
++
++  it("恢复测算非法比例与负维修费同时提示且不发请求", async () => {
++    const { calls } = renderScenarios({});
++    const user = userEvent.setup();
++    await user.click(screen.getByTestId("scenario-tab-recovery"));
++    await user.type(screen.getByTestId("recovery-bps"), "150");
++    await user.type(screen.getByTestId("repair-cost"), "-1");
++    await user.click(screen.getByTestId("recovery-submit"));
++
++    expect(screen.getByTestId("field-error-recoveryBps")).toHaveTextContent(
++      "比例必须在 0 到 100% 之间",
++    );
++    expect(screen.getByTestId("field-error-repairCost")).toHaveTextContent("金额必须是非负数");
++    expect(calls).toHaveLength(0);
++  });
+ });
+diff --git a/web/src/features/scenarios/ScenarioSection.tsx b/web/src/features/scenarios/ScenarioSection.tsx
+index ec99dc6..1f53539 100644
+--- a/web/src/features/scenarios/ScenarioSection.tsx
++++ b/web/src/features/scenarios/ScenarioSection.tsx
+@@ -32,6 +32,39 @@ const BREAKDOWN_LABELS: Record<string, string> = {
+   repairCost: "一次性维修费",
+ };
+ 
++/** 字段单位与合法范围提示（前后端同一口径：金额整数分，比例整数基点）。 */
++const FIELD_HINTS: Record<string, string> = {
++  rent: "单位：元（后端按整数分保存）。合法范围：≥ 0，最多两位小数；当前窗口租金合计见下方。",
++  share:
++    "单位：%（后端按整数基点保存，1 bps = 0.01%）。合法范围：0%—100%（0—10000 基点），最多两位小数。",
++  recoveryBps:
++    "单位：%（后端按整数基点保存）。合法范围：0%—100%（0—10000 基点），最多两位小数。",
++  repairCost: "单位：元（后端按整数分保存）。合法范围：≥ 0，最多两位小数。",
++};
++
++/** 后端字段名 → 前端表单字段名（用于把 400 fieldErrors 显示到对应输入框下）。 */
++const BACKEND_FIELD_TO_FORM_FIELD: Record<string, string> = {
++  monthlyRentCents: "rent",
++  shareBps: "share",
++  recoveryBps: "recoveryBps",
++  repairCostCents: "repairCost",
++  recoveryKind: "recoveryKind",
++};
++
++function mapServerFieldErrors(fieldErrors: Record<string, string>): {
++  mapped: Record<string, string>;
++  unmapped: Record<string, string>;
++} {
++  const mapped: Record<string, string> = {};
++  const unmapped: Record<string, string> = {};
++  for (const [backendField, message] of Object.entries(fieldErrors)) {
++    const formField = BACKEND_FIELD_TO_FORM_FIELD[backendField];
++    if (formField) mapped[formField] = message;
++    else unmapped[backendField] = message;
++  }
++  return { mapped, unmapped };
++}
++
+ interface ScenarioSectionProps {
+   diagnosis: Diagnosis;
+   scenarios: Scenario[];
+@@ -157,13 +190,15 @@ export function ScenarioSection({
+   }
+ 
+   function updateFieldError(key: string, value: string) {
++    if (value.trim() === "") return;
+     setFieldErrors((previous) => {
+       if (!(key in previous)) return previous;
+       const next = { ...previous };
+       delete next[key];
+       return next;
+     });
+-    if (value.trim() === "") return;
++    // 用户开始修正输入后，旧的后端错误横幅不再代表当前内容。
++    setSubmitError((previous) => (previous ? null : previous));
+   }
+ 
+   async function handleSubmit() {
+@@ -192,7 +227,13 @@ export function ScenarioSection({
+       keyRef.current = null;
+     } catch (error) {
+       // 失败保留输入与幂等 key，重试不会重复落库；不显示成功结果。
+-      setSubmitError(toUiError(error));
++      // 后端字段级错误（400 fieldErrors）映射到对应输入框，其余错误保留在横幅。
++      const uiError = toUiError(error);
++      const { mapped, unmapped } = mapServerFieldErrors(uiError.fieldErrors);
++      if (Object.keys(mapped).length > 0) {
++        setFieldErrors((previous) => ({ ...previous, ...mapped }));
++      }
++      setSubmitError({ ...uiError, fieldErrors: unmapped });
+     } finally {
+       setSubmitting(false);
+     }
+@@ -225,14 +266,19 @@ export function ScenarioSection({
+             data-testid="rent-input"
+             type="text"
+             inputMode="decimal"
++            aria-invalid={fieldErrors.rent ? true : undefined}
++            aria-describedby="rent-range-hint"
+             value={rentText}
+             onChange={(event) => {
+               setRentText(event.target.value);
+               updateFieldError("rent", event.target.value);
+             }}
+           />
++          <p className="field-hint muted small" id="rent-range-hint" data-testid="rent-range-hint">
++            {FIELD_HINTS.rent}
++          </p>
+           {fieldErrors.rent ? (
+-            <p className="field-error" role="alert">
++            <p className="field-error" role="alert" data-testid="field-error-rent">
+               {fieldErrors.rent}
+             </p>
+           ) : null}
+@@ -279,14 +325,19 @@ export function ScenarioSection({
+             data-testid="share-input"
+             type="text"
+             inputMode="decimal"
++            aria-invalid={fieldErrors.share ? true : undefined}
++            aria-describedby="share-range-hint"
+             value={shareText}
+             onChange={(event) => {
+               setShareText(event.target.value);
+               updateFieldError("share", event.target.value);
+             }}
+           />
++          <p className="field-hint muted small" id="share-range-hint" data-testid="share-range-hint">
++            {FIELD_HINTS.share}
++          </p>
+           {fieldErrors.share ? (
+-            <p className="field-error" role="alert">
++            <p className="field-error" role="alert" data-testid="field-error-share">
+               {fieldErrors.share}
+             </p>
+           ) : null}
+@@ -353,6 +404,14 @@ export function ScenarioSection({
+               仓位故障
+             </label>
+           </div>
++          <p className="field-hint muted small" data-testid="recovery-kind-hint">
++            可选值：设备离线（offline）或仓位故障（slot），两者分别测算、不叠加。
++          </p>
++          {fieldErrors.recoveryKind ? (
++            <p className="field-error" role="alert" data-testid="field-error-recoveryKind">
++              {fieldErrors.recoveryKind}
++            </p>
++          ) : null}
+         </div>
+         <div className="field">
+           <label htmlFor="recovery-bps">恢复比例（%）</label>
+@@ -361,14 +420,23 @@ export function ScenarioSection({
+             data-testid="recovery-bps"
+             type="text"
+             inputMode="decimal"
++            aria-invalid={fieldErrors.recoveryBps ? true : undefined}
++            aria-describedby="recovery-bps-range-hint"
+             value={recoveryBpsText}
+             onChange={(event) => {
+               setRecoveryBpsText(event.target.value);
+               updateFieldError("recoveryBps", event.target.value);
+             }}
+           />
++          <p
++            className="field-hint muted small"
++            id="recovery-bps-range-hint"
++            data-testid="recovery-bps-range-hint"
++          >
++            {FIELD_HINTS.recoveryBps}
++          </p>
+           {fieldErrors.recoveryBps ? (
+-            <p className="field-error" role="alert">
++            <p className="field-error" role="alert" data-testid="field-error-recoveryBps">
+               {fieldErrors.recoveryBps}
+             </p>
+           ) : null}
+@@ -380,14 +448,23 @@ export function ScenarioSection({
+             data-testid="repair-cost"
+             type="text"
+             inputMode="decimal"
++            aria-invalid={fieldErrors.repairCost ? true : undefined}
++            aria-describedby="repair-cost-range-hint"
+             value={repairCostText}
+             onChange={(event) => {
+               setRepairCostText(event.target.value);
+               updateFieldError("repairCost", event.target.value);
+             }}
+           />
++          <p
++            className="field-hint muted small"
++            id="repair-cost-range-hint"
++            data-testid="repair-cost-range-hint"
++          >
++            {FIELD_HINTS.repairCost}
++          </p>
+           {fieldErrors.repairCost ? (
+-            <p className="field-error" role="alert">
++            <p className="field-error" role="alert" data-testid="field-error-repairCost">
+               {fieldErrors.repairCost}
+             </p>
+           ) : null}
+diff --git a/web/src/styles.css b/web/src/styles.css
+index c573e78..078cdd6 100644
+--- a/web/src/styles.css
++++ b/web/src/styles.css
+@@ -305,12 +305,23 @@ select:disabled {
+   color: #7a8b80;
+ }
+ 
++.field-hint {
++  margin: 0;
++  font-size: 12px;
++  line-height: 1.5;
++  color: #5d6f64;
++}
++
+ .field-error {
+   color: var(--danger);
+   font-size: 12px;
+   margin: 0;
+ }
+ 
++input[aria-invalid="true"] {
++  border-color: var(--danger);
++}
++
+ .field-error-list {
+   margin: 4px 0;
+   padding-left: 20px;

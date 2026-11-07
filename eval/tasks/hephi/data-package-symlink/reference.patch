@@ -1,0 +1,281 @@
+diff --git a/docs/self-check-2026-11-07.md b/docs/self-check-2026-11-07.md
+new file mode 100644
+index 0000000..6bedb83
+--- /dev/null
++++ b/docs/self-check-2026-11-07.md
+@@ -0,0 +1,102 @@
++# 自检报告（2026-11-07）
++
++范围：本仓库相对 `718087c` 的全部新增/修改（39 个源/测试/脚本/文档文件，约 +1.8k 行），对照资料包
++`implementation-checklist.md`、`validation-matrix.md` 与 `task-tree.yaml`。
++
++方法：静态审阅、`pnpm check`（typecheck + 176 tests + 构建）、`test:unit`/`test:integration` 分层运行、
++脚本正反例实跑、与验收矩阵逐条对照。所有结论附可复核命令。
++
++## 1. 代码检查
++
++- 结构：新增 `src/version.ts`、`src/control/decision-log.ts`；修改 `activation.ts`、`worker-mount.ts`、
++  `evidence-verifier.ts`、`check-runner.ts`、`check-store.ts`、`index.ts`、`tsdown.config.ts`；
++  13 个 planned 命令脚本 + 7 个 eval 脚本 + 文档。无 `TODO/FIXME`，仓库未配置 lint（仅 tsc + tests）。
++- 静态检查：全部 `.mjs` `node --check` 通过；全部 `.sh` `sh -n` 通过。
++
++### 1.1 本次自检发现并已修复的缺陷
++
++| # | 缺陷 | 影响 | 修复 |
++| --- | --- | --- | --- |
++| S1 | shadow 模式下合同在挂载后不可读/被改写时，ready 被拒绝 | 违反 P4“shadow 一律放行、只观察”的语义 | `ready-gate.ts` 新增 `allowUnavailable`，`worker-mount.ts` 在 shadow 传入；新增测试覆盖 |
++| S2 | `eval/check-data-package.mjs` 遇到符号链接自环时 `ELOOP` 未捕获并崩溃 | 数据包预检在异常目录上不可控 | 改用 `lstatSync`，符号链接记为 `symlink` finding，不再递归；复测自环目录 EXIT=1 |
++| S3 | `eval/export-baseline.mjs` 数据库路径不存在时抛栈 | 错误不可读、退出码不可预期 | 捕获并明确报错退出 2；复测 EXIT=2 |
++
++### 1.2 仍存在的限制（未修复，已登记）
++
++| # | 限制 | 说明 |
++| --- | --- | --- |
++| L1 | 决策日志只做进程内串行 | 跨进程并发追加时 `seq` 可能重复（未加文件锁）；文档已标注 |
++| L2 | 决策日志写失败仅写 stderr | 计划要求的“工具结果/独立告警通道”依赖 G1 新增项，尚未确认可用 |
++| L3 | P2 legacy 合同例外 | 无 `plugin` 字段的旧合同不因构建不同被拒绝（其检查记录仍须为当前构建）；文档已标注，需人工确认口径 |
++| L4 | 部署无不可变构建与自动回滚 | P8 只实现“构建→重启→回读→恢复”，回滚/竞态未实现 |
++| L5 | 实载插件 commit 无回读入口 | 宿主无版本查询 API，`describePlugin` 无调用入口 |
++| L6 | `rebuild-isolated.sh` 仅 macOS | 使用 BSD `sed -i ''` |
++| L7 | eval/scripts 无自动化测试 | 仅人工正反例证据；未纳入任何 CI（按用户决定也不使用 Actions） |
++| L8 | P4 super-agent 表面未改 | Worker 工具白名单/Skill 挂载面在本仓库之外，三组真实对照未做 |
++
++## 2. 实施清单对照（21 节点）
++
++| 节点 | 实施 | 验收 | 说明 |
++| --- | --- | --- | --- |
++| G1 宿主能力确认 | 探针脚本（状态回读） | 未完成 | 11 项 + 3 项需真实 Worker/牺牲 Session；版本回读判“不具备” |
++| G2 代码基线定版 | 完成 | 完成（Agent 代办） | PR #7 合并、`hephi-baseline-1` 指 `3f276a5`、八项逐项审查；**缺人类独立审查签名** |
++| P1 持续集成 | 不实施（用户决定） | 不适用 | workflow 已删除 |
++| P2 版本可追溯 | 完成 | 部分 | 注入/合同/记录/ready 拒绝已实现并测试；宿主版本必填未做 |
++| P3 决策日志 | 完成 | 部分 | write/check/ready 记录已实现；跨进程与真实告警通道未验证 |
++| P4 影子模式 | hephi 侧完成 | 部分 | 冻结合同/放行/观察已实现并测试；super-agent 表面与三组对照缺 |
++| P5 版本化 | activation 完成 | 部分 | activation v1 + 严格解析；活跃工单禁止升级未实现 |
++| P6 测试分层 | 完成 | 部分 | 分层真实（unit 无 git 调用）；性能门槛未定义 |
++| P7 专用测试宿主 | 脚手架脚本 | 未完成 | 无干净机器/独立操作者 |
++| P8 部署与回滚 | 脚本 + 一次真实部署 | 部分 | 真实重启链路已证；回滚/竞态/实载回读缺 |
++| P9 实验仓库与凭据 | 未实施 | 未完成 | 仅只读权限检查 |
++| P10 Dubbo 构建环境 | 未实施 | 未完成 | 无 Dubbo 检查配置/三候选任务 |
++| P11 原生入口 | 验证完成（smoke） | 部分 | Issue→Ticket→Worker→PR 真实；hephi 激活型被基线缺陷阻塞 |
++| P12 人员与职责 | 校验脚本 | 未完成 | 无真人数据与 κ |
++| P13 预算 | 预检脚本 | 未完成 | 无真实账单/批准 |
++| P14 数据合规 | 预检脚本 | 未完成 | 无真实数据包/负责人确认 |
++| P15 历史基线 | 导出/校验 + 首次归档 | 部分 | 60 条唯一 Ticket（目标 ≥100 未达）；trigger 关联表未导出 |
++| P16 一致性 | 完成（除 Skill） | 部分 | Skill 修改待专项批准 |
++| GATE-B5-SMOKE / PILOT / FORMAL | 未开始 | 未完成 | 硬依赖未全部 done |
++
++## 3. 测试用例检查
++
++- 全量：17 个文件 / **176 tests**，全部通过；相对基线 `a212d69`（155）新增 21 个用例。
++- 分层：`test:unit` 7 文件 / 41 tests（实测无 git 调用）；`test:integration` 10 文件 / 135 tests（依赖真实 git）。
++- 弱断言：仅 4 处既有用例使用 `toBeTruthy`（stage-control/worker-mount 既有场景），本次新增用例未引入弱断言。
++- 覆盖缺口：eval 脚本 7 个、13 个 planned 命令脚本均无自动化测试；P2 构建注入、P3 跨进程、P4 三组对照、
++  P5 活跃工单升级、P8 回滚/竞态、P9/P10/P12/P13 的真实场景未覆盖（见限制清单）。
++
++## 4. 验收矩阵对照（62 场景）
++
++| 节点 | 已覆盖 | 部分 | 未覆盖 | 不适用 |
++| --- | --- | --- | --- | --- |
++| G1 | 0 | 1 | 5 | 0 |
++| G2 | 5 | 0 | 0 | 0 |
++| P1 | 0 | 0 | 0 | 3 |
++| P2 | 2 | 1 | 1 | 0 |
++| P3 | 1 | 2 | 0 | 0 |
++| P4 | 2 | 1 | 2 | 0 |
++| P5 | 3 | 0 | 1 | 0 |
++| P6 | 1 | 0 | 1 | 0 |
++| P7 | 0 | 0 | 2 | 0 |
++| P8 | 0 | 2 | 2 | 0 |
++| P9 | 0 | 1 | 2 | 0 |
++| P10 | 0 | 0 | 3 | 0 |
++| P11 | 1 | 0 | 1 | 0 |
++| P12 | 0 | 1 | 2 | 0 |
++| P13 | 0 | 1 | 1 | 0 |
++| P14 | 0 | 1 | 2 | 0 |
++| P15 | 1 | 3 | 0 | 0 |
++| P16 | 1 | 0 | 0 | 0 |
++| GATE-B5 | 0 | 0 | 3 | 0 |
++| **合计** | **17** | **14** | **28** | **3** |
++
++已覆盖集中在 G2（5）与 P5（3）；未覆盖集中在 G1 真机探针、P7/P9/P10/P12/P13 外部资源项与三个 B5 门槛。
++
++## 5. 结论
++
++- 代码：176 tests 全绿、构建通过；自检发现 3 个缺陷（1 个行为语义、2 个健壮性）均已修复并复测。
++- 实施：资料包 21 个节点中，6 个已完成实施（G2、P2、P3、P4、P5、P6 的代码/文档部分），
++  P1 按用户决定不实施，其余受外部资源或仓库外改动阻塞；验收层面只有 G2 由 Agent 代办完成（缺人类签名）。
++- 建议下一步：优先补 P8 回滚/实载回读与 P15 trigger 关联表；G1 真机探针与 P9–P13 需外部资源；
++  P4 三组对照需要 super-agent 仓库与宿主导出。
+diff --git a/docs/source-consistency.md b/docs/source-consistency.md
+index 9b92341..01cb251 100644
+--- a/docs/source-consistency.md
++++ b/docs/source-consistency.md
+@@ -6,7 +6,7 @@
+ 
+ | 副本 | 位置 | 分支/引用 | HEAD | 状态 |
+ | --- | --- | --- | --- | --- |
+-| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | `3f276a5`（PR #7 合并后） | `git ls-remote` 回读 |
++| 远端主干 | `github.com/paxxie2/super-agent-hephi-review` | `main` | 截至 2026-11-07 自检为 `d2e864a`（PR #7–#10 合并后；后续文档提交会继续前移） | `git ls-remote` 回读 |
+ | 执行分支 | `/Users/zm/dsh-instances/experiment/hephi-review` | `codex/dual-instance-hephi` | `b660051` | 已随 PR #7 合入 main |
+ | 旧路线图目录 | `/Users/zm/Documents/hephi-roadmap-work` | `work/hephi-95` | 已不存在 | 2026-11-07 核验时目录已删除；`c547dc1` 无法再取用 |
+ | 隔离 Super Agent 副本 | `/Users/zm/dsh-instances/experiment/superagent` | `codex/dual-instance-experiment` | `62d7d53` | 工作树干净 |
+@@ -32,7 +32,7 @@
+ 
+ ## 3.1 交付 PR
+ 
+-- 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。
++- 交付 PR：<https://github.com/paxxie2/super-agent-hephi-review/pull/7>（`codex/dual-instance-hephi` → `main`），**已于 2026-11-06T19:51:33Z 合并**，merge commit `3f276a5`。#8（状态记录）、#9（部署脚本 + P8 记录）、#10（P11 smoke + A 实例）随后合并。
+ - 基线标签 **`hephi-baseline-1`**（annotated，tag object `1e93e4b`）指向合并后的 `main` commit `3f276a5`，已推送远端。
+ - 审查记录见 `docs/g2-baseline-review.md`：按用户 2026-11-07 授权由 Agent 代办，**不是人类独立审查**。
+ 
+diff --git a/eval/check-data-package.mjs b/eval/check-data-package.mjs
+index 66a7fb9..4c0fc37 100644
+--- a/eval/check-data-package.mjs
++++ b/eval/check-data-package.mjs
+@@ -2,7 +2,7 @@
+ // P14 数据包预检：脱敏交付包不得含密钥、不得在文件名/路径中暴露实验组别。
+ // 只读扫描目录；发现命中退出码 1，目录不存在退出码 2。
+ // 用法：node eval/check-data-package.mjs --package <dir>
+-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
++import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs'
+ import { join, relative } from 'node:path'
+ 
+ function arg(name, fallback) {
+@@ -36,14 +36,17 @@ function walk(dir) {
+     const path = join(dir, name)
+     const rel = relative(root, path)
+     if (GROUP_PATTERN.test(rel)) findings.push({ path: rel, kind: 'group-label' })
+-    const stat = statSync(path)
++    const stat = lstatSync(path)
++    if (stat.isSymbolicLink()) { findings.push({ path: rel, kind: 'symlink' }); continue }
+     if (stat.isDirectory()) {
+       walk(path)
+       continue
+     }
+     files.push(rel)
+     if (stat.size > MAX_BYTES) continue
+-    const text = readFileSync(path, 'utf8')
++    let text
++    try { text = readFileSync(path, 'utf8') }
++    catch { findings.push({ path: rel, kind: 'unreadable' }); continue }
+     for (const [kind, pattern] of SECRET_PATTERNS) {
+       if (pattern.test(text)) findings.push({ path: rel, kind })
+     }
+diff --git a/eval/export-baseline.mjs b/eval/export-baseline.mjs
+index d2d1d5b..f94ca8b 100644
+--- a/eval/export-baseline.mjs
++++ b/eval/export-baseline.mjs
+@@ -58,7 +58,9 @@ function normalize(db, row) {
+ const tickets = []
+ const sources = []
+ for (const db of dbs) {
+-  const rows = readTickets(db)
++  let rows
++  try { rows = readTickets(db) }
++  catch (error) { console.error(`读取数据库失败：${db}（${error instanceof Error ? error.message : String(error)}）`); process.exit(2) }
+   const normalized = rows.map((row) => normalize(db, row))
+     .filter((ticket) => (!from || (ticket.createdAt ?? '') >= from) && (!to || (ticket.createdAt ?? '') <= to))
+   tickets.push(...normalized)
+diff --git a/hephi/docs/decisions-format.md b/hephi/docs/decisions-format.md
+index ff1d875..ba7bb61 100644
+--- a/hephi/docs/decisions-format.md
++++ b/hephi/docs/decisions-format.md
+@@ -31,6 +31,6 @@
+ ## 写入约束
+ 
+ - 只追加：任何实现都不得重写、删除或压缩历史行。
+-- 并发：同一进程内按日志文件串行分配 `seq`；写入使用追加模式。
++- 并发：同一进程内按日志文件串行分配 `seq`；写入使用追加模式。**跨进程并发未加文件锁**（已知限制，尚未实现）。
+ - 写失败（只读目录、磁盘错误）：判定结果不变，错误写入 stderr，`appendDecision` 返回 `{ok:false, logError}`，不补造记录。
+ - 脱敏、权限（文件 0600）与保留期按 P14 的数据规则执行；本日志不含 diff 内容。
+diff --git a/hephi/docs/enforcement-modes.md b/hephi/docs/enforcement-modes.md
+index e0eedc1..fe10dc5 100644
+--- a/hephi/docs/enforcement-modes.md
++++ b/hephi/docs/enforcement-modes.md
+@@ -12,6 +12,7 @@
+ - 不注册 `hephi_check` 工具，也不安装 staged 阶段控制。
+ - 写/改文件的路径与范围判定照常计算，但一律放行；决策日志记录 `mode:"shadow"`、`effectiveDecision:"allow"`、`wouldDecision:"deny"`。
+ - ready 只计算范围/预算/删除测试等纪律，一律放行；判定结果记录为 `wouldDecision`，不计算检查记录、Session 绑定与 PR 证据。
++- 合同在挂载后不可读/被改写时，shadow 的 ready 仍放行（只观察、不阻断），对应实现见 `ready-gate.ts` 的 `allowUnavailable`。
+ - 决策日志本身属于允许的观察副作用。
+ 
+ ## 未实施部分（需要本仓库之外的工作）
+diff --git a/hephi/docs/versioning.md b/hephi/docs/versioning.md
+index 7f59b62..85c23ce 100644
+--- a/hephi/docs/versioning.md
++++ b/hephi/docs/versioning.md
+@@ -28,6 +28,7 @@
+ 
+ - activation：`src/control/activation.ts` 写入 `version: 1` 并纳入合同哈希；加载时先校验原哈希，再拒绝未知版本与未知顶层字段；缺失 version 的旧合同按 legacy 读取。测试见 `tests/control/activation.test.ts` 的「activation format versioning」。
+ - 检查记录：`version: 3` 增加 `pluginCommit`；ready 拒绝另一构建产生的证据并要求用当前构建重跑（`src/control/evidence-verifier.ts`）。v2 记录在 `readRuns` 加载时即被拒绝。
++- 合同：无 `plugin` 字段的 legacy 合同不因构建不同被拒绝（P2 之前的合同），但其检查记录仍必须是当前构建产生的——这是已知的兼容例外，需人工确认是否符合“旧证据拒绝”口径。
+ - 插件构建身份：`tsdown.config.ts` 注入 `__HEPHI_COMMIT__`（dirty 构建写成 `<sha>-dirty`，无 git 时必须提供 `HEPHI_BUILD_COMMIT`，否则构建失败）；`describePlugin()` 返回 `{name, version, commit}`，prepare 合同冻结 `plugin: {version, commit}` 并纳入哈希。
+ - 其余格式（任务卡、`decisions.jsonl`、基线归档）：代码实施前，任何"已版本化"的结论不得写入验收记录。
+ - 活跃工单禁止升级由 P8 部署流程执行，不在本文件实现。
+diff --git a/hephi/src/control/ready-gate.ts b/hephi/src/control/ready-gate.ts
+index c68841d..a6c222d 100644
+--- a/hephi/src/control/ready-gate.ts
++++ b/hephi/src/control/ready-gate.ts
+@@ -24,6 +24,8 @@ function isReadyReport(execution: ToolExecution): boolean {
+ export function createReadyGate(options: {
+   loadActivation: () => Promise<ActivationContract>
+   verify?: ReadyVerifier
++  /** Shadow mode observes only: an unavailable contract must not block a ready report. */
++  allowUnavailable?: boolean
+ }): ReadyGate {
+   const approved = new Set<ToolExecutionToken>()
+   const timers = new Set<ReturnType<typeof setTimeout>>()
+@@ -43,6 +45,7 @@ export function createReadyGate(options: {
+     try {
+       contract = await options.loadActivation()
+     } catch (error) {
++      if (options.allowUnavailable) return next()
+       return { kind: 'deny', reason: `HEPHI activation is unavailable: ${error instanceof Error ? error.message : String(error)}` }
+     }
+     if (!options.verify) return { kind: 'deny', reason: 'HEPHI verifier is not configured' }
+diff --git a/hephi/src/control/worker-mount.ts b/hephi/src/control/worker-mount.ts
+index b0b8c4c..e2e8c43 100644
+--- a/hephi/src/control/worker-mount.ts
++++ b/hephi/src/control/worker-mount.ts
+@@ -215,6 +215,7 @@ export function mountWorkerGate(
+   }
+   const gate = createReadyGate({
+     loadActivation: loadBoundActivation,
++    allowUnavailable: shadow,
+     verify: shadow ? shadowVerify : options.verify ? (contract, execution) => stages
+       ? stages.verify(() => options.verify!(contract, execution), execution.signal, execution.token)
+       : options.verify!(contract, execution) : undefined,
+diff --git a/hephi/tests/control/worker-mount.test.ts b/hephi/tests/control/worker-mount.test.ts
+index 4cf8305..3d1673c 100644
+--- a/hephi/tests/control/worker-mount.test.ts
++++ b/hephi/tests/control/worker-mount.test.ts
+@@ -575,4 +575,17 @@ describe('Worker mount', () => {
+     } finally { mounted.dispose() }
+   })
+ 
++
++  it('shadow mode never blocks ready even when the activation contract disappears', async () => {
++    const dir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
++    await prepareActivation({ ...env(dir), HEPHI_ENFORCEMENT: 'shadow' })
++    const fake = fakeAgent()
++    const mounted = mountWorkerGate({} as Context, fake.agent, { stateDir: dir })!
++    try {
++      await import('node:fs/promises').then(({ unlink }) => unlink(activationPath(dir, 'ticket-1')))
++      const ready = { name: 'orchestrator_report', arguments: { state: 'ready' }, callId: 'shadow-missing-contract', token: Symbol() } as unknown as ToolExecution
++      expect(await fake.callbacks().preExecute!(ready, async () => ({ kind: 'allow' }))).toEqual({ kind: 'allow' })
++    } finally { mounted.dispose() }
++  })
++
+ })
+diff --git a/scripts/host/rebuild-isolated.sh b/scripts/host/rebuild-isolated.sh
+index 2fc72f1..6a98c6b 100644
+--- a/scripts/host/rebuild-isolated.sh
++++ b/scripts/host/rebuild-isolated.sh
+@@ -1,6 +1,7 @@
+ #!/bin/sh
+ # P7 专用测试宿主：从模板实例复制配置到新的隔离实例目录，改写路径与端口，并校验不重叠。
+ # 只做本机可验证的脚手架；干净机器重建、真实端到端和独立操作者仍需人工执行。
++# 注意：路径/端口改写使用 BSD `sed -i ''`，仅适用于 macOS。
+ # 用法：./scripts/host/rebuild-isolated.sh --template <实例目录> --target <新目录> --port <端口> [--profile <名>]
+ set -eu
+ 

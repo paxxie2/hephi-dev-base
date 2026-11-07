@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/hephi/verify-export",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（hephi/pnpm-lock.yaml）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "hephi/pnpm-lock.yaml",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: verify-export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-OD8P10/checkout/eval/daily/verify-export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "5407e9b6fef5ce7f99cd8c0d14025eddf2e8f6483fe9630cf5e4fb4c7e9a494a"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: verify-export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-OD8P10/checkout/eval/daily/verify-export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "5407e9b6fef5ce7f99cd8c0d14025eddf2e8f6483fe9630cf5e4fb4c7e9a494a"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "FAIL: verify-export self-test exited non-zero\nnode:internal/modules/cjs/loader:1505\n  throw err;\n  ^\n\nError: Cannot find module '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-OD8P10/checkout/eval/daily/verify-export.mjs'\n    at Module._resolveFilename (node:internal/modules/cjs/loader:1502:15)\n    at wrapResolveFilename (node:internal/modules/cjs/loader:1073:27)\n    at defaultResolveImplForCJSLoading (node:internal/modules/cjs/loader:1097:10)\n    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1118:12)\n    at Module._load (node:internal/modules/cjs/loader:1287:25)\n    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)\n    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)\n    at node:internal/main/run_main_module:33:47 {\n  code: 'MODULE_NOT_FOUND',\n  requireStack: []\n}\n\nNode.js v26.1.0\n",
+          "stderr": "",
+          "outputSha256": "5407e9b6fef5ce7f99cd8c0d14025eddf2e8f6483fe9630cf5e4fb4c7e9a494a"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "eval/B8-observe.md",
+        "eval/daily/verify-export.mjs"
+      ],
+      "changedFiles": [
+        "eval/B8-observe.md",
+        "eval/daily/verify-export.mjs"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: verify-export self-test\n",
+          "stderr": "",
+          "outputSha256": "98d5cea5df2ce39873762b74f56b665634a8e6d01384fb5f817bab4995060ec6"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: verify-export self-test\n",
+          "stderr": "",
+          "outputSha256": "98d5cea5df2ce39873762b74f56b665634a8e6d01384fb5f817bab4995060ec6"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: verify-export self-test\n",
+          "stderr": "",
+          "outputSha256": "98d5cea5df2ce39873762b74f56b665634a8e6d01384fb5f817bab4995060ec6"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "63f2f98ac2a0ccc7666fe1fd316abfe7b40065f0",
+  "repo": "/private/tmp/b2tasks",
+  "repeats": 3
+}

@@ -1,0 +1,117 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/history-page-size",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: GET /api/diagnoses default limit must be 10, got [20, 0]\n",
+          "outputSha256": "f0378142cc1ccd2d363e8851809b34382870ff30864115573e4727f0ee28ab61"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: GET /api/diagnoses default limit must be 10, got [20, 0]\n",
+          "outputSha256": "f0378142cc1ccd2d363e8851809b34382870ff30864115573e4727f0ee28ab61"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: GET /api/diagnoses default limit must be 10, got [20, 0]\n",
+          "outputSha256": "f0378142cc1ccd2d363e8851809b34382870ff30864115573e4727f0ee28ab61"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "INTERFACES.md",
+        "README.md",
+        "acceptance/test_business_http.py",
+        "backend/app/api/diagnoses.py",
+        "backend/tests/test_diagnosis_api.py",
+        "contracts/openapi.json",
+        "web/e2e/08-history-pagination.spec.ts",
+        "web/src/App.test.tsx",
+        "web/src/App.tsx",
+        "web/src/features/history/HistoryView.tsx"
+      ],
+      "changedFiles": [
+        "INTERFACES.md",
+        "README.md",
+        "acceptance/test_business_http.py",
+        "backend/app/api/diagnoses.py",
+        "backend/tests/test_diagnosis_api.py",
+        "contracts/openapi.json",
+        "web/src/App.test.tsx",
+        "web/src/App.tsx",
+        "web/src/features/history/HistoryView.tsx",
+        "web/e2e/08-history-pagination.spec.ts"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: diagnosis history defaults to 10 items per page\n",
+          "stderr": "",
+          "outputSha256": "9d5504f9f58922a4e28e684646f856ed475ee43bf84cdbacb6927cdf033a38ea"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: diagnosis history defaults to 10 items per page\n",
+          "stderr": "",
+          "outputSha256": "9d5504f9f58922a4e28e684646f856ed475ee43bf84cdbacb6927cdf033a38ea"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: diagnosis history defaults to 10 items per page\n",
+          "stderr": "",
+          "outputSha256": "9d5504f9f58922a4e28e684646f856ed475ee43bf84cdbacb6927cdf033a38ea"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "bd816e9eb019b0520b98dbc1bd53bdf0c85010d4",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

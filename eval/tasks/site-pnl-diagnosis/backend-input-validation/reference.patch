@@ -1,0 +1,471 @@
+diff --git a/backend/app/main.py b/backend/app/main.py
+index bc6cbc8..9a46cfc 100644
+--- a/backend/app/main.py
++++ b/backend/app/main.py
+@@ -81,10 +81,11 @@ def create_app(settings: Settings | None = None, *, seed: bool = True) -> FastAP
+ 
+     @app.exception_handler(RequestValidationError)
+     async def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
+-        field_errors: dict[str, str] = {}
+-        for error in exc.errors():
+-            loc = [str(part) for part in error.get("loc", []) if part != "body"]
+-            field_errors[".".join(loc) or "body"] = error.get("msg", "invalid")
++        from app.validation_messages import chinese_field_errors
++
++        field_errors = chinese_field_errors(exc.errors())
++        if not field_errors:
++            field_errors = {"body": "请求参数不合法"}
+         return _error_response(
+             400,
+             "VALIDATION_ERROR",
+diff --git a/backend/app/schemas.py b/backend/app/schemas.py
+index e7e91dc..6d8acc9 100644
+--- a/backend/app/schemas.py
++++ b/backend/app/schemas.py
+@@ -9,9 +9,10 @@
+ 
+ from __future__ import annotations
+ 
++import math
+ from typing import Any, Literal
+ 
+-from pydantic import BaseModel, Field
++from pydantic import BaseModel, ConfigDict, Field, field_validator
+ 
+ DateStr = str
+ MoneyStatus = Literal["known", "unknown"]
+@@ -212,8 +213,37 @@ class CreateDiagnosisRequest(BaseModel):
+ 
+ ScenarioKind = Literal["rent", "share", "recovery"]
+ 
++_SCENARIO_KINDS = ("rent", "share", "recovery")
++_RECOVERY_KINDS = ("offline", "slot")
++
++
++def _strict_measure_int(value: Any, label: str) -> int | None:
++    """测算数值字段：只接受整数（整数分/整数基点），拒绝错误类型与非有限数。
++
++    JSON 的 ``NaN``/``Infinity``/``1e400`` 会被解析为浮点非有限数；布尔与数字字符串
++    在宽松模式下可能被静默转成整数，这里一律按“错误类型”拒绝并给出中文原因。
++    """
++
++    if value is None:
++        return None
++    if isinstance(value, bool):
++        raise ValueError(f"{label}必须为整数，不能是布尔值")
++    if isinstance(value, float):
++        if not math.isfinite(value):
++            raise ValueError(f"{label}必须为有限数，不能是 NaN 或 Infinity")
++        if not value.is_integer():
++            raise ValueError(f"{label}必须为整数，不能是小数")
++        return int(value)
++    if isinstance(value, int):
++        return value
++    raise ValueError(f"{label}必须为整数，不能是字符串或其他类型")
++
+ 
+ class ScenarioRequest(BaseModel):
++    """三类测算请求。字段级校验在此完成，业务层再做 kind 相关必填与范围校验。"""
++
++    model_config = ConfigDict(extra="forbid")
++
+     kind: ScenarioKind
+     monthlyRentCents: int | None = None
+     shareBps: int | None = None
+@@ -221,6 +251,42 @@ class ScenarioRequest(BaseModel):
+     recoveryBps: int | None = None
+     repairCostCents: int | None = None
+ 
++    @field_validator("kind", mode="before")
++    @classmethod
++    def _validate_kind(cls, value: Any) -> Any:
++        if not isinstance(value, str) or value not in _SCENARIO_KINDS:
++            raise ValueError("测算类型只能是 rent / share / recovery")
++        return value
++
++    @field_validator("monthlyRentCents", mode="before")
++    @classmethod
++    def _validate_monthly_rent(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "新月租金（整数分）")
++
++    @field_validator("shareBps", mode="before")
++    @classmethod
++    def _validate_share_bps(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "分成比例（整数基点）")
++
++    @field_validator("recoveryKind", mode="before")
++    @classmethod
++    def _validate_recovery_kind(cls, value: Any) -> Any:
++        if value is None:
++            return None
++        if not isinstance(value, str) or value not in _RECOVERY_KINDS:
++            raise ValueError("恢复对象只能是 offline 或 slot")
++        return value
++
++    @field_validator("recoveryBps", mode="before")
++    @classmethod
++    def _validate_recovery_bps(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "恢复比例（整数基点）")
++
++    @field_validator("repairCostCents", mode="before")
++    @classmethod
++    def _validate_repair_cost(cls, value: Any) -> Any:
++        return _strict_measure_int(value, "一次性维修费（整数分）")
++
+ 
+ class Scenario(BaseModel):
+     id: str
+diff --git a/backend/app/services/chat.py b/backend/app/services/chat.py
+index cd29d1c..39e322b 100644
+--- a/backend/app/services/chat.py
++++ b/backend/app/services/chat.py
+@@ -1005,10 +1005,9 @@ def _tool_create_scenario(
+     try:
+         request = ScenarioRequest(**fields)
+     except ValidationError as exc:
+-        field_errors: dict[str, str] = {}
+-        for error in exc.errors():
+-            location = ".".join(str(part) for part in error.get("loc", ())) or "arguments"
+-            field_errors[location] = str(error.get("msg") or "invalid")
++        from app.validation_messages import chinese_field_errors
++
++        field_errors = chinese_field_errors(exc.errors()) or {"arguments": "测算参数不合法"}
+         raise bad_request("测算参数不合法", field_errors, code="INVALID_TOOL_ARGUMENTS")
+ 
+     idempotency_key = f"tool:{assistant_message_id}:{call_index}"
+diff --git a/backend/app/services/scenarios.py b/backend/app/services/scenarios.py
+index 579be89..8de385d 100644
+--- a/backend/app/services/scenarios.py
++++ b/backend/app/services/scenarios.py
+@@ -56,11 +56,31 @@ def _coerce_request(request: ScenarioRequest | dict[str, Any]) -> ScenarioReques
+     try:
+         return ScenarioRequest.model_validate(request)
+     except Exception as exc:  # pydantic.ValidationError
+-        field_errors = {
+-            str(error.get("loc", ["body"])[-1]): str(error.get("msg", "invalid"))
+-            for error in getattr(exc, "errors", lambda: [])()
+-        }
+-        raise bad_request("测算参数不合法", field_errors or {"body": "invalid"}) from exc
++        from app.validation_messages import chinese_field_errors
++
++        errors = getattr(exc, "errors", lambda: [])()
++        field_errors = chinese_field_errors(errors) or {"body": "测算参数不合法"}
++        raise bad_request("测算参数不合法", field_errors) from exc
++
++
++def _measure_int_error(
++    value: object,
++    label: str,
++    *,
++    minimum: int | None = None,
++    maximum: int | None = None,
++    below_message: str | None = None,
++    above_message: str | None = None,
++) -> str | None:
++    """服务层数值校验（独立于 HTTP 模型，供 Python 直接调用/工具调用复用）。"""
++
++    if isinstance(value, bool) or not isinstance(value, int):
++        return f"{label}必须为整数（不能是布尔、字符串、小数或非有限数）"
++    if minimum is not None and value < minimum:
++        return below_message or f"{label}不能小于 {minimum}"
++    if maximum is not None and value > maximum:
++        return above_message or f"{label}不能大于 {maximum}"
++    return None
+ 
+ 
+ def validate_scenario_request(request: ScenarioRequest) -> dict[str, Any]:
+@@ -80,14 +100,30 @@ def validate_scenario_request(request: ScenarioRequest) -> dict[str, Any]:
+         monthly = request.monthlyRentCents
+         if monthly is None:
+             errors["monthlyRentCents"] = "必填"
+-        elif monthly < 0:
+-            errors["monthlyRentCents"] = "月租金不能为负数（整数分）"
++        else:
++            error = _measure_int_error(
++                monthly,
++                "月租金",
++                minimum=0,
++                below_message="月租金不能为负数（整数分）",
++            )
++            if error:
++                errors["monthlyRentCents"] = error
+     elif kind == "share":
+         share_bps = request.shareBps
+         if share_bps is None:
+             errors["shareBps"] = "必填"
+-        elif not 0 <= share_bps <= 10000:
+-            errors["shareBps"] = "分成比例必须在 0 到 10000 基点之间（0%—100%）"
++        else:
++            error = _measure_int_error(
++                share_bps,
++                "分成比例",
++                minimum=0,
++                maximum=10000,
++                below_message="分成比例必须在 0 到 10000 基点之间（0%—100%）",
++                above_message="分成比例必须在 0 到 10000 基点之间（0%—100%）",
++            )
++            if error:
++                errors["shareBps"] = error
+     else:  # recovery
+         if request.recoveryKind is None:
+             errors["recoveryKind"] = "必填（offline 或 slot）"
+@@ -96,13 +132,29 @@ def validate_scenario_request(request: ScenarioRequest) -> dict[str, Any]:
+         recovery_bps = request.recoveryBps
+         if recovery_bps is None:
+             errors["recoveryBps"] = "必填"
+-        elif not 0 <= recovery_bps <= 10000:
+-            errors["recoveryBps"] = "恢复比例必须在 0 到 10000 基点之间（0%—100%）"
++        else:
++            error = _measure_int_error(
++                recovery_bps,
++                "恢复比例",
++                minimum=0,
++                maximum=10000,
++                below_message="恢复比例必须在 0 到 10000 基点之间（0%—100%）",
++                above_message="恢复比例必须在 0 到 10000 基点之间（0%—100%）",
++            )
++            if error:
++                errors["recoveryBps"] = error
+         repair = request.repairCostCents
+         if repair is None:
+             errors["repairCostCents"] = "必填"
+-        elif repair < 0:
+-            errors["repairCostCents"] = "一次性维修费不能为负数（整数分）"
++        else:
++            error = _measure_int_error(
++                repair,
++                "一次性维修费",
++                minimum=0,
++                below_message="一次性维修费不能为负数（整数分）",
++            )
++            if error:
++                errors["repairCostCents"] = error
+ 
+     if errors:
+         raise bad_request("测算参数不合法", errors)
+diff --git a/backend/app/validation_messages.py b/backend/app/validation_messages.py
+new file mode 100644
+index 0000000..a363107
+--- /dev/null
++++ b/backend/app/validation_messages.py
+@@ -0,0 +1,88 @@
++"""把 Pydantic 校验错误转换成面向用户的**中文字段级**提示。
++
++HTTP 路由（``app.main`` 的 ``RequestValidationError`` 处理器）与两处手工
++``ScenarioRequest`` 构造（测评服务 ``_coerce_request``、对话工具 ``create_scenario``）
++共用本模块，保证无论从哪个入口提交非法测算参数，``fieldErrors`` 都是明确字段 + 中文信息，
++而不是 Pydantic 的英文默认消息。
++"""
++
++from __future__ import annotations
++
++from typing import Any, Iterable
++
++# 字段名 → 中文标签；未列出的字段回退为字段名本身。
++FIELD_LABELS: dict[str, str] = {
++    # 测算
++    "kind": "测算类型",
++    "monthlyRentCents": "新月租金",
++    "shareBps": "分成比例（整数基点）",
++    "recoveryKind": "恢复对象",
++    "recoveryBps": "恢复比例（整数基点）",
++    "repairCostCents": "一次性维修费",
++    # 诊断 / 消息 / 分页 / 请求头（同一错误格式的其它路由）
++    "siteId": "点位",
++    "startDate": "开始日期",
++    "endDate": "结束日期",
++    "text": "消息内容",
++    "limit": "分页大小",
++    "offset": "分页偏移",
++    "Idempotency-Key": "幂等键",
++}
++
++_LOCATION_PREFIXES = {"body", "query", "path", "header", "cookie"}
++
++
++def _leaf_field(location: Iterable[Any]) -> str:
++    parts = [str(part) for part in location if str(part) not in _LOCATION_PREFIXES]
++    return parts[-1] if parts else "body"
++
++
++def _message_for(error: dict[str, Any], field: str) -> str:
++    label = FIELD_LABELS.get(field, field)
++    error_type = str(error.get("type") or "")
++    context = error.get("ctx") or {}
++
++    # 自定义 field_validator 抛出的 ValueError：消息本身已是中文且可操作。
++    if error_type == "value_error":
++        detail = str(context.get("error") or "").strip()
++        return detail or f"{label}不合法"
++
++    if error_type == "missing":
++        return f"{label}为必填"
++    if error_type == "extra_forbidden":
++        return f"不支持字段「{field}」：未知或与当前测算类型无关"
++    if error_type in ("literal_error", "enum"):
++        expected = context.get("expected")
++        return f"{label}只能是{expected}" if expected else f"{label}取值不合法"
++    if error_type in (
++        "int_type",
++        "int_parsing",
++        "int_from_float",
++        "bool_type",
++        "bool_parsing",
++        "string_type",
++    ):
++        return f"{label}必须为整数"
++    if error_type in ("finite_number", "nan", "infinity"):
++        return f"{label}必须为有限数，不能是 NaN 或 Infinity"
++    if error_type in ("greater_than_equal", "greater_than"):
++        boundary = context.get("ge", context.get("gt"))
++        return f"{label}不能小于 {boundary}"
++    if error_type in ("less_than_equal", "less_than"):
++        boundary = context.get("le", context.get("lt"))
++        return f"{label}不能大于 {boundary}"
++    if error_type == "string_too_short":
++        return f"{label}不能为空"
++    if error_type == "string_too_long":
++        return f"{label}过长"
++    return f"{label}不合法"
++
++
++def chinese_field_errors(errors: Iterable[dict[str, Any]]) -> dict[str, str]:
++    """``{字段: 中文提示}``；同字段多个错误只保留第一条（前端按字段展示）。"""
++
++    result: dict[str, str] = {}
++    for error in errors:
++        field = _leaf_field(error.get("loc", ()))
++        result.setdefault(field, _message_for(error, field))
++    return result
+diff --git a/backend/tests/test_scenario_schema_validation.py b/backend/tests/test_scenario_schema_validation.py
+new file mode 100644
+index 0000000..3d50e93
+--- /dev/null
++++ b/backend/tests/test_scenario_schema_validation.py
+@@ -0,0 +1,126 @@
++"""测算请求的字段级输入校验（纯 schema 测试，不依赖播种数据库）。
++
++覆盖需求：拒绝缺失、错误类型（数字字符串/布尔/小数）、非有限数（NaN/Infinity）、
++越界/负数保留给业务层，并用中文给出明确字段；未知字段与 kind 不一致的字段被拒绝。
++
++说明：本文件只依赖 ``app.schemas``（不 import ``app.data``），因此可在干净基线的
++反向复现 worktree 中直接运行；范围/负数等业务校验由 ``app.services.scenarios`` 与
++``app.domain.scenarios`` 负责，见 ``test_scenario_api.py`` 与 ``test_scenarios.py``。
++"""
++
++from __future__ import annotations
++
++import math
++
++import pytest
++from pydantic import ValidationError
++
++from app.schemas import ScenarioRequest
++
++
++def _validation_errors(payload: dict) -> dict[str, str]:
++    with pytest.raises(ValidationError) as exc_info:
++        ScenarioRequest.model_validate(payload)
++    messages: dict[str, str] = {}
++    for error in exc_info.value.errors():
++        location = [str(part) for part in error.get("loc", ()) if part != "body"]
++        messages[".".join(location) or "body"] = str(error.get("msg") or "")
++    return messages
++
++
++@pytest.mark.parametrize(
++    ("payload", "field", "expected_fragment"),
++    [
++        # 错误类型：数字字符串/布尔/小数不能被静默转成整数
++        ({"kind": "rent", "monthlyRentCents": "10000"}, "monthlyRentCents", "必须为整数"),
++        ({"kind": "rent", "monthlyRentCents": True}, "monthlyRentCents", "不能是布尔值"),
++        ({"kind": "rent", "monthlyRentCents": 1.5}, "monthlyRentCents", "不能是小数"),
++        ({"kind": "share", "shareBps": "5000"}, "shareBps", "必须为整数"),
++        ({"kind": "share", "shareBps": False}, "shareBps", "不能是布尔值"),
++        (
++            {"kind": "recovery", "recoveryKind": "offline", "recoveryBps": 5000, "repairCostCents": "0"},
++            "repairCostCents",
++            "必须为整数",
++        ),
++        # 非有限数
++        ({"kind": "rent", "monthlyRentCents": math.nan}, "monthlyRentCents", "必须为有限数"),
++        ({"kind": "rent", "monthlyRentCents": math.inf}, "monthlyRentCents", "必须为有限数"),
++        ({"kind": "share", "shareBps": -math.inf}, "shareBps", "必须为有限数"),
++        # kind / recoveryKind 取值错误
++        ({"kind": 123, "monthlyRentCents": 100}, "kind", "测算类型只能是"),
++        (
++            {"kind": "recovery", "recoveryKind": "bogus", "recoveryBps": 1000, "repairCostCents": 0},
++            "recoveryKind",
++            "恢复对象只能是 offline 或 slot",
++        ),
++    ],
++)
++def test_rejects_wrong_type_and_non_finite_with_chinese_message(
++    payload: dict, field: str, expected_fragment: str
++) -> None:
++    messages = _validation_errors(payload)
++    assert field in messages, f"应返回字段级错误: {messages}"
++    assert expected_fragment in messages[field], messages[field]
++    assert "Input should" not in messages[field], "不得把 Pydantic 英文默认消息透给用户"
++
++
++def test_rejects_unknown_field() -> None:
++    messages = _validation_errors({"kind": "rent", "monthlyRentCents": 100, "foo": 1})
++    assert "foo" in messages, f"未知字段必须被拒绝（extra=forbid）: {messages}"
++
++
++def test_rejects_missing_kind() -> None:
++    messages = _validation_errors({"monthlyRentCents": 100})
++    assert "kind" in messages
++
++
++def test_structural_errors_are_translated_to_chinese() -> None:
++    from app.validation_messages import chinese_field_errors
++
++    translated = chinese_field_errors(
++        [
++            {"loc": ("kind",), "type": "missing", "msg": "Field required"},
++            {"loc": ("foo",), "type": "extra_forbidden", "msg": "Extra inputs are not permitted"},
++        ]
++    )
++    assert "必填" in translated["kind"]
++    assert translated["foo"].startswith("不支持字段")
++
++
++def test_negative_and_out_of_range_values_are_business_layer_concerns() -> None:
++    """schema 只做类型/有限性；负数与越界仍由服务/领域层给中文范围错误。"""
++
++    assert ScenarioRequest(kind="rent", monthlyRentCents=-1).monthlyRentCents == -1
++    assert ScenarioRequest(kind="share", shareBps=10001).shareBps == 10001
++    assert (
++        ScenarioRequest(
++            kind="recovery", recoveryKind="offline", recoveryBps=-1, repairCostCents=-5
++        ).repairCostCents
++        == -5
++    )
++
++
++def test_accepts_valid_requests() -> None:
++    rent = ScenarioRequest.model_validate({"kind": "rent", "monthlyRentCents": 20000})
++    assert rent.monthlyRentCents == 20000
++
++    # 整数值的浮点在 JSON 数字语义下等价于整数；只拒绝非整数小数。
++    integral = ScenarioRequest.model_validate({"kind": "rent", "monthlyRentCents": 100.0})
++    assert integral.monthlyRentCents == 100
++
++    share = ScenarioRequest.model_validate({"kind": "share", "shareBps": 0})
++    assert share.shareBps == 0
++    share_max = ScenarioRequest.model_validate({"kind": "share", "shareBps": 10000})
++    assert share_max.shareBps == 10000
++
++    recovery = ScenarioRequest.model_validate(
++        {
++            "kind": "recovery",
++            "recoveryKind": "slot",
++            "recoveryBps": 5000,
++            "repairCostCents": 0,
++        }
++    )
++    assert recovery.recoveryKind == "slot"
++    assert recovery.recoveryBps == 5000
++    assert recovery.repairCostCents == 0

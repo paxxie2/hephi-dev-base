@@ -1,0 +1,109 @@
+{
+  "mode": "full",
+  "taskDir": "/private/tmp/b2tasks/eval/tasks/site-pnl-diagnosis/backend-input-validation",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-dSbrwk/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "47bd9e8895cbaa7c4a185d1e9a782eb3d9bd0c3c46e8b99634129b65347b8c6e"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-dSbrwk/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "47bd9e8895cbaa7c4a185d1e9a782eb3d9bd0c3c46e8b99634129b65347b8c6e"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 3, in <module>\n  File \"<frozen importlib._bootstrap_external>\", line 755, in exec_module\n  File \"<frozen importlib._bootstrap_external>\", line 892, in get_code\n  File \"<frozen importlib._bootstrap_external>\", line 950, in get_data\nFileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/m_/lzywh6d10vz6xlv3d3x7xqqm0000gq/T/hephi-b2-dSbrwk/checkout/backend/app/validation_messages.py'\n",
+          "outputSha256": "47bd9e8895cbaa7c4a185d1e9a782eb3d9bd0c3c46e8b99634129b65347b8c6e"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/main.py",
+        "backend/app/schemas.py",
+        "backend/app/services/chat.py",
+        "backend/app/services/scenarios.py",
+        "backend/app/validation_messages.py",
+        "backend/tests/test_scenario_schema_validation.py"
+      ],
+      "changedFiles": [
+        "backend/app/main.py",
+        "backend/app/schemas.py",
+        "backend/app/services/chat.py",
+        "backend/app/services/scenarios.py",
+        "backend/app/validation_messages.py",
+        "backend/tests/test_scenario_schema_validation.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: cross-module field-level validation reuse\n",
+          "stderr": "",
+          "outputSha256": "27691a00d13d6283ec6abf4c557b73dc571651a11d74eb1ab4d2816785b12aa1"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: cross-module field-level validation reuse\n",
+          "stderr": "",
+          "outputSha256": "27691a00d13d6283ec6abf4c557b73dc571651a11d74eb1ab4d2816785b12aa1"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: cross-module field-level validation reuse\n",
+          "stderr": "",
+          "outputSha256": "27691a00d13d6283ec6abf4c557b73dc571651a11d74eb1ab4d2816785b12aa1"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "e00f338b098546adc40156dc15b4b6559e19835d",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

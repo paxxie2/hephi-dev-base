@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "taskId": "ab-metrics-mechanical",
+  "repo": "hephi",
+  "base": "7c52d33a6d5c334c4f81c3408a2222853df0711b",
+  "category": "defect-fix",
+  "referenceFix": "reference.patch",
+  "allowedFiles": [
+    "eval/PREREG.md",
+    "eval/RUNBOOK.md",
+    "eval/ab-metrics.mjs",
+    "eval/b5-plan.mjs"
+  ],
+  "issue": "issue.md",
+  "hiddenTest": "hidden-test.sh",
+  "review": "review.md",
+  "stagedSuitable": false,
+  "contamination": {
+    "mergedAfterTrainingCutoff": false,
+    "private": false,
+    "cutoff": null,
+    "notes": "提交时间 2026-11 月（作者时间戳），训练截止时间未验证；为避免伪造 >=1/3 污染门槛，保守记为 false，不作任何去污染声明。"
+  },
+  "checks": {
+    "baseMustFail": true,
+    "referenceMustPass": true
+  },
+  "environment": {
+    "offline": true,
+    "lockfile": "hephi/pnpm-lock.yaml",
+    "commandsMustMatchOffline": true
+  }
+}

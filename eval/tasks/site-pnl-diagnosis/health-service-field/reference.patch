@@ -1,0 +1,145 @@
+diff --git a/README.md b/README.md
+index 401b27b..0a27105 100644
+--- a/README.md
++++ b/README.md
+@@ -98,6 +98,20 @@ uv run uvicorn --app-dir backend app.main:app --host 127.0.0.1 --port 8000
+ - 开发模式（可选）：`npm --prefix web run dev` 启动 Vite（端口 5173），并设置
+   `VITE_PROXY_TARGET=http://127.0.0.1:8000` 代理到后端。
+ 
++### 健康检查接口 `/api/health`
++
++`GET /api/health` 在正常和数据库不可用两种情况下都返回固定 `service: "site-pnl-diagnosis"`，
++并保留原有字段与语义：
++
++| 状态码 | 场景 | 响应要点 |
++|---|---|---|
++| 200 | 数据库可用 | `service` 固定值；`status="ok"`、`db="ok"`；`seeded`、`dataVersion`、`modelConfigured`、`appVersion`、`detail` 沿用原语义 |
++| 503 | 数据库不可用 | `service` 固定值不变；`status="error"`、`db="error"`；`detail` 为非空错误说明 |
++
++数据库失败时接口仍返回 503，不会伪装成整体正常；两种响应都带 `X-Request-Id` 响应头。
++`backend/tests/test_health_service.py` 使用独立临时 SQLite 与 `TestClient` 聚焦校验这两种响应，
++属于临时库/进程内接口测试，**不代表真实部署环境的端到端验收**。
++
+ ## 6. 测试命令
+ 
+ | 命令 | 工作目录 | 说明 |
+diff --git a/backend/app/schemas.py b/backend/app/schemas.py
+index e7e91dc..45cd8a5 100644
+--- a/backend/app/schemas.py
++++ b/backend/app/schemas.py
+@@ -298,6 +298,8 @@ class Site(BaseModel):
+ 
+ 
+ class Health(BaseModel):
++    # 固定服务标识：200 与数据库不可用的 503 响应都返回它，便于调用方区分服务。
++    service: Literal["site-pnl-diagnosis"] = "site-pnl-diagnosis"
+     status: Literal["ok", "error"]
+     db: Literal["ok", "error"]
+     seeded: bool = False
+diff --git a/backend/tests/test_health_service.py b/backend/tests/test_health_service.py
+new file mode 100644
+index 0000000..1fb753b
+--- /dev/null
++++ b/backend/tests/test_health_service.py
+@@ -0,0 +1,101 @@
++"""健康检查接口新增固定 ``service`` 字段的聚焦测试。
++
++覆盖（新任务，独立文件，不改动共享 fixture 和原有测试）：
++- 200：数据库可用时保留原有七个字段并新增固定 ``service``；
++- 503：数据库不可用时同样返回固定 ``service``，原有字段与状态码不变。
++
++测试使用独立临时 SQLite 与 ``TestClient``，不 mock 路由、``Health`` 或 ``db_status``。
++该测试是临时库/进程内接口测试，不代表真实部署环境的端到端验收。
++"""
++
++from __future__ import annotations
++
++import sqlite3
++from pathlib import Path
++
++from fastapi.testclient import TestClient
++
++from app.constants import APP_VERSION
++from app.db import init_db
++from app.main import create_app
++from app.settings import Settings
++
++SERVICE = "site-pnl-diagnosis"
++ORIGINAL_FIELDS = {
++    "status",
++    "db",
++    "seeded",
++    "dataVersion",
++    "modelConfigured",
++    "appVersion",
++    "detail",
++}
++
++
++def _settings(db_path: Path) -> Settings:
++    """显式配置；仅本文件使用，不触碰共享 fixture。"""
++    return Settings(
++        db_path=db_path,
++        host="127.0.0.1",
++        port=8000,
++        deepseek_api_key=None,
++        deepseek_base_url="https://api.deepseek.com",
++        deepseek_model="deepseek-flash",
++        request_timeout_seconds=30.0,
++        message_budget_seconds=90.0,
++    )
++
++
++def test_health_ok_includes_service(tmp_path: Path) -> None:
++    """200：建库并写入最小测试点位与 test-v1 元信息，断言固定 service 和原有字段。"""
++    db_path = tmp_path / "health-service-ok.db"
++    init_db(db_path)
++    conn = sqlite3.connect(db_path)
++    conn.execute(
++        "INSERT INTO sites (id, name, city, address, case_label, planned_capacity, data_version) "
++        "VALUES ('S1', '测试点位', '上海', '测试地址', '正常盈利', 3, 'test-v1')"
++    )
++    conn.execute("INSERT OR REPLACE INTO app_meta (key, value) VALUES ('data_version', 'test-v1')")
++    conn.commit()
++    conn.close()
++
++    app = create_app(_settings(db_path), seed=False)
++    with TestClient(app) as client:
++        response = client.get("/api/health")
++
++    assert response.status_code == 200
++    body = response.json()
++    assert set(body) == ORIGINAL_FIELDS | {"service"}
++    assert body["service"] == SERVICE
++    assert body["status"] == "ok"
++    assert body["db"] == "ok"
++    assert body["seeded"] is True
++    assert body["dataVersion"] == "test-v1"
++    assert body["modelConfigured"] is False
++    assert body["appVersion"] == APP_VERSION
++    assert body["detail"] is None
++    assert response.headers.get("X-Request-Id")
++
++
++def test_health_unavailable_db_includes_service(tmp_path: Path) -> None:
++    """503：以普通文件阻断数据库父路径，实际 SQLite 连接失败后仍返回固定 service。"""
++    blocker = tmp_path / "not-a-dir"
++    blocker.write_text("x")
++    broken_db = blocker / "nested" / "site.db"  # 父路径是文件，连接必然失败
++
++    app = create_app(_settings(broken_db), seed=False)
++    with TestClient(app, raise_server_exceptions=False) as client:
++        response = client.get("/api/health")
++
++    assert response.status_code == 503
++    body = response.json()
++    assert set(body) == ORIGINAL_FIELDS | {"service"}
++    assert body["service"] == SERVICE
++    assert body["status"] == "error"
++    assert body["db"] == "error"
++    assert body["seeded"] is False
++    assert body["dataVersion"] is None
++    assert body["modelConfigured"] is False
++    assert body["appVersion"] == APP_VERSION
++    assert isinstance(body["detail"], str) and body["detail"]
++    assert response.headers.get("X-Request-Id")

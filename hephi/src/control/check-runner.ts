@@ -162,6 +162,9 @@ export function retryFailureCount(records: CheckRunRecord[], checkId: string, co
   const latestReset = resetAt.reduce((latest, at) => (at > latest ? at : latest), '')
   let failures = 0
   for (const record of records) {
+    // T17: red-phase runs never touch the ordinary counter (a red failure is not a check
+    // failure, and a red pass must not clear a real one).
+    if (record.phase === 'red') continue
     if (record.checkId !== checkId || record.contractHash !== contractHash) continue
     if (latestReset && record.startedAt <= latestReset) continue
     if (record.status === 'passed') { failures = 0; continue }
@@ -350,6 +353,8 @@ export async function runCheck(options: {
   allowOperatorResolutions?: boolean;
   /** C4.5: maximum actual-run failures per check/contract before refusing to start (default 3). */
   retryLimit?: number;
+  /** T17: run the check as the red (before-implementation) phase; recorded but never counted as a green check. */
+  phase?: 'red';
 }): Promise<CheckRunRecord> {
   const { contract, stateDir, outer } = options
   const check = verificationOf(contract).checks.find(c => c.id === options.checkId)
@@ -411,6 +416,7 @@ export async function runCheck(options: {
   const record: CheckRunRecord = {
     version: 3, pluginCommit: pluginCommit(), runId, sequence: (old.at(-1)?.sequence ?? 0) + 1, ticketId: contract.ticketId,
     contractHash: contract.contractHash, checkId: check.id,
+    ...(options.phase === undefined ? {} : { phase: options.phase }),
     sessionId: String(outer.agent?.id ?? ''), callId: outer.callId, innerCallId,
     argv: [check.command, ...check.args], cwd: check.cwd, startedAt: new Date().toISOString(),
     status: 'running', exitCode: null, before,
@@ -555,6 +561,16 @@ export async function runCheck(options: {
     await writeFile(join(dir, 'output.log'), output)
     record.outputHash = sha256(output)
     record.exitCode = exitCode
+    // T17: a red run is expected to fail. It is usable as red evidence only when it
+    // failed with a non-zero exit code and the source tree did not move while it ran;
+    // the after fingerprint is recorded for every red exit, not just for a passing check.
+    if (record.phase === 'red') {
+      record.after = await gitFingerprint(workspace, contract.baseSha)
+      if (!sameSource(before, record.after)) throw new Error('red run changed the source tree while it ran; this run is not red evidence')
+      if (exitCode === null) throw new Error('red run did not report an exit code; this run is not red evidence')
+      if (exitCode === 0) throw new Error('red run exited 0: the acceptance checks already pass before the implementation; this run is not red evidence')
+      throw new Error(`red run failed as expected: exit code ${exitCode}`)
+    }
     if (jobFailure) throw new Error(jobFailure)
     if (exitCode === null) throw new Error('native execution did not report an exit code')
     if (exitCode !== 0) throw new Error(`check did not exit successfully: ${exitCode}`)

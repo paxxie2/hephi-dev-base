@@ -175,7 +175,13 @@ export function mountWorkerGate(
   })
   const removeCheck = shadow ? () => {} : agent.ctx.tools.register(defineTool({
     name: 'hephi_check', description: 'Run a frozen required check by checkId before ready.',
-    parameters: { checkId: { type: 'string', required: true } },
+    parameters: {
+      checkId: { type: 'string', required: true },
+      phase: {
+        type: 'string', enum: ['red'],
+        description: 'Set to "red" for the failing before-implementation run required by version 3 code task cards.',
+      },
+    },
     output: { schema: { type: 'json' as const }, render: (_a, value) => [{ type: 'text' as const, text: JSON.stringify(value) }] },
     execute: async (args, execution) => {
       const sessionId = String(agent.session.header.id)
@@ -188,7 +194,8 @@ export function mountWorkerGate(
       }
       checking = true
       try {
-        const record = await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId,
+        const phase = (args as { phase?: unknown }).phase === 'red' ? 'red' as const : undefined
+        const record = await runCheck({ stateDir, contract: await loadBoundActivation(), checkId: args.checkId, phase,
           outer: execution, tools: agent.ctx.tools as unknown as CheckTools, jobs: nativeJobs(ctx), sessionCwd: agent.session.header.cwd,
           allowOperatorResolutions: options.allowOperatorResolutions === true, retryLimit: options.retryLimit,
           internal: id => { internalCall = id } })

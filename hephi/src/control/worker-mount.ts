@@ -47,7 +47,7 @@ function editedPath(args: unknown): string | undefined {
 }
 
 export function hephiStartupPrompt(filePath: string, mode?: ExecutionMode, contractProblem?: string): string {
-  const instructions = 'HEPHI is enabled for this Ticket. Before creating an implementation todo/plan or modifying code, load skill("hephi-superagent-control") and call hephi_get_contract; read the rules, allowed scope and acceptance checks. Run required hephi_check checks before push/PR and ready. Do not wait until ready to load them. On resuming, use the current contract and actual Session evidence rather than pretending earlier work followed these instructions.'
+  const instructions = 'HEPHI is enabled for this Ticket. Before creating an implementation todo/plan or modifying code, load skill("hephi-superagent-control") and call hephi_get_contract; read the rules, allowed scope and acceptance checks. Run required hephi_check checks before push/PR and ready. Do not wait until ready to load them. On resuming, use the current contract and actual Session evidence rather than pretending earlier work followed these instructions. Commit your changes before running hephi_check: the check requires a clean workspace and uncommitted changes are rejected as workspace-dirty; after review feedback, add new commits and rerun the required checks.'
   if (!mode) {
     return `${instructions} The activation contract could not be read or resolved${contractProblem ? `: ${contractProblem}` : ''}. Implementation, delegation, stage control, and ready are blocked until an operator fixes the contract and remounts this Worker; do not treat this as an ordinary non-HEPHI task.`
   }

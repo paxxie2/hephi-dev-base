@@ -7,8 +7,12 @@ import type { ToolExecution } from '@deepseek-ai/dsh-tools'
 import { afterEach, describe, expect, it } from 'vitest'
 import type { ActivationContract } from '../../src/control/activation.js'
 import type { VerificationCheck } from '../../src/contracts/checks.js'
-import { runCheck, type NativeJobEvent, type NativeJobView, type NativeJobs, type CheckTools } from '../../src/control/check-runner.js'
+import {
+  CHECK_FAILURE_GUIDANCE, runCheck,
+  type CheckFailureRule, type NativeJobEvent, type NativeJobView, type NativeJobs, type CheckTools,
+} from '../../src/control/check-runner.js'
 import { checkRunDir, readRuns } from '../../src/control/check-store.js'
+import { createEvidenceVerifier } from '../../src/control/evidence-verifier.js'
 import { sha256 } from '../../src/verification/fingerprint.js'
 
 const run = promisify(execFile)
@@ -666,5 +670,190 @@ describe('T07: HEPHI_RUN_DIR for the running check', () => {
     // ...the check process actually read it, and it is this run's directory.
     expect(await readFile(observedPath, 'utf8')).toBe(runDir)
     expect(await readFile(join(runDir, 'run.json'), 'utf8')).toContain(record.runId)
+  })
+})
+
+describe('T14: classified pre-check refusals and the decision log', () => {
+  async function freshState(): Promise<string> {
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-check-state-'))
+    cleanup.push(stateDir)
+    return stateDir
+  }
+  async function decisions(stateDir: string): Promise<Array<Record<string, unknown>>> {
+    try {
+      const text = await readFile(join(stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')
+      return text.trim().split('\n').filter(Boolean).map(line => JSON.parse(line) as Record<string, unknown>)
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+      throw error
+    }
+  }
+  const passTools = () => bashResult(foregroundOk('ok\n'))
+  /** Run hephi_check once and return the refusal message (the call must reject). */
+  async function refusal(stateDir: string, contract: ActivationContract): Promise<string> {
+    const error = await runCheck({ stateDir, contract, checkId: 'build', outer: outer(), tools: passTools() })
+      .then(() => undefined, (value: unknown) => value as Error)
+    expect(error).toBeInstanceOf(Error)
+    return error!.message
+  }
+
+  it('AT-40(a): repository mismatch has its own category and next action', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    const contract = { ...context(r.dir, r.baseSha), repository: 'example/other' }
+    const reason = await refusal(stateDir, contract)
+    expect(reason).toContain('repository-mismatch:')
+    expect(reason).toContain(`Next: ${CHECK_FAILURE_GUIDANCE['repository-mismatch']}`)
+    expect((await decisions(stateDir)).at(-1)).toMatchObject({ tool: 'hephi_check', mode: 'enforce', rule: 'repository-mismatch', effectiveDecision: 'deny' })
+    expect(await readRuns(stateDir, 'ticket-1')).toEqual([])
+  })
+
+  it('AT-40(b): a missing base commit has its own category and next action', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    const contract = { ...context(r.dir, r.baseSha), baseSha: '0'.repeat(40) }
+    const reason = await refusal(stateDir, contract)
+    expect(reason).toContain('base-missing:')
+    expect(reason).toContain(`Next: ${CHECK_FAILURE_GUIDANCE['base-missing']}`)
+    expect((await decisions(stateDir)).at(-1)).toMatchObject({ tool: 'hephi_check', mode: 'enforce', rule: 'base-missing' })
+    expect(await readRuns(stateDir, 'ticket-1')).toEqual([])
+  })
+
+  it('AT-40(c): a dirty workspace reports the status summary and its own next action', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    await writeFile(join(r.dir, 'dirty-note.txt'), 'uncommitted\n')
+    const reason = await refusal(stateDir, context(r.dir, r.baseSha))
+    expect(reason).toContain('workspace-dirty:')
+    expect(reason).toContain('dirty-note.txt')
+    expect(reason).toContain(`Next: ${CHECK_FAILURE_GUIDANCE['workspace-dirty']}`)
+    expect((await decisions(stateDir)).at(-1)).toMatchObject({ rule: 'workspace-dirty' })
+    expect(await readRuns(stateDir, 'ticket-1')).toEqual([])
+  })
+
+  it('AT-40(d): a changed path outside the contract has its own category and next action', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    await writeFile(join(r.dir, 'outside-probe.txt'), 'out of scope\n')
+    const contract = { ...context(r.dir, r.baseSha), allowedPaths: ['a.txt'] }
+    const reason = await refusal(stateDir, contract)
+    expect(reason).toContain('path-out-of-contract:')
+    expect(reason).toContain('outside-probe.txt')
+    expect(reason).toContain(`Next: ${CHECK_FAILURE_GUIDANCE['path-out-of-contract']}`)
+    expect((await decisions(stateDir)).at(-1)).toMatchObject({ rule: 'path-out-of-contract' })
+    expect(await readRuns(stateDir, 'ticket-1')).toEqual([])
+  })
+
+  it('AT-40(e): the retry-limit refusal belongs to the same five-category set', async () => {
+    const x = await setup()
+    const failing = bashResult({ ...foregroundOk(''), exitCode: 1 })
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      expect((await x.execute(failing)).status).toBe('blocked')
+    }
+    const error = await x.execute(failing).then(() => undefined, (value: unknown) => value as Error)
+    expect(error).toBeInstanceOf(Error)
+    expect(error!.message).toContain('check.retry-limit:')
+    expect(error!.message).toContain(CHECK_FAILURE_GUIDANCE['check.retry-limit'])
+    expect((await decisions(x.stateDir)).at(-1)).toMatchObject({ rule: 'check.retry-limit', tool: 'hephi_check', mode: 'enforce' })
+  })
+
+  it('AT-41: one status pass lists every out-of-contract file, including untracked', async () => {
+    const r = await repo()
+    // A committed file outside the contract after the frozen base...
+    await writeFile(join(r.dir, 'committed-out.txt'), 'committed out of scope\n')
+    await run('git', ['add', 'committed-out.txt'], { cwd: r.dir })
+    await run('git', ['commit', '-m', 'out of contract'], { cwd: r.dir })
+    // ...and an untracked file outside the contract. Both must appear in the same refusal.
+    await writeFile(join(r.dir, 'untracked-out.txt'), 'untracked out of scope\n')
+    const stateDir = await freshState()
+    const contract = { ...context(r.dir, r.baseSha), allowedPaths: ['a.txt'] }
+    const reason = await refusal(stateDir, contract)
+    expect(reason).toContain('path-out-of-contract:')
+    expect(reason).toContain('committed-out.txt')
+    expect(reason).toContain('untracked-out.txt')
+    expect(reason).toContain(`Next: ${CHECK_FAILURE_GUIDANCE['path-out-of-contract']}`)
+  })
+
+  it('AT-42: a refusal before the check starts still writes one deny decision log entry', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    await writeFile(join(r.dir, 'dirty-42.txt'), 'uncommitted\n')
+    const reason = await refusal(stateDir, context(r.dir, r.baseSha))
+    expect(reason).toContain('workspace-dirty:')
+    const log = await decisions(stateDir)
+    expect(log.length).toBeGreaterThan(0)
+    expect(log.at(-1)).toMatchObject({
+      ticketId: 'ticket-1', tool: 'hephi_check', mode: 'enforce',
+      effectiveDecision: 'deny', wouldDecision: 'deny', rule: 'workspace-dirty', contractHash: 'sha256:test',
+    })
+    expect(String(log.at(-1)!.reason)).toContain('Next:')
+    // Nothing was started: no check run record was written by the refusal.
+    expect(await readRuns(stateDir, 'ticket-1')).toEqual([])
+  })
+
+  it('AT-43: a GitHub rate limit is recorded as ready.github-unavailable, not a check failure', async () => {
+    const r = await repo()
+    const stateDir = await freshState()
+    const contract = { ...context(r.dir, r.baseSha), requirePullRequest: true }
+    const record = await runCheck({ stateDir, contract, checkId: 'build', outer: outer(), tools: passTools() })
+    expect(record.status).toBe('passed')
+    const readyExecution = {
+      callId: 'ready-call' as never, rootCallId: 'ready-call' as never, name: 'orchestrator_report',
+      arguments: { state: 'ready', pr_number: 1 }, signal: new AbortController().signal, token: Symbol('ready') as never,
+      agent: { session: { header: { cwd: r.dir, id: 'worker-session' } } } as never,
+    } as unknown as ToolExecution
+    const verifier = createEvidenceVerifier({
+      stateDir,
+      pullRequest: async () => {
+        throw new Error('gh api repos/example/check-job/pulls/1 failed: API rate limit exceeded for 203.0.113.7')
+      },
+    })
+    const result = await verifier(contract, readyExecution)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.reason).toMatch(/rate limit/i)
+    expect((await decisions(stateDir)).at(-1)).toMatchObject({
+      tool: 'orchestrator_report', mode: 'enforce', effectiveDecision: 'deny', rule: 'ready.github-unavailable',
+    })
+  })
+
+  it('AT-44: classification/logging only — conditions, rules and follow-up actions are not weakened', async () => {
+    // (1) exactly the five stable categories, each with one next action.
+    expect(Object.keys(CHECK_FAILURE_GUIDANCE).sort()).toEqual(
+      ['base-missing', 'check.retry-limit', 'path-out-of-contract', 'repository-mismatch', 'workspace-dirty'],
+    )
+    // (2) every repository-side condition still refuses, logs its own rule and starts nothing.
+    const cases: Array<[CheckFailureRule, (r: { dir: string }, c: ActivationContract) => Promise<void> | void]> = [
+      ['repository-mismatch', (_r, c) => { c.repository = 'example/other' }],
+      ['base-missing', (_r, c) => { c.baseSha = '0'.repeat(40) }],
+      ['workspace-dirty', async r => { await writeFile(join(r.dir, 'dirty-44.txt'), 'uncommitted\n') }],
+      ['path-out-of-contract', async (r, c) => {
+        c.allowedPaths = ['a.txt']
+        await writeFile(join(r.dir, 'outside-44.txt'), 'out of scope\n')
+      }],
+    ]
+    for (const [rule, mutate] of cases) {
+      const r = await repo()
+      const stateDir = await freshState()
+      const contract = { ...context(r.dir, r.baseSha) }
+      await mutate(r, contract)
+      const reason = await refusal(stateDir, contract)
+      expect(reason.startsWith(`${rule}: `), `${rule}: stable category prefix`).toBe(true)
+      expect(reason, `${rule}: next action`).toContain(`Next: ${CHECK_FAILURE_GUIDANCE[rule]}`)
+      expect(reason, `${rule}: old collapsed wording is gone`).not.toContain('repository/base/clean check failed')
+      expect((await decisions(stateDir)).at(-1), `${rule}: decision rule`).toMatchObject({
+        tool: 'hephi_check', mode: 'enforce', effectiveDecision: 'deny', rule,
+      })
+      expect(await readRuns(stateDir, 'ticket-1'), `${rule}: nothing started`).toEqual([])
+    }
+    // (3) the follow-up action is still sufficient: repairing the workspace lets the same check run and pass.
+    const r = await repo()
+    const stateDir = await freshState()
+    const contract = context(r.dir, r.baseSha)
+    const dirtyPath = join(r.dir, 'dirty-44-repair.txt')
+    await writeFile(dirtyPath, 'uncommitted\n')
+    expect(await refusal(stateDir, contract)).toContain('workspace-dirty:')
+    await rm(dirtyPath)
+    const record = await runCheck({ stateDir, contract, checkId: 'build', outer: outer(), tools: passTools() })
+    expect(record.status).toBe('passed')
   })
 })

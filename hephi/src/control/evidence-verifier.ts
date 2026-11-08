@@ -527,6 +527,9 @@ export function createEvidenceVerifier(options: {
 
 /** Stable rule ids for ready denials; P3 aggregates by rule. */
 function readyRule(reason: string): string {
+  // T14/AT-43: a GitHub rate-limit failure is environment unavailability, not a failed
+  // check; give it its own rule so P3 does not count it as an evidence/check failure.
+  if (/rate limit|API rate limit exceeded/i.test(reason)) return 'ready.github-unavailable'
   // C3: waiting for a human approval is its own denial class (a wait state, not a failed check).
   if (reason.includes('ready.awaiting-approval')) return 'ready.awaiting-approval'
   // A1-BIND/A1-OUT: an unreadable Job terminal state or unverifiable output is not a

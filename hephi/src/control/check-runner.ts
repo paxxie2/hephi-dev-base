@@ -1,6 +1,8 @@
 import { mkdir, realpath, writeFile } from 'node:fs/promises'
 import { join, resolve, sep } from 'node:path'
 import { randomUUID } from 'node:crypto'
+import { execFile } from 'node:child_process'
+import { promisify } from 'node:util'
 import type { ToolExecution, ToolExecutionInput, ToolExecutionResult } from '@deepseek-ai/dsh-tools'
 import { verificationOf, type ActivationContract } from './activation.js'
 import { gitFingerprint, sha256 } from '../verification/fingerprint.js'
@@ -10,6 +12,8 @@ import { resolveWorkspace } from './workspace.js'
 import { checkRunDir, readRetryResets, readRuns, resolvedRunIds, saveRun, type CheckRunRecord } from './check-store.js'
 import { logDecision } from './decision-log.js'
 import { pluginCommit } from '../version.js'
+
+const exec = promisify(execFile)
 
 export type CheckTools = { execute(input: ToolExecutionInput): Promise<ToolExecutionResult> }
 
@@ -62,6 +66,53 @@ export async function contained(root: string, path: string): Promise<string> {
   return actual
 }
 
+/** One changed path from `git status --porcelain`, with its two-letter code. */
+type WorkspaceStatusEntry = { code: string; path: string }
+
+/**
+ * T14/AT-41: one `git status --porcelain --untracked-files=all` pass, so a single refusal
+ * can list every changed path (tracked, staged and untracked) instead of hiding untracked
+ * files behind a generic "dirty workspace". The same command the frozen `clean()` gate uses.
+ */
+async function workspaceStatus(workspace: string): Promise<WorkspaceStatusEntry[]> {
+  const { stdout } = await exec('git', ['status', '--porcelain', '--untracked-files=all'], { cwd: workspace, maxBuffer: 4 * 1024 * 1024 })
+  const entries: WorkspaceStatusEntry[] = []
+  for (const raw of stdout.split('\n')) {
+    if (!raw) continue
+    const code = raw.slice(0, 2)
+    // `R  old -> new` and quoted paths keep the last segment as the changed path.
+    const path = (raw.slice(3).split(' -> ').at(-1) ?? '').replace(/^"(.*)"$/, '$1')
+    if (path) entries.push({ code, path })
+  }
+  return entries
+}
+
+const samplePaths = (items: string[]): string => items.slice(0, 10).join(', ') + (items.length > 10 ? ` (+${items.length - 10} more)` : '')
+
+/**
+ * T14: every classified start-up refusal writes one enforce decision log entry *before*
+ * throwing, so P3 can aggregate by rule id. The thrown message carries the same stable
+ * category id and its next action; rejection conditions themselves are unchanged.
+ */
+async function refuseCheckStart(
+  stateDir: string, contract: ActivationContract, outer: ToolExecution, rule: CheckFailureRule, detail: string,
+): Promise<never> {
+  const reason = checkFailureReason(rule, detail)
+  await logDecision(stateDir, {
+    ticketId: contract.ticketId,
+    sessionId: String(outer.agent?.id ?? '') || undefined,
+    callId: String(outer.callId),
+    tool: 'hephi_check',
+    mode: 'enforce',
+    effectiveDecision: 'deny',
+    wouldDecision: 'deny',
+    rule,
+    reason,
+    contractHash: contract.contractHash,
+  })
+  throw new Error(reason)
+}
+
 function jobExitCode(detail: string | undefined): number | undefined {
   if (detail === undefined) return undefined
   const match = /^exit code: (-?\d+)(?:;|$)/.exec(detail)
@@ -74,6 +125,26 @@ function jobExitCode(detail: string | undefined): number | undefined {
 export const DEFAULT_RETRY_LIMIT = 3
 
 const RETRY_LIMIT_GUIDANCE = 'report blocked in the fixed format: (1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what. An operator retry-reset (A3) is required before this check can run again.'
+
+/**
+ * T14: stable failure categories for a check that refuses to start. The previous code
+ * collapsed repository mismatch, missing base commit and a dirty workspace into one
+ * `repository/base/clean check failed` string and logged nothing; each category now has
+ * one stable rule id (used for the decision log and P3 aggregation) and one next action.
+ */
+export const CHECK_FAILURE_GUIDANCE = {
+  'repository-mismatch': 'Reopen the Worker workspace from the frozen repository and rerun hephi_check.',
+  'base-missing': 'Fetch the frozen base commit into the workspace (or re-clone from the contract base) before rerunning hephi_check.',
+  'workspace-dirty': 'Commit or discard every tracked, staged and untracked change in the workspace, then rerun hephi_check on a clean tree.',
+  'path-out-of-contract': 'Revert every changed file outside the contract allowedPaths (or prepare a new contract) before rerunning hephi_check.',
+  'check.retry-limit': RETRY_LIMIT_GUIDANCE,
+} as const
+export type CheckFailureRule = keyof typeof CHECK_FAILURE_GUIDANCE
+
+/** One line an operator/Worker can act on: stable category id + concrete next action. */
+export function checkFailureReason(rule: CheckFailureRule, detail: string): string {
+  return `${rule}: ${detail} Next: ${CHECK_FAILURE_GUIDANCE[rule]}`
+}
 
 /** A blocked record that actually ran; start-up refusals (`check not started:`) are not failures. */
 function ranAndFailed(record: CheckRunRecord): boolean {
@@ -303,26 +374,36 @@ export async function runCheck(options: {
   const retryFailures = retryFailureCount(old, check.id, contract.contractHash,
     retryResets.filter(record => record.checkId === check.id).map(record => record.at))
   if (retryFailures >= retryLimit) {
-    const reason = `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract); ${RETRY_LIMIT_GUIDANCE}`
-    await logDecision(stateDir, {
-      ticketId: contract.ticketId,
-      sessionId: String(outer.agent?.id ?? '') || undefined,
-      callId: String(outer.callId),
-      tool: 'hephi_check',
-      mode: 'enforce',
-      effectiveDecision: 'deny',
-      wouldDecision: 'deny',
-      rule: 'check.retry-limit',
-      reason,
-      contractHash: contract.contractHash,
-    })
-    throw new Error(reason)
+    await refuseCheckStart(stateDir, contract, outer, 'check.retry-limit',
+      `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract).`)
   }
   const workspace = await resolveWorkspace(contract.workspace, options.sessionCwd)
-  if (normalizeRepository(await remoteRepository(workspace)) !== normalizeRepository(contract.repository)
-    || !await hasCommit(workspace, contract.baseSha) || !await clean(workspace)) throw new Error('repository/base/clean check failed')
+  // T14: four separately classified pre-check refusals, each logged before it throws.
+  // (The retry-limit refusal is the fifth category of the same classification set.)
+  const origin = await remoteRepository(workspace)
+  if (normalizeRepository(origin) !== normalizeRepository(contract.repository)) {
+    await refuseCheckStart(stateDir, contract, outer, 'repository-mismatch',
+      `frozen repository is ${contract.repository}, workspace origin is ${origin}.`)
+  }
+  if (!await hasCommit(workspace, contract.baseSha)) {
+    await refuseCheckStart(stateDir, contract, outer, 'base-missing',
+      `frozen base commit ${contract.baseSha} is not present in the workspace.`)
+  }
   const before = await gitFingerprint(workspace, contract.baseSha)
-  if (before.changedFiles.some(p => !inScope(contract, p))) throw new Error('changed path outside contract')
+  // AT-41: one status pass lists every changed path, including untracked files; a path
+  // outside the contract is reported as such instead of being folded into "dirty".
+  const status = await workspaceStatus(workspace)
+  const outOfContract = [...new Set([...before.changedFiles, ...status.map(entry => entry.path)])]
+    .filter(path => !inScope(contract, path))
+  if (outOfContract.length > 0) {
+    await refuseCheckStart(stateDir, contract, outer, 'path-out-of-contract',
+      `changed files outside the contract: ${samplePaths(outOfContract)}.`)
+  }
+  if (status.length > 0) {
+    const summary = status.map(entry => `${entry.code.trim() || '??'} ${entry.path}`)
+    await refuseCheckStart(stateDir, contract, outer, 'workspace-dirty',
+      `uncommitted changes: ${samplePaths(summary)}.`)
+  }
   const runId = randomUUID(), innerCallId = `hephi-${randomUUID()}`
   const dir = checkRunDir(stateDir, contract.ticketId, runId)
   await mkdir(dir, { recursive: true })

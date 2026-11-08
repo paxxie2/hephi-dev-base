@@ -1,0 +1,99 @@
+{
+  "mode": "full",
+  "taskDir": "/Users/zm/repos/hephi-dev-base/eval/tasks/site-pnl-diagnosis/backend-input-validation-v3",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\nAssertionError: 415 must map to UNSUPPORTED_MEDIA_TYPE\n",
+          "outputSha256": "ea36f417394540614053a96f771ae13f34ed6fab16a006e17af0a50e8d1c4ce1"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\nAssertionError: 415 must map to UNSUPPORTED_MEDIA_TYPE\n",
+          "outputSha256": "ea36f417394540614053a96f771ae13f34ed6fab16a006e17af0a50e8d1c4ce1"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 2, in <module>\nAssertionError: 415 must map to UNSUPPORTED_MEDIA_TYPE\n",
+          "outputSha256": "ea36f417394540614053a96f771ae13f34ed6fab16a006e17af0a50e8d1c4ce1"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/main.py"
+      ],
+      "changedFiles": [
+        "backend/app/main.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: unified 415 error code\n",
+          "stderr": "",
+          "outputSha256": "865b7e03f0bb584b99ab7e0493fb2a83e3fa0381d99af42573d9e8a1886a3e4d"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: unified 415 error code\n",
+          "stderr": "",
+          "outputSha256": "865b7e03f0bb584b99ab7e0493fb2a83e3fa0381d99af42573d9e8a1886a3e4d"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: unified 415 error code\n",
+          "stderr": "",
+          "outputSha256": "865b7e03f0bb584b99ab7e0493fb2a83e3fa0381d99af42573d9e8a1886a3e4d"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "e00f338b098546adc40156dc15b4b6559e19835d",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

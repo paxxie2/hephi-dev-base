@@ -1,0 +1,31 @@
+diff --git a/backend/app/schemas.py b/backend/app/schemas.py
+index e7e91dc..c2ab6e7 100644
+--- a/backend/app/schemas.py
++++ b/backend/app/schemas.py
+@@ -11,7 +11,7 @@ from __future__ import annotations
+ 
+ from typing import Any, Literal
+ 
+-from pydantic import BaseModel, Field
++from pydantic import BaseModel, ConfigDict, Field
+ 
+ DateStr = str
+ MoneyStatus = Literal["known", "unknown"]
+@@ -202,6 +202,8 @@ class DiagnosisPage(BaseModel):
+ 
+ 
+ class CreateDiagnosisRequest(BaseModel):
++    model_config = ConfigDict(extra="forbid")
++
+     siteId: str
+     startDate: DateStr
+     endDate: DateStr
+@@ -214,6 +216,8 @@ ScenarioKind = Literal["rent", "share", "recovery"]
+ 
+ 
+ class ScenarioRequest(BaseModel):
++    model_config = ConfigDict(extra="forbid")
++
+     kind: ScenarioKind
+     monthlyRentCents: int | None = None
+     shareBps: int | None = None

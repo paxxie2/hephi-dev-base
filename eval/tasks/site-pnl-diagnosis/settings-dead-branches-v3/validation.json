@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "taskId": "settings-dead-branches-v3",
+  "checkedAt": "2026-11-08T16:07:16Z",
+  "checker": "agent-assisted (not an independent human reviewer)",
+  "repoPathUsed": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "base": {
+    "sha": "8d2ec5858ed3071eae598e5afb30b069807ce598",
+    "resolvedCommit": "8d2ec5858ed3071eae598e5afb30b069807ce598",
+    "gitCatFileType": "commit",
+    "existsInLocalClone": true,
+    "expected": "fail",
+    "exitCodes": [
+      1,
+      1,
+      1
+    ],
+    "consistent": true,
+    "ok": true,
+    "runs": [
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76",
+        "stdoutTail": ""
+      },
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76",
+        "stdoutTail": ""
+      },
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "37bafc1eb3cdd0f7183e53cc67dec31b9c8c338b0f2807335039af7e3092ed76",
+        "stdoutTail": ""
+      }
+    ]
+  },
+  "command": "node eval/check-task.mjs eval/tasks/site-pnl-diagnosis/settings-dead-branches-v3 --repo /Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis --json",
+  "mode": "full (not dry-run)",
+  "repeats": 3,
+  "reference": {
+    "expected": "pass",
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "consistent": true,
+    "ok": true,
+    "runs": [
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "f8eec8cece92501995c48457c74a9bb3d3fd4be5aea37a66f4898bdda6e0601f",
+        "stdoutTail": "PASS: dead branch removed and SITE_PNL_ENV_FILE normalised to a path\n"
+      },
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "f8eec8cece92501995c48457c74a9bb3d3fd4be5aea37a66f4898bdda6e0601f",
+        "stdoutTail": "PASS: dead branch removed and SITE_PNL_ENV_FILE normalised to a path\n"
+      },
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "f8eec8cece92501995c48457c74a9bb3d3fd4be5aea37a66f4898bdda6e0601f",
+        "stdoutTail": "PASS: dead branch removed and SITE_PNL_ENV_FILE normalised to a path\n"
+      }
+    ]
+  },
+  "scope": {
+    "allowedFiles": [
+      "backend/app/settings.py"
+    ],
+    "changedFiles": [
+      "backend/app/settings.py"
+    ],
+    "outside": [],
+    "ok": true
+  },
+  "environment": {
+    "declared": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "offline": true,
+    "hiddenTestStdlibOnly": true,
+    "note": "隐藏测试只用 Python 标准库（ast/os/sys/subprocess/types/importlib），不联网、不安装依赖；check-task 完整模式在临时 git worktree 中执行。"
+  },
+  "overallOk": true,
+  "limitations": [
+    "评审为 agent 辅助，没有第二名独立人类评审。",
+    "隐藏测试只校验本卡目标断言（源码/AST/配置行为），不证明整仓回归测试通过。",
+    "变体卡的需求点为本次新设计；base 是真实历史提交，reference.patch 是实现该变体的参考修复（非历史 commit 的 diff）。"
+  ]
+}

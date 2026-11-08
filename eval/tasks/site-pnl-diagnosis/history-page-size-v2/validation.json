@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/Users/zm/repos/hephi-dev-base/eval/tasks/site-pnl-diagnosis/history-page-size-v2",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: DiagnosisPage must expose hasMore, got ['items', 'limit', 'offset', 'total']\n",
+          "outputSha256": "13d795a92f2d116eb6b6aa8a8c1c8082a6bcd048965f8cb449306c3ca2a911a1"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: DiagnosisPage must expose hasMore, got ['items', 'limit', 'offset', 'total']\n",
+          "outputSha256": "13d795a92f2d116eb6b6aa8a8c1c8082a6bcd048965f8cb449306c3ca2a911a1"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: DiagnosisPage must expose hasMore, got ['items', 'limit', 'offset', 'total']\n",
+          "outputSha256": "13d795a92f2d116eb6b6aa8a8c1c8082a6bcd048965f8cb449306c3ca2a911a1"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/schemas.py",
+        "backend/app/services/diagnoses.py"
+      ],
+      "changedFiles": [
+        "backend/app/schemas.py",
+        "backend/app/services/diagnoses.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: pagination hasMore metadata\n",
+          "stderr": "",
+          "outputSha256": "5bea26227ce9d7fc3bce5893fe0f2ad4697b6f4ad5b36d5cd353ab32c8872390"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: pagination hasMore metadata\n",
+          "stderr": "",
+          "outputSha256": "5bea26227ce9d7fc3bce5893fe0f2ad4697b6f4ad5b36d5cd353ab32c8872390"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: pagination hasMore metadata\n",
+          "stderr": "",
+          "outputSha256": "5bea26227ce9d7fc3bce5893fe0f2ad4697b6f4ad5b36d5cd353ab32c8872390"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "bd816e9eb019b0520b98dbc1bd53bdf0c85010d4",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

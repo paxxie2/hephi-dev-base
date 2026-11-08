@@ -1,0 +1,101 @@
+{
+  "mode": "full",
+  "taskDir": "/Users/zm/repos/hephi-dev-base/eval/tasks/site-pnl-diagnosis/history-page-size-v3",
+  "structure": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "environment.offline=true：lockfile 未在任务目录/本地仓库找到（uv.lock）；完整模式会强制校验，dry-run 无法确认仓库锁文件"
+    ]
+  },
+  "checks": {
+    "environment": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "base": {
+      "expected": "fail",
+      "runs": [
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 8, in <module>\nAssertionError: list_diagnoses must accept siteId, got ['request', 'limit', 'offset']\n",
+          "outputSha256": "13af839e9fdda370aed8492235c413cf5b9df4e51210c61e41cf75fc45cdd6f0"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 8, in <module>\nAssertionError: list_diagnoses must accept siteId, got ['request', 'limit', 'offset']\n",
+          "outputSha256": "13af839e9fdda370aed8492235c413cf5b9df4e51210c61e41cf75fc45cdd6f0"
+        },
+        {
+          "code": 1,
+          "signal": null,
+          "stdout": "",
+          "stderr": "Traceback (most recent call last):\n  File \"<stdin>\", line 8, in <module>\nAssertionError: list_diagnoses must accept siteId, got ['request', 'limit', 'offset']\n",
+          "outputSha256": "13af839e9fdda370aed8492235c413cf5b9df4e51210c61e41cf75fc45cdd6f0"
+        }
+      ],
+      "codes": [
+        1,
+        1,
+        1
+      ],
+      "consistent": true,
+      "ok": true
+    },
+    "scope": {
+      "allowedFiles": [
+        "backend/app/api/diagnoses.py",
+        "backend/app/services/diagnoses.py"
+      ],
+      "changedFiles": [
+        "backend/app/api/diagnoses.py",
+        "backend/app/services/diagnoses.py"
+      ],
+      "outside": [],
+      "ok": true
+    },
+    "reference": {
+      "expected": "pass",
+      "runs": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: optional siteId filter\n",
+          "stderr": "",
+          "outputSha256": "b12ef0e947655bc182968ad7983b3dec0e1a6a205ee6615986ac8e05fa3a9d58"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: optional siteId filter\n",
+          "stderr": "",
+          "outputSha256": "b12ef0e947655bc182968ad7983b3dec0e1a6a205ee6615986ac8e05fa3a9d58"
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "PASS: optional siteId filter\n",
+          "stderr": "",
+          "outputSha256": "b12ef0e947655bc182968ad7983b3dec0e1a6a205ee6615986ac8e05fa3a9d58"
+        }
+      ],
+      "codes": [
+        0,
+        0,
+        0
+      ],
+      "consistent": true,
+      "ok": true
+    }
+  },
+  "ok": true,
+  "baseSha": "bd816e9eb019b0520b98dbc1bd53bdf0c85010d4",
+  "repo": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "repeats": 3
+}

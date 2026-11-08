@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "taskId": "restore-health-service-id-v3",
+  "checkedAt": "2026-11-08T16:07:16Z",
+  "checker": "agent-assisted (not an independent human reviewer)",
+  "repoPathUsed": "/Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis",
+  "base": {
+    "sha": "e00f338b098546adc40156dc15b4b6559e19835d",
+    "resolvedCommit": "e00f338b098546adc40156dc15b4b6559e19835d",
+    "gitCatFileType": "commit",
+    "existsInLocalClone": true,
+    "expected": "fail",
+    "exitCodes": [
+      1,
+      1,
+      1
+    ],
+    "consistent": true,
+    "ok": true,
+    "runs": [
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "d63e419d69571036aa956031656fffe925f2102589a6356537221608b52a6f92",
+        "stdoutTail": ""
+      },
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "d63e419d69571036aa956031656fffe925f2102589a6356537221608b52a6f92",
+        "stdoutTail": ""
+      },
+      {
+        "code": 1,
+        "signal": null,
+        "outputSha256": "d63e419d69571036aa956031656fffe925f2102589a6356537221608b52a6f92",
+        "stdoutTail": ""
+      }
+    ]
+  },
+  "command": "node eval/check-task.mjs eval/tasks/site-pnl-diagnosis/restore-health-service-id-v3 --repo /Users/zm/dsh-instances/experiment/sources/site-pnl-diagnosis --json",
+  "mode": "full (not dry-run)",
+  "repeats": 3,
+  "reference": {
+    "expected": "pass",
+    "exitCodes": [
+      0,
+      0,
+      0
+    ],
+    "consistent": true,
+    "ok": true,
+    "runs": [
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "17c02df43ae7a70c4c67e91d02ba93614652f8349b5011cf8b9e14489b63ea21",
+        "stdoutTail": "PASS: Health exposes a structured ServiceInfo service descriptor on 200/503\n"
+      },
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "17c02df43ae7a70c4c67e91d02ba93614652f8349b5011cf8b9e14489b63ea21",
+        "stdoutTail": "PASS: Health exposes a structured ServiceInfo service descriptor on 200/503\n"
+      },
+      {
+        "code": 0,
+        "signal": null,
+        "outputSha256": "17c02df43ae7a70c4c67e91d02ba93614652f8349b5011cf8b9e14489b63ea21",
+        "stdoutTail": "PASS: Health exposes a structured ServiceInfo service descriptor on 200/503\n"
+      }
+    ]
+  },
+  "scope": {
+    "allowedFiles": [
+      "backend/app/constants.py",
+      "backend/app/schemas.py",
+      "backend/app/main.py"
+    ],
+    "changedFiles": [
+      "backend/app/constants.py",
+      "backend/app/main.py",
+      "backend/app/schemas.py"
+    ],
+    "outside": [],
+    "ok": true
+  },
+  "environment": {
+    "declared": {
+      "offline": true,
+      "lockfile": "uv.lock",
+      "found": true,
+      "ok": true
+    },
+    "offline": true,
+    "hiddenTestStdlibOnly": true,
+    "note": "隐藏测试只用 Python 标准库（ast/os/sys/subprocess/types/importlib），不联网、不安装依赖；check-task 完整模式在临时 git worktree 中执行。"
+  },
+  "overallOk": true,
+  "limitations": [
+    "评审为 agent 辅助，没有第二名独立人类评审。",
+    "隐藏测试只校验本卡目标断言（源码/AST/配置行为），不证明整仓回归测试通过。",
+    "变体卡的需求点为本次新设计；base 是真实历史提交，reference.patch 是实现该变体的参考修复（非历史 commit 的 diff）。"
+  ]
+}

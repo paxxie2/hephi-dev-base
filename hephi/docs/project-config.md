@@ -296,8 +296,9 @@ checks 结构、验收项引用存在的 **test** check、重复 id；`acceptanc
   有计划但目标不在计划内（精确路径或 glob）→ 拒绝 `plan.outside-plan`；
 - ready：无当前合同计划 → 拒绝 `plan.not-declared`；有计划 → 既有最终 diff 复核（越界为 `plan.outside-plan`）；
 - shadow：不注册工具、不实际拒绝，只记录 wouldDecision（`plan.recorded` / `plan.outside-plan` / `plan.not-declared`）；
-- 合同变更（re-prepare 产生新 `contractHash`）：旧计划不再生效，新合同下需重新声明；
-  `requirePlan=true` 且未重新声明时 write/edit 与 ready 均拒绝；
+- 合同生命周期（T11）：同一 ticket 的 re-prepare **复用**既有合同（`contractHash` 不变、不覆盖
+  `activation.json`），旧计划继续有效，不得把 re-prepare 当作换合同；只有新 ticket（或人工移除合同后重新激活）
+  才产生新合同。新合同下旧计划不生效、需重新声明；`requirePlan=true` 且未声明时 write/edit 与 ready 均拒绝；
 - 与 C1 共存：判定顺序 scope → plan → C1，拒绝原因可区分。
 
 ### 6.4 审计规则（已在 `decisions-format.md` 登记）

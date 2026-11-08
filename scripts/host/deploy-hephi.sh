@@ -75,7 +75,7 @@ while [ $# -gt 0 ]; do
     --auto-restart-wait) [ $# -ge 2 ] || usage; auto_restart_wait="$2"; shift 2 ;;
     --process-file) [ $# -ge 2 ] || usage; process_file="$2"; shift 2 ;;
     --node) [ $# -ge 2 ] || usage; node_cmd="$2"; shift 2 ;;
-    --skip-tests) skip_tests="yes" ;;
+    --skip-tests) skip_tests="yes"; shift ;;
     --peer-root) [ $# -ge 2 ] || usage; peer_root="$2"; shift 2 ;;
     --instance-pattern) [ $# -ge 2 ] || usage; instance_pattern_input="$2"; shift 2 ;;
     -h|--help) usage ;;

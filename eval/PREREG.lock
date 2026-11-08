@@ -3,7 +3,7 @@
   "kind": "b1-prereg-lock",
   "generator": "eval/prereg-lock.mjs",
   "generatorVersion": "1.0.0",
-  "createdAt": "2026-11-08T15:54:24.176Z",
+  "createdAt": "2026-11-08T15:58:34.421Z",
   "lockStatus": "markers-cleared",
   "ownerApproval": "not-verified-by-tool",
   "note": "本锁只证明扫描时未发现未决标记；负责人书面批准仍以 eval/decisions-draft.md 与 PREREG §9 的记录为准。",
@@ -14,8 +14,8 @@
   "inputs": [
     {
       "path": "eval/PREREG.md",
-      "sha256": "5e9c37af7e4d134e1ac501ab2307cba109aa54d0579819a046ca9b802129bb41",
-      "bytes": 12238
+      "sha256": "4ac9e2977c4afdce898a6e9cf0acff425e0dfa6a1a1bab9dc917a7b604076fd2",
+      "bytes": 12452
     },
     {
       "path": "eval/decisions-draft.md",
@@ -23,7 +23,7 @@
       "bytes": 13903
     }
   ],
-  "preregSha256": "267d406925ac350168534ad06cd28e930b394781d171300ea63eb81225f959d3",
+  "preregSha256": "c91516c3877bce397f8d3302055aea1b4a13bb968d869525cc5307207dff4145",
   "markerScan": {
     "tokens": [
       "N_TODO",
@@ -97,5 +97,6 @@
   },
   "warnings": [
     "非 `approved` 的 decisions 状态：D-1=approved-by-owner, D-2=approved-by-owner, D-3=approved-by-owner, D-4=approved-by-owner, D-5=approved-by-owner, D-6=approved-by-owner, D-7=approved-by-owner, D-8=approved-by-owner, D-9=approved-by-owner, D-10=approved-by-owner（本工具不验证其含义，只记录）"
-  ]
+  ],
+  "forcedOverwrite": true
 }

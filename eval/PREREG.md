@@ -122,11 +122,13 @@
 
 ## 9. 锁定与版本
 
-- **锁定记录（本版 v1.0）**：锁定日期 2026-11-08（Asia/Shanghai）；seed `20261108`；
+- 锁定记录（本版 v1.0）：锁定日期 2026-11-08（Asia/Shanghai）；seed `20261108`；
   批准链 = 负责人口头批准（owner-approval）+ 委托代定参数（delegated-b5-parameters，D-3/D-4/D-5/D-8）
   + D-1/D-2/D-6/D-7/D-9/D-10 负责人批准；执行 Agent 无权代批，仅在授权范围内同步入档。
-- 锁定内容包含本文件全部数值 + `requirements.txt` 版本 + 任务集清单（`eval/tasks/` 的 taskId 列表与 sha256）
-  + rubric 版本；锁定哈希见 `eval/PREREG.lock`（`prereg-lock.mjs` 生成）。
+- **锁哈希覆盖面（如实声明）**：`eval/PREREG.lock` 只哈希 `eval/PREREG.md` 与 `eval/decisions-draft.md`
+  两个文件（工具 `prereg-lock.mjs` 的固定输入）。`eval/stats/requirements.txt`、任务集清单
+  （`eval/tasks/` taskId+sha256）与 rubric（`eval/label/RUBRIC.md`）**不在锁哈希内**，
+  以 git 提交 `b36a4d2`（及锁定时的 HEAD）为准冻结；任何后续改动须按本节升版本。
 - 版本记录：每次变更升 `v0.x`，写明变更点、理由、是否影响已跑数据；锁定后变更需负责人批准。
 - D-8（执行模式）：**normal 模式**，不等 P4 shadow、不新增开发；差异在运行记录 `executionMode` 如实披露。
 - D-9（off 组投递）：off 独立 profile 实例（不挂载赫菲、不打 `hephi/delivery`），与 native 投**同一任务卡**；

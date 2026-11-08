@@ -750,11 +750,21 @@ describe('T14: classified pre-check refusals and the decision log', () => {
     for (let attempt = 0; attempt < 3; attempt += 1) {
       expect((await x.execute(failing)).status).toBe('blocked')
     }
+    // Operator reset off (default): the refusal tells the Worker to report blocked and stop
+    // (8613452 control 3), inside the T14 stable category/format.
     const error = await x.execute(failing).then(() => undefined, (value: unknown) => value as Error)
     expect(error).toBeInstanceOf(Error)
     expect(error!.message).toContain('check.retry-limit:')
-    expect(error!.message).toContain(CHECK_FAILURE_GUIDANCE['check.retry-limit'])
+    expect(error!.message).toContain('state "blocked"')
+    expect(error!.message).not.toContain('operator retry-reset')
     expect((await decisions(x.stateDir)).at(-1)).toMatchObject({ rule: 'check.retry-limit', tool: 'hephi_check', mode: 'enforce' })
+    // Operator reset on: the historical reset instruction is preserved.
+    const onError = await runCheck({
+      stateDir: x.stateDir, contract: x.c, checkId: 'build', outer: outer(), tools: failing, allowOperatorResolutions: true,
+    }).then(() => undefined, (value: unknown) => value as Error)
+    expect(onError).toBeInstanceOf(Error)
+    expect(onError!.message).toContain('check.retry-limit:')
+    expect(onError!.message).toContain(CHECK_FAILURE_GUIDANCE['check.retry-limit'])
   })
 
   it('AT-41: one status pass lists every out-of-contract file, including untracked', async () => {

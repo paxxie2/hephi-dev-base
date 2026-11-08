@@ -1,7 +1,8 @@
 # A5 端到端验收脚手架（场景矩阵 + 记录规范）
 
-状态：**脚手架 v0.1（2026-11-07）· 未执行任何真实 E2E**。本目录只提供 A5 场景矩阵、
-证据采集规范与记录脚手架；任何场景的执行都由操作者在真实宿主上用真实 Issue 完成，
+状态：**脚手架 v0.1；现状更新于 2026-11-08**。本目录已有历史真实 E2E 记录，见 [S4 汇总](../2026-11-07-s4-acceptance.md)。
+当前实载 `6d24e1b` 的 Issue57 正常原生检查和 PR 交付通过，但输出仅 2,429 字节，>16KiB/裁剪边界未覆盖，完整 A2/A5 未通过。历史记录不能自动外推为当前版本验收。
+本文件提供 A5 场景矩阵、证据采集规范与记录脚手架；任何场景的执行都由操作者在真实宿主上用真实 Issue 完成，
 本文件与 `hephi/scripts/e2e-record.mjs` **都不执行**验收、不创建 Issue/PR、不读写宿主状态。
 
 > **总声明（适用于全部场景，不得省略）：假宿主 / fixture / 单元测试通过 ≠ E2E 通过。**
@@ -13,8 +14,7 @@
 1. **E9（后台检查）与 E5（检查中宿主中断）前置未满足前，禁止执行、禁止声称通过。**
    - E9 依赖 A1-BIND 后台分支 + **H3 真实宿主探针**（`jobs.get` 终态/`detail`、错误 Session 行为、`readAt.lossy`）；
    - E5 依赖 A3（已合并）+ 真实宿主中断/停机探针 H0、SQLite 停读方案 H7、A3 真实宿主验证；
-   - 当前 `hephi/docs/validation/2026-11-07-evidence-chain-host.md` 的 H1–H5 尚无真实宿主结论
-     （A2 探针在历史快照上 H1/H2 为 FAIL），因此 **E9/E5 一律记 `blocked`，不得 pass**。
+   - 历史 A2 定案及 `bc21caca` 复跑已有结论：H1/H4 pass、H2 fail，生产 H3/H5/H6 manual；一次性 profile H6 fail，强绑定关闭。H0/H7 历史探针已做，不替代 A3 可信边界和真实恢复验证；**E9/E5 仍 blocked，不得 pass**。
 2. **`--status pass` 的机器强制条件**（`e2e-record.mjs` 实现）：
    - 至少 **3 条 `--evidence`**（真实证据路径/SHA/命令输出，不是描述性文字）；
    - `--loaded-sha` 不能是 `unverified`（磁盘哈希不得替代实载 commit 回读）；
@@ -88,7 +88,8 @@
 
 ## 5. A5 场景矩阵
 
-> 所有场景当前状态：**未执行**（`pending`）；E9/E5 为 **`blocked`（前置未满足）**。
+> 已有历史场景记录见 §6；E1-off partial，E9/E5 blocked。E1-on 表示启用插件，不表示绑定开启；E1-off 表示无插件对照。
+> 当前 `6d24e1b` 的 Issue57 仅补正常原生检查与交付，不替代 E9 或完整 A5。
 > 每个场景都必须按“检查 → 创建/更新 PR → ready → 交付”的顺序执行，并在记录中逐项留证。
 
 ### E1-off｜对照组：不开赫菲
@@ -159,8 +160,7 @@
 - **记录路径**：`e2e/<date>-E4.md`（写入 `hephi/docs/validation/e2e/`）。
 ### E5｜检查执行中宿主中断（A3 前后两段）— **BLOCKED**
 
-- **前置**：A3 已合并（`resolutions.jsonl` + runner 跳过 + `hephi resolve`）；**真实宿主中断/停机探针 H0、
-  SQLite 停读 H7、A3 真实宿主验证均未完成**。
+- **前置**：A3 已合并（`resolutions.jsonl` + runner 跳过 + `hephi resolve`）；**真实停机探针 H0 和 SQLite 停读 H7 已有历史证据，但 A3 可信操作者边界及当前版本真实恢复验证仍未完成**。
 - **执行顺序**：检查执行中让宿主中断/连接断开 → 记录遗留 `running`/`unknown` → ready 拒绝 →
   操作者用 `hephi resolve` 解除 → 重新检查 → 核对旧记录不变。
 - **操作命令/入口**：中断宿主（或模拟连接断开）；恢复后
@@ -194,7 +194,7 @@
 - **记录路径**：`e2e/<date>-E7.md`（写入 `hephi/docs/validation/e2e/`）。
 ### E9｜后台检查正常完成（Job 终态绑定）— **BLOCKED**
 
-- **前置**：A1-BIND 后台分支 + **H3 真实宿主探针**（`jobs.get` 终态/detail、错误 Session 行为、`readAt.lossy`）未验证。
+- **前置**：A1-BIND 后台分支已有实现；生产 ready 路径中的 H3 终态/归属/输出验证及 H6 可信边界仍不足，强绑定保持关闭。普通 Job 检查成功不等于 E9 通过。
 - **执行顺序**：长检查提升为后台 Job → 等待完成 → ready 通过并绑定 Job 终态/输出 → 交付。
 - **操作命令/入口**：合同检查超时被提升（`promoteOnTimeout`）或显式后台；ready 时 `ctx.jobs` 可用。
 - **必须采集的证据**：`run.json` 的 jobId/status/exitCode/outputHash；`job/registered`/`job/settled` 与 Session 快照；
@@ -228,9 +228,10 @@
 
 | 场景 | 当前状态 | 解除条件 |
 | --- | --- | --- |
-| E1-off / E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1 | 未执行（pending） | 按 §5 前置逐项满足后由操作者执行并记录 |
+| E1-on / E2 / E3 / E4 / E6 / E7 / E8 / E10 / E-PR1 | 历史记录 pass（各自范围内） | 见 [S4 汇总](../2026-11-07-s4-acceptance.md)，不代表当前候选复验；E1-on 是等价清理，E-PR1 沿用同一 run 的首次 PR 创建流程 |
+| E1-off | **partial** | 补齐无插件挂载/提示/工具、相同任务卡和干净环境的 provenance；仅无 HEPHI state 不足 |
 | E9 | **blocked** | A1-BIND 后台分支 + H3 真实宿主探针通过并记录；且 H1/H2 编码问题按 A2 结论处理 |
-| E5 | **blocked** | H0 停机/中断探针 + H7 SQLite 停读 + A3 真实宿主验证通过并记录 |
+| E5 | **blocked** | H0/H7已有历史记录；仍须满足 A3 可信边界并补真实中断、解除、新检查和交付 |
 
 A5 完成判定（D5 可评 L1 的前提）：矩阵中**全部应执行场景**都有真实 E2E 记录且人工复核通过；
 E9/E5 在解除条件满足前不得计入完成；**不得用单测/fixture 补空**。人类负责人签收前，
@@ -242,5 +243,6 @@ A5 与 D5 均不得记为验收通过。
 - 版本流水线/合并提交：`external-review/ROADMAP95-plan-review.md` P2-7。
 - 实载回读序列：同报告 P0-4（D4）。
 - 记录脚手架：`hephi/scripts/e2e-record.mjs`（`--help`；`--self-test`）。
-- 宿主证据链现状：`hephi/docs/validation/2026-11-07-evidence-chain-host.md`（H1–H6）。
+- 宿主证据链：`hephi/docs/validation/2026-11-07-evidence-chain-host.md`（模板）；`hephi/docs/validation/2026-11-07-a2-final.md`（历史定案及复跑边界）。
+- 当前 `6d24e1b` 的部署、Issue57 与原始产物：见 [S4 汇总 §2c](../2026-11-07-s4-acceptance.md)。
 - A1 绑定边界：`hephi/README.md`「证据链核对（A1-BIND / A1-OUT）」。

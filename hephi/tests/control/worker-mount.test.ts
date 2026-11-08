@@ -60,13 +60,13 @@ function stageServices(children: StageChild[] = [], parentJobs: string[] = []) {
 
 type PreExecute = (execution: ToolExecution, next: () => Promise<any>) => Promise<any>
 type Guard = (execution: ToolExecution) => string | undefined
-function fakeAgent(preset = 'dsh-superagent-worker', origin?: 'subagent', cwd = '/tmp/ticket-1') {
+function fakeAgent(preset = 'dsh-superagent-worker', origin?: 'subagent', cwd = '/tmp/ticket-1', id = 'worker-ticket-1', parentSession?: string) {
   const listeners = new Map<string, Function>()
   const guards = new Set<Guard>()
   const prompts: Array<{ text: () => string }> = []
   const services: Record<string, unknown> = {}
   const agent = {
-    session: { header: { id: 'worker-ticket-1', agentPreset: preset, origin, cwd } },
+    session: { header: { id, agentPreset: preset, origin, cwd, parentSession } },
     ctx: {
       on: (name: string, listener: Function) => {
         listeners.set(name, listener)
@@ -110,6 +110,8 @@ describe('Worker mount', () => {
     const mounted = mountWorkerGate({} as Context, fake.agent, { stateDir })
     const text = fake.callbacks().prompt!.text()
     expect(text).toContain('Before creating an implementation todo/plan or modifying code')
+    expect(text).toContain('orchestrator_report progress and the real pr_number')
+    expect(text).not.toContain('before push/PR')
     expect(text).toContain('hephi_kb_search')
     expect(text).toContain('skill("hephi-superagent-control")')
     expect(text).toContain('hephi_get_contract')
@@ -592,6 +594,34 @@ describe('Worker mount', () => {
       const ready = { name: 'orchestrator_report', arguments: { state: 'ready' }, callId: 'shadow-missing-contract', token: Symbol() } as unknown as ToolExecution
       expect(await fake.callbacks().preExecute!(ready, async () => ({ kind: 'allow' }))).toEqual({ kind: 'allow' })
     } finally { mounted.dispose() }
+  })
+
+  it('applies the worker path limit to a spawned subagent and does not give it hephi_check', async () => {
+    const { repo, baseSha } = await gitWorkspace()
+    await run('git', ['remote', 'add', 'origin', 'git@github.com:paxxie2/dubbo.git'], { cwd: repo })
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-worker-'))
+    await prepareActivation(env(stateDir, 'native', repo, baseSha))
+    const child = fakeAgent('standard', 'subagent', repo, 'child-1', 'worker-ticket-1')
+    const registered: string[] = []
+    child.agent.ctx.tools.register = ((tool: { name: string }) => {
+      registered.push(tool.name)
+      return () => true
+    }) as typeof child.agent.ctx.tools.register
+    const context = {
+      agents: { list: () => [child.agent], get: () => undefined },
+      on: () => () => true,
+    } as unknown as Context
+    const dispose = installWorkerMount(context, { stateDir })
+    try {
+      expect(registered).not.toContain('hephi_check')
+      expect(child.callbacks().prompt!.text()).toContain('path limits apply to this subagent')
+      const next = async () => ({ kind: 'allow' as const })
+      const call = (path: string) => ({
+        name: 'write', arguments: { path }, callId: 'child-write', token: Symbol(), agent: child.agent, signal: new AbortController().signal,
+      }) as unknown as ToolExecution
+      expect((await child.callbacks().preExecute!(call('../outside.ts'), next)).kind).toBe('deny')
+      expect(await child.callbacks().preExecute!(call('src/ok.ts'), next)).toEqual({ kind: 'allow' })
+    } finally { dispose() }
   })
 
 })

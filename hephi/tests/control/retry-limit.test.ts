@@ -158,7 +158,8 @@ describe('C4.5 retry limit: derived counter', () => {
     expect(await lastDecisionRule(x.stateDir)).toBe('check.retry-limit')
     const decision = JSON.parse((await readFile(join(x.stateDir, 'hephi', 'ticket-1', 'decisions.jsonl'), 'utf8')).trim().split('\n').at(-1)!)
     expect(decision).toMatchObject({ tool: 'hephi_check', effectiveDecision: 'deny', rule: 'check.retry-limit' })
-    expect(decision.reason).toContain('report blocked in the fixed format')
+    expect(decision.reason).toContain('state "blocked"')
+    expect(decision.reason).not.toContain('operator retry-reset')
   })
 
   it('C45-02: a passing run clears the counter', async () => {

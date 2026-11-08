@@ -211,6 +211,21 @@ export function authorizationProblem(contract: { allowedPaths: string[]; task?: 
 
 const sample = (items: string[]) => items.slice(0, 10).join(', ') + (items.length > 10 ? ` (+${items.length - 10} more)` : '')
 
+/** Used only when the task card sets no budget. Recorded and shown; never a refusal. */
+export const ADVISORY_BUDGET = { maxFiles: 8, maxChangedLines: 400 } as const
+
+export function advisoryBudgetWarnings(contract: ActivationContract, changes: ChangeSummary): string[] {
+  if (!contract.task || contract.task.budget) return []
+  const warnings: string[] = []
+  if (changes.files.length > ADVISORY_BUDGET.maxFiles) {
+    warnings.push(`advisory budget: change touches ${changes.files.length} files, the default advisory limit is ${ADVISORY_BUDGET.maxFiles}; this is recorded and does not block delivery`)
+  }
+  if (changes.changedLines > ADVISORY_BUDGET.maxChangedLines) {
+    warnings.push(`advisory budget: change has ${changes.changedLines} changed lines, the default advisory limit is ${ADVISORY_BUDGET.maxChangedLines}; this is recorded and does not block delivery`)
+  }
+  return warnings
+}
+
 /**
  * Mechanical limits only: paths, an explicitly requested budget, protected test deletion,
  * and the C1 protected acceptance assets. They do not detect semantic drift inside

@@ -96,8 +96,9 @@ const samplePaths = (items: string[]): string => items.slice(0, 10).join(', ') +
  */
 async function refuseCheckStart(
   stateDir: string, contract: ActivationContract, outer: ToolExecution, rule: CheckFailureRule, detail: string,
+  guidance: string = CHECK_FAILURE_GUIDANCE[rule],
 ): Promise<never> {
-  const reason = checkFailureReason(rule, detail)
+  const reason = `${rule}: ${detail} Next: ${guidance}`
   await logDecision(stateDir, {
     ticketId: contract.ticketId,
     sessionId: String(outer.agent?.id ?? '') || undefined,
@@ -124,7 +125,8 @@ function jobExitCode(detail: string | undefined): number | undefined {
 /** C4.5 default: actual-run failures allowed per check/contract before refusing to start. */
 export const DEFAULT_RETRY_LIMIT = 3
 
-const RETRY_LIMIT_GUIDANCE = 'report blocked in the fixed format: (1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what. An operator retry-reset (A3) is required before this check can run again.'
+const RETRY_LIMIT_FACTS = '(1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what.'
+const RETRY_LIMIT_GUIDANCE = `report blocked in the fixed format: ${RETRY_LIMIT_FACTS} An operator retry-reset (A3) is required before this check can run again.`
 
 /**
  * T14: stable failure categories for a check that refuses to start. The previous code
@@ -144,6 +146,16 @@ export type CheckFailureRule = keyof typeof CHECK_FAILURE_GUIDANCE
 /** One line an operator/Worker can act on: stable category id + concrete next action. */
 export function checkFailureReason(rule: CheckFailureRule, detail: string): string {
   return `${rule}: ${detail} Next: ${CHECK_FAILURE_GUIDANCE[rule]}`
+}
+
+/**
+ * 8613452: with the operator channel off, the retry-limit refusal must tell the Worker to
+ * report blocked and stop instead of asking for a reset this host cannot perform. With the
+ * channel on, the historical reset instruction (also the T14 five-category guidance) applies.
+ */
+function retryLimitGuidance(allowResolutions: boolean): string {
+  if (allowResolutions) return CHECK_FAILURE_GUIDANCE['check.retry-limit']
+  return `do not call hephi_check again. Call orchestrator_report with state "blocked" and ${RETRY_LIMIT_FACTS} Operator reset is not enabled, so this ticket stops here; a new ticket can run the check again.`
 }
 
 /** A blocked record that actually ran; start-up refusals (`check not started:`) are not failures. */
@@ -370,17 +382,18 @@ export async function runCheck(options: {
   const allowResolutions = options.allowOperatorResolutions === true
   const resolved = allowResolutions ? await resolvedRunIds(stateDir, contract.ticketId, contract.contractHash) : new Set<string>()
   if (old.some(r => (r.status === 'running' || r.status === 'unknown') && !resolved.has(r.runId))) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
-  // C4.5: refuse to start once the derived failure count reaches the limit. Only the
-  // operator retry-reset channel (same A3 switch/trust boundary) can clear the counter;
-  // the refusal is logged as rule `check.retry-limit` (new rule number; decisions-format.md
-  // registration is pending Lead because that file is outside this change's scope).
+  // C4.5: refuse to start once the derived failure count reaches the limit.
+  // With the operator channel on, only retry-reset clears the counter.
+  // With it off, the same refusal tells the Worker to report blocked and stop;
+  // it does not ask for a reset that this host cannot perform. A new ticket can run the check.
   const retryResets = allowResolutions ? await readRetryResets(stateDir, contract.ticketId, contract.contractHash) : []
   // A retry-reset only clears the counter of its own check (single check granularity).
   const retryFailures = retryFailureCount(old, check.id, contract.contractHash,
     retryResets.filter(record => record.checkId === check.id).map(record => record.at))
   if (retryFailures >= retryLimit) {
     await refuseCheckStart(stateDir, contract, outer, 'check.retry-limit',
-      `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract).`)
+      `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract).`,
+      retryLimitGuidance(allowResolutions))
   }
   const workspace = await resolveWorkspace(contract.workspace, options.sessionCwd)
   // T14: four separately classified pre-check refusals, each logged before it throws.

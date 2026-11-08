@@ -7,7 +7,7 @@ import { join } from 'node:path'
 import { loadKnowledgeBases } from '../kb/index.js'
 import { activationIntentPath, activationIntentPresentSync, activationPath, defaultStateDir, enforcementOf, executionModeOf, loadActivation, loadActivationSync, migrateActivationIntentSync, type ActivationContract, type EnforcementMode, type ExecutionMode } from './activation.js'
 import { createReadyGate, type ReadyVerifier } from './ready-gate.js'
-import { assetReadyReport, authorizedAcceptance, checkDiscipline, inScope, isProtectedAsset, type AssetRecord } from './discipline.js'
+import { ADVISORY_BUDGET, advisoryBudgetWarnings, assetReadyReport, authorizedAcceptance, checkDiscipline, inScope, isProtectedAsset, summarizeChanges, type AssetRecord } from './discipline.js'
 import { appendPlan, planIncludes, readPlan } from './plan-store.js'
 import { checkoutRelative, resolveWorkspace } from './workspace.js'
 import { DELEGATION_TOOLS, MODIFYING_TOOLS } from './stage-control.js'
@@ -34,7 +34,9 @@ export function hephiTaskPrompt(contract: ActivationContract | undefined): strin
     `HEPHI task goal (frozen; do not reinterpret or extend): ${task.goal}`,
     ...task.acceptance.map(a => `- ${a.id}: ${a.text} | may change: ${a.paths.join(', ')} | prove with hephi_check("${a.check}")`),
     ...(task.outOfScope.length ? [`Explicitly out of scope: ${task.outOfScope.join('; ')}`] : []),
-    ...(task.budget ? [`Change budget requested by the Issue: ${[task.budget.maxFiles && `at most ${task.budget.maxFiles} files`, task.budget.maxChangedLines && `at most ${task.budget.maxChangedLines} changed lines`].filter(Boolean).join(', ')}.`] : []),
+    ...(task.budget
+      ? [`Change budget requested by the Issue: ${[task.budget.maxFiles && `at most ${task.budget.maxFiles} files`, task.budget.maxChangedLines && `at most ${task.budget.maxChangedLines} changed lines`].filter(Boolean).join(', ')}. Exceeding it is refused.`]
+      : [`Advisory change budget, recorded but not refused: at most ${ADVISORY_BUDGET.maxFiles} files and ${ADVISORY_BUDGET.maxChangedLines} changed lines.`]),
     'Do not delete existing tests. Change only what an acceptance item needs; if an item cannot be met within these paths, report blocked with the reason instead of widening the change.',
   ]
   return lines.join('\n')
@@ -47,13 +49,13 @@ function editedPath(args: unknown): string | undefined {
 }
 
 export function hephiStartupPrompt(filePath: string, mode?: ExecutionMode, contractProblem?: string): string {
-  const instructions = 'HEPHI is enabled for this Ticket. Before creating an implementation todo/plan or modifying code, load skill("hephi-superagent-control") and call hephi_get_contract; read the rules, allowed scope and acceptance checks. Run required hephi_check checks before push/PR and ready. Do not wait until ready to load them. On resuming, use the current contract and actual Session evidence rather than pretending earlier work followed these instructions.'
+  const instructions = 'HEPHI is enabled for this Ticket. Before creating an implementation todo/plan or modifying code, load skill("hephi-superagent-control") and call hephi_get_contract; read the rules, allowed scope and acceptance checks. Create or update the PR and bind it with orchestrator_report progress and the real pr_number, then run every required hephi_check, then call orchestrator_report with state ready. Do not report ready before those checks pass, and do not wait for merge. On resuming, use the current contract and actual Session evidence rather than pretending earlier work followed these instructions.'
   if (!mode) {
     return `${instructions} The activation contract could not be read or resolved${contractProblem ? `: ${contractProblem}` : ''}. Implementation, delegation, stage control, and ready are blocked until an operator fixes the contract and remounts this Worker; do not treat this as an ordinary non-HEPHI task.`
   }
   const modeLine = mode === 'staged'
     ? 'Execution mode: staged. Use the hephi_stage serial stage cycle. Do not create implementation subagents or an Agent Team at any point before the final report. Do not implement or report ready before the first stage plan.'
-    : 'Execution mode: native. Use the native DSH planning and Agent Team/subagent tools as needed. HEPHI installs no phase tool or phase record for this task; the cumulative ready verification still applies.'
+    : 'Execution mode: native. HEPHI applies the same path limits to this worker and to subagents it spawns. HEPHI installs no phase tool or phase record; the cumulative ready verification still applies.'
   let repository: unknown
   try {
     repository = JSON.parse(readFileSync(filePath, 'utf8')).repository
@@ -106,10 +108,11 @@ export type WorkerControlConfig = {
 export function mountWorkerGate(
   ctx: Context,
   agent: Agent,
-  options: { stateDir?: string; verify?: ReadyVerifier } & WorkerControlConfig = {},
+  options: { stateDir?: string; verify?: ReadyVerifier; ticketId?: string; scopeOnly?: boolean } & WorkerControlConfig = {},
 ): MountedWorker | undefined {
-  if (!isWorkerAgent(agent)) return undefined
-  const ticketId = workerTicketId(agent)
+  const scopeOnly = options.scopeOnly === true
+  if (!scopeOnly && !isWorkerAgent(agent)) return undefined
+  const ticketId = options.ticketId ?? workerTicketId(agent)
   if (!ticketId) return undefined
   const stateDir = options.stateDir ?? defaultStateDir()
   migrateActivationIntentSync(stateDir, ticketId)
@@ -156,7 +159,7 @@ export function mountWorkerGate(
     return current
   }
 
-  const stages = mountedContract && mode === 'staged' && !shadow
+  const stages = !scopeOnly && mountedContract && mode === 'staged' && !shadow
     ? installStageControl(agent, stateDir, ticketId, {
         loadContract: loadBoundActivation,
         jobs: () => ctx.get('jobs') as StageJobs | undefined,
@@ -168,12 +171,12 @@ export function mountWorkerGate(
 
   let checking = false
   let internalCall: string | undefined
-  const removeCheckGuard = agent.ctx.tools.guard(e => {
+  const removeCheckGuard = scopeOnly ? () => {} : agent.ctx.tools.guard(e => {
     if (e.callId === internalCall) return
     if (checking && (MODIFYING_TOOLS.has(e.name) || DELEGATION_TOOLS.has(e.name) || e.name === 'hephi_check'
       || (e.name === 'orchestrator_report' && (e.arguments as { state?: string })?.state === 'ready'))) return 'HEPHI synchronous check is running'
   })
-  const removeCheck = shadow ? () => {} : agent.ctx.tools.register(defineTool({
+  const removeCheck = scopeOnly || shadow ? () => {} : agent.ctx.tools.register(defineTool({
     name: 'hephi_check', description: 'Run a frozen required check by checkId before ready.',
     parameters: { checkId: { type: 'string', required: true } },
     output: { schema: { type: 'json' as const }, render: (_a, value) => [{ type: 'text' as const, text: JSON.stringify(value) }] },
@@ -199,7 +202,23 @@ export function mountWorkerGate(
           rule: passed ? 'check.pass' : `check.${record.status}`, reason: record.reason,
           contractHash: mountedContract?.contractHash,
         })
-        return JSON.parse(JSON.stringify(record))
+        const value = JSON.parse(JSON.stringify(record)) as { advisory?: string[] }
+        try {
+          const contract = await loadBoundActivation()
+          const workspace = await resolveWorkspace(contract.workspace, agent.session.header.cwd)
+          const advisory = advisoryBudgetWarnings(contract, await summarizeChanges(workspace, contract.baseSha))
+          if (advisory.length) {
+            value.advisory = advisory
+            await logDecision(stateDir, {
+              ticketId, sessionId, callId: String(execution.callId), tool: 'hephi_check', mode: 'enforce',
+              effectiveDecision: 'allow', wouldDecision: 'allow', rule: 'budget.advisory', reason: advisory.join('; '),
+              contractHash: contract.contractHash,
+            })
+          }
+        } catch {
+          // The advisory diff is not part of the check result. A git failure here must not fail a check that already finished.
+        }
+        return value
       } finally { checking = false; internalCall = undefined }
     },
   }))
@@ -230,7 +249,7 @@ export function mountWorkerGate(
   //  - requirePlan unset/false (default, optional C4.2): keep the earlier "needs a frozen task card"
   //    condition so legacy task-card-less contracts keep their previous tool surface.
   const requirePlan = mountedContract?.verification.requirePlan === true
-  const removePlan = shadow || !mountedContract || (!requirePlan && mountedContract.task === undefined) ? () => {} : agent.ctx.tools.register(defineTool({
+  const removePlan = scopeOnly || shadow || !mountedContract || (!requirePlan && mountedContract.task === undefined) ? () => {} : agent.ctx.tools.register(defineTool({
     name: 'hephi_plan', description: 'Declare/append the change plan (C4.2). Planned files must be inside the contract scope. When the contract sets verification.requirePlan=true, write/edit and ready are denied until a plan for the current contract exists; otherwise the plan is optional.',
     parameters: { files: { type: 'array', items: { type: 'string' }, required: true }, note: { type: 'string' } },
     output: PLAN_OUTPUT,
@@ -325,7 +344,18 @@ export function mountWorkerGate(
         contractHash: contract.contractHash,
       })
     }
-    if (report.problems.length === 0) return undefined
+    if (report.problems.length === 0) {
+      const warnings = advisoryBudgetWarnings(contract, report.changes)
+      if (warnings.length) {
+        await logDecision(stateDir, {
+          ticketId, sessionId: sessionId === undefined || sessionId === null ? undefined : String(sessionId),
+          callId: String(execution.callId), tool: 'orchestrator_report', mode: 'enforce',
+          effectiveDecision: 'allow', wouldDecision: 'allow', rule: 'budget.advisory', reason: warnings.join('; '),
+          contractHash: contract.contractHash,
+        })
+      }
+      return undefined
+    }
     const rule = report.problems.some(problem => problem.includes(' deleted ')) ? 'asset.unauthorized-delete' : 'asset.unauthorized-modify'
     const reason = `HEPHI protected acceptance asset change is not authorized: ${report.problems.join('; ')}`
     await logDecision(stateDir, {
@@ -342,7 +372,7 @@ export function mountWorkerGate(
         return options.verify!(contract, execution)
       }
     : undefined
-  const gate = createReadyGate({
+  const gate = scopeOnly ? undefined : createReadyGate({
     loadActivation: loadBoundActivation,
     allowUnavailable: shadow,
     verify: shadow ? shadowVerify : guardedVerify ? (contract, execution) => stages
@@ -444,9 +474,10 @@ export function mountWorkerGate(
   }
   const removePreExecute = agent.ctx.on('tools/pre-execute', async (execution: ToolExecution, next: () => Promise<PreToolDecision>) => {
     const problem = await scopeProblem(execution)
-    return problem ? { kind: 'deny' as const, reason: problem } : gate.preExecute(execution, next)
+    if (problem) return { kind: 'deny' as const, reason: problem }
+    return gate ? gate.preExecute(execution, next) : next()
   }, { prepend: true })
-  const removeGuard = agent.ctx.tools.guard(gate.guard)
+  const removeGuard = gate ? agent.ctx.tools.guard(gate.guard) : () => {}
   // A contract or mode change must not leave an admitted native/staged window.
   const removeBinding = agent.ctx.tools.guard(execution => {
     if (!modeSensitive(execution.name, execution.arguments)) return undefined
@@ -456,7 +487,9 @@ export function mountWorkerGate(
     name: 'hephi:startup-instructions',
     order: 900,
     interpolate: false,
-    text: () => [hephiStartupPrompt(filePath, mode, mountProblem), hephiTaskPrompt(mountedContract)].filter(Boolean).join('\n'),
+    text: () => (scopeOnly
+      ? [hephiTaskPrompt(mountedContract), 'HEPHI path limits apply to this subagent: write and edit outside the task scope are denied.'].filter(Boolean).join('\n')
+      : [hephiStartupPrompt(filePath, mode, mountProblem), hephiTaskPrompt(mountedContract)].filter(Boolean).join('\n')),
   })
   let disposed = false
   return {
@@ -471,10 +504,24 @@ export function mountWorkerGate(
       removeCheck()
       removeCheckGuard()
       removePlan()
-      gate.dispose()
+      gate?.dispose()
       stages?.dispose()
     },
   }
+}
+
+function ancestorTicketId(ctx: Context, agent: Agent): string | undefined {
+  const header = agent.session.header as { origin?: string; parentSession?: string }
+  if (header.origin !== 'subagent') return undefined
+  let parentId = header.parentSession
+  const agents = (ctx as Context & { agents?: { get?(id: string): Agent | undefined } }).agents
+  for (let depth = 0; parentId && depth < 8; depth += 1) {
+    if (parentId.startsWith('worker-')) return parentId.slice('worker-'.length)
+    const parent = agents?.get?.(parentId)
+    parentId = (parent?.session.header as { parentSession?: string } | undefined)?.parentSession
+    if (!parent) return undefined
+  }
+  return undefined
 }
 
 export function installWorkerMount(ctx: Context, options: { stateDir?: string; verify?: ReadyVerifier } & WorkerControlConfig = {}): () => void {
@@ -482,9 +529,16 @@ export function installWorkerMount(ctx: Context, options: { stateDir?: string; v
   let closed = false
   const mount = (agent: Agent): MountedWorker | undefined => {
     if (closed || mounted.has(agent)) return mounted.get(agent)
-    const result = mountWorkerGate(ctx, agent, options)
-    if (result) mounted.set(agent, result)
-    return result
+    const direct = mountWorkerGate(ctx, agent, options)
+    if (direct) {
+      mounted.set(agent, direct)
+      return direct
+    }
+    const ticketId = ancestorTicketId(ctx, agent)
+    if (!ticketId) return undefined
+    const inherited = mountWorkerGate(ctx, agent, { ...options, ticketId, scopeOnly: true })
+    if (inherited) mounted.set(agent, inherited)
+    return inherited
   }
   // Mounting is synchronous: all gate registrations happen before the
   // listener returns. A mount error propagates through agent creation instead

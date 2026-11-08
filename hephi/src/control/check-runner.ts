@@ -67,7 +67,14 @@ function jobExitCode(detail: string | undefined): number | undefined {
 /** C4.5 default: actual-run failures allowed per check/contract before refusing to start. */
 export const DEFAULT_RETRY_LIMIT = 3
 
-const RETRY_LIMIT_GUIDANCE = 'report blocked in the fixed format: (1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what. An operator retry-reset (A3) is required before this check can run again.'
+const RETRY_LIMIT_FACTS = '(1) the blocked acceptance item; (2) what each attempt changed; (3) the key points of the check output; (4) the assessed cause; (5) who must decide what.'
+const RETRY_LIMIT_GUIDANCE = `report blocked in the fixed format: ${RETRY_LIMIT_FACTS} An operator retry-reset (A3) is required before this check can run again.`
+
+function retryLimitReason(checkId: string, failures: number, limit: number, allowResolutions: boolean): string {
+  const head = `check ${checkId} reached the retry limit (${failures}/${limit} actual-run failures for this contract); `
+  if (allowResolutions) return head + RETRY_LIMIT_GUIDANCE
+  return `${head}do not call hephi_check again. Call orchestrator_report with state "blocked" and ${RETRY_LIMIT_FACTS} Operator reset is not enabled, so this ticket stops here; a new ticket can run the check again.`
+}
 
 /** A blocked record that actually ran; start-up refusals (`check not started:`) are not failures. */
 function ranAndFailed(record: CheckRunRecord): boolean {
@@ -288,16 +295,16 @@ export async function runCheck(options: {
   const allowResolutions = options.allowOperatorResolutions === true
   const resolved = allowResolutions ? await resolvedRunIds(stateDir, contract.ticketId, contract.contractHash) : new Set<string>()
   if (old.some(r => (r.status === 'running' || r.status === 'unknown') && !resolved.has(r.runId))) throw new Error('unfinished/unsupported execution requires operator resolution; no automatic recovery')
-  // C4.5: refuse to start once the derived failure count reaches the limit. Only the
-  // operator retry-reset channel (same A3 switch/trust boundary) can clear the counter;
-  // the refusal is logged as rule `check.retry-limit` (new rule number; decisions-format.md
-  // registration is pending Lead because that file is outside this change's scope).
+  // C4.5: refuse to start once the derived failure count reaches the limit.
+  // With the operator channel on, only retry-reset clears the counter.
+  // With it off, the same refusal tells the Worker to report blocked and stop;
+  // it does not ask for a reset that this host cannot perform. A new ticket can run the check.
   const retryResets = allowResolutions ? await readRetryResets(stateDir, contract.ticketId, contract.contractHash) : []
   // A retry-reset only clears the counter of its own check (single check granularity).
   const retryFailures = retryFailureCount(old, check.id, contract.contractHash,
     retryResets.filter(record => record.checkId === check.id).map(record => record.at))
   if (retryFailures >= retryLimit) {
-    const reason = `check ${check.id} reached the retry limit (${retryFailures}/${retryLimit} actual-run failures for this contract); ${RETRY_LIMIT_GUIDANCE}`
+    const reason = retryLimitReason(check.id, retryFailures, retryLimit, allowResolutions)
     await logDecision(stateDir, {
       ticketId: contract.ticketId,
       sessionId: String(outer.agent?.id ?? '') || undefined,

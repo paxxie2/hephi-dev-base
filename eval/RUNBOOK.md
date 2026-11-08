@@ -333,3 +333,16 @@ node eval/record-run.mjs --self-test   # 26 条断言；全部在 mkdtemp 临时
 
 > **未验证项（必须保留）**：B3-05 只是**派生夹具，不是正式实验记录**；本仓库目前**没有甲（A 侧）
 > 交付的真实 run**，因此本工具及其自测不能证明任何正式实验记录或对照实验结论。与 §12 口径一致。
+
+## 15. T03 部署前置三条规则（2026-11-08 追加）
+
+> 本节为**追加规则**，不修改 §1–§14 的既有约束与数值。部署检查脚本 `scripts/deploy-check.sh`
+> 只读核对下列前置；任一不满足则不得升级插件/部署。
+
+1. **有 HEPHI 工单不升级插件**：`/orchestrator/api/tickets`（或探测到的可用 tickets 端点）中存在
+   运行/等待/blocked/待修复的 HEPHI 工单时，不得升级插件或部署新版本；先清空未决工单。接口不可达
+   时同样视为无法确认，按失败处理并记录 `FAIL:unreachable` 与 curl 退出码，不得猜测为空。
+2. **本期不配置审批人**：`project-config/*.json` 中不得出现 `approvers` 配置；当前口径为不配置审批人
+   （`eval/daily/APPEALS.md` 的人工复核流程另行约定，不代表审批人配置）。
+3. **由人合并 PR**：Worker/Agent 不启用 auto-merge（提示中未命名具体 merge CLI 时由人合并每个 PR）；
+   本期的 PR 合并由人执行，Agent 不得代合并、不得代批。

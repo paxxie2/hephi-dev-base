@@ -523,6 +523,92 @@
         }
       }
     },
+    "ticketIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "T04：一次任务关联的全部工单 id；同一 taskId 的多张工单由 eval/ab-metrics.mjs 合并失败与成本（AT-60）"
+    },
+    "firstReviewCandidate": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "head",
+        "submittedAt"
+      ],
+      "description": "T04：首次提交审查的候选 commit 与提交时间；未提交或未观测时为 null",
+      "properties": {
+        "head": {
+          "$ref": "#/$defs/sha40"
+        },
+        "submittedAt": {
+          "$ref": "#/$defs/isoDateTime"
+        }
+      }
+    },
+    "finalCandidate": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "head"
+      ],
+      "description": "T04：最终候选 commit（验收/合并时的 head）；未观测时为 null",
+      "properties": {
+        "head": {
+          "$ref": "#/$defs/sha40"
+        }
+      }
+    },
+    "acceptanceVerdict": {
+      "type": "string",
+      "enum": [
+        "passed",
+        "failed",
+        "invalid",
+        "unknown"
+      ],
+      "description": "T04：验收结论（passed=合格交付；failed=未通过；invalid=运行无效；unknown=未判定）"
+    },
+    "mergedAt": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time",
+      "description": "T04：PR 合并时间；未合并时为 null"
+    },
+    "sevenDayOutcome": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "clean",
+        "rework",
+        "pending",
+        "not-applicable",
+        null
+      ],
+      "description": "T04：合并后 7 天观察结果（clean=无返修；rework=返修；pending=观察中；not-applicable=未合并/不可观察；null=未记录）"
+    },
+    "queueWaitSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "T04：工单从创建到开始执行的队列等待秒数"
+    },
+    "reviewWaitSeconds": {
+      "type": "number",
+      "minimum": 0,
+      "description": "T04：候选提交到审查完成的等待秒数"
+    },
     "faults": {
       "type": "object",
       "additionalProperties": false,

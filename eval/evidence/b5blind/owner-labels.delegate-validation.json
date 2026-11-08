@@ -1,0 +1,12 @@
+{
+  "manifest": "eval/evidence/b5blind/materials/manifest.json",
+  "labels": "eval/evidence/b5blind/owner-labels.delegate.json",
+  "ok": true,
+  "errors": [],
+  "summary": {
+    "expected": 8,
+    "labeled": 8,
+    "missing": [],
+    "complete": true
+  }
+}

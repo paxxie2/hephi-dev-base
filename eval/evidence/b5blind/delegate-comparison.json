@@ -1,0 +1,7 @@
+{
+  "warning": "descriptive AI-delegate vs agent comparison; NOT human-agent agreement, NOT evidence; delegate read README that leaked agent label summary, so not independent",
+  "fieldsCompared": 56,
+  "agreements": 56,
+  "agreementRate": 1.0,
+  "differences": []
+}

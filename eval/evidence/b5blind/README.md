@@ -87,3 +87,15 @@ node eval/evidence/b5blind/leak-scan.mjs eval/evidence/b5blind/materials
 - 样本仅 8 次、同一任务、同一基线；不足以做 native vs off 的效果推断。
 - 未运行模型、未运行隐藏测试、未修改被测仓库、未合并任何 PR。
 - owner 标注与 human–agent agreement 尚未产生；见 `eval/B5-blind-protocol.md`。
+
+## 7. AI 代复核产物（owner-labels.delegate.json，2026-11-08）
+
+负责人将 §4–§6 的 owner 标注委托给另一个 AI agent 完成；该产物以 `owner-labels.delegate.json` 收录，**labeler 保留原值 `agent:codex-owner-delegate-not-human`**，不冒充真人。
+
+- 完整性：`owner-labels.delegate-validation.json`（import.mjs，8/8、complete=true）。
+- 独立性：交接文档 `OWNER-DELEGATE.md` 明示该 agent 先读了本 README 的 §3（含 agent 标签摘要），**不构成独立盲评**；且标注者是 AI，不是 owner 真人。
+- 因此：
+  1. **不得**用本文件计算 human–agent agreement；
+  2. **不得**用它声称 B4 达标或 B5 效果；
+  3. `delegate-comparison.json` 只是“AI 代做 vs agent”的描述性对比（56/56 一致），不构成任何一致性证据。
+- 盲评状态保持 **partial（single-labeler；无真人标注）**；若负责人本人或第二真人完成标注，再按 `B5-blind-protocol.md` §4–§6 计算 agreement。

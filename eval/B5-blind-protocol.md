@@ -130,3 +130,10 @@ node eval/kappa.mjs --scores /tmp/human-agent-agreement.json
 - 私有证据：`eval/evidence/b5blind/{private-mapping.json,source-evidence.json,mapping-audit.txt}`
 - 文件完整性：`eval/evidence/b5blind/SHA256SUMS`
 - 本文不产生、不声称任何 B5 效果结论；未运行模型、未跑隐藏测试、未修改被测仓库、未合并 PR。
+
+## 8. AI 代复核记录（2026-11-08）
+
+负责人把 §4–§6 的 owner 标注委托给另一个 AI agent；该产物只作为 `owner-labels.delegate.json` 归档（labeler=`agent:codex-owner-delegate-not-human`），**不满足本协议要求的真人 owner 标注**：
+- 不能计算 human–agent agreement，不能算双人 kappa；
+- 交接文档自述已接触 agent 标签摘要，不构成独立盲评；
+- 盲评状态保持 partial；真人标注入口与模板不变（§4）。

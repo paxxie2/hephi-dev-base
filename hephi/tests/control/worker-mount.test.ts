@@ -113,6 +113,8 @@ describe('Worker mount', () => {
     expect(text).toContain('hephi_kb_search')
     expect(text).toContain('skill("hephi-superagent-control")')
     expect(text).toContain('hephi_get_contract')
+    // AT-70: the startup prompt states that checks run on committed source only.
+    expect(text).toContain('Commit your changes before running hephi_check')
     mounted!.dispose()
     expect(fake.callbacks().prompt).toBeUndefined()
   })

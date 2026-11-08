@@ -30,7 +30,7 @@
 
 ## D-3 成本上限
 
-- status: `pending-trial`
+- status: `approved-by-owner (delegated)`
 - 当前状态：PREREG §5 七项成本阈值均为占位。
 - 选项：整体保留表中候选；按试跑调整各项；按预定仓库/模型分层制定。
 - 对样本量、成本和可比性的影响：更严预算可能减少可完成配对；分层上限影响成本比较，须完整披露。
@@ -41,7 +41,7 @@
 
 ## D-4 整体和分层样本量
 
-- status: `pending-trial`
+- status: `approved-by-owner (delegated budget)`
 - 当前状态：N_TODO；min_pairs=5 只是脚手架占位。
 - 选项：试跑后按配对效能估计；预先预算限定可行样本并标证据限制；缩小首轮范围后重新估计。
 - 对样本量、成本和可比性的影响：直接决定总成本与统计精度，各分层不能以整体数量替代。
@@ -52,7 +52,7 @@
 
 ## D-5 环境不可用停止阈值
 
-- status: `pending-approval`
+- status: `approved-by-owner (delegated)`
 - 当前状态：PREREG §8 为 ENV_TODO，批次窗口口径也需确认。
 - 选项：固定批次比例阈值；连续批次阈值；预先规定比例及绝对事件数联合条件。
 - 对样本量、成本和可比性的影响：提前停止影响样本量与成本；分组或窗口不一致会破坏可比性。
@@ -83,7 +83,7 @@
 
 ## D-8 P4 shadow 可用性
 
-- status: `pending-approval`
+- status: `approved-by-owner (delegated)`
 - 当前状态：RUNBOOK §1/§3 只有机制说明，实际宿主可用性未验证。
 - 选项：具备真实证据后选 shadow；使用 normal 并披露限制；延后实验待能力确认。
 - 对样本量、成本和可比性的影响：执行模式影响成本与可比性；不能预设 shadow 已激活。
@@ -121,7 +121,18 @@
 - 负责人原话：“乙包的，我全部批准”（2026-11-08 06:36 Asia/Shanghai，经 Lead 转述；完整范围与边界见 `eval/approvals/2026-11-08-owner-approval.md`）。
 - 本文件 status 变更：D-1、D-2、D-6、D-10 → `approved-by-owner`；D-3、D-4 → `pending-trial`；D-5、D-8 保持 `pending-approval`。
 - 同日稍后：负责人选择 A（单人+agent）并授权搭 off profile 试跑，D-7、D-9 改为 `approved-by-owner`（仅限本轮开发试跑范围，见 `eval/approvals/2026-11-08-b5-trial-authorization.md`）。
-- 仍未决：成本上限七项数值（D-3）、样本量 N（D-4）、环境不可用停止阈值（D-5）、P4 shadow 可用性（D-8）、off 投递一致性真实校验（D-9 选择已批、校验未做）、资源/预算、真人评审者为 1 人+agent 降级（见批准记录 §4）。
+- 2026-11-08 委托 AI 代定参数后：D-3/D-4/D-5/D-8 已有 delegated 决策（见 `eval/approvals/2026-11-08-delegated-b5-parameters.md`）；仍未完成：PREREG §9 锁定、D-9 真实投递一致性校验、D-4 任务池/合格任务数核对、成本 100 元预算与 token 上限的可行性预检、真人评审者为 1 人+agent 降级。
 - 本节不改变 `eval/PREREG.md` 的任何数值/占位；PREREG 仍未锁定，`prereg-lock --check` 仍应失败。
 
 D-8/D-9 的真实可用性及任务卡投递仍需实际入口证据；当前真实端到端未验证通过。上述推荐不是实验结论，也不能代替试跑结果。
+
+## 2026-11-08 委托 AI 代定参数（D-3/D-4/D-5/D-8）
+
+负责人要求“另一个模型代替处理”并由该模型推送决策记录（原提交 `fe8c6cb`，其远端分支不可达，本仓库按文件内容恢复并保留引用）。完整记录见 `eval/approvals/2026-11-08-delegated-b5-parameters.md`；要点：
+
+- **D-3**（成本/资源口径，`approved-by-owner (delegated)`）：主 token 指标 = input+output+cacheRead+cacheWrite（去重，另报不含 cache 的 input+output）；native 有效运行 token 中位数上限 1,000,000、P90 上限 2,000,000；耗时中位数 30 分钟/P90 60 分钟、超时率 10%、人工介入中位数 1 次/运行；本轮模型费用总上限 **100 元人民币**；单次 60 分钟或 3,000,000 token 停止；每组并发最多 1。价格/汇率以实际计费为准，未虚构价格。
+- **D-4**（规模，`approved-by-owner (delegated budget)`）：固定预算 **67 个不同任务的配对**（每任务 off/native 各一次），随机 13 个任务两组各重复一次，最多 160 runs；**67 是资源预算，不是统计效能验证**；单仓库 site-pnl-diagnosis、单模型 deepseek-flash、seed=20261108；历史 8 次开发试跑不混入新批主分析。
+- **D-5**（环境停止，`approved-by-owner (delegated)`）：任一组每 10 次环境失败超过 20%，或连续失败 3 次，暂停。
+- **D-8**（P4 shadow，`approved-by-owner (delegated)`）：使用现有 normal 模式，不等 shadow、不新增开发；须在记录中披露差异。
+
+**仍未锁 PREREG**：`eval/PREREG.md` 的数值占位仍需按 §9 同步并锁定；D-9 的真实投递一致性校验、D-4 的“67 对从何而来/实际合格任务数”仍需执行前核对；本轮不启动实验。

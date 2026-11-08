@@ -1,8 +1,9 @@
 # 发布流水线 S1–S7（ROADMAP-95 §3.2）
 
-状态：**操作文档（本轮新增）**。S1 预检脚本已实现（`scripts/release/preflight.mjs`；本轮已实测 dry-run，并在干净临时克隆上跑通 `--skip-check` 冒烟：141/41 断言套件 PASS，install/check 如实标 SKIP）；
-S2–S7 是流程定义，**尚未执行**；真实部署/真实验收仍被 Z1/D1–D5/open Ticket 阻断。
-本文不改变任何“未验证/blocked”结论；**不得把流程文档当成验收通过证明**。
+状态：**操作文档（2026-11-07 新增，2026-11-08 同步）**。S1 预检脚本已实现；历史 `--skip-check` 冒烟在旧干净克隆上 PASS（**141 假宿主断言 / 41 effects-db**，install/check 标 SKIP），该数字属历史构建，**不改写为当前**。
+当前 main 的假宿主套件为 **302 断言**（PR51）；`6d24e1b` 部署构建（分支基线 `2eb05b1`，早于 302 同步）为 **39 文件 559 tests**，其假宿主套件仍属 **281 断言**口径——两种口径按版本分别记录，**不混算**。
+S3 已对 `bc21cac`、`6d24e1b` 真实执行；S4 仍为 **partial**（E1-off partial、E5/E9 blocked、长输出与完整 A2/A5 未覆盖）；S5–S7 未执行。所有历史失败与门禁原样保留。
+本文不改变任何“未验证/blocked”结论；**不得把流程文档当成验收通过证明，也不得宣称完整 S1@`6d24e1b` 已由旧报告证明**。
 
 ## 0. 硬边界（先读）
 
@@ -46,7 +47,7 @@ node scripts/release/preflight.mjs --skip-check --out /tmp/s1-skip-check.json
   非 40hex ref 时要求 source `HEAD == ref`；PATH 有 `node`/`pnpm`。
 - **步骤**：源校验 → 临时 `git clone --no-hardlinks` + `checkout ref` + 克隆树干净 →
   `hephi/` 下 `pnpm install --frozen-lockfile` + `pnpm check` → 假宿主
-  `node scripts/host/test-deploy-hephi.mjs`（期望 PASS 141）+ `node scripts/host/test-effects-db.mjs`（期望 PASS 41）。
+  `node scripts/host/test-deploy-hephi.mjs`（历史口径 PASS 141；当前 main 为 302，`6d24e1b` 树为 281 口径，见下）+ `node scripts/host/test-effects-db.mjs`（历史冒烟与 `6d24e1b` 组件测试均为 41 passed）。
 - **产物**：JSON 报告 `source/ref/headSha/treeClean/node/pnpm/steps[{name,command,cwd,exit,seconds,tail}]/verdict`；
   `--out` 落盘，否则打印摘要（stdout）+ JSON 报告路径（stderr）。
 - **失败处理**：任一步非零/超时 → `verdict=FAIL`、exit 1；修复后**新提交 = 新构建 SHA**，重跑 S1。
@@ -59,7 +60,11 @@ node scripts/release/preflight.mjs --skip-check --out /tmp/s1-skip-check.json
   - 共享工作树（=宿主实载插件目录）当时有他人未提交改动，默认 source 的 dry-run 会因 `treeClean=false` exit 1，
     这是**预期的前置拦截**，不是脚本缺陷；干净候选上 dry-run 为 exit 0。
 - **限制**：脚本无法通用识别 source 是否为“宿主实载目录”，运行前人工确认；
-  S1 通过不代表真实宿主可用，也不替代 S2/S3/S4；本轮未跑完整 `pnpm install/check`（`--skip-check` 快速冒烟）。
+  S1 通过不代表真实宿主可用，也不替代 S2/S3/S4；历史冒烟未跑完整 `pnpm install/check`（`--skip-check`）。
+- **口径分离（2026-11-08，不得混算）**：
+  - 历史：`73d2862` 的 `--skip-check` 冒烟 = **141 假宿主断言 / 41 effects-db**（旧构建，install/check SKIP），保留原文，不改写为当前。
+  - 当前 main：假宿主套件已随 PR51 增至 **302 断言**；`6d24e1b` 部署构建（基线 `2eb05b1`）为 **39 文件 559 tests**，假宿主套件仍属 **281 断言**口径。
+  - `6d24e1b` 部署时只执行了 `pnpm check`（39 文件 559 tests + 构建），**未跑完整 S1**（假宿主/effects-db 预检）；旧 `9fa8598` 报告不能证明 `6d24e1b` 的完整 S1。
 
 ## 3. S2：独立复核（外部）
 
@@ -69,7 +74,7 @@ node scripts/release/preflight.mjs --skip-check --out /tmp/s1-skip-check.json
 - 失败处理：Request changes → 回 S1（新提交=新构建 SHA）；**S2 未通过不得进入 S3**。
 - 关联：Z1（R3.8 二次独立复核）属于同一类独立复核门禁；Z1 未关闭前 R3.8/相关证据不得标“真实验证”。
 
-## 4. S3：真实部署（停机式排空）— 当前 **blocked**
+## 4. S3：真实部署（停机式排空）— `bc21cac`/`6d24e1b` 已执行，历史 blocked 保留
 
 ```sh
 # 形态示例（真实执行前必须满足下方依赖；先 --dry-run 验证参数/门禁）
@@ -83,16 +88,16 @@ scripts/host/deploy-hephi.sh \
 
 **依赖（缺一不可，见计划审查 P0-5/P0-4）**：
 
-| 依赖 | 要求 | 当前状态 |
+| 依赖 | 要求 | 当前状态（2026-11-08 同步；历史门禁不改） |
 | --- | --- | --- |
-| Z1 | R3.8 二次独立复核通过 | 未完成 |
-| D1 | 排空证据方案（`--drain effects` + H0/H7 探针） | H0/H7 已做，真实有 effect 的等待行为未验证 |
-| D2 | 正式 hostVersion 来源 | 未定义（实验性标识不采纳） |
-| D3 | open Ticket 已处置 | **2 个 open Ticket**，真实部署被门禁阻断 |
-| D4 | 实载 SHA 回读方式 | 决策日志 `pluginCommit`（需一次真实工具调用）/启动日志；未纳入 R-P8-01 序列前不得声称 |
-| D5 | 维护窗口（暂停/停机/恢复派发的人工窗口） | 未定义 |
-| S2 | deploy 脚本改动先过独立复核（P1-2/P0-5） | 脚本改动未单独 S2 |
-| 探针 | H0 停机、H7 SQLite copy 模式通过并记录 | H0/H7 已完成记录；真实 drain 未验证 |
+| Z1 | R3.8 二次独立复核通过 | **未完成** |
+| D1 | 排空证据方案（`--drain effects` + H0/H7 探针） | 已按 stop-based effects 决策执行（precheck/final `total=0`）；真实非零 effect 等待仍未验证 |
+| D2 | 正式 hostVersion 来源 | **已归档**（`docs/deployment-prerequisite-decisions-2026-11-07.md` §3：可读环境标识，非兼容性认证） |
+| D3 | open Ticket 已处置 | 原 **2 个 open Ticket** 已于 2026-11-07 12:52:48Z 经授权停止/关闭（不记为业务成功）；后续部署门禁通过 |
+| D4 | 实载 SHA 回读方式 | **已归档**（decisions §4）：双入口 activation markers + 决策 `pluginCommit`；属同用户运行证据，非防伪/强绑定 |
+| D5 | 维护窗口（暂停/停机/恢复派发的人工窗口） | **已归档**（decisions §5）；`keptPaused=yes` 仅指部署结束状态 |
+| S2 | deploy 脚本改动先过独立复核（P1-2/P0-5） | **脚本改动未单独 S2**（门禁保留） |
+| 探针 | H0 停机、H7 SQLite copy 模式通过并记录 | H0/H7 已完成记录；真实非零 effect drain 未验证 |
 
 **执行顺序（P0-4）**：暂停 → 排空/effects 查询 → 记录进程与（可选）Job 标识 → 停止宿主 →
 最终查询（`check-effects-db --mode copy`）→ 切换不可变 release → 启动 → 10 项健康 →
@@ -103,8 +108,12 @@ scripts/host/deploy-hephi.sh \
 **失败处理**：脚本 fail-closed；恢复 previous 并复检；双失败保持 paused、保留两段证据、人工接管；
 **不得**默认 0drain 字段、编造 hostVersion 或绕过 open Ticket。真实部署失败/中断后不得“继续切换”。
 
-**当前状态**：真实 `--drain effects --dry-run` 被 2 个 open Ticket 门禁阻断（exit 1，未停机/未切换），
-见 `hephi/docs/validation/2026-11-07-maintenance-drain-probe.md`。**S3 未执行**。
+**已执行（2026-11-08）**：
+- `bc21cac`：02:16 部署 PASS，记录 `deploy-20261107T181639Z-43593.json`，activation verified，10/10 health。
+- `6d24e1b`：03:26:55 部署 PASS，记录 `deploy-20261107T192655Z-28428.json`；target=`6d24e1b`、previous=`bc21caca`、activation=verified、keptPaused=yes、effects `total=0`。
+- **人工恢复（不得省略）**：部署脚本成功后其子进程退出，原生 CLI 默认环境 `start` 失败（profile 不存在，失败日志保留）；随后用既有 `start.sh` 经 tmux 启动，当前 PID `74123`、双入口 `6d24e1b`、10/10 health ready。不得宣称部署后持续存活无人工介入。
+
+**历史状态（2026-11-07，保留）**：真实 `--drain effects --dry-run` 曾被 2 个 open Ticket 门禁阻断（exit 1，未停机/未切换），见 `hephi/docs/validation/2026-11-07-maintenance-drain-probe.md`。该 blocked 记录不被后续成功覆盖。
 
 ## 5. S4：真实验收
 
@@ -115,7 +124,7 @@ scripts/host/deploy-hephi.sh \
   decisions.jsonl、PR 状态、候选/实载 SHA、结论）；E9/E5 前置未满足时记 blocked。
 - **失败处理**：blocked/fail 如实记录；不得用假宿主/单测/fixture 作为 E2E 通过证据；
   回滚/恢复按 S3 的 fail-closed 流程。
-- **当前状态**：未执行（S3 未通过，A5 所有场景 pending/blocked）。
+- **当前状态**：**partial**。A5 历史场景见 `hephi/docs/validation/2026-11-07-s4-acceptance.md`：E1-off partial、E5/E9 blocked；`6d24e1b` 的 Issue57 正常检查与 PR58 交付通过，但输出 2,429 字节不证明 >16KiB 分支，完整 A2/A5 未通过；人类签收未做。
 
 ## 6. S5：默认值变更
 
@@ -135,11 +144,11 @@ scripts/host/deploy-hephi.sh \
 - **只含文档/证据的合并**：不改变运行代码，不需重新部署（前提：代码树与已验收 SHA 相同；merge 未引入代码冲突解决）。
 - **产物**：main SHA、merge commit 构建的预检/冒烟记录、合并说明。
 - **失败处理**：合并引入新代码/冲突解决导致构建变化 → 当作新候选重走 S1/S2/S3/S4；无法则不合入 main。
-- **当前状态**：未合并（分支 `agent/roadmap95` 未开 PR/未合并；main 未移动）。
+- **当前状态**：`agent/roadmap95` 分支未合并（历史）；main 已由其他 PR 前进到 `5b5c4ef`（本次文档核对对象），但完整 S6 流程未执行。不得把 docs-only 合并或 PR 已合入当成完整 S6 通过。
 
 ## 8. S7：投入使用
 
-- **前置**：S6 完成；监控/回滚预案/值班人确认；P8 实载回读边界仍为 unverified 时不得声称“实载版本已验证”。
+- **前置**：S6 完成；监控/回滚预案/值班人确认；实载回读虽已有 D4 两条方式，但仍属同用户运行证据，不得据此声称“实载版本已防伪验证”。
 - **步骤**：在维护窗口启用/切换生产标签与派发；观察错误率/健康/load；保留 previous release 与回滚命令；
   恢复派发由操作者手动执行。
 - **产物**：投入记录（时间、release SHA、操作者、监控窗口、回滚点）。
@@ -153,22 +162,22 @@ scripts/host/deploy-hephi.sh \
 2. **文档/证据-only 提交**：不改变运行代码 → 不重新部署，不产生新构建 SHA；不能把文档改动当作新验收。
 3. **新代码提交**：即使很小也生成新构建 SHA；已验收 SHA 结论不自动延续。
 4. **merge commit**：以合并提交构建为准；PR head 构建通过不能替代 main 构建验收。
-5. **实载回读**：只认 `pluginCommit`/启动日志；读不到 → `unverified`，不得用磁盘哈希/重启时间替代。
+5. **实载回读**：只认双入口 activation markers、决策日志 `pluginCommit` 或启动日志（D4）；读不到 → `unverified`，不得用磁盘哈希/重启时间替代。
 6. **不可绕过**：不得默认 0 排空字段、编造 hostVersion、绕过 open Ticket 或跳过独立复核。
 
 ## 10. 当前状态与未验证项（不得写成通过）
 
 | 项 | 状态 |
 | --- | --- |
-| S1 预检脚本 | 已实现；dry-run（exit 0）与 `--skip-check` 冒烟（141/41 套件 PASS）已实测；完整 `pnpm install/check` 未在本轮跑 |
+| S1 预检脚本 | 已实现；历史 dry-run（exit 0）与 `--skip-check` 冒烟（141/41，旧构建）保留；当前 main 假宿主套件 302、`6d24e1b` 为 559 tests / 281 口径，**口径分版本**；完整 S1（假宿主/effects 预检）未在 `6d24e1b` 上重跑 |
 | S2 独立复核 | 送审材料已整理（s2-review-bundle），**复核未做** |
-| S3 真实部署 | **blocked**：D3 2 个 open Ticket；D1/D2/D4/D5、Z1、deploy 脚本单独 S2 未完成；未停机/未切换 |
-| S4 真实验收 | 未执行（S3 未通过） |
+| S3 真实部署 | `bc21cac`、`6d24e1b` 已执行并通过（含人工启动恢复）；历史 blocked（2 open Ticket）保留；Z1、deploy 脚本单独 S2 仍未完成 |
+| S4 真实验收 | **partial**（E1-off partial、E5/E9 blocked、长输出与完整 A2/A5 未覆盖；人类签收未做） |
 | S5 默认值变更 | 未做 |
-| S6 合并 | 未做（分支未合并） |
+| S6 合并 | 完整流程未执行（`agent/roadmap95` 未合并；main 已由其他 PR 前进到 `5b5c4ef`） |
 | S7 投入使用 | 未开始 |
-| 实载 commit 回读 | unverified（无宿主回读入口） |
-| A5 E2E / A2 H1–H6 | A2 探针已提供但真实宿主结论未完成；A5 未执行 |
+| 实载 commit 回读 | 已具备 D4 两条等价方式（activation markers + 决策 `pluginCommit`）；读不到才记 `unverified`；属同用户运行证据，非防伪/强绑定 |
+| A5 E2E / A2 H1–H6 | A2 定案 H2/H6 fail、强绑定关闭；A5 历史记录存在（E1-off partial、E5/E9 blocked）；`6d24e1b` 未完整复跑 |
 
 ## 11. 关联
 
@@ -176,5 +185,7 @@ scripts/host/deploy-hephi.sh \
 - 计划审查 `/Users/…/external-review/ROADMAP95-plan-review.md` P0-4（实载回读）、P2-7（merge commit）、P0-5（S3 依赖）。
 - `hephi/docs/validation/2026-11-07-s2-review-bundle.md`（S2 材料与复跑命令）。
 - `hephi/docs/validation/2026-11-07-maintenance-drain-probe.md`（H0/H7/drain 真实状态）。
+- `docs/deployment-prerequisite-decisions-2026-11-07.md`（D1/D2/D4/D5 正式决策与 S3 前置关闭）。
+- `hephi/docs/validation/2026-11-07-s4-acceptance.md`（S4/A5 现状与 `6d24e1b` Issue57 记录）。
 - `hephi/docs/validation/e2e/README.md`（S4 场景矩阵）。
 - `scripts/host/deploy-hephi.sh`（S3 部署脚本）、`scripts/release/preflight.mjs`（S1 预检）。

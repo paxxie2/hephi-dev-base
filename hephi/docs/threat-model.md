@@ -1,15 +1,15 @@
-# 威胁模型（A4，2026-11-07，草稿）
+# 威胁模型（A4，2026-11-07；2026-11-08 更新）
 
-> 状态：**2026-11-08 更新（基于 A2 真实探针结果；仍有部署侧/宿主侧未验证项）**。本文按 ROADMAP-95 §A4 编写，用于固定信任边界与已知防线；
-> 涉及宿主隔离的结论依赖 G1 第 7、8 项探针（未做）与 A2 H1–H6 探针（未做），因此不能作为
-> “宿主已隔离”或“证据不可伪造”的证明。
+> 状态：**2026-11-08 更新（基于 A2 真实探针定案；仍有宿主侧/部署侧未验证项）**。本文按 ROADMAP-95 §A4 编写，用于固定信任边界与已知防线；
+> 宿主隔离结论仍缺 G1 第 7、8 项探针；A2 H1–H6 已有定案（H1 pass、H2 fail、H3 pass（一次性 profile）、H4 pass、H5 pass（仅无截断分支）、H6 fail），其中 **H6 是历史 fail，不是“未测”**。
+> 因此本文不能作为“宿主已隔离”或“证据不可伪造”的证明；双入口实载回读可用只证明加载了哪个构建，不等于防伪隔离。
 
 ## 1. 资产与攻击者
 
 | 项 | 说明 |
 | --- | --- |
 | 资产 | 检查记录（`run.json` + `output.log`）、决策日志、激活合同、ready 判定结果、真实宿主执行结果 |
-| 攻击者 A：Worker（模型/被劫持的工具调用） | 能在工作区读写、能执行 bash、能请求 `hephi_check` 与 `orchestrator_report`；**能否影响自己的 Session 快照未验证（H6）** |
+| 攻击者 A：Worker（模型/被劫持的工具调用） | 能在工作区读写、能执行 bash、能请求 `hephi_check` 与 `orchestrator_report`；**能影响自己的 Session 快照（H6 一次性 profile fail；生产 B 未做写入尝试）** |
 | 攻击者 B：同机非特权用户 | 若与插件同 UID，可读写宿主状态目录（G1 第 7、8 项未验证） |
 | 攻击者 C：恶意/被篡改的插件构建 | 本模型不覆盖：构建来源由 P2/部署控制；磁盘哈希 ≠ 实载 commit（L5） |
 
@@ -19,7 +19,7 @@
 | --- | --- | --- |
 | 状态目录 `<stateDir>/hephi/` | **可被 Worker 所在进程写入**（同一宿主进程/同一 UID） | 无 OS 隔离证据；G1 第 7、8 项未做 |
 | Session 快照（`sessionQuery.readSession`） | **H6 fail（一次性 profile 实测）**：Worker 可追加 `session.vN.jsonl.zstd` 事件并写伪造 `run.json` | 因此强绑定保持关闭；A1-BIND 只按“检测已列举伪造”交付，不声称不可伪造 |
-| Job 接口（`jobs.get/readAt`） | 宿主服务，按 Session 隔离（H3 未验证错误 session 的行为） | 后台证据依赖它 |
+| Job 接口（`jobs.get/readAt`） | 宿主服务，按 Session 隔离；H3 一次性 profile 已核验（含未知/错误 Session 拒绝），生产 ready 路径仍为 manual | 后台证据依赖它 |
 | 操作者解除入口（A3 `resolutions.jsonl`） | 默认关闭；`HEPHI_ALLOW_OPERATOR_RESOLUTIONS` 只是策略开关，**不是安全边界**（Worker 的 shell 会继承宿主 env） | 可信边界待 G1 第 9 项 + 宿主配置字段；关闭时 runner/verifier 均不采信 |
 | 输出绑定（A1-OUT） | 绑定生效时从 Session 结果/Job 输出重算哈希；不可得即拒绝 | A2 on bc21cac：H1 pass(path-B)、H2 fail（前台无结构化 value）、H4 pass；path-B 前台 → `ready.output-unverified` 拒绝 |
 
@@ -41,20 +41,20 @@
 1. 宿主隔离（G1 第 7、8 项）：若 Worker 能写状态目录，伪造记录/日志仍可能，只有 A1-BIND/A1-OUT 能发现一部分。
 2. H6：Worker 若能让 Session 快照包含伪造调用，A1-BIND 失效 → 必须停止启用绑定并回到 A4 整改。
 3. A3 的可信边界：操作者配置必须 Worker 不可读/不可继承；本轮只有默认关闭 + 文档告警。
-4. 实载 commit 不可回读（L5）：磁盘哈希与健康不能证明运行中的代码。
+4. 实载 commit 回读：D4 的运行期双入口方式（activation markers + 决策 `pluginCommit`）已具备，能证明加载了哪个构建，但不构成防伪隔离；磁盘哈希与健康仍不能替代。
 5. `hephi_check` 期间的文件改动又改回（K7 #1）：指纹只能证明前后一致。
 
 ## 4b. A4 结论（2026-11-08）
 
 - 同用户 Worker **可以**伪造 `run.json`/追加 Session 快照（H6 fail）；因此“状态目录/快照不可伪造”不成立，A1-BIND 不能作为不可伪造证明，只能作为“已列举伪造方式未被绕过”的检测层。
 - 强绑定保持关闭；A1-OUT 对前台 path-B 不可得即 fail-closed；后台 Job 输出依赖 `jobs.readAt`（不可读/lossy 拒绝）。
-- 部署侧新增的 activation markers/回读只证明加载了哪个构建（D4），不改变上述证据可信度结论。
+- 部署侧新增的 activation markers/回读只证明加载了哪个构建（D4）；**双入口实载回读可用不等于防伪隔离**，也不改变状态目录/快照可被同用户 Worker 写入的事实，因此不改变上述证据可信度结论。
 - 剩余风险：真实宿主 supervisor 行为、非零 effect 等待的 drain、C3 review→Trigger、运行期网络隔离未验证。
 
 ## 5. 需要宿主/负责人决定的事项
 
 - 是否采用 OS 级隔离（独立 UID、只读状态目录、操作者凭据）——属外部资源与安全审批。
 - A3 操作者配置的存放位置与权限（仅操作者可写、Worker 不可读）。
-- H6 结果若为“可影响”，是否接受“A 线降级为只检测已列举伪造”并相应下调 D1 目标。
+- H6 已为 fail（一次性 profile：Worker 可影响自己的 Session 快照/状态目录），强绑定保持关闭；是否按“A 线只检测已列举伪造”正式下调 D1 目标仍待负责人决定。
 
 > 本文不修改任何既有结论；R3.7/P8 仍为部分/unverified，D1 未通过。

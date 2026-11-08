@@ -21,8 +21,11 @@
 5. B 重启时 setup 的 gh 探测撞上 REST 配额耗尽（agentCliSignedOut），待整点恢复后重启复验
 
 ## 待办
-- 配额恢复后重启 B 复验 setup problem 清零
-- deploy-hephi.sh 死循环根因待查（脚本级 bug，未定位到行）
+- ~~deploy-hephi.sh 死循环根因待查~~ → 已定位并修复（f56dcbf）：`--skip-tests` 参数分支漏 `shift`，
+  参数解析 `while [ $# -gt 0 ]` 对其永不消耗 → 纯内建空转（无子进程/无 sleep/高 CPU，与现场症状逐项吻合）。
+  已客观复现（修复前 2 秒 97.6% CPU 空转、校验不可达）→ 一行修复 → 复验立即 exit 2；
+  假宿主套件 303 断言含新增 R3-T13b 回归用例一次通过。该缺陷由 1175694（--skip-tests 标志）引入，
+  第 4 次尝试是首个实际传入该标志的调用。
 
 ## 最终复验（2026-11-08T15:15Z 配额恢复后）
 - 重启 B：`[hephi-activation] entry=index/tools commit=055491d0… pid=51558` ✓

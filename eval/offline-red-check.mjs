@@ -183,17 +183,18 @@ export function normalizeTestSpec(entry) {
   const slash = raw.lastIndexOf('/')
   const dot = raw.lastIndexOf('.')
   if (slash >= 0 && dot > slash && raw.slice(dot + 1).trim() !== '') {
-    // A path-like entry without a separator: treat the basename as the file and
-    // the trailing segment (after the last '/') as classname + name is ambiguous,
-    // so require the explicit `file::name` form for path entries.
-    return { file: normalizePath(raw), classname: null, name: raw.slice(slash + 1) }
+    // A path-like entry without a `::`/`#` separator names the whole test file
+    // (the v3 task-card schema freezes plain relative paths in `tests`). Every
+    // testcase whose classname matches the file satisfies P1.
+    return { file: normalizePath(raw), classname: null, name: null }
   }
   return { file: null, classname: null, name: raw }
 }
 
 export function matchTestcase(spec, testcase) {
   if (!spec || !testcase) return false
-  const sameName = spec.name === testcase.name || normalizeClass(spec.name) === normalizeClass(testcase.name)
+  const sameName = spec.name === null || spec.name === undefined
+    || spec.name === testcase.name || normalizeClass(spec.name) === normalizeClass(testcase.name)
   if (!sameName) return false
   if (spec.classname) {
     if (!classSuffixMatch(spec.classname, testcase.classname)) return false
@@ -256,8 +257,11 @@ export function assertionFailureTypesFor(card, acceptanceItem, checkConfig) {
 const failureTypeMatches = (types, testcase) => {
   const failures = [...testcase.failures, ...testcase.errors]
   return failures.some(failure => {
-    const type = typeof failure.type === 'string' ? failure.type : ''
+    let type = typeof failure.type === 'string' ? failure.type : ''
     const message = typeof failure.message === 'string' ? failure.message : ''
+    // pytest junit omits the type attribute for plain asserts while writing the
+    // assert expression into message; treat that shape as an AssertionError.
+    if (type === '' && /^assert\b/.test(message)) type = 'AssertionError'
     return types.some(configured => type === configured || message.includes(configured))
   })
 }

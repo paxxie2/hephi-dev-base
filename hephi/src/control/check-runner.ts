@@ -46,9 +46,15 @@ const JOB_CONFIRM_MS = 15_000
 const isTerminal = (status: string) => status === 'completed' || status === 'killed' || status === 'failed'
 const quote = (s: string) => "'" + s.replace(/'/g, "'\\''") + "'"
 export function sameSource(a: unknown, b: unknown): boolean { return JSON.stringify(a) === JSON.stringify(b) }
-/** The exact shell command a check hands to the native bash tool; Session binding compares against it. */
-export function checkCommand(baseSha: string, command: string, args: string[]): string {
-  return `HEPHI_BASE_COMMIT=${quote(baseSha)} ` + [command, ...args].map(quote).join(' ')
+/**
+ * The exact shell command a check hands to the native bash tool; Session binding compares against it.
+ * T07: when the run directory is known, `HEPHI_RUN_DIR` is exported for the check process so a check
+ * can write into its own run directory. The 4th argument stays optional so callers that only need the
+ * frozen command shape (test fixtures and legacy readers) keep the historical two-variable-free form.
+ */
+export function checkCommand(baseSha: string, command: string, args: string[], runDir?: string): string {
+  const runDirPrefix = runDir === undefined ? '' : `HEPHI_RUN_DIR=${quote(runDir)} `
+  return runDirPrefix + `HEPHI_BASE_COMMIT=${quote(baseSha)} ` + [command, ...args].map(quote).join(' ')
 }
 export async function contained(root: string, path: string): Promise<string> {
   const [base, actual] = await Promise.all([realpath(root), realpath(resolve(root, path))])
@@ -320,7 +326,7 @@ export async function runCheck(options: {
   const runId = randomUUID(), innerCallId = `hephi-${randomUUID()}`
   const dir = checkRunDir(stateDir, contract.ticketId, runId)
   await mkdir(dir, { recursive: true })
-  const command = checkCommand(contract.baseSha, check.command, check.args)
+  const command = checkCommand(contract.baseSha, check.command, check.args, dir)
   const record: CheckRunRecord = {
     version: 3, pluginCommit: pluginCommit(), runId, sequence: (old.at(-1)?.sequence ?? 0) + 1, ticketId: contract.ticketId,
     contractHash: contract.contractHash, checkId: check.id,

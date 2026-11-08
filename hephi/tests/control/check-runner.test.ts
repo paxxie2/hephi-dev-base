@@ -629,3 +629,42 @@ describe('incremental native Job output collection', () => {
     expect(thrownJobs.disposeCalls).toBe(1)
   })
 })
+
+describe('T07: HEPHI_RUN_DIR for the running check', () => {
+  it('AT-50: the check command reads $HEPHI_RUN_DIR and it points at this run directory', async () => {
+    const r = await repo()
+    const stateDir = await mkdtemp(join(tmpdir(), 'hephi-check-state-'))
+    cleanup.push(stateDir)
+    const observedPath = join(stateDir, 'observed-run-dir.txt')
+    const observe: VerificationCheck = {
+      id: 'build', kind: 'build', purpose: 'observe the run directory', command: 'sh',
+      args: ['-c', `printf '%s' "$HEPHI_RUN_DIR" > "${observedPath}"`], cwd: '.', required: true, timeoutMs: 5000,
+    }
+    const contract: ActivationContract = { ...context(r.dir, r.baseSha), verification: { version: 1, checks: [observe] } }
+    let seenCommand = ''
+    // The host bash tool is replaced with a real `sh -c` execution so the assertion is
+    // about what the check process actually reads, not about a re-parse of the string.
+    const tools: CheckTools = {
+      execute: async input => {
+        const args = input.arguments as { command: string; workdir: string }
+        seenCommand = args.command
+        const { stdout } = await run('sh', ['-c', args.command], { cwd: args.workdir })
+        return {
+          isError: false, content: [], value: {
+            kind: 'foreground', exitCode: 0, signal: null, timedOut: false, aborted: false,
+            stdout: { text: stdout, truncated: false }, stderr: { text: '', truncated: false },
+          },
+        } as never
+      },
+    }
+    const record = await runCheck({ stateDir, contract, checkId: 'build', outer: outer(), tools })
+    expect(record.status).toBe('passed')
+    const runDir = checkRunDir(stateDir, 'ticket-1', record.runId)
+    // The frozen command string carries the run dir before the check command...
+    expect(seenCommand).toContain(`HEPHI_RUN_DIR='${runDir}'`)
+    expect(seenCommand).toContain(`HEPHI_BASE_COMMIT='${r.baseSha}'`)
+    // ...the check process actually read it, and it is this run's directory.
+    expect(await readFile(observedPath, 'utf8')).toBe(runDir)
+    expect(await readFile(join(runDir, 'run.json'), 'utf8')).toContain(record.runId)
+  })
+})

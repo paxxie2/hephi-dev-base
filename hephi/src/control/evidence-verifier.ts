@@ -268,7 +268,7 @@ function jobEventEvidence(
  */
 async function analyzeNativeEvidence(
   snapshot: SessionSnapshot, sessionId: string, contract: ActivationContract, record: CheckRunRecord,
-  workspace: string, jobs: NativeJobs | undefined,
+  stateDir: string, workspace: string, jobs: NativeJobs | undefined,
 ): Promise<NativeEvidence> {
   if (snapshot.session?.id !== sessionId) return { bindingProblem: 'Session snapshot belongs to a different Session' }
   const own = snapshot.events.filter(event => event.seq >= snapshot.inheritedEventCount)
@@ -278,7 +278,7 @@ async function analyzeNativeEvidence(
   let expectedCommand: string
   let expectedCwd: string
   try {
-    expectedCommand = checkCommand(contract.baseSha, definition.command, definition.args)
+    expectedCommand = checkCommand(contract.baseSha, definition.command, definition.args, checkRunDir(stateDir, contract.ticketId, record.runId))
     expectedCwd = await contained(workspace, definition.cwd)
   } catch (error) {
     return { bindingProblem: `${record.checkId}: cannot resolve the frozen check command or directory: ${error instanceof Error ? error.message : String(error)}` }
@@ -303,9 +303,9 @@ async function analyzeNativeEvidence(
  */
 export async function sessionBindingProblem(
   snapshot: SessionSnapshot, sessionId: string, contract: ActivationContract, record: CheckRunRecord,
-  context: { workspace: string; jobs?: NativeJobs },
+  context: { stateDir: string; workspace: string; jobs?: NativeJobs },
 ): Promise<string | undefined> {
-  const evidence = await analyzeNativeEvidence(snapshot, sessionId, contract, record, context.workspace, context.jobs)
+  const evidence = await analyzeNativeEvidence(snapshot, sessionId, contract, record, context.stateDir, context.workspace, context.jobs)
   return evidence.bindingProblem ?? evidence.jobUnavailable
 }
 
@@ -440,7 +440,7 @@ export function createEvidenceVerifier(options: {
         // the ownership check keeps a missing sessionQuery from masking a foreign record.
         const snapshot = await options.readSession(sessionId)
         for (const r of used) {
-          const evidence = await analyzeNativeEvidence(snapshot, sessionId, contract, r, workspace, options.jobs)
+          const evidence = await analyzeNativeEvidence(snapshot, sessionId, contract, r, options.stateDir, workspace, options.jobs)
           // Non-fatal shape facts (for example `workdir: absent` on the job-event path) are kept
           // in the denial reason so the operator can see what could not be compared.
           const notes = evidence.notes && evidence.notes.length > 0 ? ` (${evidence.notes.join('; ')})` : ''

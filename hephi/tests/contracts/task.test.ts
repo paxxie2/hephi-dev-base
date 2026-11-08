@@ -1,9 +1,10 @@
-import { mkdtemp, readFile } from 'node:fs/promises'
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { Context } from '@deepseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
+import { main as cliMain } from '../../src/cli.js'
 import { DEFAULT_PROTECTED, parseIssueTask, parseTaskCard, taskCardSchema } from '../../src/contracts/task.js'
 import { loadActivation, prepareActivation } from '../../src/control/activation.js'
 import { mountWorkerGate } from '../../src/control/worker-mount.js'
@@ -183,5 +184,26 @@ describe('Issue task card v3 (T13)', () => {
     const v3 = blocks.filter((block): block is Record<string, unknown> => typeof block === 'object' && block !== null && (block as { version?: unknown }).version === 3)
     expect(v3.map(block => block.kind)).toEqual(['code', 'refactor'])
     for (const block of v3) expect(() => parseTaskCard(block)).not.toThrow()
+  })
+
+  it('T13: hephi lint-task accepts a flattened v3 bundle carrying kind', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'hephi-task-'))
+    const file = join(dir, 'bundle.json')
+    await writeFile(file, JSON.stringify({
+      version: 3,
+      kind: 'code',
+      goal: 'total() returns the sum of its two arguments',
+      outOfScope: ['pricing rules'],
+      acceptance: [{ ...v3Acceptance, check: 'unit', tests: ['tests/price.test.ts'] }],
+      ticketId: 'ticket-1',
+      allowedPaths: ['src/**', 'tests/**'],
+      checks: [{ id: 'unit', kind: 'test', purpose: 'unit', command: 'node', args: ['test.js'] }],
+    }))
+    const out: string[] = []
+    const err: string[] = []
+    const code = await cliMain(['lint-task', file], process.env, { out: message => out.push(message), err: message => err.push(message) })
+    expect(code).toBe(0)
+    expect(out.join('\n')).toContain('HEPHI task lint: PASS')
+    expect(err.join('\n')).not.toContain('unknown top-level field ignored: kind')
   })
 })

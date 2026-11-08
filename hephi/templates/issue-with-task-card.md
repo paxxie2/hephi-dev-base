@@ -43,7 +43,7 @@
 
 ## 2. 任务卡写法（hephi-task 块）
 
-- `version`：当前为 1（需要"受保护验收资产授权"时用 version 2，并给 `authorizes`）。
+- `version`：支持 1/2/3——1 为基础任务卡；2 增加受保护验收资产授权（`authorizes`/`protectedAssets`）；3 增加必填 `kind`、必填 `outOfScope` 和验收项 `tests`/`cases`（示例见 §6）。
 - `goal`：一句可核对的目标；不要写"优化一下"这类不可验收的话。
 - `acceptance[]`：每项含
   - `id`：稳定标识（如 AC1）；

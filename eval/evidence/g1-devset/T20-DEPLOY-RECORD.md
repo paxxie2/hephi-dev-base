@@ -23,3 +23,9 @@
 ## 待办
 - 配额恢复后重启 B 复验 setup problem 清零
 - deploy-hephi.sh 死循环根因待查（脚本级 bug，未定位到行）
+
+## 最终复验（2026-11-08T15:15Z 配额恢复后）
+- 重启 B：`[hephi-activation] entry=index/tools commit=055491d0… pid=51558` ✓
+- setup problem: None ✓（agentCliSignedOut 已清除）
+- paused 保持 true（按部署约定，派发恢复由操作者在 T21 启动时执行）
+- 配额止损：g1-exp/g1-ctl 已停（开发集完成后不再轮询）

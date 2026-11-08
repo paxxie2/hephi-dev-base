@@ -32,3 +32,11 @@
 ## 运行成本事故记录
 - GitHub REST 配额两次耗尽：4 个实例并行轮询共享单 token；已停 3083/3084（3084 与 g1-exp 监听完全重复属最大浪费）。
 - 误跑消耗：种子 sqlite 复活旧工单 3-4 张（已停+清表）；准入误判重投多评 1 次。
+
+## AT-81（新版本关闭 HEPHI 兼容性检查）✅
+g1-at81 仓（不在 prepare.sh 匹配范围 → prepare exit 0，无 HEPHI_* 导出）：issue #2 接单 → 无合同（hephi 目录数保持 10）→ 正常完成并报 ready，PR #3 已合入。新版本 SA(d0e64d6)+插件(9c5afb2) 对非 HEPHI 任务无回归。
+
+## AT-84（一次性实例隔离）✅
+g1-exp(3085)/g1-ctl(3086)：独立 DSH_HOME/state/work/sources/端口/凭据配置；实载版本经 activation 标记回读（exp=9c5afb2，ctl=6d24e1b3 冻结发布物 symlink）；对照组加载 T01 冻结制品。预检=T03 脚本 5/5 PASS（2026-11-08 受托记录附 deploy-check 证据）。
+
+## T15 门槛结论：AT-80 ✅（歧义已注明）、AT-81 ✅、AT-84 ✅。G1 制品（integration 94d2650+a7b2d1e+1a0f6be）开发集验证完成。

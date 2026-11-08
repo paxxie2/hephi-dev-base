@@ -99,3 +99,9 @@ node eval/evidence/b5blind/leak-scan.mjs eval/evidence/b5blind/materials
   2. **不得**用它声称 B4 达标或 B5 效果；
   3. `delegate-comparison.json` 只是“AI 代做 vs agent”的描述性对比（56/56 一致），不构成任何一致性证据。
 - 盲评状态保持 **partial（single-labeler；无真人标注）**；若负责人本人或第二真人完成标注，再按 `B5-blind-protocol.md` §4–§6 计算 agreement。
+
+## 8. AI 代标注接受模式（2026-11-08）
+
+负责人接受 AI 代复核标注作为第二来源（不再要求本人人工标注）。据此新增：
+- `agreement-ai.mjs` / `agreement-ai.json`：逐字段 AI–AI agreement（可定义时附 Cohen's kappa；单类别字段 kappa=null/undefined）。
+- 结论等级不变：**不是 human–agent agreement、不是双人 kappa、不是 B4/B5 达标证据**；B5 盲评仍为 partial（无真人标注）。

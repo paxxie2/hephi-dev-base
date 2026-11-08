@@ -137,3 +137,11 @@ node eval/kappa.mjs --scores /tmp/human-agent-agreement.json
 - 不能计算 human–agent agreement，不能算双人 kappa；
 - 交接文档自述已接触 agent 标签摘要，不构成独立盲评；
 - 盲评状态保持 partial；真人标注入口与模板不变（§4）。
+
+## 9. AI 代标注接受模式（2026-11-08）
+
+负责人决定不再要求本人人工标注，接受 AI 代复核标注作为第二来源（见 `eval/approvals/2026-11-08-ai-delegate-labeling.md`）：
+- 一致性只能写 **AI–AI agreement**（`eval/evidence/b5blind/agreement-ai.json`），不是 human–agent，不是双人 kappa；
+- delegate 标注者非独立（已接触 agent 标签摘要），结果仅描述性；
+- B4/B5 盲评状态保持 partial；B4 校准、B5 效果结论仍不可声称；
+- 未来若出现第二名真人，按 §4–§6 重做并升级。

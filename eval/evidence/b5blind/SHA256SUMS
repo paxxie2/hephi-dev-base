@@ -1,7 +1,9 @@
 93c462082b9c8a06313ca1be0de0aee586286b70f5ed9989b6ff7b1cf7d054de  ./.gitattributes
 ad4fbcfbb22d56c6662b1b673bcda3ee9655d5eed0f3bff85314b1124dd7a311  ./OWNER-DELEGATE.md
-98af3d388cd40767fff001b79994b83c5eeb0d0ada41e2d4e3cf5fbcb673d6ca  ./README.md
+df72ae469c7ac0e71a7a9880778693587fa6daf1fa0d6e9e76d25048f6bed9b5  ./README.md
 4adf34ede0434cfa895f22be948e9f9a12b34252eb81c6699bf1813fa0fbfd44  ./agent-labels.json
+c68f9708f7f43887f269f726da71a3af0e800e530febe166bd51d9d4296961cd  ./agreement-ai.json
+d99410b2aac98b143682609a12d0925ce57374b223811dbe25dadfc1afe4241f  ./agreement-ai.mjs
 8331f5d597a385bd825e093d2f93a21c88eefe9b990a6bd01cb25cc4969646b4  ./commands.log
 0d6caa2e2366c02ec9c04eb2d1bbc47c0f6cd74a6d97835af555e440d8f12778  ./delegate-comparison.json
 357f586047f681cdf0daccbfa896c680fd52a1ee199ff0e70169fb5c07a6d7bf  ./export.log

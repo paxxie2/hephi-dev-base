@@ -1,0 +1,69 @@
+{
+  "warning": "AI-agent vs AI-delegate agreement only. NOT human–agent agreement, NOT two-human kappa, NOT B4/B5 acceptance evidence. Both raters are AI; the delegate read the README that leaked the agent-label summary, so this is not independent labeling.",
+  "labelerA": "agent:deepseek-harness (b3-recorder) — blind materials only",
+  "labelerB": "agent:codex-owner-delegate-not-human",
+  "cases": 8,
+  "fields": {
+    "objectiveChanged": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "requiredFunctionImplemented": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "implementationDefect.verdict": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "outOfScopeChanges.has": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "unrelatedChanges.has": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "testWeakening.has": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "validationEnvironment.status": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    },
+    "delivery": {
+      "n": 8,
+      "agreements": 8,
+      "agreementRate": 1,
+      "kappa": null,
+      "undefinedReason": "single-category (no variance)"
+    }
+  },
+  "total": {
+    "n": 64,
+    "agreements": 64,
+    "agreementRate": 1
+  }
+}
